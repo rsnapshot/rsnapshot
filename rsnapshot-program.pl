@@ -98,10 +98,14 @@ my $do_configtest	= 0; # parse config file and exit
 my $one_fs			= 0; # one file system (don't cross partitions within a backup point)
 
 # how much noise should we make?
-my $quiet			= 0; # don't display warnings about FIFOs and special files if enabled
-my $verbose			= 0; # show the shell commands being executed
-my $extra_verbose	= 0; # show extra verbose messages
-my $debug			= 0; # super verbose debugging messages
+#	0	Absolutely quiet (reserved only, not implemented)
+#	1	Don't display warnings about FIFOs and special files
+#	2	Default (errors only)
+#	3	Verbose (show shell commands)
+#	4	Extra verbose messages (individual actions inside some subroutines, output from rsync)
+#	5	Debug
+#
+my $verbose = 2;
 
 # remember what directory we started in
 my $cwd = cwd();
@@ -166,34 +170,31 @@ if (defined($opts{'c'}))	{
 	$config_file = $opts{'c'};
 }
 
-# verbose (or extra verbose)?
-if (defined($opts{'v'}))	{
-	$verbose = 1;
-}
-if (defined($opts{'V'}))	{
-	$verbose = 1;
-	$extra_verbose = 1;
-}
-
-# debug
-if (defined($opts{'D'}))	{
-	$verbose = 1;
-	$extra_verbose = 1;
-	$debug = 1;
-}
-
-# test?
+# test? (just show what WOULD be done)
 if (defined($opts{'t'}))	{
 	$test = 1;
-	$verbose = 1;
+	$verbose = 3;
 }
 
 # quiet?
 if (defined($opts{'q'}))	{
-	$quiet = 1;
+	$verbose = 1;
 }
 
-# one file system?
+# verbose (or extra verbose)?
+if (defined($opts{'v'}))	{
+	$verbose = 3;
+}
+if (defined($opts{'V'}))	{
+	$verbose = 4;
+}
+
+# debug
+if (defined($opts{'D'}))	{
+	$verbose = 5;
+}
+
+# one file system? (don't span partitions with rsync)
 if (defined($opts{'x'}))	{
 	$one_fs = 1;
 }
@@ -530,11 +531,18 @@ if ( -f "$config_file" )	{
 		exit(0);
 	}
 } else	{
+	# warn that the config file could not be found
 	print STDERR "Config file \"$config_file\" does not exist or is not readable.\n";
 	if (-e "$config_file.default")	{
 		print STDERR "Did you copy $config_file.default to $config_file yet?\n";
 	}
-	log_err("Config file \"$config_file\" does not exist or is not readable");
+	
+	# if this wasn't a test, report the error to syslog
+	if (0 == $do_configtest)	{
+		log_err("Config file \"$config_file\" does not exist or is not readable");
+	}
+	
+	# exit showing an error
 	exit(-1);
 }
 
@@ -544,7 +552,13 @@ if (0 == $file_syntax_ok)	{
 	print STDERR "Errors were found in $config_file, rsnapshot can not continue.\n";
 	print STDERR "If you think an entry looks right, make sure you don't have\n";
 	print STDERR "spaces where only tabs should be.\n";
-	log_err("Errors were found in $config_file, rsnapshot can not continue.");
+	
+	# if this wasn't a test, report the error to syslog
+	if (0 == $do_configtest)	{
+		log_err("Errors were found in $config_file, rsnapshot can not continue.");
+	}
+	
+	# exit showing an error
 	exit(-1);
 }
 
@@ -599,6 +613,8 @@ if (!defined($interval_num))	{
 	bail("Interval \"$cmd\" unknown, check $config_file");
 }
 
+# if we got this far, the config file is valid
+
 ################################
 ### BEGIN FILESYSTEM ACTIONS ###
 ################################
@@ -611,7 +627,7 @@ if (defined($config_vars{'lockfile'}))	{
 
 # CREATE SNAPSHOT_ROOT IF IT DOESN'T EXIST, WITH THE FILE PERMISSIONS 0700
 if ( ! -d "$config_vars{'snapshot_root'}" )	{
-	if (1 == $verbose)	{ print "mkdir -m 0700 -p $config_vars{'snapshot_root'}\n"; }
+	if ($verbose > 2)	{ print "mkdir -m 0700 -p $config_vars{'snapshot_root'}\n"; }
 	if (0 == $test)	{
 		eval	{
 			mkpath( "$config_vars{'snapshot_root'}", 0, 0700 );
@@ -719,7 +735,7 @@ sub log_msg	{
 	
 	if (defined($config_vars{'cmd_logger'}))	{
 		# verbose to display messages, extra verbose to display errors
-		if ( (1 == $extra_verbose) or ((1 == $verbose) && ($level ne 'err')) )	{
+		if ( ($verbose > 3) or (($verbose > 2) && ($level ne 'err')) )	{
 			print "$config_vars{'cmd_logger'} -i -p $facility.$level -t rsnapshot $msg\n";
 		}
 		# log to syslog
@@ -838,7 +854,7 @@ sub add_lockfile	{
 		exit(-1);
 	}
 	
-	if (1 == $verbose)	{ print "touch $lockfile\n"; }
+	if ($verbose > 2)	{ print "touch $lockfile\n"; }
 	
 	# create the lockfile
 	my $result = open(LOCKFILE, "> $lockfile");
@@ -864,7 +880,7 @@ sub remove_lockfile	{
 	
 	if (defined($lockfile))	{
 		if ( -e "$lockfile" )	{
-			if (1 == $verbose)	{ print "rm -f $lockfile\n"; }
+			if ($verbose > 2)	{ print "rm -f $lockfile\n"; }
 			
 			$result = unlink($lockfile);
 			if (0 == $result)	{
@@ -1012,13 +1028,13 @@ sub backup_interval	{
 	}
 	
 	# extra verbose?
-	if (1 == $extra_verbose)	{ $default_rsync_short_args .= 'v'; }
+	if ($verbose > 3)	{ $default_rsync_short_args .= 'v'; }
 	
 	# ROTATE DIRECTORIES
 	#
 	# remove oldest directory
 	if ( -d "$config_vars{'snapshot_root'}/$interval.$interval_max" )	{
-		if (1 == $verbose)	{ print "rm -rf $config_vars{'snapshot_root'}/$interval.$interval_max/\n"; }
+		if ($verbose > 2)	{ print "rm -rf $config_vars{'snapshot_root'}/$interval.$interval_max/\n"; }
 		if (0 == $test)	{
 			my $result = rmtree( "$config_vars{'snapshot_root'}/$interval.$interval_max/", 0, 0 );
 			if (0 == $result)	{
@@ -1030,7 +1046,7 @@ sub backup_interval	{
 	# rotate the middle ones
 	for (my $i=($interval_max-1); $i>0; $i--)	{
 		if ( -d "$config_vars{'snapshot_root'}/$interval.$i" )	{
-			if (1 == $verbose)	{
+			if ($verbose > 2)	{
 				print "mv $config_vars{'snapshot_root'}/$interval.$i/ $config_vars{'snapshot_root'}/$interval." . ($i+1) . "/\n";
 			}
 			if (0 == $test)	{
@@ -1047,7 +1063,7 @@ sub backup_interval	{
 		my $result;
 		
 		# decide which verbose message to show, if at all
-		if (1 == $verbose)	{
+		if ($verbose > 2)	{
 			if (1 == $have_gnu_cp)	{
 				print "$config_vars{'cmd_cp'} -al $config_vars{'snapshot_root'}/$interval.0/ $config_vars{'snapshot_root'}/$interval.1/\n";
 			} else	{
@@ -1091,7 +1107,7 @@ sub backup_interval	{
 		# don't mkdir for dest unless we have to
 		my $destpath = "$config_vars{'snapshot_root'}/$interval.0/" . join('/', @dirs);
 		if ( ! -e "$destpath" )	{
-			if (1 == $verbose)	{ print "mkdir -m 0755 -p $destpath\n"; }
+			if ($verbose > 2)	{ print "mkdir -m 0755 -p $destpath\n"; }
 			if (0 == $test)	{
 				eval	{
 					mkpath( "$destpath", 0, 0755 );
@@ -1154,7 +1170,8 @@ sub backup_interval	{
 				
 			# anonymous rsync
 			} elsif ( is_anon_rsync_path($src) )	{
-				if (0 == $extra_verbose)	{ $rsync_short_args .= 'q'; }
+				# make rsync quiet if we're not running EXTRA verbose
+				if ($verbose < 3)	{ $rsync_short_args .= 'q'; }
 				
 			# this should have already been validated once, but better safe than sorry
 			} else	{
@@ -1169,7 +1186,7 @@ sub backup_interval	{
 			
 			# RUN THE RSYNC COMMAND FOR THIS BACKUP POINT
 			# BASED ON THE @cmd_stack VARS
-			if (1 == $verbose)	{ print join(' ', @cmd_stack, "\n"); }
+			if ($verbose > 2)	{ print join(' ', @cmd_stack, "\n"); }
 			if (0 == $test)		{ system(@cmd_stack); }
 			
 		# OR, IF WE HAVE A BACKUP SCRIPT, RUN IT, THEN SYNC IT TO DEST
@@ -1180,7 +1197,7 @@ sub backup_interval	{
 			# remove the tmp directory if it's still there for some reason
 			# (this shouldn't happen unless the program was killed prematurely, etc)
 			if ( -e "$tmpdir" )	{
-				if (1 == $verbose)	{ print "rm -rf $tmpdir\n"; }
+				if ($verbose > 2)	{ print "rm -rf $tmpdir\n"; }
 				if (0 == $test)	{
 					$result = rmtree("$tmpdir", 0, 0);
 					if (0 == $result)	{
@@ -1190,7 +1207,7 @@ sub backup_interval	{
 			}
 			
 			# create the tmp directory
-			if (1 == $verbose)	{ print "mkdir -m 0755 -p $tmpdir\n"; }
+			if ($verbose > 2)	{ print "mkdir -m 0755 -p $tmpdir\n"; }
 			if (0 == $test)	{
 				eval	{
 					mkpath( "$tmpdir", 0, 0755 );
@@ -1201,7 +1218,7 @@ sub backup_interval	{
 			}
 			
 			# change to the tmp directory
-			if (1 == $verbose)	{ print "cd $tmpdir\n"; }
+			if ($verbose > 2)	{ print "cd $tmpdir\n"; }
 			if (0 == $test)	{
 				$result = chdir("$tmpdir");
 				if (0 == $result)	{
@@ -1214,13 +1231,13 @@ sub backup_interval	{
 			# the assumption here is that the backup script is written in such a way
 			# that it creates files in it's current working directory.
 			#
-			if (1 == $verbose)	{ print "$$sp_ref{'script'}\n"; }
+			if ($verbose > 2)	{ print "$$sp_ref{'script'}\n"; }
 			if (0 == $test)	{
 				system( $$sp_ref{'script'} );
 			}
 			
 			# change back to the previous directory
-			if (1 == $verbose)	{ print "cd $cwd\n"; }
+			if ($verbose > 2)	{ print "cd $cwd\n"; }
 			if (0 == $test)	{
 				chdir($cwd);
 			}
@@ -1231,7 +1248,7 @@ sub backup_interval	{
 			# rsync sees that the timestamps are different, and insists
 			# on changing things even if the files are bit for bit identical on content.
 			#
-			if (1 == $verbose)	{ print "sync_if_different(\"$tmpdir\", \"$config_vars{'snapshot_root'}/$interval.0/$$sp_ref{'dest'}\")\n"; }
+			if ($verbose > 2)	{ print "sync_if_different(\"$tmpdir\", \"$config_vars{'snapshot_root'}/$interval.0/$$sp_ref{'dest'}\")\n"; }
 			if (0 == $test)	{
 				$result = sync_if_different("$tmpdir", "$config_vars{'snapshot_root'}/$interval.0/$$sp_ref{'dest'}");
 				if (!defined($result))	{
@@ -1241,7 +1258,7 @@ sub backup_interval	{
 			
 			# remove the tmp directory
 			if ( -e "$tmpdir" )	{
-				if (1 == $verbose)	{ print "rm -rf $tmpdir\n"; }
+				if ($verbose > 2)	{ print "rm -rf $tmpdir\n"; }
 				if (0 == $test)	{
 					$result = rmtree("$tmpdir", 0, 0);
 					if (0 == $result)	{
@@ -1257,7 +1274,7 @@ sub backup_interval	{
 	}
 	
 	# update mtime of $interval.0 to reflect the time this snapshot was taken
-	if (1 == $verbose)	{ print "touch $config_vars{'snapshot_root'}/$interval.0/\n"; }
+	if ($verbose > 2)	{ print "touch $config_vars{'snapshot_root'}/$interval.0/\n"; }
 	if (0 == $test)	{
 		my $result = utime(time(), time(), "$config_vars{'snapshot_root'}/$interval.0/");
 		if (0 == $result)	{
@@ -1286,7 +1303,7 @@ sub rotate_interval	{
 	#
 	# delete the oldest one
 	if ( -d "$config_vars{'snapshot_root'}/$interval.$interval_max" )	{
-		if (1 == $verbose)	{ print "rm -rf $config_vars{'snapshot_root'}/$interval.$interval_max/\n"; }
+		if ($verbose > 2)	{ print "rm -rf $config_vars{'snapshot_root'}/$interval.$interval_max/\n"; }
 		if (0 == $test)	{
 			my $result = rmtree( "$config_vars{'snapshot_root'}/$interval.$interval_max/", 0, 0 );
 			if (0 == $result)	{
@@ -1298,7 +1315,7 @@ sub rotate_interval	{
 	# rotate the middle ones
 	for (my $i=($interval_max-1); $i>=0; $i--)	{
 		if ( -d "$config_vars{'snapshot_root'}/$interval.$i" )	{
-			if (1 == $verbose)	{ print "mv $config_vars{'snapshot_root'}/$interval.$i/ $config_vars{'snapshot_root'}/$interval." . ($i+1) . "/\n"; }
+			if ($verbose > 2)	{ print "mv $config_vars{'snapshot_root'}/$interval.$i/ $config_vars{'snapshot_root'}/$interval." . ($i+1) . "/\n"; }
 			if (0 == $test)	{
 				my $result = rename( "$config_vars{'snapshot_root'}/$interval.$i/", ("$config_vars{'snapshot_root'}/$interval." . ($i+1) . '/') );
 				if (0 == $result)	{
@@ -1310,7 +1327,7 @@ sub rotate_interval	{
 	
 	# hard link (except for directories) previous interval's oldest dir over to .0
 	if ( -d "$config_vars{'snapshot_root'}/$prev_interval.$prev_interval_max" )	{
-		if (1 == $verbose)	{
+		if ($verbose > 2)	{
 			if (1 == $have_gnu_cp)	{
 				print "$config_vars{'cmd_cp'} -al $config_vars{'snapshot_root'}/$prev_interval.$prev_interval_max/ ";
 				print "$config_vars{'snapshot_root'}/$interval.0/\n";
@@ -1412,7 +1429,7 @@ sub native_cp_al	{
 	
 	# MKDIR DEST (AND SET MODE)
 	if ( ! -d "$dest" )	{
-		if (1 == $debug)	{ print "mkdir(\"$dest\", " . get_perms($st->mode) . ");\n"; }
+		if ($verbose > 4)	{ print "mkdir(\"$dest\", " . get_perms($st->mode) . ");\n"; }
 		
 		$result = mkdir("$dest", $st->mode);
 		if ( ! $result )	{
@@ -1423,7 +1440,7 @@ sub native_cp_al	{
 	
 	# CHOWN DEST (if root)
 	if (0 == $<)	{
-		if (1 == $debug)	{ print "chown(" . $st->uid . ", " . $st->gid . ", \"$dest\");\n"; }
+		if ($verbose > 4)	{ print "chown(" . $st->uid . ", " . $st->gid . ", \"$dest\");\n"; }
 		
 		$result = chown($st->uid, $st->gid, "$dest");
 		if (! $result)	{
@@ -1453,7 +1470,7 @@ sub native_cp_al	{
 			
 			# SYMLINK (must be tested for first, because it will also pass the file and dir tests)
 			if ( -l "$src/$node" )	{
-				if (1 == $debug)	{ print "copy_symlink(\"$src/$node\", \"$dest/$node\")\n"; }
+				if ($verbose > 4)	{ print "copy_symlink(\"$src/$node\", \"$dest/$node\")\n"; }
 				
 				$result = copy_symlink("$src/$node", "$dest/$node");
 				if (0 == $result)	{
@@ -1464,7 +1481,7 @@ sub native_cp_al	{
 			} elsif ( -f "$src/$node" )	{
 				
 				# make a hard link
-				if (1 == $debug)	{ print "link(\"$src/$node\", \"$dest/$node\");\n"; }
+				if ($verbose > 4)	{ print "link(\"$src/$node\", \"$dest/$node\");\n"; }
 				
 				$result = link("$src/$node", "$dest/$node");
 				if (! $result)	{
@@ -1475,7 +1492,7 @@ sub native_cp_al	{
 			# DIRECTORY
 			} elsif ( -d "$src/$node" )	{
 				
-				if (1 == $debug)	{ print "native_cp_al(\"$src/$node\", \"$dest/$node\")\n"; }
+				if ($verbose > 4)	{ print "native_cp_al(\"$src/$node\", \"$dest/$node\")\n"; }
 				
 				# call this subroutine recursively, to create the directory
 				$result = native_cp_al("$src/$node", "$dest/$node");
@@ -1486,19 +1503,19 @@ sub native_cp_al	{
 				
 			# FIFO
 			} elsif ( -p "$src/$node" )	{
-				if (0 == $quiet)	{ print STDERR "Warning! Ignoring FIFO $src/$node\n"; }
+				if ($verbose > 0)	{ print STDERR "Warning! Ignoring FIFO $src/$node\n"; }
 				
 			# SOCKET
 			} elsif ( -S "$src/$node" )	{
-				if (0 == $quiet)	{ print STDERR "Warning! Ignoring socket: $src/$node\n"; }
+				if ($verbose > 0)	{ print STDERR "Warning! Ignoring socket: $src/$node\n"; }
 				
 			# BLOCK DEVICE
 			} elsif ( -b "$src/$node" )	{
-				if (0 == $quiet)	{ print STDERR "Warning! Ignoring special block file: $src/$node\n"; }
+				if ($verbose > 0)	{ print STDERR "Warning! Ignoring special block file: $src/$node\n"; }
 				
 			# CHAR DEVICE
 			} elsif ( -c "$src/$node" )	{
-				if (0 == $quiet)	{ print STDERR "Warning! Ignoring special character file: $src/$node\n"; }
+				if ($verbose > 0)	{ print STDERR "Warning! Ignoring special character file: $src/$node\n"; }
 			}
 		}
 		
@@ -1512,7 +1529,7 @@ sub native_cp_al	{
 	undef( $dh );
 	
 	# UTIME DEST
-	if (1 == $debug)	{ print "utime(" . $st->atime . ", " . $st->mtime . ", \"$dest\");\n"; }
+	if ($verbose > 4)	{ print "utime(" . $st->atime . ", " . $st->mtime . ", \"$dest\");\n"; }
 	
 	$result = utime($st->atime, $st->mtime, "$dest");
 	if (! $result)	{
@@ -1561,14 +1578,14 @@ sub sync_if_different	{
 	$dest = remove_trailing_slash($dest);
 	
 	# copy everything from src to dest
-	if (1 == $debug)	{ print "sync_cp_src_dest(\"$src\", \"$dest\")\n"; }
+	if ($verbose > 4)	{ print "sync_cp_src_dest(\"$src\", \"$dest\")\n"; }
 	$result = sync_cp_src_dest("$src", "$dest");
 	if ( ! $result )	{
 		bail("sync_cp_src_dest(\"$src\", \"$dest\")");
 	}
 	
 	# delete everything from dest that isn't in src
-	if (1 == $debug)	{ print "sync_rm_dest(\"$src\", \"$dest\")\n"; }
+	if ($verbose > 4)	{ print "sync_rm_dest(\"$src\", \"$dest\")\n"; }
 	$result = sync_rm_dest("$src", "$dest");
 	if ( ! $result )	{
 		bail("sync_rm_dest(\"$src\", \"$dest\")");
@@ -1696,19 +1713,19 @@ sub sync_cp_src_dest	{
 				
 			# FIFO
 			} elsif ( -p "$src/$node" )	{
-				if (0 == $quiet)	{ print STDERR "Warning! Ignoring FIFO $src/$node\n"; }
+				if ($verbose > 0)	{ print STDERR "Warning! Ignoring FIFO $src/$node\n"; }
 				
 			# SOCKET
 			} elsif ( -S "$src/$node" )	{
-				if (0 == $quiet)	{ print STDERR "Warning! Ignoring socket: $src/$node\n"; }
+				if ($verbose > 0)	{ print STDERR "Warning! Ignoring socket: $src/$node\n"; }
 				
 			# BLOCK DEVICE
 			} elsif ( -b "$src/$node" )	{
-				if (0 == $quiet)	{ print STDERR "Warning! Ignoring special block file: $src/$node\n"; }
+				if ($verbose > 0)	{ print STDERR "Warning! Ignoring special block file: $src/$node\n"; }
 				
 			# CHAR DEVICE
 			} elsif ( -c "$src/$node" )	{
-				if (0 == $quiet)	{ print STDERR "Warning! Ignoring special character file: $src/$node\n"; }
+				if ($verbose > 0)	{ print STDERR "Warning! Ignoring special character file: $src/$node\n"; }
 			}
 		}
 	}
@@ -1822,7 +1839,7 @@ sub copy_symlink	{
 	}
 	
 	# CREATE THE SYMLINK
-	if (1 == $debug)	{ print "symlink(\"" . readlink("$src") . "\", \"$dest\");\n"; }
+	if ($verbose > 4)	{ print "symlink(\"" . readlink("$src") . "\", \"$dest\");\n"; }
 	
 	$result = symlink(readlink("$src"), "$dest");
 	if (! $result)	{
@@ -1833,7 +1850,7 @@ sub copy_symlink	{
 	# CHOWN DEST (if root)
 	if (0 == $<)	{
 		if ( -e "$dest" )	{
-			if (1 == $debug)	{ print "chown(" . $st->uid . ", " . $st->gid . ", \"$dest\");\n"; }
+			if ($verbose > 4)	{ print "chown(" . $st->uid . ", " . $st->gid . ", \"$dest\");\n"; }
 			
 			$result = chown($st->uid, $st->gid, "$dest");
 			if (! $result)	{
