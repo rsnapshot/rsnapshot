@@ -11,7 +11,7 @@
 ##############################################################################
 #
 # NOTE: THIS SCRIPT HAS BEEN SUPERCEDED BY THE "no_create_root" OPTION IN
-# rsnapshot. iT IS LEFT HERE JUST IN CASE ANYONE WANTS TO USE IT.
+# rsnapshot. IT IS LEFT HERE JUST IN CASE ANYONE WANTS TO USE IT.
 #
 ##############################################################################
 ##############################################################################
