@@ -914,6 +914,11 @@ sub log_msg	{
 	
 	chomp($str);
 	
+	# if this is just noise, don't log it
+	if (defined($loglevel) && ($level > $loglevel))	{
+		return (undef);
+	}
+	
 	# open logfile, write to it, close it back up
 	# if we fail, don't use the usual print_* functions, since they just call this again
 	if ((0 == $test) && (0 == $do_configtest))	{
