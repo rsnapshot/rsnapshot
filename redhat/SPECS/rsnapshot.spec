@@ -49,5 +49,8 @@ rm -rf $RPM_BUILD_DIR/%{name}-%{version}/
 %{_mandir}/man1/rsnapshot.1*
 
 %changelog
+* Thu Oct 30 2003 Nathan Rosenquist <rsnapshot@scubaninja.com>
+- update to 1.0.3
+
 * Tue Oct 28 2003 Carl Wilhelm Soderstrom <chrome@real-time.com>
 - created spec file
