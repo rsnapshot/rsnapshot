@@ -97,15 +97,17 @@ my $test			= 0; # turn verbose on, but don't execute any filesystem commands
 my $do_configtest	= 0; # parse config file and exit
 my $one_fs			= 0; # one file system (don't cross partitions within a backup point)
 
-# how much noise should we make?
-#	0	Absolutely quiet (reserved only, not implemented)
+# how much noise should we make? the default is 2
+#
+#	0	Absolutely quiet (reserved, but not implemented)
 #	1	Don't display warnings about FIFOs and special files
 #	2	Default (errors only)
 #	3	Verbose (show shell commands)
 #	4	Extra verbose messages (individual actions inside some subroutines, output from rsync)
 #	5	Debug
 #
-my $verbose = 2;
+my $verbose			= undef;
+my $default_verbose	= 2;
 
 # remember what directory we started in
 my $cwd = cwd();
@@ -507,6 +509,23 @@ if ( -f "$config_file" )	{
 			$line_syntax_ok = 1;
 			next;
 		}
+		# VERBOSE
+		if ($var eq 'verbose')	{
+			if ($value =~ m/^\d$/)	{
+				if (($value >= 1) && ($value <= 5))	{
+					# if we didn't override this with a command line flag, set it here
+					if (!defined($verbose))	{
+						$verbose = $value;
+					}
+					$line_syntax_ok = 1;
+					next;
+				} else	{
+					bail("verbose must be a value between 1 and 5");
+				}
+			} else	{
+				bail("verbose must be a value between 1 and 5");
+			}
+		}
 		
 		# make sure we understood this line
 		# if not, warn the user, and prevent the program from executing
@@ -561,6 +580,13 @@ if (0 == $file_syntax_ok)	{
 	# exit showing an error
 	exit(-1);
 }
+
+# if we didn't manage to get a verbose level yet, either through the config file
+# or the command line, use the default
+if (!defined($verbose))	{
+	$verbose = $default_verbose;
+}
+
 
 # FIGURE OUT WHICH INTERVAL WE'RE RUNNING, AND HOW IT RELATES TO THE OTHERS
 # THEN RUN THE ACTION FOR THE CHOSEN INTERVAL
@@ -702,7 +728,9 @@ sub bail	{
 	my $str = shift(@_);
 	
 	if ($str)	{ print STDERR $str . "\n"; }
-	log_err($str);
+	if (0 == $do_configtest)	{
+		log_err($str);
+	}
 	remove_lockfile($config_vars{'lockfile'});
 	exit(-1);
 }
@@ -854,18 +882,19 @@ sub add_lockfile	{
 		exit(-1);
 	}
 	
-	if ($verbose > 2)	{ print "touch $lockfile\n"; }
-	
 	# create the lockfile
-	my $result = open(LOCKFILE, "> $lockfile");
-	if (!defined($result))	{
-		print STDERR "Could not write lockfile $lockfile\n";
-		log_err("Could not write lockfile $lockfile");
-		exit(-1);
-	}
-	$result = close(LOCKFILE);
-	if (!defined($result))	{
-		print STDERR "Warning! Could not close lockfile $lockfile\n";
+	if ($verbose > 2)	{ print "touch $lockfile\n"; }
+	if (0 == $test)	{
+		my $result = open(LOCKFILE, "> $lockfile");
+		if (!defined($result))	{
+			print STDERR "Could not write lockfile $lockfile\n";
+			log_err("Could not write lockfile $lockfile");
+			exit(-1);
+		}
+		$result = close(LOCKFILE);
+		if (!defined($result))	{
+			print STDERR "Warning! Could not close lockfile $lockfile\n";
+		}
 	}
 }
 
@@ -881,12 +910,13 @@ sub remove_lockfile	{
 	if (defined($lockfile))	{
 		if ( -e "$lockfile" )	{
 			if ($verbose > 2)	{ print "rm -f $lockfile\n"; }
-			
-			$result = unlink($lockfile);
-			if (0 == $result)	{
-				print STDERR "Error! Could not remove lockfile $lockfile\n";
-				log_err("Error! Could not remove lockfile $lockfile");
-				exit(-1);
+			if (0 == $test)	{
+				$result = unlink($lockfile);
+				if (0 == $result)	{
+					print STDERR "Error! Could not remove lockfile $lockfile\n";
+					log_err("Error! Could not remove lockfile $lockfile");
+					exit(-1);
+				}
 			}
 		}
 	}

@@ -7,6 +7,10 @@ VERSION 1.0.9
 ------------------------------------------------------------------------------
 - Added backup_mysql.sh example script in utils/ to backup a MySQL database
 - Added backup_smb_share.sh example script in utils/ to backup an SMB share
+- Changed verbose settings internally to use numbers, instead of several
+  arbitrary variables.
+- Added optional "verbose" field to the config file, with values 1-5
+- Fixed lockfile code to not run in test mode
 
 VERSION 1.0.8 (Dec 26 12:56 2003)
 ------------------------------------------------------------------------------

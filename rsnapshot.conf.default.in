@@ -55,6 +55,15 @@ interval	weekly	4
 # All are optional, with sensible defaults #
 ############################################
 
+# Verbose level, 1 through 5. The default is 2.
+# 1	Print fatal errors only
+# 2	Print errors and warnings only
+# 3	Show equivalent shell commands being executed
+# 4	Show extra verbose information
+# 5	Debug mode
+#
+verbose		2
+
 # Default rsync args. All rsync commands have at least these options set.
 #
 #rsync_short_args	-a
