@@ -1,6 +1,7 @@
 VERSION = 1.0.8
 
 DEB_BUILD_DIR = fakeroot
+RPM_BASE_DIR  = /usr/src/redhat
 
 man:
 	pod2man rsnapshot-program.pl > rsnapshot.1
@@ -41,6 +42,13 @@ debian:
 	chown -R root:root ${DEB_BUILD_DIR}/
 	dpkg -b ${DEB_BUILD_DIR}/ rsnapshot-$(VERSION)-1.deb
 	/bin/rm -rf ${DEB_BUILD_DIR}/
+
+rpm: tar
+	/bin/cp rsnapshot-$(VERSION).tar.gz ${RPM_BASE_DIR}/SOURCES/
+	/bin/cp redhat/SOURCES/rsnapshot.patch ${RPM_BASE_DIR}/SOURCES/
+	/bin/cp redhat/SPECS/rsnapshot.spec ${RPM_BASE_DIR}/SPECS/
+	/usr/bin/rpmbuild -bb ${RPM_BASE_DIR}/SPECS/rsnapshot.spec
+	/bin/cp ${RPM_BASE_DIR}/RPMS/noarch/rsnapshot-$(VERSION)-1.noarch.rpm .
 
 tar:
 	/bin/rm -f rsnapshot-$(VERSION).tar.gz
