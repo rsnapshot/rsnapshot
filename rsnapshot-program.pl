@@ -129,7 +129,7 @@ getopts('vVtqx', \%opts);
 $cmd = $ARGV[0];
 
 # ALTERNATE CONFIG FILE
-if (defined($opts{'c'}) && ( -f $opts{'c'} ))	{
+if (defined($opts{'c'}))	{
 	$config_file = $opts{'c'};
 }
 
@@ -192,7 +192,7 @@ if ($cmd eq 'configtest')	{
 #########################
 
 if ( -f "$config_file" )	{
-	open(CONFIG, $config_file) or bail("Could not open config file \"$config_file\"");
+	open(CONFIG, $config_file) or bail("Could not open config file \"$config_file\"\nAre you sure you have permission?");
 	while (my $line = <CONFIG>)	{
 		chomp($line);
 		
@@ -440,6 +440,9 @@ if ( -f "$config_file" )	{
 	}
 } else	{
 	print STDERR "Config file \"$config_file\" does not exist or is not readable.\n";
+	if (-e "$config_file.default")	{
+		print STDERR "Did you copy $config_file.default to $config_file yet?\n";
+	}
 	exit(-1);
 }
 
