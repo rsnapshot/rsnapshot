@@ -264,12 +264,12 @@ sub backup_interval	{
 	
 	# ROTATE DIRECTORIES
 	#
-	# move oldest directory to .tmp
+	# remove oldest directory
 	if ( -d "$config_vars{'snapshot_root'}/$interval.$interval_max" )	{
 		
-		if ($verbose)	{ print "$config_vars{'cmd_mv'} $config_vars{'snapshot_root'}/$interval.$interval_max $config_vars{'snapshot_root'}/$interval.tmp\n"; }
+		if ($verbose)	{ print "$config_vars{'cmd_rm'} -rf $config_vars{'snapshot_root'}/$interval.$interval_max/\n"; }
 		if ($test == 0)	{
-			system( $config_vars{'cmd_mv'}, "$config_vars{'snapshot_root'}/$interval.$interval_max", "$config_vars{'snapshot_root'}/$interval.tmp" );
+			system( $config_vars{'cmd_rm'}, '-rf', "$config_vars{'snapshot_root'}/$interval.$interval_max/" );
 		}
 	}
 	
@@ -278,42 +278,20 @@ sub backup_interval	{
 		if ( -d "$config_vars{'snapshot_root'}/$interval.$i" )	{
 			
 			if ($verbose)	{
-				print "$config_vars{'cmd_mv'} $config_vars{'snapshot_root'}/$interval.$i $config_vars{'snapshot_root'}/$interval." . ($i+1) . "\n";
+				print "$config_vars{'cmd_mv'} $config_vars{'snapshot_root'}/$interval.$i/ $config_vars{'snapshot_root'}/$interval." . ($i+1) . "/\n";
 			}
 			if ($test == 0)	{
-				system( $config_vars{'cmd_mv'}, "$config_vars{'snapshot_root'}/$interval.$i", ("$config_vars{'snapshot_root'}/$interval." . ($i+1)) );
+				system( $config_vars{'cmd_mv'}, "$config_vars{'snapshot_root'}/$interval.$i/", ("$config_vars{'snapshot_root'}/$interval." . ($i+1) . '/') );
 			}
 		}
 	}
 	
-	# if we have a .tmp directory (or if we would if we weren't testing)
-	if ((-d "$config_vars{'snapshot_root'}/$interval.tmp") or ((-d "$config_vars{'snapshot_root'}/$interval.$interval_max") && ($test == 1)))	{
+	# hard link (except for directories) .0 over to .1
+	if ( -d "$config_vars{'snapshot_root'}/$interval.0" )	{
 		
-		# move .0 to .1
-		if ($verbose)	{ print "$config_vars{'cmd_mv'} $config_vars{'snapshot_root'}/$interval.0/ $config_vars{'snapshot_root'}/$interval.1\n"; }
+		if ($verbose)	{ print "$config_vars{'cmd_cp'} -al $config_vars{'snapshot_root'}/$interval.0/ $config_vars{'snapshot_root'}/$interval.1/\n"; }
 		if ($test == 0)	{
-			system( $config_vars{'cmd_mv'}, "$config_vars{'snapshot_root'}/$interval.0/", "$config_vars{'snapshot_root'}/$interval.1" );
-		}
-		
-		# move .tmp/ to .0/
-		if ($verbose)	{ print "$config_vars{'cmd_mv'} $config_vars{'snapshot_root'}/$interval.tmp/ $config_vars{'snapshot_root'}/$interval.0\n"; }
-		if ($test == 0)	{
-			system( $config_vars{'cmd_mv'}, "$config_vars{'snapshot_root'}/$interval.tmp/", "$config_vars{'snapshot_root'}/$interval.0" );
-		}
-		
-		# rsync .1/ to .0/
-		if ($verbose)	{ print "$config_vars{'cmd_rsync'} -al --delete --numeric-ids --devices $config_vars{'snapshot_root'}/$interval.1/ $config_vars{'snapshot_root'}/$interval.0/\n"; }
-		if ($test == 0)	{
-			system( $config_vars{'cmd_rsync'}, '-al', '--delete', '--numeric-ids', '--devices', "$config_vars{'snapshot_root'}/$interval.1/", "$config_vars{'snapshot_root'}/$interval.0/" );
-		}
-		
-	# we don't have a .tmp directory
-	} elsif ( -d "$config_vars{'snapshot_root'}/$interval.0" )	{
-		
-		# hard link (except for directories) .0 over to .1
-		if ($verbose)	{ print "$config_vars{'cmd_cp'} -al $config_vars{'snapshot_root'}/$interval.0/ $config_vars{'snapshot_root'}/$interval.1\n"; }
-		if ($test == 0)	{
-			system( $config_vars{'cmd_cp'}, '-al', "$config_vars{'snapshot_root'}/$interval.0/", "$config_vars{'snapshot_root'}/$interval.1" );
+			system( $config_vars{'cmd_cp'}, '-al', "$config_vars{'snapshot_root'}/$interval.0/", "$config_vars{'snapshot_root'}/$interval.1/" );
 		}
 		
 	}
@@ -336,9 +314,9 @@ sub backup_interval	{
 		# don't mkdir unless we have to
 		my $destpath = "$config_vars{'snapshot_root'}/$interval.0/" . join('/', @dirs);
 		if ( ! -e "$destpath" )	{
-			if ($verbose)	{ print "$config_vars{'cmd_mkdir'} -p $destpath\n"; }
+			if ($verbose)	{ print "$config_vars{'cmd_mkdir'} -p $destpath/\n"; }
 			if ($test == 0)	{
-				system( $config_vars{'cmd_mkdir'}, '-p', $destpath );
+				system( $config_vars{'cmd_mkdir'}, '-p', "$destpath/" );
 			}
 		}
 		
@@ -527,24 +505,12 @@ Example: B<interval hourly 6>
 
 For this example, every time this is run, the following will happen:
 
+<snapshot_root>/hourly.0/ will be recursively deleted, if it exists.
+
 <snapshot_root>/hourly.{1,2,3,4} will all be rotated +1, if they exist.
 
 <snapshot_root>/hourly.0/ will be copied to <snapshot_root>/hourly.1/
-using hard links
-
-<snapshot_root>/hourly.0/<backup_points> will be rsynced with the
-backup points specified in this config file later.
-
-If we already have a full rotation in place, this optimization will
-kick in to save time and strain on the disk:
-
-<snapshot_root>/hourly.5/ will be moved to <snapshot_root>/hourly.tmp/
-
-<snapshot_root>/hourly.{0,1,2,3,4} will all be rotated +1
-
-<snapshot_root>/hourly.tmp/ will be moved to <snapshot_root>/hourly.0/
-
-<snapshot_root>/hourly.1/ will be rsynced back to <snapshot_root>/hourly.0/
+using hard links.
 
 <snapshot_root>/hourly.0/<backup_points> will be rsynced with the
 backup points specified in this config file later.

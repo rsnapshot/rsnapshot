@@ -201,24 +201,12 @@ Example: \fBinterval hourly 6\fR
 .Sp
 For this example, every time this is run, the following will happen:
 .Sp
+<snapshot_root>/hourly.0/ will be recursively deleted, if it exists.
+.Sp
 <snapshot_root>/hourly.{1,2,3,4} will all be rotated +1, if they exist.
 .Sp
 <snapshot_root>/hourly.0/ will be copied to <snapshot_root>/hourly.1/
-using hard links
-.Sp
-<snapshot_root>/hourly.0/<backup_points> will be rsynced with the
-backup points specified in this config file later.
-.Sp
-If we already have a full rotation in place, this optimization will
-kick in to save time and strain on the disk:
-.Sp
-<snapshot_root>/hourly.5/ will be moved to <snapshot_root>/hourly.tmp/
-.Sp
-<snapshot_root>/hourly.{0,1,2,3,4} will all be rotated +1
-.Sp
-<snapshot_root>/hourly.tmp/ will be moved to <snapshot_root>/hourly.0/
-.Sp
-<snapshot_root>/hourly.1/ will be rsynced back to <snapshot_root>/hourly.0/
+using hard links.
 .Sp
 <snapshot_root>/hourly.0/<backup_points> will be rsynced with the
 backup points specified in this config file later.
