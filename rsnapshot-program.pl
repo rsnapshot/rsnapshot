@@ -1081,7 +1081,7 @@ sub print_msg	{
 	chomp($str);
 	
 	# print to STDOUT
-	if ((!defined($verbose)) or ($level >= $verbose))	{
+	if ((!defined($verbose)) or ($verbose >= $level))	{
 		print $str, "\n";
 	}
 	
@@ -2107,6 +2107,8 @@ sub rotate_interval	{
 				bail("Could not rmtree(\"$config_vars{'snapshot_root'}/$interval.$interval_max/\",0,0);");
 			}
 		}
+	} else	{
+		print_msg("$config_vars{'snapshot_root'}/$interval.$interval_max not present (yet), nothing to delete", 4);
 	}
 	
 	# rotate the middle ones
@@ -2127,6 +2129,8 @@ sub rotate_interval	{
 					bail($errstr);
 				}
 			}
+		} else	{
+			print_msg("$config_vars{'snapshot_root'}/$interval.$i not present (yet), nothing to delete", 4);
 		}
 	}
 	
@@ -2158,6 +2162,8 @@ sub rotate_interval	{
 			print_err("$prev_interval must be above 1 to keep snapshots at the $interval level", 1);
 			exit(1);
 		}
+	} else	{
+		print_msg("$config_vars{'snapshot_root'}/$prev_interval.$prev_interval_max not present (yet), nothing to copy", 4);
 	}
 }
 
