@@ -1712,25 +1712,50 @@ sub rotate_interval	{
 		}
 	}
 	
-	# pull up the previous interval's max directory for this interval's .0
+	# prev.max and interval.0 require more attention
 	if ( -d "$config_vars{'snapshot_root'}/$prev_interval.$prev_interval_max" )	{
 		my $result;
 		
-		# mv hourly.5 to daily.0 (or whatever intervals we're using)
-		if ($verbose > 2)	{
-			print_cmd("mv $config_vars{'snapshot_root'}/$prev_interval.$prev_interval_max/ ",
-						"$config_vars{'snapshot_root'}/$interval.0/");
-		}
-		if (0 == $test)	{
-			$result = rename(
-							"$config_vars{'snapshot_root'}/$prev_interval.$prev_interval_max/",
-							"$config_vars{'snapshot_root'}/$interval.0/"
-			);
-			if (0 == $result)	{
-				my $errstr = '';
-				$errstr .= "Error! rename(\"$config_vars{'snapshot_root'}/$prev_interval.$prev_interval_max/\", ";
-				$errstr .= "\"$config_vars{'snapshot_root'}/$interval.0/\")";
-				bail($errstr);
+		# if the previous interval has at least 2 snapshots, move the last one up a level
+		if ($prev_interval_max > 0)	{
+			# mv hourly.5 to daily.0 (or whatever intervals we're using)
+			if ($verbose > 2)	{
+				print_cmd("mv $config_vars{'snapshot_root'}/$prev_interval.$prev_interval_max/ ",
+							"$config_vars{'snapshot_root'}/$interval.0/");
+			}
+			if (0 == $test)	{
+				$result = rename(
+								"$config_vars{'snapshot_root'}/$prev_interval.$prev_interval_max/",
+								"$config_vars{'snapshot_root'}/$interval.0/"
+				);
+				if (0 == $result)	{
+					my $errstr = '';
+					$errstr .= "Error! rename(\"$config_vars{'snapshot_root'}/$prev_interval.$prev_interval_max/\", ";
+					$errstr .= "\"$config_vars{'snapshot_root'}/$interval.0/\")";
+					bail($errstr);
+				}
+			}
+		# OK, the previous interval doesn't have an interval to spare. we can't move it up a level,
+		# or we'll have to do a full backup all over again!
+		#
+		# in this scenario, we try to use --link-dest on the next interval if possible, and failing that
+		# we use cp -al to create an identical hard link directory tree that we can use.
+		} else	{
+			my $link_dest_possible = 0;
+			
+			# try link_dest first
+			if (1 == $link_dest)	{
+				# TODO:
+				#	figure out the NEXT interval
+				#	try to use --link-dest against next_interval.0/
+				#	if successful, make a note of it:
+					$link_dest_success = 1;
+				
+			# fall back to GNU cp, or even native_cp_al()
+			}
+			if (0 == $link_dest_possible)	{
+				# TODO:
+				#	call cp_al();
 			}
 		}
 	}

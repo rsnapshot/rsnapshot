@@ -7,15 +7,18 @@ for version 1.0.x
 
 - Do --link-dest to the next highest interval if we're only keeping one
   interval. Double check that we would never delete hourly.0 or equiv.
-  We should probably re-add the cp -al feature in this case, and document
-  a warning about using a value of 1 for the lowest interval.
-
-- Do COMPREHENSIVE test before next release
+  Failing that, fall back to cp_al(). We should also document the details
+  of this scenario (having only one dir with the lowest interval).
 
 - Keep track of whether we hit any non-fatal errors during the run, then
   report at the end whether the run was successful.
 
 - Add and test logging feature
+
+- Add include, exclude, include_file, and exclude_file parameters, which
+  will simply pass their contents directly to rsync invocations.
+
+- Do COMPREHENSIVE test before next release
 
 - Figure out a way to do transfers the other way: from clients to the server
   instead of just from the server to the clients. Of course it will have to
