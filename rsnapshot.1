@@ -145,9 +145,9 @@ connections are handled with \fB\f(BIrsync\fB\|(1)\fR over \fB\f(BIssh\fB\|(1)\f
 anonymous rsync connections simply use an rsync server. Both remote
 and local transfers depend on rsync.
 .PP
-rsnapshot saves much more disk space than you might imagine. The amount
+\&\fBrsnapshot\fR saves much more disk space than you might imagine. The amount
 of space required is roughly the size of one full backup, plus a copy
-of each additional file that is changed. rsnaphsot makes extensive
+of each additional file that is changed. \fBrsnapshot\fR makes extensive
 use of hard links, so if the file doesn't change, the next snapshot is
 simply a hard link to the exact same file.
 .PP
@@ -173,29 +173,30 @@ The command line options are as follows:
 .IX Header "CONFIGURATION"
 \&\fB/etc/rsnapshot.conf\fR is the default configuration file. All parameters
 in this file must be seperated by tabs. \fB/etc/rsnapshot.conf.default\fR
-can be used as a syntactically valid reference. It is recommended that
-you copy \fB/etc/rsnapshot.conf.default\fR to \fB/etc/rsnapshot.conf\fR, and
-then modify \fB/etc/rsnapshot.conf\fR to suit your needs. What follows here
-is a list of allowed parameters.
+can be used as a syntactically valid reference.
+.PP
+It is recommended that you copy \fB/etc/rsnapshot.conf.default\fR to
+\&\fB/etc/rsnapshot.conf\fR, and then modify \fB/etc/rsnapshot.conf\fR to suit
+your needs. What follows here is a list of allowed parameters:
 .Sp
 .RS 4
 \&\fBsnapshot_root\fR local filesystem path to save all snapshots
 .Sp
-\&\fBcmd_rsync\fR full path to rsync
+\&\fBcmd_rsync\fR     full path to rsync
 .Sp
-\&\fBcmd_ssh\fR   full path to ssh
+\&\fBcmd_ssh\fR       full path to ssh
 .Sp
-\&\fBcmd_mkdir\fR full path to mkdir
+\&\fBcmd_mkdir\fR     full path to mkdir
 .Sp
-\&\fBcmd_touch\fR full path to touch
+\&\fBcmd_touch\fR     full path to touch
 .Sp
-\&\fBcmd_cp\fR    full path to cp
+\&\fBcmd_cp\fR        full path to cp
 .Sp
-\&\fBcmd_mv\fR    full path to mv
+\&\fBcmd_mv\fR        full path to mv
 .Sp
-\&\fBcmd_rm\fR    full path to rm
+\&\fBcmd_rm\fR        full path to rm
 .Sp
-\&\fBinterval\fR  [name] [number]
+\&\fBinterval\fR      [name] [number]
 .Sp
 .RS 4
 \&\*(L"name\*(R" refers to the name of this interval (i.e. hourly, daily). \*(L"number\*(R"
@@ -209,14 +210,14 @@ Example: \fBinterval hourly 6\fR
 .Sp
 For this example, every time this is run, the following will happen:
 .Sp
-<snapshot_root>/hourly.5/ will be recursively deleted, if it exists.
+<snapshot_root>/hourly.5/ will be deleted, if it exists.
 .Sp
 <snapshot_root>/hourly.{1,2,3,4} will all be rotated +1, if they exist.
 .Sp
 <snapshot_root>/hourly.0/ will be copied to <snapshot_root>/hourly.1/
 using hard links.
 .Sp
-<snapshot_root>/hourly.0/<backup_points> will be rsynced with the
+Each backup point in <snapshot_root>/hourly.0/ will be rsynced with the
 backup points specified in this config file later.
 .Sp
 Intervals must be specified in the config file in order, from most
@@ -239,10 +240,7 @@ Example:
 .Sp
 daily.0/ will be copied from hourly.5/, and weekly.0/ will be copied from daily.6/
 .Sp
-hourly.0/ will, of course, be copied directly from the filesystem.
-.Sp
-\&\fBrsnapshot\fR makes extensive use of hard links, so the actual space
-taken up is basically one full snapshot, plus each changed file.
+hourly.0/ will be rsynced directly from the filesystem.
 .RE
 .RE
 .RS 4
@@ -352,6 +350,21 @@ Here is an example crontab entry, assuming that intervals \fBhourly\fR,
 .Sp
 \&\fB30 23 1 * *         /usr/local/bin/rsnapshot monthly\fR
 .RE
+.PP
+This example will do the following:
+.Sp
+.RS 4
+6 hourly backups a day (once every 4 hours, at 0,4,8,12,16,20)
+.Sp
+1 daily backup every day, at 11:50PM
+.Sp
+4 weekly backups a month, at 11:40PM, on the 1st, 8th, 15th, and 22nd
+.Sp
+1 monthly backup every month, at 11:30PM on the 1st day of the month
+.RE
+.PP
+Remember that these are just the times that the program runs.
+To set the number of backups stored, set the interval numbers in \fB/etc/rsnapshot.conf\fR
 .SH "AUTHOR"
 .IX Header "AUTHOR"
 Based on code originally by Mike Rubel \fBhttp://www.mikerubel.org/computers/rsync_snapshots/\fR
@@ -426,8 +439,10 @@ For ssh to work unattended through cron, you will probably want to use
 public key logins. Create an ssh key with no passphrase for root, and
 install the public key on each machine you want to backup. If you are
 backing up system files from remote machines, this probably means
-unattended root logins. If the private key is obtained by an attacker,
-they will have free run of all your systems. \s-1BE\s0 \s-1CAREFUL\s0! If you are
+unattended root logins.
+.PP
+\&\s-1BE\s0 \s-1CAREFUL\s0! If the private key is obtained by an attacker,
+they will have free run of all your systems. If you are
 unclear on how to do this, see \fB\f(BIssh\fB\|(1)\fR, \fB\f(BIsshd\fB\|(1)\fR, and \fB\f(BIssh\-keygen\fB\|(1)\fR.
 .PP
 rsync transfers are done using the \-\-numeric\-ids option. This means that
@@ -435,3 +450,22 @@ user names and group names are ignored during transfers, but the \s-1UID/GID\s0
 information is kept intact. The assumption is that the backups will be
 restored in the same environment they came from. Without this option,
 multi-server backups would be unmanageable.
+.PP
+If you remove backup points in the config file, they will permanently stay in
+the snapshots directory unless you remove the files yourself.
+If you want to conserve disk space, you will need to go into
+the <snapshot_root> directory and manually remove the files from the
+smallest interval's .0 directory.
+.PP
+For example, if you were previously
+backing up /home/ in home/, and hourly is your smallest interval, you
+would need to do the following to reclaim that disk space:
+.Sp
+.RS 4
+rm \-rf <snapshot_root>/hourly.0/home/
+.RE
+.PP
+Please note that the other snapshots previously made of /home/ will still
+be using that disk space, but since the files are flushed out of hourly.0/,
+they will no longer be copied to the subsequent directories, and will thus
+be removed in due time as the rotations happen.
