@@ -1,0 +1,53 @@
+#!/bin/sh
+
+##############################################################################
+# rsnaptar
+# by Nathan Rosenquist <rsnapshot@scubaninja.com>
+#
+# A quick hack of a shell script to tar up backup points from the rsnapshot
+# snapshot root. Sends an e-mail to an address specified on the command line
+# when finished.
+#
+# http://rsnapshot.scubaninja.com/
+##############################################################################
+
+# DIRECTORIES
+TAR_DIR="/var/dvd_backup"
+SNAPSHOT_DIR="/.snapshots/daily.0"
+
+# SHELL COMMANDS
+LS="/bin/ls"
+TAR="/bin/tar"
+CAT="/bin/cat"
+CHMOD="/bin/chmod"
+CHOWN="/bin/chown"
+MKDIR="/bin/mkdir"
+SENDMAIL="/usr/lib/sendmail -t -oi"
+HOSTNAME=`/bin/hostname`
+DATE=`/bin/date +%Y-%m-%d`
+
+# GET E-MAIL ADDRESS
+if [ ! $1 ]; then
+	echo "Usage: rsnaptar user@domain.com"
+	exit 1
+else
+	TO_EMAIL=$1
+fi
+
+# MAKE ONE TAR FILE FOR EACH BACKUP POINT
+${MKDIR} -p ${TAR_DIR}/${DATE}/
+cd ${SNAPSHOT_DIR}
+for BACKUP_POINT in `${LS} ${SNAPSHOT_DIR}`; do
+	${TAR} czf ${TAR_DIR}/${DATE}/${BACKUP_POINT}.tar.gz ${BACKUP_POINT}/
+done
+
+# there are probably sensitive files here, so use the strictest permissions
+${CHMOD} -R 0700 ${TAR_DIR}/
+cd -
+
+${CAT} <<EOF | ${SENDMAIL}
+To: ${TO_EMAIL}
+Subject: backup job complete - ${HOSTNAME}
+
+Now is the time to backup the latest files from rsnapshot on ${HOSTNAME}
+EOF
