@@ -21,7 +21,7 @@ for version 1.0.x
 - Add an file exclusion list feature, using "include" and "exclude" params
   in the config file. These will be passed directly as args to rsync.
 
-- Implement a generalized way to pass arbitrary args to ssh?
+- Document ssh_args option
 
 - Add support for rsh using this syntax: rsh://[user@]domain:/foo/bar/
 
