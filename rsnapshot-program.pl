@@ -738,9 +738,6 @@ sub parse_config_file {
 			if ((is_real_local_abs_path("$src")) && ($config_vars{'snapshot_root'} =~ m/^$src/)) {
 				
 				# old, less good, backward compatibility method
-				#
-				# this still fails if the snapshot_root is buried more than one level below
-				# the backup point.
 				if ( defined($config_vars{'rsync_long_args'}) && ($config_vars{'rsync_long_args'} !~ m/--relative/) ) {
 					# remove trailing slashes from source and dest, since we will be using our own
 					$src    = remove_trailing_slash($src);
@@ -751,7 +748,7 @@ sub parse_config_file {
 					while (my $node = readdir(SRC)) {
 						next if ($node =~ m/^\.\.?$/o); # skip '.' and '..'
 						
-						if ("$src/$node" ne "$config_vars{'snapshot_root'}")    {
+						if ("$config_vars{'snapshot_root'}" !~ m/^$src\/$node/) {
 							my %hash;
 							
 							# avoid double slashes from root filesystem

@@ -60,6 +60,9 @@ VERSION 1.2.0 (Jan ?? ??:?? 2005)
 - Removed warning messages from native_cp_al() about special files
 - Modified error printing so full run string is displayed once at the top
   of a list of error messages
+- Fixed bug in old method of preventing the snapshot root from being backed
+  up, which occurred when snapshot root was more than one level down from a
+  backup point
 
 VERSION 1.1.6 (Jul 05 16:35 2004)
 ------------------------------------------------------------------------------
