@@ -405,9 +405,11 @@ sub show_usage	{
 ### PERLDOC / POD ###
 #####################
  
+=pod 
+ 
 =head1 NAME
 
-B<rsnapshot> - remote filesystem snapshot utility
+rsnapshot - remote filesystem snapshot utility
 
 =head1 SYNOPSIS
 
