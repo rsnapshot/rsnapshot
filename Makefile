@@ -1,3 +1,6 @@
+# GET THE VERSION NUMBER DIRECTLY FROM THE PROGRAM
+VERSION=`./rsnapshot version_only`
+
 default:
 	@echo "it's written in perl, just type make install"
 	
@@ -10,19 +13,18 @@ html:
 	rm -f pod2htmi.x~~
 	
 clean:
-	rm -rf rsnapshot-0.9.2/
-	rm -f rsnapshot-0.9.2.tar.gz
-	rm -f rsnapshot-0.9.2-1.deb
-	rm -rf rsnapshot_dpkg
+	rm -rf rsnapshot-${VERSION}/
+	rm -f rsnapshot-${VERSION}.tar.gz
+	rm -f rsnapshot-${VERSION}-1.deb
 	
 tar:
 	make man
-	mkdir rsnapshot-0.9.2
-	rm -f rsnapshot-0.9.2.tar.gz
-	cp rsnapshot rsnapshot.conf Makefile rsnapshot.1 GPL INSTALL README TODO rsnapshot-0.9.2/
-	chown -R 0:0 rsnapshot-0.9.2/
-	tar czf rsnapshot-0.9.2.tar.gz rsnapshot-0.9.2/
-	rm -rf rsnapshot-0.9.2/
+	mkdir rsnapshot-${VERSION}
+	rm -f rsnapshot-${VERSION}.tar.gz
+	cp rsnapshot rsnapshot.conf Makefile rsnapshot.1 GPL INSTALL README TODO rsnapshot-${VERSION}/
+	chown -R 0:0 rsnapshot-${VERSION}/
+	tar czf rsnapshot-${VERSION}.tar.gz rsnapshot-${VERSION}/
+	rm -rf rsnapshot-${VERSION}/
 	rm -f rsnapshot.1
 	
 debian:
@@ -35,7 +37,8 @@ debian:
 	chmod 755 rsnapshot_dpkg/usr/bin/rsnapshot
 	chmod 644 rsnapshot_dpkg/usr/share/man/man1/rsnapshot.1.gz
 	chown -R root:root rsnapshot_dpkg/
-	dpkg -b rsnapshot_dpkg/ rsnapshot-0.9.2-1.deb
+	dpkg -b rsnapshot_dpkg/ rsnapshot-${VERSION}-1.deb
+	rm -rf rsnapshot_dpkg/
 	
 install:
 	cp -f rsnapshot /usr/local/bin/rsnapshot
