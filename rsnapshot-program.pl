@@ -33,9 +33,9 @@ use File::Path;			# mkpath(), rmtree()
 use File::stat;			# lstat()
 use POSIX qw(locale_h);	# setlocale()
 
-#########################
-### DECLARE VARIABLES ###
-#########################
+################################
+### DECLARE GLOBAL VARIABLES ###
+################################
 
 # version of rsnapshot
 my $VERSION = '1.1.6';
@@ -141,41 +141,6 @@ my $display_rm = 'rm';
 # remember what directory we started in
 my $cwd = cwd();
 
-######################
-### AUTOCONF STUFF ###
-######################
-
-# this file works both "as-is", and when it has been parsed by autoconf for installation
-# the variables with "@" symbols on both sides get replaced during ./configure
-
-# autoconf variables (may have too many slashes)
-my $autoconf_sysconfdir	= '@sysconfdir@';
-my $autoconf_prefix		= '@prefix@';
-
-# consolidate multiple slashes
-$autoconf_sysconfdir	=~ s/\/+/\//g;
-$autoconf_prefix		=~ s/\/+/\//g;
-
-# remove trailing slashes
-$autoconf_sysconfdir	=~ s/\/$//g;
-$autoconf_prefix		=~ s/\/$//g;
-
-# if --sysconfdir was not set explicitly during ./configure, but we did use autoconf
-if ($autoconf_sysconfdir eq '${prefix}/etc')	{
-	$config_file = "$autoconf_prefix/etc/rsnapshot.conf";
-	
-# if --sysconfdir was set explicitly at ./configure, overriding the --prefix setting
-} elsif ($autoconf_sysconfdir ne ('@' . 'sysconfdir' . '@'))	{
-	$config_file = "$autoconf_sysconfdir/rsnapshot.conf";
-	
-# if all else fails, use the old standard from the pre-autoconf versions
-} else	{
-	$config_file = '/etc/rsnapshot.conf';
-}
-
-undef ($autoconf_sysconfdir);
-undef ($autoconf_prefix);
-
 ###############
 ### SIGNALS ###
 ###############
@@ -188,49 +153,17 @@ $SIG{'ABRT'}	= sub { bail('rsnapshot was sent ABRT signal... cleaning up'); };
 $SIG{'TERM'}	= sub { bail('rsnapshot was sent TERM signal... cleaning up'); };
 
 ##############################
-### GET COMMAND LINE INPUT ###
+### CORE PROGRAM STRUCTURE ###
 ##############################
 
-# GET COMMAND LINE OPTIONS
-getopt('c', \%opts);
-getopts('vVtqx', \%opts);
-$cmd = $ARGV[0];
+# figure out the path to the default config file
+$config_file = find_config_file();
 
-# alternate config file
-if (defined($opts{'c'}))	{
-	$config_file = $opts{'c'};
-}
+# get command line options
+# (this can override $config_file, if the -c flag is used on the command line)
+get_cmd_line_opts();
 
-# test? (just show what WOULD be done)
-if (defined($opts{'t'}))	{
-	$test = 1;
-	$verbose = 3;
-}
-
-# quiet?
-if (defined($opts{'q'}))	{
-	$verbose = 1;
-}
-
-# verbose (or extra verbose)?
-if (defined($opts{'v'}))	{
-	$verbose = 3;
-}
-if (defined($opts{'V'}))	{
-	$verbose = 4;
-}
-
-# debug
-if (defined($opts{'D'}))	{
-	$verbose = 5;
-}
-
-# one file system? (don't span partitions with rsync)
-if (defined($opts{'x'}))	{
-	$one_fs = 1;
-}
-
-# COMMAND LINE ARGS
+# if we need to run a command that doesn't require the config file, do it now
 if ( ! $cmd )	{
 	show_usage();
 	exit(1);
@@ -250,14 +183,12 @@ if ($cmd eq 'version_only')	{
 if ($cmd eq 'configtest')	{
 	$do_configtest = 1;
 }
-# if we made it here, we didn't exit
 
-#########################
-### PARSE CONFIG FILE ###
-#########################
-
+# PARSE CONFIG FILE
 if ( -f "$config_file" )	{
-	
+	# parse the config file
+	# if there is a problem, this subroutine will exit the program and notify the user of the error
+	#
 	parse_config_file();
 	
 } else	{
@@ -278,9 +209,16 @@ if ( -f "$config_file" )	{
 
 # CONFIG TEST ONLY?
 # if so, pronounce success and quit right here
-if ((1 == $do_configtest) && (1 == $config_perfect))	{
-	print "Syntax OK\n";
-	exit(0);
+if (1 == $do_configtest)	{
+	if (1 == $config_perfect)	{
+		print "Syntax OK\n";
+		exit(0);
+		
+	# this should never happen, because any errors should have killed the program before this
+	} else	{
+		print "Syntax Error\n";
+		exit(1);
+	}
 }
 
 # SHOW DISK SPACE?
@@ -295,116 +233,34 @@ if ($cmd eq 'du')	{
 	}
 }
 
-# SET VARIOUS DEFAULTS IN CASE THEY GOT OVERLOOKED
-# if we didn't manage to get a verbose level yet, either through the config file
-# or the command line, use the default
-if (!defined($verbose))	{
-	$verbose = $default_verbose;
-}
-# same for loglevel
-if (!defined($loglevel))	{
-	$loglevel = $default_loglevel;
-}
-# assemble rsync include/exclude args
-if (defined($rsync_include_args))	{
-	if (!defined($config_vars{'rsync_long_args'}))	{
-		$config_vars{'rsync_long_args'} = $global_default_rsync_long_args;
-	}
-	$config_vars{'rsync_long_args'} .= " $rsync_include_args";
-}
-# assemble rsync include/exclude file args
-if (defined($rsync_include_file_args))	{
-	if (!defined($config_vars{'rsync_long_args'}))	{
-		$config_vars{'rsync_long_args'} = $global_default_rsync_long_args;
-	}
-	$config_vars{'rsync_long_args'} .= " $rsync_include_file_args";
-}
-
-#############################################
-### PREPARE TO RUN THE PROGRAM "FOR REAL" ###
-#############################################
-
-# FIGURE OUT WHICH INTERVAL WE'RE RUNNING, AND HOW IT RELATES TO THE OTHERS
-# THEN RUN THE ACTION FOR THE CHOSEN INTERVAL
-# remember, in each hashref in this loop:
-#   "interval" is something like "daily", "weekly", etc.
-#   "number" is the number of these intervals to keep on the filesystem
 #
-my $i = 0;
-foreach my $i_ref (@intervals)	{
-	
-	# this is the interval we're set to run
-	if ($$i_ref{'interval'} eq $cmd)	{
-		$interval_num = $i;
-		
-		# how many of these intervals should we keep?
-		# we start counting from 0, so subtract one
-		# i.e. 6 intervals == interval.0 .. interval.5
-		$interval_max = $$i_ref{'number'} - 1;
-		
-		# we found our interval, exit the foreach loop
-		last;
-	}
-	
-	# since the "last" command above breaks from this entire block,
-	# and since we loop through the intervals in order, if we got this
-	# far in the first place it means that we're looking at an interval
-	# which isn't selected to run, and that there will be more intervals in the loop.
-	# therefore, this WILL be the previous interval's information, the next time through.
-	#
-	$prev_interval = $$i_ref{'interval'};
-	
-	# which of the previous interval's numbered directories should we pull from
-	# for the interval we're currently set to run?
-	# i.e. daily.0/ might get pulled from hourly.6/
-	#
-	$prev_interval_max = $$i_ref{'number'} - 1;
-	
-	$i++;
-}
-undef($i);
+# IF WE GOT THIS FAR, PREPARE TO RUN A BACKUP
+#
 
-# MAKE SURE THE USER IS REQUESTING TO RUN ON AN INTERVAL WE UNDERSTAND
+# figure out which interval we're working on
+get_current_interval();
+
+# make sure the user is requesting to run on an interval we understand
 if (!defined($interval_num))	{
 	bail("Interval \"$cmd\" unknown, check $config_file");
 }
 
-################################
-### BEGIN FILESYSTEM ACTIONS ###
-################################
-
 # log the beginning of this run
 log_msg("$run_string: started", 2);
 
-# set POSIX locale
-# this may fix some potential problems with rmtree()
-# another solution is to enable "cmd_rm" in rsnapshot.conf
-print_msg("Setting locale to POSIX \"C\"", 4);
-setlocale(POSIX::LC_ALL, 'C');
+# this is reported to fix some semi-obscure problems with rmtree()
+set_posix_locale();
 
-# IF WE'RE USING A LOCKFILE, TRY TO ADD IT
+# if we're using a lockfile, try to add it
 # the program will bail if one exists
 if (defined($config_vars{'lockfile'}))	{
 	add_lockfile( $config_vars{'lockfile'} );
 }
 
-# CREATE SNAPSHOT_ROOT IF IT DOESN'T EXIST, WITH THE FILE PERMISSIONS 0700
-if ( ! -d "$config_vars{'snapshot_root'}" )	{
-	print_cmd("mkdir -m 0700 -p $config_vars{'snapshot_root'}/");
-	
-	if (0 == $test)	{
-		eval	{
-			mkpath( "$config_vars{'snapshot_root'}/", 0, 0700 );
-		};
-		if ($@)	{
-			bail(
-				"Unable to create $config_vars{'snapshot_root'}/,\nPlease make sure you have the right permissions."
-			);
-		}
-	}
-}
+# create snapshot_root if it doesn't exist
+create_snapshot_root();
 
-# ACTUALLY RUN THE BACKUP JOB
+# actually run the backup job
 if (0 == $interval_num)	{
 	# if this is the most frequent interval, actually do the backups here
 	backup_interval($cmd);
@@ -414,35 +270,15 @@ if (0 == $interval_num)	{
 	rotate_interval($cmd, $prev_interval);
 }
 
-# IF WE HAVE A LOCKFILE, REMOVE IT
+# if we have a lockfile, remove it
 if (defined($config_vars{'lockfile'}))	{
 	remove_lockfile($config_vars{'lockfile'});
 }
 
-# IF WE GOT THIS FAR, THE PROGRAM IS DONE RUNNING
-# WRITE TO THE LOG AND SYSLOG WITH THE STATUS OF THE OUTCOME
-if (0 == get_exit_code())	{
-	syslog_msg("$run_string: completed successfully");
-	log_msg   ("$run_string: completed successfully", 2);
-	exit (get_exit_code());
-	
-} elsif (1 == get_exit_code())	{
-	syslog_err("$run_string: completed, but with some errors");
-	log_err   ("$run_string: completed, but with some errors", 2);
-	exit (get_exit_code());
-	
-} elsif (2 == get_exit_code())	{
-	syslog_warn("$run_string: completed, but with some warnings");
-	log_warn   ("$run_string: completed, but with some warnings", 2);
-	exit (get_exit_code());
-	
-# this should never happen
-} else	{
-	syslog_err("$run_string: completed, but with no definite status");
-	log_err   ("$run_string: completed, but with no definite status", 2);
-	exit (1);
-	
-}
+# if we got this far, the program is done running
+# write to the log and syslog with the status of the outcome
+#
+exit_with_status();
 
 ###################
 ### SUBROUTINES ###
@@ -479,6 +315,82 @@ Options:
     -V extra verbose - same as -v, but show rsync output as well
     -D debug         - a firehose of diagnostic information
 HERE
+}
+
+# accepts no arguments
+# returns the path to the default config file
+#
+# this program works both "as-is" in the source tree, and when it has been parsed by autoconf for installation
+# the variables with "@" symbols on both sides get replaced during ./configure
+# this subroutine returns the correct path to the default config file
+sub find_config_file	{
+	# autoconf variables (may have too many slashes)
+	my $autoconf_sysconfdir	= '@sysconfdir@';
+	my $autoconf_prefix		= '@prefix@';
+	my $default_config_file	= '/etc/rsnapshot.conf';
+	
+	# consolidate multiple slashes
+	$autoconf_sysconfdir	=~ s/\/+/\//g;
+	$autoconf_prefix		=~ s/\/+/\//g;
+	
+	# remove trailing slashes
+	$autoconf_sysconfdir	=~ s/\/$//g;
+	$autoconf_prefix		=~ s/\/$//g;
+
+	# if --sysconfdir was not set explicitly during ./configure, but we did use autoconf
+	if ($autoconf_sysconfdir eq '${prefix}/etc')	{
+		$default_config_file = "$autoconf_prefix/etc/rsnapshot.conf";
+		
+	# if --sysconfdir was set explicitly at ./configure, overriding the --prefix setting
+	} elsif ($autoconf_sysconfdir ne ('@' . 'sysconfdir' . '@'))	{
+		$default_config_file = "$autoconf_sysconfdir/rsnapshot.conf";
+	}
+	
+	return ($default_config_file);
+}
+
+# accepts no args
+# returns no args
+# sets some global variables
+sub get_cmd_line_opts	{
+	# GET COMMAND LINE OPTIONS
+	getopt('c', \%opts);
+	getopts('vVtqx', \%opts);
+	$cmd = $ARGV[0];
+	
+	# alternate config file
+	if (defined($opts{'c'}))	{
+		$config_file = $opts{'c'};
+	}
+	
+	# test? (just show what WOULD be done)
+	if (defined($opts{'t'}))	{
+		$test = 1;
+		$verbose = 3;
+	}
+	
+	# quiet?
+	if (defined($opts{'q'}))	{
+		$verbose = 1;
+	}
+	
+	# verbose (or extra verbose)?
+	if (defined($opts{'v'}))	{
+		$verbose = 3;
+	}
+	if (defined($opts{'V'}))	{
+		$verbose = 4;
+	}
+	
+	# debug
+	if (defined($opts{'D'}))	{
+		$verbose = 5;
+	}
+	
+	# one file system? (don't span partitions with rsync)
+	if (defined($opts{'x'}))	{
+		$one_fs = 1;
+	}
 }
 
 # accepts an error string
@@ -682,7 +594,7 @@ sub log_msg	{
 				exit(1);
 			}
 			
-			print LOG '[', get_cur_date(), '] ', $str, "\n";
+			print LOG '[', get_current_date(), '] ', $str, "\n";
 			
 			$result = close(LOG);
 			if (!defined($result))	{
@@ -799,18 +711,13 @@ sub raise_error	{
 	$exit_code = 1;
 }
 
-# returns the exit code for rsnapshot
-sub get_exit_code	{
-	return ($exit_code);
-}
-
 # accepts no arguments
 # returns the current date (for the logfile)
 #
 # there's probably a wonderful module that can do this all for me,
 # but unless it comes standard with perl 5.004 and later, i'd rather do it this way :)
 #
-sub get_cur_date	{
+sub get_current_date	{
 	# localtime() gives us an array with these elements:
 	# 0 = seconds
 	# 1 = minutes
@@ -1404,6 +1311,34 @@ sub parse_config_file	{
 	}
 	close(CONFIG) or print_err("Warning! Could not close $config_file", 2);
 	
+	####################################################################
+	# SET SOME SENSIBLE DEFAULTS FOR VALUES THAT MAY NOT HAVE BEEN SET #
+	####################################################################
+	
+	# if we didn't manage to get a verbose level yet, either through the config file
+	# or the command line, use the default
+	if (!defined($verbose))	{
+		$verbose = $default_verbose;
+	}
+	# same for loglevel
+	if (!defined($loglevel))	{
+		$loglevel = $default_loglevel;
+	}
+	# assemble rsync include/exclude args
+	if (defined($rsync_include_args))	{
+		if (!defined($config_vars{'rsync_long_args'}))	{
+			$config_vars{'rsync_long_args'} = $global_default_rsync_long_args;
+		}
+		$config_vars{'rsync_long_args'} .= " $rsync_include_args";
+	}
+	# assemble rsync include/exclude file args
+	if (defined($rsync_include_file_args))	{
+		if (!defined($config_vars{'rsync_long_args'}))	{
+			$config_vars{'rsync_long_args'} = $global_default_rsync_long_args;
+		}
+		$config_vars{'rsync_long_args'} .= " $rsync_include_file_args";
+	}
+	
 	###############################################
 	# NOW THAT THE CONFIG FILE HAS BEEN READ IN,  #
 	# DO A SANITY CHECK ON THE DATA WE PULLED OUT #
@@ -1724,6 +1659,119 @@ sub remove_lockfile	{
 				}
 			}
 		}
+	}
+}
+
+# accepts no arguments
+# returns no arguments
+# sets the locale to POSIX (C) to mitigate some problems with the rmtree() command
+#
+sub set_posix_locale	{
+	# set POSIX locale
+	# this may fix some potential problems with rmtree()
+	# another solution is to enable "cmd_rm" in rsnapshot.conf
+	print_msg("Setting locale to POSIX \"C\"", 4);
+	setlocale(POSIX::LC_ALL, 'C');
+}
+
+# accepts no arguments
+# returns no arguments
+# creates the snapshot_root directory (chmod 0700), if it doesn't exist and no_create_root = 0
+sub create_snapshot_root	{
+	# make sure no_create_root == 0
+	if (defined($config_vars{'no_create_root'}))	{
+		if (1 == $config_vars{'no_create_root'})	{
+			print_err ("rsnapshot refuses to create snapshot_root when no_create_root is enabled", 1);
+			syslog_err("rsnapshot refuses to create snapshot_root when no_create_root is enabled");
+			bail();
+		}
+	}
+	
+	# create the directory
+	if ( ! -d "$config_vars{'snapshot_root'}" )	{
+		print_cmd("mkdir -m 0700 -p $config_vars{'snapshot_root'}/");
+		
+		if (0 == $test)	{
+			eval	{
+				mkpath( "$config_vars{'snapshot_root'}/", 0, 0700 );
+			};
+			if ($@)	{
+				bail(
+					"Unable to create $config_vars{'snapshot_root'}/,\nPlease make sure you have the right permissions."
+				);
+			}
+		}
+	}
+}
+
+# accepts no arguments
+# returns no arguments
+# sets some global variables
+sub get_current_interval	{
+	
+	# FIGURE OUT WHICH INTERVAL WE'RE RUNNING, AND HOW IT RELATES TO THE OTHERS
+	# THEN RUN THE ACTION FOR THE CHOSEN INTERVAL
+	# remember, in each hashref in this loop:
+	#   "interval" is something like "daily", "weekly", etc.
+	#   "number" is the number of these intervals to keep on the filesystem
+	
+	my $i = 0;
+	foreach my $i_ref (@intervals)	{
+		
+		# this is the interval we're set to run
+		if ($$i_ref{'interval'} eq $cmd)	{
+			$interval_num = $i;
+			
+			# how many of these intervals should we keep?
+			# we start counting from 0, so subtract one
+			# i.e. 6 intervals == interval.0 .. interval.5
+			$interval_max = $$i_ref{'number'} - 1;
+			
+			# we found our interval, exit the foreach loop
+			last;
+		}
+		
+		# since the "last" command above breaks from this entire block,
+		# and since we loop through the intervals in order, if we got this
+		# far in the first place it means that we're looking at an interval
+		# which isn't selected to run, and that there will be more intervals in the loop.
+		# therefore, this WILL be the previous interval's information, the next time through.
+		#
+		$prev_interval = $$i_ref{'interval'};
+		
+		# which of the previous interval's numbered directories should we pull from
+		# for the interval we're currently set to run?
+		# i.e. daily.0/ might get pulled from hourly.6/
+		#
+		$prev_interval_max = $$i_ref{'number'} - 1;
+		
+		$i++;
+	}
+}
+
+# accepts no args
+# prints out status to the logs, then exits the program with the current exit code
+sub exit_with_status	{
+	if (0 == $exit_code)	{
+		syslog_msg("$run_string: completed successfully");
+		log_msg   ("$run_string: completed successfully", 2);
+		exit ($exit_code);
+		
+	} elsif (1 == $exit_code)	{
+		syslog_err("$run_string: completed, but with some errors");
+		log_err   ("$run_string: completed, but with some errors", 2);
+		exit ($exit_code);
+		
+	} elsif (2 == $exit_code)	{
+		syslog_warn("$run_string: completed, but with some warnings");
+		log_warn   ("$run_string: completed, but with some warnings", 2);
+		exit ($exit_code);
+		
+	# this should never happen
+	} else	{
+		syslog_err("$run_string: completed, but with no definite status");
+		log_err   ("$run_string: completed, but with no definite status", 2);
+		exit (1);
 	}
 }
 
