@@ -8,6 +8,9 @@ Add config_version to:
 	man page
 	HOWTO
 
+Add clarification on --relative with rsync:// servers, and how paths
+are relative to the exported module, not the domain
+
 future versions (in no particular order)
 ------------------------------------------------------------------------------
 - Tighten up validation of third argument on backup points
