@@ -1,5 +1,5 @@
-Summary: rsync backup snapshot program
 Name: rsnapshot
+Summary: rsync backup snapshot program
 Version: 1.0.4
 Release: 1
 BuildArch: noarch
@@ -42,13 +42,16 @@ rm -rf $RPM_BUILD_DIR/%{name}-%{version}/
 
 %files
 %defattr(-,root,root)
-%doc COPYING README INSTALL TODO
-%config %{_sysconfdir}/rsnapshot.conf.default
-%config(noreplace) %{_sysconfdir}/rsnapshot.conf
-%{_bindir}/rsnapshot
-%{_mandir}/man1/rsnapshot.1*
+%verify(user group mode md5 size mtime) %doc COPYING README INSTALL TODO
+%verify(user group mode md5 size mtime) %config %{_sysconfdir}/rsnapshot.conf.default
+%verify(user group mode) %config(noreplace) %{_sysconfdir}/rsnapshot.conf
+%verify(user group mode md5 size mtime) %{_bindir}/rsnapshot
+%verify(user group mode md5 size mtime) %{_mandir}/man1/rsnapshot.1*
 
 %changelog
+* Wed Nov 05 2003 Nathan Rosenquist <rsnapshot@scubaninja.com>
+- Removed fileutils dependency, added verification info
+
 * Tue Nov 04 2003 Nathan Rosenquist <rsnapshot@scubaninja.com>
 - fixed anonymous rsync error
 
