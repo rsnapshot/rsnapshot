@@ -2,6 +2,8 @@ rsnapshot TODO list:
 
 Future versions (in no particular order)
 ------------------------------------------------------------------------------
+- Add global and per-backup "bwlimit" parameter, and pass it along to rsync
+
 - Revamp config file to allow better representation of hierarchial data
 
 - Add "delete" feature, to allow deleting specific directories or files
