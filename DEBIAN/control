@@ -1,0 +1,17 @@
+Package: rsnapshot
+Version: 1.0.2-1
+Priority: optional
+Section: utils
+Maintainer: Nathan Rosenquist <rsnapshot@scubaninja.com>
+Depends: perl, fileutils, rsync
+Recommends: ssh
+Architecture: all
+Description: Local and remote filesystem snapshot utility
+             .
+             rsnapshot is a filesystem snapshot utility
+             It can take incremental snapshots of local
+             and remote filesystems for any number of
+             machines. rsnapshot makes extensive use of
+             hard links, so disk space is only used when
+             absolutely necessary.
+installed-size: 24
