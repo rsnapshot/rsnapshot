@@ -13,7 +13,8 @@ INSTALLATION
 	QUICK INSTALLATION
 		su root
 		make install
-
+		cp /etc/rsnapshot.conf.default /etc/rsnapshot.conf
+		
 	THE HARD WAY
 		su root
 		cp rsnapshot /usr/local/bin/rsnapshot
@@ -28,6 +29,8 @@ INSTALLATION
 		cp -i rsnapshot.conf /etc/rsnapshot.conf
 		chown 0:0 /etc/rsnapshot.conf
 		chmod 600 /etc/rsnapshot.conf
+		
+		cp /etc/rsnapshot.conf.default /etc/rsnapshot.conf
 		
 QUICK START (for the impatient)
 	see the README file if you want the 30 second overview

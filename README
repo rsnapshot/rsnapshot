@@ -11,7 +11,9 @@ See the GNU General Public Licence for details.
 For installation instructions, read INSTALL
 
 Once you have installed rsnapshot, you will need to configure it.
-The default configuration file is /etc/rsnapshot.conf
+The default configuration file is /etc/rsnapshot.conf. If this
+file does not exist, copy /etc/rsnapshot.conf.default over to
+/etc/rsnapshot.conf and edit it to suit your tastes.
 
 When /etc/rsnapshot.conf contains your chosen settings, the final
 step is to setup a cron job to automate your backups. Here is a
