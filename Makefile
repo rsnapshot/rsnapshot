@@ -13,6 +13,8 @@ clean:
 	rm -f rsnapshot.1
 	rm -rf rsnapshot-0.9.1/
 	rm -f rsnapshot-0.9.1.tar.gz
+	rm -f rsnapshot-0.9.1-1.deb
+	rm -rf rsnapshot_dpkg
 	
 tar:
 	make man
@@ -23,6 +25,18 @@ tar:
 	tar czf rsnapshot-0.9.1.tar.gz rsnapshot-0.9.1/
 	rm -rf rsnapshot-0.9.1/
 	rm -f rsnapshot.1
+	
+dpkg:
+	mkdir -p rsnapshot_dpkg/{DEBIAN,usr/bin,etc,usr/share/man/man1}
+	cp DEBIAN/* rsnapshot_dpkg/DEBIAN/
+	cat rsnapshot | sed 's/\/usr\/local\/bin/\/usr\/bin/g' > rsnapshot_dpkg/usr/bin/rsnapshot
+	pod2man rsnapshot_dpkg/usr/bin/rsnapshot | gzip -9c > rsnapshot_dpkg/usr/share/man/man1/rsnapshot.1.gz
+	cp rsnapshot.conf rsnapshot_dpkg/etc/
+	chmod 600 rsnapshot_dpkg/etc/rsnapshot.conf
+	chmod 755 rsnapshot_dpkg/usr/bin/rsnapshot
+	chmod 644 rsnapshot_dpkg/usr/share/man/man1/rsnapshot.1.gz
+	chown -R root:root rsnapshot_dpkg/
+	dpkg -b rsnapshot_dpkg/ rsnapshot-0.9.1-1.deb
 	
 install:
 	cp -f rsnapshot /usr/local/bin/rsnapshot
