@@ -1,3 +1,5 @@
+# $Id: version #
+
 VERSION = 1.2.1
 
 RPM_BASE_DIR = /usr/src/redhat
