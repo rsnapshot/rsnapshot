@@ -339,7 +339,7 @@ cleanup:
 	/bin/rm -f Makefile config.log config.status configure.lineno rsnapshot
 
 debian:
-	./configure --prefix=/usr --sysconfdir=/etc --mandir=/usr/share/man
+	./configure --prefix=/usr --sysconfdir=/etc --mandir=/usr/share/man --bindir=/usr/bin --with-rsync=/usr/bin/rsync --with-ssh=/usr/bin/ssh --with-logger=/usr/bin/logger
 	make DESTDIR=${DEB_BUILD_DIR} install
 
 	/bin/mkdir ${DEB_BUILD_DIR}/DEBIAN/
