@@ -36,7 +36,7 @@ snapshot_root	/.snapshots/
 #
 #@CMD_CP@
 
-# uncomment this to use the rm program instead of the built-in perl routine
+# uncomment this to use the rm program instead of the built-in perl routine.
 @CMD_RM@
 
 # rsync must be enabled for anything to work.
@@ -47,6 +47,9 @@ snapshot_root	/.snapshots/
 
 # Comment this out to disable syslog support.
 @CMD_LOGGER@
+
+# Uncomment this to specify a path to "du" for disk usage checks.
+#@CMD_DU@
 
 #########################################
 #           BACKUP INTERVALS            #
@@ -71,11 +74,11 @@ interval	weekly	4
 #link_dest	0
 
 # Verbose level, 1 through 5.
-# 1	Quiet		Print fatal errors only
-# 2	Default		Print errors and warnings only
-# 3	Verbose		Show equivalent shell commands being executed
-# 4	Extra Verbose	Show extra verbose information
-# 5	Debug mode	More than you care to know
+# 1     Quiet           Print fatal errors only
+# 2     Default         Print errors and warnings only
+# 3     Verbose         Show equivalent shell commands being executed
+# 4     Extra Verbose   Show extra verbose information
+# 5     Debug mode      More than you care to know
 #
 verbose		2
 
@@ -119,8 +122,10 @@ loglevel	3
 #
 #one_fs		0
 
-# If you enable the lockfile, make sure the lockfile directory is
-# not world writable. Otherwise anyone can prevent the program from running.
+# If enabled, rsnapshot will write a lockfile to prevent two instances
+# from running simultaneously (and messing up the snapshot_root).
+# If you enable this, make sure the lockfile directory is not world
+# writable. Otherwise anyone can prevent the program from running.
 #
 #lockfile	/var/run/rsnapshot.pid
 
