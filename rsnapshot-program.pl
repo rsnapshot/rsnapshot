@@ -608,16 +608,20 @@ sub backup_interval	{
 	# this should never happen
 	if (!defined($interval))	{ bail('backup_interval() expects an argument'); }
 	
-	# set up default args for rsync
+	# set up default args for rsync and ssh
 	my $default_rsync_short_args	= '-al';
 	my $default_rsync_long_args		= '--delete --numeric-ids --devices';
+	my $default_ssh_args			= undef;
 	
-	# if the config file specified rsync args, use those instead
+	# if the config file specified rsync or ssh args, use those instead
 	if (defined($config_vars{'rsync_short_args'}))	{
 		$default_rsync_short_args = $config_vars{'rsync_short_args'};
 	}
 	if (defined($config_vars{'rsync_long_args'}))	{
 		$default_rsync_long_args = $config_vars{'rsync_long_args'};
+	}
+	if (defined($config_vars{'ssh_args'}))	{
+		$default_ssh_args = $config_vars{'ssh_args'};
 	}
 	
 	# extra verbose?
@@ -679,6 +683,7 @@ sub backup_interval	{
 		my $script					= undef;
 		my $tmpdir					= undef;
 		my $result					= undef;
+		my $ssh_args				= $default_ssh_args;
 		my $rsync_short_args		= $default_rsync_short_args;
 		my @rsync_long_args_stack	= ( split(/\s/, $default_rsync_long_args) );
 		
@@ -728,6 +733,10 @@ sub backup_interval	{
 			if ( defined($$sp_ref{'opts'}) && defined($$sp_ref{'opts'}->{'rsync_long_args'}) )	{
 				@rsync_long_args_stack = split(/\s/, $$sp_ref{'opts'}->{'rsync_long_args'});
 			}
+			# SSH ARGS
+			if ( defined($$sp_ref{'opts'}) && defined($$sp_ref{'opts'}->{'ssh_args'}) )	{
+				$ssh_args = $$sp_ref{'opts'}->{'ssh_args'};
+			}
 			# ONE_FS
 			if ( defined($$sp_ref{'opts'}) && defined($$sp_ref{'opts'}->{'one_fs'}) )	{
 				if (1 == $$sp_ref{'opts'}->{'one_fs'})	{
@@ -746,9 +755,9 @@ sub backup_interval	{
 			# if this is a user@host:/path, use ssh
 			} elsif ( is_ssh_path($src) )	{
 				
-				# if we have custom args to SSH, add them
-				if ( defined($config_vars{'ssh_args'}) && $config_vars{'ssh_args'} )	{
-					push( @rsync_long_args_stack, "--rsh=$config_vars{'cmd_ssh'} $config_vars{'ssh_args'}" );
+				# if we have any args for SSH, add them
+				if ( defined($ssh_args) )	{
+					push( @rsync_long_args_stack, "--rsh=$config_vars{'cmd_ssh'} $ssh_args" );
 					
 				# no arguments is the default
 				} else	{
@@ -1654,7 +1663,6 @@ sub parse_backup_opts	{
 		# pass unchecked
 		
 	# SSH ARGS
-	# TODO: test that this actually works!
 	} elsif ( defined($parsed_opts{'ssh_args'}) )	{
 		# pass unchecked
 		
