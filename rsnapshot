@@ -197,7 +197,7 @@ if ( -f $config_file )	{
 		if ($line =~ /^\s*$/)	{ next; }
 		
 		# parse line
-		my ($var, $value, $value2) = split(/\t+/, $line, 3);
+		my ($var, $value, $value2, $value3) = split(/\t+/, $line, 4);
 		
 		# warn about entries we don't understand, and prevent the program from running
 		if (!defined($var) or !defined($value))	{
@@ -284,8 +284,10 @@ if ( -f $config_file )	{
 		
 		# BACKUP points
 		if ($var eq 'backup')	{
-			my $src = $value;
-			my $dest = $value2;
+			my $src			= $value;	# source directory
+			my $dest		= $value2;	# dest directory
+			my $opt_str		= $value3;	# option string from this backup point
+			my $opts_ref	= undef;	# array_ref to hold parsed opts
 			
 			if ( !defined($config_vars{'snapshot_root'}) )	{	bail("snapshot_root needs to be defined before backup points"); }
 			
@@ -321,6 +323,10 @@ if ( -f $config_file )	{
 			}
 			if ($dest =~ /^\//)	{ bail("Full paths not allowed for backup destinations"); }
 			
+			if (defined($opt_str))	{
+				$opts_ref = parse_backup_opts($opt_str);
+			}
+			
 			# remember src/dest
 			# also, first check to see that we're not backing up the snapshot directory
 			if ((-e "$src") && ($config_vars{'snapshot_root'} =~ $src))	{
@@ -333,6 +339,9 @@ if ( -f $config_file )	{
 						my %hash;
 						$hash{'src'}	= "$src/$node";
 						$hash{'dest'}	= "$dest/$node";
+						if (defined($opts_ref))	{
+							$hash{'opts'} = $opts_ref;
+						}
 						push(@snapshot_points, \%hash);
 					}
 				}
@@ -341,6 +350,9 @@ if ( -f $config_file )	{
 				my %hash;
 				$hash{'src'}	= $src;
 				$hash{'dest'}	= $dest;
+				if (defined($opts_ref))	{
+					$hash{'opts'} = $opts_ref;
+				}
 				push(@snapshot_points, \%hash);
 			}
 		}
@@ -902,6 +914,19 @@ sub native_cp_al	{
 	if ($debug)	{ print "utime(" . $st->atime . ", " . $st->mtime . ", \"$dest\");"; }
 	
 	return (1);
+}
+
+# accepts a string of options
+# returns an array_ref of parsed options
+#
+# this is for individual backup points only
+sub parse_backup_opts	{
+	my $opts_str = shift(@_);
+	my @parsed_opts;
+	
+	
+	
+	return (\@parsed_opts);
 }
 
 #####################
