@@ -3,7 +3,7 @@ rsnapshot changelog
 http://www.rsnapshot.org/
 ------------------------------------------------------------------------------
 
-VERSION 1.1.3 (Apr ?? ??:?? 2004)
+VERSION 1.1.3 (Apr 06 14:24 2004)
 ------------------------------------------------------------------------------
 - Validating rsync_short_args, must be in format '-an', not '-a -n'
 - Assembling @cmd_stack list one at a time, rather than using join()
