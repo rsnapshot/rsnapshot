@@ -81,7 +81,7 @@ if ($cmd eq 'version_only')	{
  
 # PARSE CONFIG FILE 
 if ( -f $config_file )	{
-	open(CONFIG, $config_file) or die "could not open config file \"$config_file\"";
+	open(CONFIG, $config_file) or bail("could not open config file \"$config_file\"");
 	while (my $line = <CONFIG>)	{
 		chomp($line);
 		
@@ -281,7 +281,7 @@ sub backup_interval	{
 	}
 	
 	# if we have a .tmp directory, move .0 to .1, and .tmp to .0
-	if ( -d "$config_vars{'snapshot_root'}/$interval.tmp" )	{
+	if ( -d "$config_vars{'snapshot_root'}/$interval.tmp" or ((-d "$config_vars{'snapshot_root'}/$interval.$interval_max") && ($test == 1)) )	{
 		# move .0 to .1
 		if ($verbose)	{ print "$config_vars{'cmd_mv'} $config_vars{'snapshot_root'}/$interval.0/ $config_vars{'snapshot_root'}/$interval.1\n"; }
 		if ($test == 0)	{
