@@ -8,4 +8,4 @@ Carl Wilhelm Soderstrom <chrome@real-time.com>
 	- Created the RPM .spec file which allowed the RPM package to be built
 
 Ted Zlatanov <tzz@lifelogs.com>
-	- added the one_fs feature, autoconf support, many others
+	- Added the one_fs feature, autoconf support, many others
