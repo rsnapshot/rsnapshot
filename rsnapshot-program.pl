@@ -548,12 +548,6 @@ if (0 == $file_syntax_ok)	{
 	exit(-1);
 }
 
-# IF WE'RE USING A LOCKFILE, TRY TO ADD IT
-# the program will bail if one exists
-if (defined($config_vars{'lockfile'}))	{
-	add_lockfile( $config_vars{'lockfile'} );
-}
-
 # FIGURE OUT WHICH INTERVAL WE'RE RUNNING, AND HOW IT RELATES TO THE OTHERS
 # THEN RUN THE ACTION FOR THE CHOSEN INTERVAL
 # remember, in each hashref in this loop:
@@ -608,6 +602,12 @@ if (!defined($interval_num))	{
 ################################
 ### BEGIN FILESYSTEM ACTIONS ###
 ################################
+
+# IF WE'RE USING A LOCKFILE, TRY TO ADD IT
+# the program will bail if one exists
+if (defined($config_vars{'lockfile'}))	{
+	add_lockfile( $config_vars{'lockfile'} );
+}
 
 # CREATE SNAPSHOT_ROOT IF IT DOESN'T EXIST, WITH THE FILE PERMISSIONS 0700
 if ( ! -d "$config_vars{'snapshot_root'}" )	{
