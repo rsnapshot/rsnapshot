@@ -6,7 +6,7 @@ http://www.rsnapshot.org/
 VERSION 1.1.3 (??? ?? ??:?? 2004)
 ------------------------------------------------------------------------------
 - Validating rsync_short_args, must be in format '-an', not '-a -n'
-- Filtering possible blank entries out of @cmd_stack passed to system()
+- Assembling @cmd_stack list one at a time, rather than using join()
 
 VERSION 1.1.2 (Mar 17 02:12 2004)
 ------------------------------------------------------------------------------
