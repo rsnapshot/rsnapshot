@@ -632,12 +632,12 @@ if (0 == $interval_num)	{
 	rotate_interval($cmd, $prev_interval);
 }
 
-# if we have a lockfile, remove it
+# IF WE HAVE A LOCKFILE, REMOVE IT
 if (defined($config_vars{'lockfile'}))	{
 	remove_lockfile($config_vars{'lockfile'});
 }
 
-# if we got this far, assume success. the program is done running
+# IF WE GOT THIS FAR, ASSUME SUCCESS. THE PROGRAM IS DONE RUNNING
 log_msg("$run_string: completed successfully");
 
 exit(0);
@@ -680,7 +680,8 @@ HERE
 }
 
 # accepts an error string
-# prints to STDERR, and exits safely and consistently
+# prints to STDERR and maybe syslog. removes the lockfile if it exists.
+# exits the program safely and consistently
 sub bail	{
 	my $str = shift(@_);
 	
@@ -1870,6 +1871,7 @@ sub file_diff   {
 	my $st2		= undef;
 	my $buf1	= undef;
 	my $buf2	= undef;
+	my $result	= undef;
 	
 	# number of bytes to read at once
 	my $BUFSIZE = 16384;
@@ -1896,23 +1898,42 @@ sub file_diff   {
 		return (1);
 	}
 	
-	# ok, we're still here. that means we have to...
+	# ok, we're still here.
+	# that means we have to compare files one chunk at a time
 	
-	# COMPARE FILES ONE CHUNK AT A TIME
-	open(FILE1, "$file1") or return (undef);
-	open(FILE2, "$file2") or return (undef);
+	# open both files
+	$result = open(FILE1, "$file1");
+	if (!defined($result))	{
+		return (undef);
+	}
+	$result = open(FILE2, "$file2");
+	if (!defined($result))	{
+		close(FILE1);
+		return (undef);
+	}
 	
+	# compare files
 	while ((0 == $done) && (read(FILE1, $buf1, $BUFSIZE)) && (read(FILE2, $buf2, $BUFSIZE)))	{
 		# exit this loop as soon as possible
 		if ($buf1 ne $buf2)	 {
 			$is_different = 1;
 			$done = 1;
+			last;
 		}
 	}
 	
-	close(FILE2) or return (undef);
-	close(FILE1) or return (undef);
+	# close both files
+	$result = close(FILE2);
+	if (!defined($result))	{
+		close(FILE1);
+		return (undef);
+	}
+	$result = close(FILE1);
+	if (!defined($result))	{
+		return (undef);
+	}
 	
+	# return our findings
 	return ($is_different);
 }
 
