@@ -11,8 +11,6 @@ for version 1.0.x
 - Add a file exclusion list feature, using "include" and "exclude" params
   in the config file. These will be passed directly as args to rsync.
 
-- Add a "verbose" option to the config file, mirrorring the internal numbers.
-
 for version 2.0.x
 ------------------------------------------------------------------------------
 - Possibly rewrite it in C, if there's time or inclination. This would be a
