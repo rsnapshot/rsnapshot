@@ -1067,7 +1067,7 @@ B<cmd_rsync>       /usr/bin/rsync
 
 B<cmd_ssh>         /usr/bin/ssh
 
-B<#cmd_cp>          /bin/cp
+B<#cmd_cp>         /bin/cp
 
 B<interval>        hourly  6
 
