@@ -97,13 +97,16 @@ my $test = 0;
 # don't display warnings about FIFOs and special files if enabled
 my $quiet = 0;
 
+# one file system (don't cross partitions within a backup point)
+my $one_fs = 0;
+
 ##############################
 ### CORE PROGRAM STRUCTURE ###
 ##############################
 
 # GET COMMAND LINE OPTIONS
 getopt('c', \%opts);
-getopts('vVtq', \%opts);
+getopts('vVtqx', \%opts);
 $cmd = $ARGV[0];
 
 # ALTERNATE CONFIG FILE
@@ -129,6 +132,11 @@ if (defined($opts{'t'}))	{
 # QUIET?
 if (defined($opts{'q'}))	{
 	$quiet = 1;
+}
+
+# ONE FILE SYSTEM?
+if (defined($opts{'x'}))	{
+	$one_fs = 1;
 }
 
 # COMMAND LINE ARGS
@@ -427,6 +435,8 @@ sub backup_interval	{
 	# if -V was passed as a flag, show verbose messages for rsync
 	if ($extra_verbose)	{ $rsync_args .= 'v'; }
 	
+	if ($one_fs)		{ $rsync_args .= 'x'; }
+	
 	# ROTATE DIRECTORIES
 	#
 	# remove oldest directory
@@ -624,7 +634,7 @@ HERE
 
 sub show_usage	{
 	print "rsnapshot $VERSION\n";
-	print "Usage: rsnapshot [-vVtq] [-c /alt/config/file] <interval>|configtest|help|version\n";
+	print "Usage: rsnapshot [-vVtqx] [-c /alt/config/file] <interval>|configtest|help|version\n";
 	print "Type \"man rsnapshot\" for full details.\n";
 }
 
@@ -832,7 +842,7 @@ rsnapshot - remote filesystem snapshot utility
 
 =head1 SYNOPSIS
 
-B<rsnapshot> [B<-vVtq>] [B<-c> /alt/config/file] [command]
+B<rsnapshot> [B<-vVtqx>] [B<-c> /alt/config/file] [command]
 
 =head1 DESCRIPTION
 
@@ -870,6 +880,8 @@ B<-V> same as -v, but show rsync output as well
 B<-t> test, show shell commands that would be executed
 
 B<-q> quiet, supress non-fatal warnings
+
+B<-x> one filesystem, don't cross partitions within each backup point
 
 B<-c> path to alternate config file
 
