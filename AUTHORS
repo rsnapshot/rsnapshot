@@ -15,3 +15,9 @@ Ralf van Dooren <r.vdooren@snow.nl>
 
 Shane Liebling <shane@cryptio.net>
     - Fixed a compatibility bug in utils/backup_smb_share.sh
+
+Christoph Wegscheider <christoph.wegscheider@wegi.net>
+    - Added and maintains the Debian rsnapshot package
+
+Peter Palfrader <weasel@debian.org>
+    - Enhanced error reporting to include command line options

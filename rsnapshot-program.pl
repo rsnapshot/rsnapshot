@@ -42,7 +42,7 @@ use Text::ParseWords;	# parse_line()
 $| = 1;
 
 # version of rsnapshot
-my $VERSION = '1.1.6';
+my $VERSION = '1.?.?';
 
 # command or interval to execute (first cmd line arg)
 my $cmd;
@@ -4324,6 +4324,15 @@ rsnapshot entry in the FreeBSD ports tree.
 
 Carl Boe (B<boe@demog.berkeley.edu>) Found several subtle bugs and
 provided fixes for them.
+
+Shane Leibling (B<shane@cryptio.net>) fixed a compatibility bug in
+utils/backup_smb_share.sh
+
+Christoph Wegscheider (B<christoph.wegscheider@wegi.net>) added and
+maintains the Debian rsnapshot package.
+
+Peter Palfrader (B<weasel@debian.org>) enhanced error reporting to
+include command line options.
 
 =head1 COPYRIGHT
 

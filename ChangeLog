@@ -3,7 +3,7 @@ rsnapshot changelog
 http://www.rsnapshot.org/
 ------------------------------------------------------------------------------
 
-VERSION 1.1.7 (??? ?? ??:?? 2004)
+VERSION 1.?.? (??? ?? ??:?? 2004)
 ------------------------------------------------------------------------------
 - Turned off buffering ($|=1)
 - Changed default lockfile to /var/run/rsnapshot.pid, for FHS compliance
@@ -12,6 +12,9 @@ VERSION 1.1.7 (??? ?? ??:?? 2004)
 - Changed utils/backup_smb_share.sh to re-order the smbtar arguments
 - Added "-uroot" to utils/backup_mysql.sh example file
 - Changed regex in is_blank() subroutine
+- Changed rsync include/exclude mode to relative
+- Peter Palfrader <weasel@debian.org> enhanced error reporting to include
+  command line options
 
 VERSION 1.1.6 (Jul 05 16:35 2004)
 ------------------------------------------------------------------------------
