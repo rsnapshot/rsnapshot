@@ -3015,10 +3015,40 @@ fi
 # this is kludgy, but it works
 RSNAPSHOT_SYSCONFDIR=`eval echo ${sysconfdir}`
 
-echo ""
-echo "Now type \"make install\""
-echo ""
-echo "After rsnapshot is installed, don't forget to copy"
-echo "$RSNAPSHOT_SYSCONFDIR/rsnapshot.conf.default to $RSNAPSHOT_SYSCONFDIR/rsnapshot.conf"
-echo ""
+# figure out if this is a fresh install or an upgrade
+# advise the user accordingly
+if test -e "$RSNAPSHOT_SYSCONFDIR/rsnapshot.conf"; then
+	echo ""
+	echo "+----------------------------------------------------------------------------+"
+	echo "| A previous version of rsnapshot was detected.                              |"
+	echo "|                                                                            |"
+	echo "| It is HIGHLY recommended that you upgrade your config file for             |"
+	echo "| compatibility with this release. The only change will be that the          |"
+	echo "| \"rsync_long_args\" parameter will be explicitly set to the old default      |"
+	echo "| value from previous versions. If you have already set this parameter,      |"
+	echo "| no changes will be made.                                                   |"
+	echo "|                                                                            |"
+	echo "| If you don't upgrade your config file, rsnapshot will appear to work, but  |"
+	echo "| rearrange the relative paths to your backup files when you aren't looking. |"
+	echo "| It would be a nasty surprise, which is why we're telling you about it now. |"
+	echo "|                                                                            |"
+	echo "| If you would like to automatically upgrade your config file, just type:    |"
+	echo "|                                                                            |"
+	echo "|     \"make upgrade\"                                                         |"
+	echo "|                                                                            |"
+	echo "| After you have upgraded your config file, type:                            |"
+	echo "|                                                                            |"
+	echo "|     \"make install\"                                                         |"
+	echo "|                                                                            |"
+	echo "| to install the program.                                                    |"
+	echo "+----------------------------------------------------------------------------+"
+	echo ""
+else
+	echo ""
+	echo "Now type \"make install\" to install the program."
+	echo ""
+	echo "After rsnapshot is installed, don't forget to copy"
+	echo "$RSNAPSHOT_SYSCONFDIR/rsnapshot.conf.default to $RSNAPSHOT_SYSCONFDIR/rsnapshot.conf"
+	echo ""
+fi
 

@@ -1,6 +1,11 @@
 VERSION = 1.2.0
 
-RPM_BASE_DIR  = /usr/src/redhat
+RPM_BASE_DIR = /usr/src/redhat
+
+upgrade:
+	@echo ""
+	${PERL} utils/upgrade_rsnapshot.pl ${sysconfdir}/rsnapshot.conf
+	@echo ""
 
 man:
 	@# perl 5.8 for this
@@ -11,7 +16,7 @@ html:
 	/bin/rm -f pod2htmd.*
 	/bin/rm -f pod2htmi.*
 
-cleanup:
+clean:
 	/bin/rm -rf rsnapshot-$(VERSION)/
 	/bin/rm -rf autom4te.cache
 	/bin/rm -f rsnapshot-$(VERSION).tar.gz
@@ -24,11 +29,11 @@ cleanup:
 	/bin/rm -f Makefile config.log config.status configure.lineno rsnapshot
 	
 rpm: tar
-	/bin/cp rsnapshot-$(VERSION).tar.gz ${RPM_BASE_DIR}/SOURCES/
-	/bin/cp redhat/SOURCES/rsnapshot.patch ${RPM_BASE_DIR}/SOURCES/
-	/bin/cp redhat/SPECS/rsnapshot.spec ${RPM_BASE_DIR}/SPECS/
-	/usr/bin/rpmbuild -bb ${RPM_BASE_DIR}/SPECS/rsnapshot.spec
-	/bin/cp ${RPM_BASE_DIR}/RPMS/noarch/rsnapshot-$(VERSION)-1.noarch.rpm .
+	/bin/cp rsnapshot-$(VERSION).tar.gz $(RPM_BASE_DIR)/SOURCES/
+	/bin/cp redhat/SOURCES/rsnapshot.patch $(RPM_BASE_DIR)/SOURCES/
+	/bin/cp redhat/SPECS/rsnapshot.spec $(RPM_BASE_DIR)/SPECS/
+	/usr/bin/rpmbuild -bb $(RPM_BASE_DIR)/SPECS/rsnapshot.spec
+	/bin/cp $(RPM_BASE_DIR)/RPMS/noarch/rsnapshot-$(VERSION)-1.noarch.rpm .
 
 tar: man
 	/bin/rm -f rsnapshot-$(VERSION).tar.gz
