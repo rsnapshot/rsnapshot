@@ -14,7 +14,7 @@ use Getopt::Std;
 ### DECLARE VARIABLES ###
 #########################
 
-my $VERSION = '0.9.3';
+my $VERSION = '0.9.4';
 
 my $config_file	= '/etc/rsnapshot.conf'; 
 
@@ -179,7 +179,7 @@ if ( -f $config_file )	{
 				readdir(SRC);	# ..
 				
 				while (my $dir = readdir(SRC))	{
-					if ("$src/$dir" ne $config_vars{'snapshot_root'})	{
+					if ("$src/$dir" ne "$config_vars{'snapshot_root'}")	{
 						my %hash;
 						$hash{'src'}	= "$src/$dir";
 						$hash{'dest'}	= "$dest/$dir";
