@@ -10,6 +10,7 @@ VERSION 1.1.4 (Apr 30 22:43 2004)
 - Added utils/sign_packages.sh utility script
 - Added utils/rsnapshot_if_mounted.sh utility script
 - Standardized comment headers in utils/ scripts
+- Added DEBIAN/copyright file
 
 VERSION 1.1.3 (Apr 06 14:24 2004)
 ------------------------------------------------------------------------------
