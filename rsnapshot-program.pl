@@ -32,6 +32,7 @@ use Getopt::Std;		# getopts()
 use File::Path;			# mkpath(), rmtree()
 use File::stat;			# stat(), lstat()
 use POSIX qw(locale_h);	# setlocale()
+use Text::ParseWords;	# parse_line()
 
 ########################################
 ###     DECLARE GLOBAL VARIABLES     ###
@@ -404,7 +405,7 @@ sub parse_config_file {
 		if (is_blank($line)) { next; }
 		
 		# parse line
-		my ($var, $value, $value2, $value3) = split(/\t+/, $line, 4);
+		my ($var, $value, $value2, $value3) = parse_line('\s+', 0, $line);
 		
 		# warn about entries we don't understand, and immediately prevent the
 		# program from running or parsing anything else
