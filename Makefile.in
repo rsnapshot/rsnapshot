@@ -324,7 +324,7 @@ clean:
 	/bin/rm -f pod2htmd.*
 	/bin/rm -f pod2htmi.*
 	/bin/rm -rf autom4te.cache
-	/bin/rm -f Makefile config.log config.status rsnapshot
+	/bin/rm -f Makefile config.log config.status configure.lineno rsnapshot
 
 debian:
 	./configure --prefix=/usr --sysconfdir=/etc --mandir=/usr/share/man
