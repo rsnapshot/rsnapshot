@@ -87,6 +87,7 @@ my $file_line_num = 0;
 
 # assume we don't have any of these programs
 my $have_gnu_cp	= 0;
+my $have_rm		= 0;
 my $have_rsync	= 0;
 my $have_ssh	= 0;
 
@@ -334,6 +335,18 @@ if ( -f "$config_file" )	{
 			if ((-f "$value") && (-x "$value") && (1 == is_real_local_abs_path($value)))	{
 				$config_vars{'cmd_cp'} = $value;
 				$have_gnu_cp = 1;
+				$line_syntax_ok = 1;
+				next;
+			} else	{
+				config_err($file_line_num, "$line - $value is not executable");
+			}
+		}
+		
+		# CHECK FOR rm (optional)
+		if ($var eq 'cmd_rm')	{
+			if ((-f "$value") && (-x "$value") && (1 == is_real_local_abs_path($value)))	{
+				$config_vars{'cmd_rm'} = $value;
+				$have_rm = 1;
 				$line_syntax_ok = 1;
 				next;
 			} else	{
@@ -824,7 +837,8 @@ if ((1 == $do_configtest) && (1 == $config_perfect))	{
 ### SET POSIX LOCALE ###
 ########################
 
-# this fixes some potential problems with rmtree()
+# this may fix some potential problems with rmtree()
+# another solution is to enable "cmd_rm" in rsnapshot.conf
 print_msg("Setting locale to POSIX \"C\"", 4);
 setlocale(POSIX::LC_ALL, 'C');
 
@@ -1697,9 +1711,9 @@ sub backup_interval	{
 	if ( (-d "$config_vars{'snapshot_root'}/$interval.$interval_max") && ($interval_max > 0) )	{
 		print_cmd("rm -rf $config_vars{'snapshot_root'}/$interval.$interval_max/");
 		if (0 == $test)	{
-			my $result = rmtree( "$config_vars{'snapshot_root'}/$interval.$interval_max/", 0, 0 );
+			my $result = rm_rf( "$config_vars{'snapshot_root'}/$interval.$interval_max/" );
 			if (0 == $result)	{
-				bail("Error! rmtree(\"$config_vars{'snapshot_root'}/$interval.$interval_max/\",0,0)\n");
+				bail("Error! rm_rf(\"$config_vars{'snapshot_root'}/$interval.$interval_max/\")\n");
 			}
 		}
 	}
@@ -1952,9 +1966,9 @@ sub backup_interval	{
 				if (0 == $test)	{
 					# if it's a dir, delete it
 					if ( -d "$tmpdir" )	{
-						$result = rmtree("$tmpdir", 0, 0);
+						$result = rm_rf("$tmpdir");
 						if (0 == $result)	{
-							bail("Could not rmtree(\"$tmpdir\",0,0);");
+							bail("Could not rm_rf(\"$tmpdir\");");
 						}
 					# if for some stupid reason it's a file, unlink it
 					} else	{
@@ -2069,9 +2083,9 @@ sub backup_interval	{
 				print_cmd("rm -rf $tmpdir");
 				
 				if (0 == $test)	{
-					$result = rmtree("$tmpdir", 0, 0);
+					$result = rm_rf("$tmpdir");
 					if (0 == $result)	{
-						bail("Could not rmtree(\"$tmpdir\",0,0);");
+						bail("Could not rm_rf(\"$tmpdir\");");
 					}
 				}
 			}
@@ -2116,9 +2130,9 @@ sub rotate_interval	{
 		print_cmd("rm -rf $config_vars{'snapshot_root'}/$interval.$interval_max/");
 		
 		if (0 == $test)	{
-			my $result = rmtree( "$config_vars{'snapshot_root'}/$interval.$interval_max/", 0, 0 );
+			my $result = rm_rf( "$config_vars{'snapshot_root'}/$interval.$interval_max/" );
 			if (0 == $result)	{
-				bail("Could not rmtree(\"$config_vars{'snapshot_root'}/$interval.$interval_max/\",0,0);");
+				bail("Could not rm_rf(\"$config_vars{'snapshot_root'}/$interval.$interval_max/\");");
 			}
 		}
 	} else	{
@@ -2432,6 +2446,54 @@ sub native_cp_al	{
 	return (1);
 }
 
+# stub subroutine
+# calls either cmd_rm_rf() or the native perl rmtree()
+# returns 1 on success, 0 on failure
+sub rm_rf	{
+	my $path = shift(@_);
+	my $result = 0;
+	
+	# make sure we were passed an argument
+	if (!defined($path)) { return(0); }
+	
+	# extra bonus safety feature!
+	# confirm that whatever we're deleting must be inside the snapshot_root
+	if ("$path" !~ "^$config_vars{'snapshot_root'}")	{
+		bail("rm_rf() tried to delete something outside of $config_vars{'snapshot_root'}! Quitting now!");
+	}
+	
+	if (1 == $have_rm)	{
+		$result = cmd_rm_rf("$path");
+	} else	{
+		$result = rmtree("$path", 0, 0);
+	}
+	
+	return ($result);
+}
+
+# this is a wrapper to the "rm" program, called with the "-rf" flags.
+sub cmd_rm_rf	{
+	my $path = shift(@_);
+	my $result = 0;
+	
+	# make sure we were passed an argument
+	if (!defined($path)) { return(0); }
+	
+	if ( ! -e "$path" )	{
+		print_err("cmd_rm_rf() needs a valid file path as an argument", 2);
+		return (0);
+	}
+	
+	# make the system call to /bin/rm
+	$result = system( $config_vars{'cmd_rm'}, '-rf', "$path" );
+	if ($result != 0)	{
+		print_err("Warning! $config_vars{'cmd_rm'} failed.", 2);
+		return (0);
+	}
+	
+	return (1);
+}
+
 # This subroutine works the way I hoped rsync would under certain conditions.
 # This is no fault of rsync, I just had something slightly different in mind :)
 #
@@ -2696,7 +2758,7 @@ sub sync_rm_dest	{
 			
 			# if this node isn't present in src, delete it
 			if ( ! -e "$src/$node" )	{
-				$result = rmtree("$dest/$node", 0, 0);
+				$result = rm_rf("$dest/$node");
 				if (0 == $result)	{
 					print_err("Warning! Could not delete \"$dest/$node\"", 2);
 				}
