@@ -201,11 +201,117 @@ If you are upgrading from a previous installation:
                  backup    root@example.com:/etc/ example.com/
                  backup    root@example.com:/var/ example.com/
 
-         Be aware that the backup_script parameter does NOT follow these
-         rules. Any backup_script parameters should remain unchanged from
-         before. Additionally, new checks have been added to rsnapshot to
+         But what happens when you had an entry like this?
+
+             backup    /var/qmail/            localhost/email/
+
+         As you can see, there is no direct mapping from the source path
+         to the destination. You now have essentially four choices:
+
+             1. Manually change the backup directories for individual backup
+                points inside the snapshot root. This is probably the best
+                method for most people to follow.
+
+                For example, take this entry:
+
+                    backup  /var/qmail/     localhost/email/
+
+                For the conversion, we are going to change it to:
+
+                    backup  /var/qmail/     localhost/
+
+                Assume the snapshot root is "/.snapshots/", and the smallest
+                interval is "hourly". Under the old system, these files would
+                be backed up in this location:
+
+                    /.snapshots/hourly.0/localhost/email/
+
+                After we change the config file over to use --relative in
+                rsync_long_args, the same files will now get backed up here:
+
+                    /.snapshots/hourly.0/localhost/var/qmail/
+
+                To make the transition seamless, we need to move this
+                directory inside the snapshot root, and create all the parent
+                directories, if necessary. So in this example, we do:
+
+                    cd /.snapshots/hourly.0/localhost/
+                    mkdir var/
+                    mv email/ var/
+
+                If we map all the directories over in this way, we maintain
+                all the hard links. The only real drawback is that users will
+                have to learn the new locations of the files to restore them.
+
+             2. Keep rsync_long_args set to the old values. Backward
+                compatibility is maintained, but you can't take advantage of
+                the new features.
+
+             3. Specify rsync_long_args for a particular backup point where
+                you want to use the old method. I.E.:
+
+    backup /etc/       localhost/
+    backup /home/      localhost/
+    backup /var/qmail/ localhost/email/ rsync_long_args=--delete --numeric-ids
+
+                This way you get the new features except where you need to
+                override them for certain backup points. Be very careful here
+                because it's easy to forget what's going on.
+
+             4. Delete the latest snapshot and do a full re-sync under the new
+                system. This is the brute force "I don't care about my old
+                backups anyway" method. If this interests you, then perform
+                the following steps:
+
+                  A. Figure out where your snapshot root is located.
+                  B. Figure out what the smallest interval is (I.E. hourly).
+                  C. Modify the config file to change your paths over to the
+                     new system.
+                  D. Manually delete the most recent snapshot directory.
+                     Assuming your snapshot root is set to "/.snapshots/", and
+                     your smallest interval is "hourly", you would delete the
+                     following directory:
+
+                         rm -rf /.snapshots/hourly.0/
+
+                  E. Manually run rsnapshot on the lowest interval to perform
+                     a full re-sync.
+
+                         rsnapshot -v hourly
+
+                Aside from the extra time spent on the full re-sync, the other
+                big drawback to this method is that your snapshots will now
+                take up the space of TWO full backups, plus incrementals. If
+                you liked this method and were more concerned with disk space
+                than history, you could also conceivably just delete the
+                entire snapshot root and start over as well. Obviously this is
+                a tactic to be used as a last resort!
+
+         Finally, be aware that the backup_script parameter does NOT follow
+         these new rules. Backup scripts still drop their files right into
+         the destination directory specified. This makes sense when you
+         realize that, since the files came from a script, they didn't really
+         have a source path on the filesystem to begin with.
+
+         Any backup_script parameters should remain unchanged from before.
+         Additionally, new checks have been added to rsnapshot to
          prevent you from accidentally wiping out your backup points later
-         with an incorrect backup_script destination.
+         with an incorrect backup_script destination. For instance, this
+         would nuke your backups, except that rsnapshot won't let you do it:
+
+             backup         /etc/                           localhost/etc/
+             backup_script  /usr/local/bin/backup_pgsql.sh  localhost/etc/
+
+         This won't work either, because the backup script destination is
+         above the backup point:
+
+             backup         /etc/                           localhost/etc/
+             backup_script  /usr/local/bin/backup_pgsql.sh  localhost/
+
+         The correct usage would be something like this:
+
+             backup         /etc/                           localhost/etc/
+             backup_script  /usr/local/bin/backup_pgsql.sh  localhost/pgsql/
 
 ----------------------
   ADDITIONAL OPTIONS
