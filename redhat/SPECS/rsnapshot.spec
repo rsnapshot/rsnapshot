@@ -1,5 +1,5 @@
 Name: rsnapshot
-Summary: rsync backup snapshot program
+Summary: Local and remote filesystem snapshot utility
 Version: 1.0.4
 Release: 1
 BuildArch: noarch
