@@ -862,6 +862,15 @@ sub is_anon_rsync_path	{
 	return (0);
 }
 
+sub is_handler_path	{
+	my $path	= shift(@_);
+	
+	if (!defined($path))			{ return (undef); }
+	if ($path =~ m/^\w*?:\/\/.*$/)	{ return (1); }
+	
+	return (0);
+}
+
 # accepts path
 # returns 1 if it's a syntactically valid absolute path
 # returns 0 otherwise
@@ -906,6 +915,18 @@ sub remove_trailing_slash	{
 	$str =~ s/\/+$//;
 	
 	return ($str);
+}
+
+sub get_handler_type	{
+	my $path	= shift(@_);
+	
+	if (!defined($path))	{ return (undef); }
+	
+	if ($path =~ m/^(\w*?):\/\/.*$/)	{
+		return ($1);
+	}
+	
+	return (undef);
 }
 
 sub show_help	{
