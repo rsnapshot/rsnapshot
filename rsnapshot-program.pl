@@ -2329,6 +2329,14 @@ BE CAREFUL! If the private key is obtained by an attacker, they will
 have free run of all the systems involved. If you are unclear on how
 to do this, see B<ssh(1)>, B<sshd(1)>, and B<ssh-keygen(1)>.
 
+Backup scripts are run as the same user that rsnapshot is running as.
+Typically this is root. Make sure that all of your backup scripts are
+only writable by root, and that they don't call any other programs
+that aren't owned by root. If you fail to do this, anyone who can
+write to the backup script or any program it calls can fully take
+over the machine. Of course, this is not a situation unique to
+rsnapshot.
+
 rsync transfers are done using the --numeric-ids option. This means that
 user names and group names are ignored during transfers, but the UID/GID
 information is kept intact. The assumption is that the backups will be

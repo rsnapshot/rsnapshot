@@ -575,6 +575,14 @@ configuration, or using an alternate shell such as \fBscponly\fR.
 have free run of all the systems involved. If you are unclear on how
 to do this, see \fB\f(BIssh\fB\|(1)\fR, \fB\f(BIsshd\fB\|(1)\fR, and \fB\f(BIssh\-keygen\fB\|(1)\fR.
 .PP
+Backup scripts are run as the same user that rsnapshot is running as.
+Typically this is root. Make sure that all of your backup scripts are
+only writable by root, and that they don't call any other programs
+that aren't owned by root. If you fail to do this, anyone who can
+write to the backup script or any program it calls can fully take
+over the machine. Of course, this is not a situation unique to
+rsnapshot.
+.PP
 rsync transfers are done using the \-\-numeric\-ids option. This means that
 user names and group names are ignored during transfers, but the \s-1UID/GID\s0
 information is kept intact. The assumption is that the backups will be
