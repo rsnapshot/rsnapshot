@@ -661,9 +661,7 @@ sub gnu_cp_al	{
 	
 	$result = system( $config_vars{'cmd_cp'}, '-al', "$src", "$dest" );
 	if ($result != 0)	{
-		if (0 == $quiet)	{
-			print STDERR "Warning! $config_vars{'cmd_cp'} failed. Perhaps this is not GNU cp?\n";
-		}
+		print STDERR "Warning! $config_vars{'cmd_cp'} failed. Perhaps this is not GNU cp?\n";
 		return (0);
 	}
 	
