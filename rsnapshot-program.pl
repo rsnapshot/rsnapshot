@@ -2187,11 +2187,6 @@ sub rsync_backup_point	{
 	my $interval				= shift(@_);
 	my $bp_ref					= shift(@_);
 	my $default_args_ref		= shift(@_);
-	
-	if (!defined($interval))			{ bail('interval not defined in rsync_backup_point()'); }
-	if (!defined($bp_ref))				{ bail('bp_ref not defined in rsync_backup_point()'); }
-	if (!defined($default_args_ref))	{ bail('default_args_ref not defined in rsync_backup_point()'); }
-	
 	my @cmd_stack				= ();
 	my $src						= undef;
 	my $script					= undef;
@@ -2200,6 +2195,11 @@ sub rsync_backup_point	{
 	my $ssh_args				= $$default_args_ref{'ssh_args'};
 	my $rsync_short_args		= $$default_args_ref{'rsync_short_args'};
 	my @rsync_long_args_stack	= ( split(/\s/, $$default_args_ref{'rsync_long_args'}) );
+	
+	# validate subroutine args
+	if (!defined($interval))			{ bail('interval not defined in rsync_backup_point()'); }
+	if (!defined($bp_ref))				{ bail('bp_ref not defined in rsync_backup_point()'); }
+	if (!defined($default_args_ref))	{ bail('default_args_ref not defined in rsync_backup_point()'); }
 	
 	# append a trailing slash if src is a directory
 	if (defined($$bp_ref{'src'}))	{
