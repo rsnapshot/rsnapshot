@@ -16,7 +16,7 @@
 
 # DIRECTORIES
 TAR_DIR="/var/dvd_backup"
-SNAPSHOT_DIR="/.snapshots/daily.0"
+SNAPSHOT_DIR="/backup/private/snapshots/daily.0"
 
 # SHELL COMMANDS
 LS="/bin/ls"
@@ -28,6 +28,11 @@ MKDIR="/bin/mkdir"
 SENDMAIL="/usr/lib/sendmail -t -oi"
 HOSTNAME=`/bin/hostname`
 DATE=`/bin/date +%Y-%m-%d`
+
+# uncomment this to gpg encrypt files
+# the e-mail address the notification is being sent to must have their GPG key
+# in the public keyring of the user running this backup
+#GPG="/usr/bin/gpg"
 
 # GET E-MAIL ADDRESS
 if [ ! $1 ]; then
@@ -41,7 +46,17 @@ fi
 ${MKDIR} -p ${TAR_DIR}/${DATE}/
 cd ${SNAPSHOT_DIR}
 for BACKUP_POINT in `${LS} ${SNAPSHOT_DIR}`; do
-	${TAR} czf ${TAR_DIR}/${DATE}/${BACKUP_POINT}.tar.gz ${BACKUP_POINT}/
+	
+	# GPG encrypt backups if $GPG is defined
+	if test ${GPG}; then
+		${TAR} --numeric-owner -cf - ${BACKUP_POINT}/ | \
+			$GPG --encrypt -r $TO_EMAIL > ${TAR_DIR}/${DATE}/${BACKUP_POINT}.tar.gpg
+		
+	# just create regular tar files
+	else
+		${TAR} -czf ${TAR_DIR}/${DATE}/${BACKUP_POINT}.tar.gz ${BACKUP_POINT}/
+	fi
+	
 done
 cd -
 
