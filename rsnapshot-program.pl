@@ -400,11 +400,11 @@ if ( -f "$config_file" )	{
 			$config_vars{'rsync_long_args'} = $value;
 			$line_syntax_ok = 1;
 		}
-		# TODO SSH ARGS (they're all short since it's a BSD project, and they'll be wrapped in quotes)
-		# i.e.:
-		# 	ssh_args		-xyz -p 22
-		# becomes:
-		# 	rsync -av --rsh="/usr/bin/ssh -xyz -p 22" /home/foo/bar user@domain.com:/home/foo/bar
+		# SSH ARGS
+		if ($var eq 'ssh_args')	{
+			$config_vars{'ssh_args'} = $value;
+			$line_syntax_ok = 1;
+		}
 		
 		# make sure we understood this line
 		# if not, warn the user, and prevent the program from executing
@@ -660,7 +660,15 @@ sub backup_interval	{
 		
 		# if this is a user@host:/path, use ssh
 		if ( is_ssh_path($src) )	{
-			push( @rsync_long_args_stack, "--rsh=$config_vars{'cmd_ssh'}" );
+			
+			# if we have custom args to SSH, add them
+			if ( defined($config_vars{'ssh_args'}) && $config_vars{'ssh_args'} )	{
+				push( @rsync_long_args_stack, "--rsh=$config_vars{'cmd_ssh'} $config_vars{'ssh_args'}" );
+				
+			# no arguments is the default
+			} else	{
+				push( @rsync_long_args_stack, "--rsh=$config_vars{'cmd_ssh'}" );
+			}
 			
 		# anonymous rsync
 		} elsif ( is_anon_rsync_path($src) )	{
