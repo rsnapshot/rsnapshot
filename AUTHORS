@@ -38,3 +38,6 @@ Nicolas Kaiser <nikai@nikai.net>
 
 David Cantrell <david@cantrell.org.uk>
     - Wrote the rsnapshot-diff utility
+
+Chris Petersen - http://www.forevermore.net/
+    - Added cwrsync permanent-share support

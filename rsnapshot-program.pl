@@ -690,6 +690,10 @@ sub parse_config_file {
 			} elsif ( is_anon_rsync_path($src) ) {
 				$line_syntax_ok = 1;
 				
+			# check for cwrsync
+			} elsif ( is_cwrsync_path($src) ) {
+				$line_syntax_ok = 1;
+				
 			# fear the unknown
 			} else {
 				config_err($file_line_num, "$line - Source directory \"$src\" doesn't exist");
@@ -2214,6 +2218,17 @@ sub is_ssh_path {
 }
 
 # accepts path
+# returns 1 if it's a valid cwrsync server path
+# return 0 otherwise
+sub is_cwrsync_path {
+	my $path	= shift(@_);
+	if (!defined($path))		{ return (undef); }
+	if ($path =~ m/^[^\/]+::/)	{ return (1); }
+	
+	return (0);
+}
+
+# accepts path
 # returns 1 if it's a syntactically valid anonymous rsync path
 # returns 0 otherwise
 sub is_anon_rsync_path {
@@ -2632,6 +2647,11 @@ sub rsync_backup_point {
 		
 	# anonymous rsync
 	} elsif ( is_anon_rsync_path($$bp_ref{'src'}) ) {
+		# make rsync quiet if we're not running EXTRA verbose
+		if ($verbose < 4) { $rsync_short_args .= 'q'; }
+		
+	# cwrsync path
+	} elsif ( is_cwrsync_path($$bp_ref{'src'}) ) {
 		# make rsync quiet if we're not running EXTRA verbose
 		if ($verbose < 4) { $rsync_short_args .= 'q'; }
 		
@@ -5223,6 +5243,22 @@ Nicolas Kaiser <nikai@nikai.net>
 =over 4
 
 - Fixed typos in program and man page
+
+=back
+
+David Cantrell <david@cantrell.org.uk>
+
+=over 4
+
+Wrote the rsnapshot-diff utility
+
+=back
+
+Chris Petersen - B<http://www.forevermore.net/>
+
+=over 4
+
+Added cwrsync permanent-share support
 
 =back
 
