@@ -24,6 +24,8 @@ for version 1.0.x
 - Add syslog support. Make sure it's compatible with Perl 5.004 cross platform.
   Sys::Syslog is installed but doesn't seem to work on Perl 5.005 / Solaris 8.
 
+- Add a command-line argument to force the removal of the lockfile.
+
 for version 2.0.x
 ------------------------------------------------------------------------------
 - Possibly rewrite it in C, if there's time or inclination. This would be a
