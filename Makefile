@@ -40,9 +40,13 @@ tar:
 	cp redhat/SOURCES/rsnapshot.patch rsnapshot-${VERSION}/redhat/SOURCES/
 	cp redhat/SPECS/rsnapshot.spec rsnapshot-${VERSION}/redhat/SPECS/
 	
-	chown -R 0:0 rsnapshot-${VERSION}/
+	chown -R root:root rsnapshot-${VERSION}/
 	tar czf rsnapshot-${VERSION}.tar.gz rsnapshot-${VERSION}/
 	rm -rf rsnapshot-${VERSION}/
+	
+	# utils
+	mkdir rsnapshot-${VERSION}/utils/
+	cp utils/rsnaptar rsnapshot-${VERSION}/utils/
 	
 debian:
 	mkdir -p ${DEB_BUILD_DIR}/{DEBIAN,usr/bin,etc,usr/share/man/man1}
@@ -66,17 +70,17 @@ install:
 	mkdir -p /usr/local/bin/
 	cp -f rsnapshot /usr/local/bin/rsnapshot
 	chmod 755 /usr/local/bin/rsnapshot
-	chown 0:0 /usr/local/bin/rsnapshot
+	chown root:root /usr/local/bin/rsnapshot
 	
 	mkdir -p /usr/local/man/man1/
 	rm -f /usr/local/man/man1/rsnapshot.1.gz
 	cp -f rsnapshot.1 /usr/local/man/man1/rsnapshot.1
 	chmod 644 /usr/local/man/man1/rsnapshot.1
-	chown 0:0 /usr/local/man/man1/rsnapshot.1
+	chown root:root /usr/local/man/man1/rsnapshot.1
 	
 	cp -f rsnapshot.conf /etc/rsnapshot.conf.default
 	chmod 600 /etc/rsnapshot.conf.default
-	chown 0:0 /etc/rsnapshot.conf.default
+	chown root:root /etc/rsnapshot.conf.default
 	@echo
 	@echo "+--------------------------------------------------------------------------+"
 	@echo "| Example config file installed in /etc/rsnapshot.conf.default             |"
