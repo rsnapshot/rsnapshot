@@ -1132,12 +1132,12 @@ sub add_lockfile	{
 		exit(-1);
 	}
 	
+	# create the lockfile
 	my $result = open(LOCKFILE, "> $lockfile");
 	if (!defined($result))	{
 		print STDERR "Could not write lockfile $lockfile\n";
 		exit(-1);
 	}
-	
 	$result = close(LOCKFILE);
 	if (!defined($result))	{
 		print STDERR "Warning! Could not close lockfile $lockfile\n";
