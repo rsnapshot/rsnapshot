@@ -2,19 +2,25 @@ rsnapshot TODO list:
 
 for version 1.0.x
 ------------------------------------------------------------------------------
-+ Update man page to document one_fs feature
-+ Use "install" in makefile instead of fileutils commands (cp, etc)
-+ Add an file exclusion list feature
-+ Implement a generalized way to pass arbitrary args to rsync and ssh
-+ Support for SSH tunnelling (this may be handled by arbitrary args)
-+ Add support for connecting to an rsync daemon requiring authentication,
+- Update man page to document one_fs feature
+
+- Use "install" in makefile instead of fileutils commands (cp, etc)
+
+- Add an file exclusion list feature
+
+- Implement a generalized way to pass arbitrary args to rsync and ssh
+
+- Support for SSH tunnelling (this may be handled by arbitrary args)
+
+- Add support for connecting to an rsync daemon requiring authentication,
   either using the --password-file flag or RSYNC_PASSWORD env var
-+ Add support for arbitrary programs to handle certain types of connections;
+
+- Add support for arbitrary programs to handle certain types of connections;
   i.e. http_handler gets set to wget, to handle http downloads, which are
   then rsynced into main snapshot_root tree
 
 for version 2.0.x
 ------------------------------------------------------------------------------
-+ Possibly rewrite it in C, if there's time or inclination. This would be a
+- Possibly rewrite it in C, if there's time or inclination. This would be a
   lot of work! However, it would allow all the benefits of GNU cp combined
   with total compatibility.

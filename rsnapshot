@@ -94,7 +94,7 @@ my $one_fs			= 0; # one file system (don't cross partitions within a backup poin
 # how much noise should we make?
 my $quiet			= 0; # don't display warnings about FIFOs and special files if enabled
 my $verbose			= 0; # show the shell commands being executed
-my $extra_verbose	= 0; # show verbose messages from rsync
+my $extra_verbose	= 0; # show extra verbose messages
 my $debug			= 0; # super verbose debugging messages
 
 ###############
@@ -1132,6 +1132,8 @@ sub add_lockfile	{
 		exit(-1);
 	}
 	
+	if (1 == $verbose)	{ print "touch $lockfile\n"; }
+	
 	# create the lockfile
 	my $result = open(LOCKFILE, "> $lockfile");
 	if (!defined($result))	{
@@ -1157,6 +1159,8 @@ sub remove_lockfile	{
 		print STDERR "remove_lockfile() must be passed a value\n";
 		exit(-1);
 	}
+	
+	if (1 == $verbose)	{ print "rm -f $lockfile\n"; }
 	
 	$result = unlink($lockfile);
 	
