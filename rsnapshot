@@ -210,7 +210,7 @@ if ( -f "$config_file" )	{
 			}
 			
 			# remove the trailing slash(es) if present
-			$value =~ s/\/+$//g;
+			$value = remove_trailing_slash($value);
 			
 			# if path exists already, make sure it's a directory
 			if ((-e "$value") && (! -d "$value"))	{
@@ -327,7 +327,7 @@ if ( -f "$config_file" )	{
 			if ((is_real_local_abs_path("$src")) && ($config_vars{'snapshot_root'} =~ $src))	{
 				
 				# remove trailing slash from source, since we will be using our own
-				$src =~ s/\/$//;
+				$src = remove_trailing_slash($src);
 				
 				opendir(SRC, "$src") or bail("Could not open $src");
 				
@@ -775,6 +775,16 @@ sub is_real_local_abs_path	{
 	}
 }
 
+# accepts string
+# removes trailing slash, returns the string
+sub remove_trailing_slash	{
+	my $str = shift(@_);
+	
+	$str =~ s/\/+$//;
+	
+	return ($str);
+}
+
 sub show_help	{
 	show_usage();
 	
@@ -874,8 +884,8 @@ sub native_cp_al	{
 	
 	# strip trailing slashes off the directories,
 	# since we'll add them back on later
-	$src  =~ s/\/$//;
-	$dest =~ s/\/$//;
+	$src  = remove_trailing_slash($src);
+	$dest = remove_trailing_slash($dest);
 	
 	# LSTAT SRC
 	my $st = lstat("$src");
