@@ -1,4 +1,4 @@
-rsnapshot 0.9.0
+rsnapshot 0.9.1
 
 rsnapshot is a filesystem snapshot utility. It can take incremental
 snapshots of local and remote filesystems for any number of machines.

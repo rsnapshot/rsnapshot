@@ -11,17 +11,17 @@ html:
 	
 clean:
 	rm -f rsnapshot.1
-	rm -rf rsnapshot-0.9.0/
-	rm -f rsnapshot-0.9.0.tar.gz
+	rm -rf rsnapshot-0.9.1/
+	rm -f rsnapshot-0.9.1.tar.gz
 	
 tar:
 	make man
-	mkdir rsnapshot-0.9.0
-	rm -f rsnapshot-0.9.0.tar.gz
-	cp rsnapshot rsnapshot.conf Makefile rsnapshot.1 GPL INSTALL README rsnapshot-0.9.0/
-	chown -R 0:0 rsnapshot-0.9.0/
-	tar czf rsnapshot-0.9.0.tar.gz rsnapshot-0.9.0/
-	rm -rf rsnapshot-0.9.0/
+	mkdir rsnapshot-0.9.1
+	rm -f rsnapshot-0.9.1.tar.gz
+	cp rsnapshot rsnapshot.conf Makefile rsnapshot.1 GPL INSTALL README TODO rsnapshot-0.9.1/
+	chown -R 0:0 rsnapshot-0.9.1/
+	tar czf rsnapshot-0.9.1.tar.gz rsnapshot-0.9.1/
+	rm -rf rsnapshot-0.9.1/
 	rm -f rsnapshot.1
 	
 install:
