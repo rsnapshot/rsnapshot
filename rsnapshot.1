@@ -129,7 +129,7 @@
 .\" ========================================================================
 .\"
 .IX Title "RSNAPSHOT 1"
-.TH RSNAPSHOT 1 "2004-05-15" "perl v5.8.0" "User Contributed Perl Documentation"
+.TH RSNAPSHOT 1 "2004-05-16" "perl v5.8.0" "User Contributed Perl Documentation"
 .SH "NAME"
 rsnapshot \- remote filesystem snapshot utility
 .SH "SYNOPSIS"
@@ -188,17 +188,19 @@ It is recommended that you copy \fB/etc/rsnapshot.conf.default\fR to
 your needs. What follows here is a list of allowed parameters:
 .Sp
 .RS 4
-\&\fBsnapshot_root\fR local filesystem path to save all snapshots
+\&\fBsnapshot_root\fR  Local filesystem path to save all snapshots
 .Sp
-\&\fBcmd_rsync\fR     Full path to rsync (required)
+\&\fBno_create_root\fR If set to 1, rsnapshot won't create snapshot_root directory
 .Sp
-\&\fBcmd_ssh\fR       Full path to ssh (optional)
+\&\fBcmd_rsync\fR      Full path to rsync (required)
 .Sp
-\&\fBcmd_cp\fR        Full path to cp  (optional, but must be \s-1GNU\s0 version)
+\&\fBcmd_ssh\fR        Full path to ssh (optional)
 .Sp
-\&\fBcmd_rm\fR        Full path to rm  (optional)
+\&\fBcmd_cp\fR         Full path to cp  (optional, but must be \s-1GNU\s0 version)
 .Sp
-\&\fBcmd_logger\fR    Full path to logger (optional, for syslog support)
+\&\fBcmd_rm\fR         Full path to rm  (optional)
+.Sp
+\&\fBcmd_logger\fR     Full path to logger (optional, for syslog support)
 .Sp
 .RS 4
 If you have \s-1GNU\s0 cp, you should uncomment cmd_cp, since you will get extra

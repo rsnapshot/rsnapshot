@@ -6,6 +6,17 @@
 # by Nathan Rosenquist <nathan@rsnapshot.org>
 # http://www.rsnapshot.org/
 #
+##############################################################################
+##############################################################################
+##############################################################################
+#
+# NOTE: THIS SCRIPT HAS BEEN SUPERCEDED BY THE "no_create_root" OPTION IN
+# rsnapshot. iT IS LEFT HERE JUST IN CASE ANYONE WANTS TO USE IT.
+#
+##############################################################################
+##############################################################################
+##############################################################################
+#
 # This is a simple shell script to run rsnapshot only if the backup drive
 # is mounted. It is intended to be used when backups are made to removable
 # devices (such as FireWire drives).

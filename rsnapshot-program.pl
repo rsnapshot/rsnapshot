@@ -309,6 +309,24 @@ if ( -f "$config_file" )	{
 			next;
 		}
 		
+		# NO_CREATE_ROOT
+		if ($var eq 'no_create_root')	{
+			if (defined($value))	{
+				if ('1' eq $value)	{
+					$config_vars{'no_create_root'} = 1;
+					$line_syntax_ok = 1;
+					next;
+				} elsif ('0' eq $value)	{
+					$config_vars{'no_create_root'} = 0;
+					$line_syntax_ok = 1;
+					next;
+				} else	{
+					config_err($file_line_num, "$line - no_create_root must be set to either 1 or 0");
+					next;
+				}
+			}
+		}
+		
 		# CHECK FOR RSYNC (required)
 		if ($var eq 'cmd_rsync')	{
 			if ((-f "$value") && (-x "$value") && (1 == is_real_local_abs_path($value)))	{
@@ -800,6 +818,16 @@ if (scalar(@intervals) > 1)	{
 		if (1 == $intervals[0]->{'number'})	{
 			print_err ("Can not have first interval set to 1, and have a second interval", 1);
 			syslog_err("Can not have first interval set to 1, and have a second interval");
+			exit(1);
+		}
+	}
+}
+# make sure that the snapshot_root exists if no_create_root is set to 1
+if (defined($config_vars{'no_create_root'}))	{
+	if (1 == $config_vars{'no_create_root'})	{
+		if ( ! -d "$config_vars{'snapshot_root'}" )	{
+			print_err ("rsnapshot refuses to create snapshot_root when no_create_root is enabled", 1);
+			syslog_err("rsnapshot refuses to create snapshot_root when no_create_root is enabled");
 			exit(1);
 		}
 	}
@@ -3032,17 +3060,19 @@ your needs. What follows here is a list of allowed parameters:
 
 =over 4
 
-B<snapshot_root> local filesystem path to save all snapshots
+B<snapshot_root>  Local filesystem path to save all snapshots
 
-B<cmd_rsync>     Full path to rsync (required)
+B<no_create_root> If set to 1, rsnapshot won't create snapshot_root directory
 
-B<cmd_ssh>       Full path to ssh (optional)
+B<cmd_rsync>      Full path to rsync (required)
 
-B<cmd_cp>        Full path to cp  (optional, but must be GNU version)
+B<cmd_ssh>        Full path to ssh (optional)
 
-B<cmd_rm>        Full path to rm  (optional)
+B<cmd_cp>         Full path to cp  (optional, but must be GNU version)
 
-B<cmd_logger>    Full path to logger (optional, for syslog support)
+B<cmd_rm>         Full path to rm  (optional)
+
+B<cmd_logger>     Full path to logger (optional, for syslog support)
 
 =over 4
 

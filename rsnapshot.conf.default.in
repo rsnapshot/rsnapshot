@@ -19,6 +19,12 @@
 # All snapshots will be stored under this root directory.
 snapshot_root	/.snapshots/
 
+# If no_create_root is enabled, rsnapshot will not automatically create the
+# snapshot_root directory. This is particularly useful if you are backing
+# up to removable media, such as a FireWire drive.
+#
+#no_create_root	1
+
 #################################
 # EXTERNAL PROGRAM DEPENDENCIES #
 #################################

@@ -1,20 +1,24 @@
---- rsnapshot.conf.default.in	Mon Jan 19 17:22:30 2004
-+++ rsnapshot.conf.default.in.RPM	Mon Jan 19 17:23:28 2004
-@@ -28,7 +28,7 @@
+--- rsnapshot.conf.default	Sun May 16 17:35:01 2004
++++ rsnapshot.conf.default.RPM	Sun May 16 17:36:34 2004
+@@ -34,10 +34,10 @@
  #
  # See the README file or the man page for more details.
  #
 -#cmd_cp		/bin/cp
 +cmd_cp		/bin/cp
  
+ # uncomment this to use the rm program instead of the built-in perl routine
+-#cmd_rm		/bin/rm
++cmd_rm		/bin/rm
+ 
  # rsync must be enabled for anything to work.
- @CMD_RSYNC@
-@@ -81,7 +81,7 @@
+ cmd_rsync	/usr/bin/rsync
+@@ -122,7 +122,7 @@
  # If you enable the lockfile, make sure the lockfile directory is
  # not world writable. Otherwise anyone can prevent the program from running.
  #
 -#lockfile	/var/run/rsnapshot
 +lockfile	/var/lock/subsys/rsnapshot
  
- # If this is enabled, rsync won't span filesystem partitions within a
- # backup point. This essentially passes the -x option to rsync.
+ ###############################
+ ### BACKUP POINTS / SCRIPTS ###
