@@ -5,6 +5,7 @@ for version 1.0.x
 + Add an file exclusion list feature
 + Add a "one_fs" feature to the config file
 + Come up with a generalized way to pass arbitrary args to rsync and ssh
++ Support for SSH tunnelling
 
 for version 2.0.x
 ------------------------------------------------------------------------------
