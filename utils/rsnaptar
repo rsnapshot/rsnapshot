@@ -63,6 +63,7 @@ cd -
 
 # there are probably sensitive files here, so use the strictest permissions
 ${CHMOD} -R 0600 ${TAR_DIR}/
+${CHMOD} 0700 ${TAR_DIR}/
 
 ${CAT} <<EOF | ${SENDMAIL}
 To: ${TO_EMAIL}
