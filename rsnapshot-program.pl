@@ -29,7 +29,6 @@ use strict;
 use Cwd;
 use DirHandle;
 use Getopt::Std;
-use File::Copy;
 use File::Path;
 use File::stat;
 
@@ -1097,10 +1096,21 @@ sub sync_cp_src_dest	{
 					}
 				}
 				
-			# FIXME: do all the checks for different file types
-			# it's some goofy file like a FIFO, complain but keep going
-			} elsif (1)	{
-				print "other file type: not done yet\n";
+			# FIFO
+			} elsif ( -p "$src/$node" )	{
+				if (0 == $quiet)	{ print STDERR "Warning! Ignoring FIFO $src/$node\n"; }
+				
+			# SOCKET
+			} elsif ( -S "$src/$node" )	{
+				if (0 == $quiet)	{ print STDERR "Warning! Ignoring socket: $src/$node\n"; }
+				
+			# BLOCK DEVICE
+			} elsif ( -b "$src/$node" )	{
+				if (0 == $quiet)	{ print STDERR "Warning! Ignoring special block file: $src/$node\n"; }
+				
+			# CHAR DEVICE
+			} elsif ( -c "$src/$node" )	{
+				if (0 == $quiet)	{ print STDERR "Warning! Ignoring special character file: $src/$node\n"; }
 			}
 		}
 	}
