@@ -3942,7 +3942,7 @@ of cron jobs. It is possible, however, to run as any arbitrary user
 with an alternate configuration file.
 
 All important options are specified in a configuration file, which is
-located by default at B</etc/rsnapshot.conf>. An alternate one can be
+located by default at B</etc/rsnapshot.conf>. An alternate file can be
 specified on the command line. There are also additional options which
 can be passed on the command line.
 
@@ -3970,11 +3970,13 @@ B<-D> a firehose of diagnostic information
 
 B</etc/rsnapshot.conf> is the default configuration file. All parameters
 in this file must be seperated by tabs. B</etc/rsnapshot.conf.default>
-can be used as a syntactically valid reference.
+can be used as a reference.
 
 It is recommended that you copy B</etc/rsnapshot.conf.default> to
 B</etc/rsnapshot.conf>, and then modify B</etc/rsnapshot.conf> to suit
-your needs. What follows here is a list of allowed parameters:
+your needs.
+
+Here is a list of allowed parameters:
 
 =over 4
 
@@ -3991,6 +3993,8 @@ B<cmd_cp>         Full path to cp  (optional, but must be GNU version)
 B<cmd_rm>         Full path to rm  (optional)
 
 B<cmd_logger>     Full path to logger (optional, for syslog support)
+
+B<cmd_du>         Full path to du (optional, for disk usage reports)
 
 =over 4
 
@@ -4043,8 +4047,8 @@ For this example, every time this is run, the following will happen:
 <snapshot_root>/hourly.0/ will be copied to <snapshot_root>/hourly.1/
 using hard links.
 
-Each backup point in <snapshot_root>/hourly.0/ will be rsynced with the
-backup points specified in this config file later.
+Each backup point (explained below) will then be rsynced to the
+corresponding directories in <snapshot_root>/hourly.0/
 
 Intervals must be specified in the config file in order, from most
 frequent to least frequent. The first entry is the one which will be
@@ -4108,6 +4112,9 @@ B<loglevel            3>
 This number means the same thing as B<verbose> above, but it determines how
 much data is written to the logfile, if one is being written.
 
+The only thing missing from this at the higher levels is the direct output
+from rsync. We hope to add support for this in a future relase.
+
 =back
 
 B<logfile             /var/log/rsnapshot>
@@ -4164,16 +4171,29 @@ B<rsync_short_args    -a>
 
 List of short arguments to pass to rsync. If not specified,
 "-a" is the default. Please note that these must be all next to each other.
-For example, "-an" is valid, while "-a -n" is not.
+For example, "-az" is valid, while "-a -z" is not.
 
 =back
 
-B<rsync_long_args     --delete --numeric-ids>
+B<rsync_long_args     --delete --numeric-ids --relative --delete-excluded>
 
 =over 4
 
-List of long arguments to pass to rsync. If not specified,
-"--delete --numeric-ids" is the default.
+List of long arguments to pass to rsync. Beginning with rsnapshot 1.2.0, this
+default has changed. In previous versions, the default values were
+
+    --delete --numeric-ids
+
+Starting with version 1.2.0, the default values are
+
+    --delete --numeric-ids --relative --delete-excluded
+
+This directly affects how the destination paths in your backup points are
+constructed. Depending on what behaviour you want, you can explicitly set
+the values to make the program behave like the old version or the current
+version. The newer settings are recommended if you're just starting. If
+you are upgrading, read the upgrade guide in the INSTALL file in the
+source distribution for more information.
 
 =back
 
@@ -4185,7 +4205,7 @@ Arguments to be passed to ssh. If not specified, the default is none.
 
 =back
 
-B<lockfile    /var/lock/subsys/rsnapshot>
+B<lockfile    /var/run/rsnapshot.pid>
 
 =over 4
 
@@ -4206,38 +4226,67 @@ The default is off.
 
 =back
 
-B<backup>  /local/path/                localhost/path/
+B<UPGRADE NOTICE:>
 
-B<backup>  root@example.com:/path/     example.com/path/
+=over 4
 
-B<backup>  rsync://example.com/path2/  example.com/path2/
+If you have used an older version of rsnapshot, you might notice that the
+destination paths on the backup points have changed. Please read the INSTALL
+file in the source distribution for upgrade options.
 
-B<backup>  /local/path2/               localhost/path2/      one_fs=1
+=back
 
-B<backup_script>    /usr/local/bin/backup_database.sh    db_backup/
+B<backup>  /etc/                       localhost/
+
+B<backup>  root@example.com:/etc/      example.com/
+
+B<backup>  rsync://example.com/path2/  example.com/
+
+B<backup>  /var/                       localhost/      one_fs=1
+
+B<backup_script>   /usr/local/bin/backup_pgsql.sh    pgsql_backup/
 
 =over 4
 
 Examples:
 
-B<backup   /etc/     etc/>
+B<backup   /etc/        localhost/>
 
 =over 4
 
-Backs up /etc/ to <snapshot_root>/<interval>.0/etc/ using rsync on the local filesystem
+Backs up /etc/ to <snapshot_root>/<interval>.0/localhost/etc/ using rsync on
+the local filesystem
 
 =back
 
-B<backup   root@example.com:/home/       example.com/home/>
+B<backup   /usr/local/  localhost/>
 
 =over 4
 
-Backs up root@example.com:/home/ to <snapshot_root>/<interval>.0/example.com/home/
+Backs up /usr/local/ to <snapshot_root>/<interval>.0/localhost/usr/local/
+using rsync on the local filesystem
+
+=back
+
+B<backup   root@example.com:/etc/       example.com/>
+
+=over 4
+
+Backs up root@example.com:/etc/ to <snapshot_root>/<interval>.0/example.com/etc/
 using rsync over ssh
 
 =back
 
-B<backup   rsync://example.com/pub/      example.com/pub/>
+B<backup   root@example.com:/usr/local/ example.com/>
+
+=over 4
+
+Backs up root@example.com:/usr/local/ to
+<snapshot_root>/<interval>.0/example.com/usr/local/ using rsync over ssh
+
+=back
+
+B<backup   rsync://example.com/pub/      example.com/>
 
 =over 4
 
@@ -4246,13 +4295,13 @@ using an anonymous rsync server
 
 =back
 
-B<backup   /local/path2/    localhost/path2/    one_fs=1>
+B<backup   /var/     localhost/   one_fs=1>
 
 =over 4
 
-This is the same as the first example, but notice how the fourth parameter is passed.
-This sets this backup point to not span filesystem partitions. If the global one_fs
-has been set, this will override it locally.
+This is the same as the other examples, but notice how the fourth parameter
+is passed. This sets this backup point to not span filesystem partitions.
+If the global one_fs has been set, this will override it locally.
 
 =back
 
@@ -4263,6 +4312,11 @@ B<backup_script      /usr/local/bin/backup_database.sh   db_backup/>
 In this example, we specify a script or program to run. This script should simply
 create files and/or directories in it's current working directory. rsnapshot will
 then take that output and move it into the directory specified in the third column.
+
+Please note that whatever is in the destination directory will be completely
+deleted and recreated. For this reason, rsnapshot prevents you from specifying
+a destination directory for a backup_script that will clobber other backups.
+
 So in this example, say the backup_database.sh script simply runs a command like:
 
 =over 4
@@ -4274,9 +4328,11 @@ mysqldump -uusername mydatabase > mydatabase.sql
 =back
 
 rsnapshot will take the generated "mydatabase.sql" file and move it into the
-db_backup/ directory inside the snapshot interval, just the same as if it had
-been sitting on the filesystem. If the backup script generates the same output
-on the next run, no additional disk space will be taken up.
+<snapshot_root>/<interval>.0/db_backup/ directory. On subsequent runs,
+rsnapshot checks the differences between the files created against the
+previous files. If the backup script generates the same output on the next
+run, the files will be hard linked against the previous ones, and no
+additional disk space will be taken up.
 
 =back
 
@@ -4316,17 +4372,17 @@ B<interval>        weekly  7
 
 B<interval>        monthly 3
 
-B<backup>  /etc/                        localhost/etc/
+B<backup>  /etc/                        localhost/
 
-B<backup>  /home/                       localhost/home/
+B<backup>  /home/                       localhost/
 
-B<backup>  root@foo.com:/etc/           foo.com/etc/
+B<backup>  root@foo.com:/etc/           foo.com/
 
-B<backup>  root@foo.com:/home/          foo.com/home/
+B<backup>  root@foo.com:/home/          foo.com/
 
-B<backup>  root@mail.foo.com:/home/     mail.foo.com/home/
+B<backup>  root@mail.foo.com:/home/     mail.foo.com/
 
-B<backup>  rsync://example.com/pub/     example.com/pub/
+B<backup>  rsync://example.com/pub/     example.com/
 
 B<backup_script>    /usr/local/bin/backup_database.sh    db_backup/
 
@@ -4335,9 +4391,14 @@ B<backup_script>    /usr/local/bin/backup_database.sh    db_backup/
 =head1 USAGE
 
 B<rsnapshot> can be used by any user, but for system-wide backups
-you will probably want to run it as root. Since backups tend to
-get neglected if human intervention is required, the preferred
-way is to run it from cron.
+you will probably want to run it as root.
+
+Since backups usually get neglected if human intervention is
+required, the preferred way is to run it from cron.
+
+When you are first setting up your backups, you will probably
+also want to run it from the command line once or twice to get
+a feel for what it's doing.
 
 Here is an example crontab entry, assuming that intervals B<hourly>,
 B<daily>, B<weekly> and B<monthly> have been defined in B</etc/rsnapshot.conf>
@@ -4371,10 +4432,12 @@ This example will do the following:
 It is usually a good idea to schedule the larger intervals to run a bit before the
 lower ones. For example, in the crontab above, notice that "daily" runs 10 minutes
 before "hourly". This helps prevent race conditions where the "daily" would try to
-run before the "hourly" job had finished.
+run before the "hourly" job had finished. This is where the B<lockfile> parameter
+really comes in handy.
 
 Remember that these are just the times that the program runs.
-To set the number of backups stored, set the interval numbers in B</etc/rsnapshot.conf>
+To set the number of backups stored, set the B<interval> numbers in
+B</etc/rsnapshot.conf>
 
 To check the disk space used by rsnapshot, you can call it with the "du" argument.
 
@@ -4387,7 +4450,8 @@ B</usr/local/bin/rsnapshot du>
 =back
 
 This will show you exactly how much disk space is taken up in the snapshot root. This
-feature requires the UNIX B<du> command to be installed on your system, and in your path.
+feature requires the UNIX B<du> command to be installed on your system, for it to
+support the "-csh" command line arguments, and to be in your path.
 
 =head1 EXIT VALUES
 
@@ -4411,9 +4475,17 @@ rsync(1), ssh(1), logger(1), sshd(1), ssh-keygen(1), perl(1), cp(1), du(1), cron
 
 =head1 DIAGNOSTICS
 
-Use the B<-t> flag to see what commands would have been executed. The
-B<-v>, B<-V>, and B<-D> flags will print increasingly more information.
-Much weird behavior can probably be attributed to plain old file system
+Use the B<-t> flag to see what commands would have been executed. This will show
+you the commands rsnapshot would try to run. There are a few minor differences
+(for example, not showing an attempt to remove the lockfile because it wasn't
+really created in the test), but should give you a very good idea what will happen.
+
+Using the B<-v>, B<-V>, and B<-D> flags will print increasingly more information
+to STDOUT.
+
+Make sure you don't have spaces in the config file that you think are actually tabs.
+
+Much other weird behavior can probably be attributed to plain old file system
 permissions and ssh authentication issues.
 
 =head1 BUGS
@@ -4430,11 +4502,10 @@ If you don't, you may have extra directories created in your snapshots.
 For more information on how the trailing slash is handled, see the
 B<rsync(1)> manpage.
 
-If you do not plan on making the backups readable by regular users, be
-sure to make the snapshot directory chmod 700 root. If the snapshot
-directory is readable by other users, they will be able to modify the
-snapshots containing their files, thus destroying the integrity of the
-snapshots.
+Make sure to make the snapshot directory chmod 700 and owned by root
+(assuming backups are made by the root user). If the snapshot directory
+is readable by other users, they will be able to modify the snapshots
+containing their files, thus destroying the integrity of the snapshots.
 
 If you would like regular users to be able to restore their own backups,
 there are a number of ways this can be accomplished. One such scenario
@@ -4455,6 +4526,9 @@ drwxr-xr-x    /.private/.snapshots
 Export the /.private/.snapshots directory over read-only NFS, a read-only
 Samba share, etc.
 
+See the rsnapshot HOWTO for more information on making backups
+accessible to non-privileged users.
+
 For ssh to work unattended through cron, you will probably want to use
 public key logins. Create an ssh key with no passphrase for root, and
 install the public key on each machine you want to backup. If you are
@@ -4463,7 +4537,7 @@ unattended root logins. Another posibility is to create a second user
 on the machine just for backups. Give the user a different name such
 as "rsnapshot", but keep the UID and GID set to 0, to give root
 privileges. However, make logins more restrictive, either through ssh
-configuration, or using an alternate shell such as B<scponly>.
+configuration, or using an alternate shell.
 
 BE CAREFUL! If the private key is obtained by an attacker, they will
 have free run of all the systems involved. If you are unclear on how
@@ -4482,7 +4556,10 @@ This means that user names and group names are ignored during transfers,
 but the UID/GID information is kept intact. The assumption is that the
 backups will be restored in the same environment they came from. Without
 this option, restoring backups for multiple heterogeneous servers would
-be unmanageable.
+be unmanageable. If you are archiving snapshots with GNU tar, you may
+want to use the --numeric-owner parameter. Also, keep a copy of the
+archived system's /etc/passwd and /etc/group files handy for the UID/GID
+to name mapping.
 
 If you remove backup points in the config file, the previously archived
 files under those points will permanently stay in the snapshots directory
@@ -4490,13 +4567,13 @@ unless you remove the files yourself. If you want to conserve disk space,
 you will need to go into the <snapshot_root> directory and manually
 remove the files from the smallest interval's ".0" directory.
 
-For example, if you were previously backing up /home/ in home/, and
-hourly is your smallest interval, you would need to do the following to
-reclaim that disk space:
+For example, if you were previously backing up /home/ with a destination
+of localhost/, and hourly is your smallest interval, you would need to do
+the following to reclaim that disk space:
 
 =over 4
 
-rm -rf <snapshot_root>/hourly.0/home/
+rm -rf <snapshot_root>/hourly.0/localhost/home/
 
 =back
 
@@ -4507,53 +4584,102 @@ be removed in due time as the rotations happen.
 
 =head1 AUTHORS
 
-Based on code originally by Mike Rubel
+Mike Rubel - B<http://www.mikerubel.org/computers/rsync_snapshots/>
 
 =over 4
 
-B<http://www.mikerubel.org/computers/rsync_snapshots/>
+- Created the original shell scripts on which this project is based
 
 =back
 
-Rewritten and expanded in Perl by Nathan Rosenquist
+Nathan Rosenquist (B<nathan@rsnapshot.org>)
 
 =over 4
 
-B<http://www.rsnapshot.org/>
+- Primary author and maintainer of rsnapshot.
 
 =back
 
-Carl Wilhelm Soderstrom B<(chrome@real-time.com)> created the RPM
-.spec file which allowed the RPM package to be built, among other
-things.
+Carl Wilhelm Soderstrom B<(chrome@real-time.com)>
 
-Ted Zlatanov (B<tzz@lifelogs.com>) contributed code, advice, patches
-and many good ideas.
+=over 4
 
-Ralf van Dooren (B<r.vdooren@snow.nl>) added and maintains the
-rsnapshot entry in the FreeBSD ports tree.
+- Created the RPM .spec file which allowed the RPM package to be built, among
+other things.
 
-Carl Boe (B<boe@demog.berkeley.edu>) Found several subtle bugs and
-provided fixes for them.
+=back
 
-Shane Leibling (B<shane@cryptio.net>) fixed a compatibility bug in
-utils/backup_smb_share.sh
+Ted Zlatanov (B<tzz@lifelogs.com>)
 
-Christoph Wegscheider (B<christoph.wegscheider@wegi.net>) added and
-maintains the Debian rsnapshot package.
+=over 4
 
-Bharat Mediratta (B<bharat@menalto.com>) improved the exclusion
-rules to avoid backing up the snapshot root (among other things).
+- Added the one_fs feature, autoconf support, good advice, and much more.
 
-Peter Palfrader (B<weasel@debian.org>) enhanced error reporting to
-include command line options.
+=back
+
+Ralf van Dooren (B<r.vdooren@snow.nl>)
+
+=over 4
+
+- Added and maintains the rsnapshot entry in the FreeBSD ports tree.
+
+=back
+
+SlapAyoda
+
+=over 4
+
+- Provided access to his computer museum for software testing.
+
+=back
+
+Carl Boe (B<boe@demog.berkeley.edu>)
+
+=over 4
+
+- Found several subtle bugs and provided fixes for them.
+
+=back
+
+Shane Leibling (B<shane@cryptio.net>)
+
+=over 4
+
+- Fixed a compatibility bug in utils/backup_smb_share.sh
+
+=back
+
+Christoph Wegscheider (B<christoph.wegscheider@wegi.net>)
+
+=over 4
+
+- Added and maintains the Debian rsnapshot package.
+
+=back
+
+Bharat Mediratta (B<bharat@menalto.com>)
+
+=over 4
+
+- Improved the exclusion rules to avoid backing up the snapshot root (among
+other things).
+
+=back
+
+Peter Palfrader (B<weasel@debian.org>)
+
+=over 4
+
+- Enhanced error reporting to include command line options.
+
+=back
 
 =head1 COPYRIGHT
 
-Copyright (C) 2003-2004 Nathan Rosenquist
+Copyright (C) 2003-2005 Nathan Rosenquist
 
-Portions Copyright (C) 2002-2003 Mike Rubel, Carl Wilhelm Soderstrom,
-Ted Zlatanov
+Portions Copyright (C) 2002-2005 Mike Rubel, Carl Wilhelm Soderstrom,
+Ted Zlatanov, Carl Boe, Shane Liebling, Bharat Mediratta, Peter Palfrader
 
 This man page is distributed under the same license as rsnapshot:
 the GPL (see below).

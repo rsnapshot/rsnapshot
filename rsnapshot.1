@@ -129,7 +129,7 @@
 .\" ========================================================================
 .\"
 .IX Title "rsnapshot 1"
-.TH rsnapshot 1 "2005-01-22" "" ""
+.TH rsnapshot 1 "2005-01-23" "" ""
 .SH "NAME"
 rsnapshot \- remote filesystem snapshot utility
 .SH "SYNOPSIS"
@@ -156,7 +156,7 @@ of cron jobs. It is possible, however, to run as any arbitrary user
 with an alternate configuration file.
 .PP
 All important options are specified in a configuration file, which is
-located by default at \fB/etc/rsnapshot.conf\fR. An alternate one can be
+located by default at \fB/etc/rsnapshot.conf\fR. An alternate file can be
 specified on the command line. There are also additional options which
 can be passed on the command line.
 .PP
@@ -181,11 +181,13 @@ The command line options are as follows:
 .IX Header "CONFIGURATION"
 \&\fB/etc/rsnapshot.conf\fR is the default configuration file. All parameters
 in this file must be seperated by tabs. \fB/etc/rsnapshot.conf.default\fR
-can be used as a syntactically valid reference.
+can be used as a reference.
 .PP
 It is recommended that you copy \fB/etc/rsnapshot.conf.default\fR to
 \&\fB/etc/rsnapshot.conf\fR, and then modify \fB/etc/rsnapshot.conf\fR to suit
-your needs. What follows here is a list of allowed parameters:
+your needs.
+.PP
+Here is a list of allowed parameters:
 .Sp
 .RS 4
 \&\fBsnapshot_root\fR  Local filesystem path to save all snapshots
@@ -201,6 +203,8 @@ your needs. What follows here is a list of allowed parameters:
 \&\fBcmd_rm\fR         Full path to rm  (optional)
 .Sp
 \&\fBcmd_logger\fR     Full path to logger (optional, for syslog support)
+.Sp
+\&\fBcmd_du\fR         Full path to du (optional, for disk usage reports)
 .Sp
 .RS 4
 If you have \s-1GNU\s0 cp, you should uncomment cmd_cp, since you will get extra
@@ -252,8 +256,8 @@ For this example, every time this is run, the following will happen:
 <snapshot_root>/hourly.0/ will be copied to <snapshot_root>/hourly.1/
 using hard links.
 .Sp
-Each backup point in <snapshot_root>/hourly.0/ will be rsynced with the
-backup points specified in this config file later.
+Each backup point (explained below) will then be rsynced to the
+corresponding directories in <snapshot_root>/hourly.0/
 .Sp
 Intervals must be specified in the config file in order, from most
 frequent to least frequent. The first entry is the one which will be
@@ -316,6 +320,9 @@ are 1 through 5. The default is 2.
 .RS 4
 This number means the same thing as \fBverbose\fR above, but it determines how
 much data is written to the logfile, if one is being written.
+.Sp
+The only thing missing from this at the higher levels is the direct output
+from rsync. We hope to add support for this in a future relase.
 .RE
 .RE
 .RS 4
@@ -373,16 +380,33 @@ This gets passed directly to rsync using the \-\-exclude\-from directive. See th
 .RS 4
 List of short arguments to pass to rsync. If not specified,
 \&\*(L"\-a\*(R" is the default. Please note that these must be all next to each other.
-For example, \*(L"\-an\*(R" is valid, while \*(L"\-a \-n\*(R" is not.
+For example, \*(L"\-az\*(R" is valid, while \*(L"\-a \-z\*(R" is not.
 .RE
 .RE
 .RS 4
 .Sp
-\&\fBrsync_long_args     \-\-delete \-\-numeric\-ids\fR
+\&\fBrsync_long_args     \-\-delete \-\-numeric\-ids \-\-relative \-\-delete\-excluded\fR
 .Sp
 .RS 4
-List of long arguments to pass to rsync. If not specified,
-\&\*(L"\-\-delete \-\-numeric\-ids\*(R" is the default.
+List of long arguments to pass to rsync. Beginning with rsnapshot 1.2.0, this
+default has changed. In previous versions, the default values were
+.Sp
+.Vb 1
+\&    --delete --numeric-ids
+.Ve
+.Sp
+Starting with version 1.2.0, the default values are
+.Sp
+.Vb 1
+\&    --delete --numeric-ids --relative --delete-excluded
+.Ve
+.Sp
+This directly affects how the destination paths in your backup points are
+constructed. Depending on what behaviour you want, you can explicitly set
+the values to make the program behave like the old version or the current
+version. The newer settings are recommended if you're just starting. If
+you are upgrading, read the upgrade guide in the \s-1INSTALL\s0 file in the
+source distribution for more information.
 .RE
 .RE
 .RS 4
@@ -395,7 +419,7 @@ Arguments to be passed to ssh. If not specified, the default is none.
 .RE
 .RS 4
 .Sp
-\&\fBlockfile    /var/lock/subsys/rsnapshot\fR
+\&\fBlockfile    /var/run/rsnapshot.pid\fR
 .Sp
 .RS 4
 Lockfile to use when rsnapshot is run. This prevents a second invocation
@@ -416,37 +440,66 @@ The default is off.
 .RE
 .RS 4
 .Sp
-\&\fBbackup\fR  /local/path/                localhost/path/
+\&\fB\s-1UPGRADE\s0 \s-1NOTICE:\s0\fR
 .Sp
-\&\fBbackup\fR  root@example.com:/path/     example.com/path/
+.RS 4
+If you have used an older version of rsnapshot, you might notice that the
+destination paths on the backup points have changed. Please read the \s-1INSTALL\s0
+file in the source distribution for upgrade options.
+.RE
+.RE
+.RS 4
 .Sp
-\&\fBbackup\fR  rsync://example.com/path2/  example.com/path2/
+\&\fBbackup\fR  /etc/                       localhost/
 .Sp
-\&\fBbackup\fR  /local/path2/               localhost/path2/      one_fs=1
+\&\fBbackup\fR  root@example.com:/etc/      example.com/
 .Sp
-\&\fBbackup_script\fR    /usr/local/bin/backup_database.sh    db_backup/
+\&\fBbackup\fR  rsync://example.com/path2/  example.com/
+.Sp
+\&\fBbackup\fR  /var/                       localhost/      one_fs=1
+.Sp
+\&\fBbackup_script\fR   /usr/local/bin/backup_pgsql.sh    pgsql_backup/
 .Sp
 .RS 4
 Examples:
 .Sp
-\&\fBbackup   /etc/     etc/\fR
+\&\fBbackup   /etc/        localhost/\fR
 .Sp
 .RS 4
-Backs up /etc/ to <snapshot_root>/<interval>.0/etc/ using rsync on the local filesystem
+Backs up /etc/ to <snapshot_root>/<interval>.0/localhost/etc/ using rsync on
+the local filesystem
 .RE
 .RE
 .RS 4
 .Sp
-\&\fBbackup   root@example.com:/home/       example.com/home/\fR
+\&\fBbackup   /usr/local/  localhost/\fR
 .Sp
 .RS 4
-Backs up root@example.com:/home/ to <snapshot_root>/<interval>.0/example.com/home/
+Backs up /usr/local/ to <snapshot_root>/<interval>.0/localhost/usr/local/
+using rsync on the local filesystem
+.RE
+.RE
+.RS 4
+.Sp
+\&\fBbackup   root@example.com:/etc/       example.com/\fR
+.Sp
+.RS 4
+Backs up root@example.com:/etc/ to <snapshot_root>/<interval>.0/example.com/etc/
 using rsync over ssh
 .RE
 .RE
 .RS 4
 .Sp
-\&\fBbackup   rsync://example.com/pub/      example.com/pub/\fR
+\&\fBbackup   root@example.com:/usr/local/ example.com/\fR
+.Sp
+.RS 4
+Backs up root@example.com:/usr/local/ to
+<snapshot_root>/<interval>.0/example.com/usr/local/ using rsync over ssh
+.RE
+.RE
+.RS 4
+.Sp
+\&\fBbackup   rsync://example.com/pub/      example.com/\fR
 .Sp
 .RS 4
 Backs up rsync://example.com/pub/ to <snapshot_root>/<interval>.0/example.com/pub/
@@ -455,12 +508,12 @@ using an anonymous rsync server
 .RE
 .RS 4
 .Sp
-\&\fBbackup   /local/path2/    localhost/path2/    one_fs=1\fR
+\&\fBbackup   /var/     localhost/   one_fs=1\fR
 .Sp
 .RS 4
-This is the same as the first example, but notice how the fourth parameter is passed.
-This sets this backup point to not span filesystem partitions. If the global one_fs
-has been set, this will override it locally.
+This is the same as the other examples, but notice how the fourth parameter
+is passed. This sets this backup point to not span filesystem partitions.
+If the global one_fs has been set, this will override it locally.
 .RE
 .RE
 .RS 4
@@ -471,6 +524,11 @@ has been set, this will override it locally.
 In this example, we specify a script or program to run. This script should simply
 create files and/or directories in it's current working directory. rsnapshot will
 then take that output and move it into the directory specified in the third column.
+.Sp
+Please note that whatever is in the destination directory will be completely
+deleted and recreated. For this reason, rsnapshot prevents you from specifying
+a destination directory for a backup_script that will clobber other backups.
+.Sp
 So in this example, say the backup_database.sh script simply runs a command like:
 .Sp
 .RS 4
@@ -482,9 +540,11 @@ mysqldump \-uusername mydatabase > mydatabase.sql
 .RS 4
 .Sp
 rsnapshot will take the generated \*(L"mydatabase.sql\*(R" file and move it into the
-db_backup/ directory inside the snapshot interval, just the same as if it had
-been sitting on the filesystem. If the backup script generates the same output
-on the next run, no additional disk space will be taken up.
+<snapshot_root>/<interval>.0/db_backup/ directory. On subsequent runs,
+rsnapshot checks the differences between the files created against the
+previous files. If the backup script generates the same output on the next
+run, the files will be hard linked against the previous ones, and no
+additional disk space will be taken up.
 .RE
 .RE
 .RS 4
@@ -524,26 +584,31 @@ Putting it all together (an example file):
 .Sp
 \&\fBinterval\fR        monthly 3
 .Sp
-\&\fBbackup\fR  /etc/                        localhost/etc/
+\&\fBbackup\fR  /etc/                        localhost/
 .Sp
-\&\fBbackup\fR  /home/                       localhost/home/
+\&\fBbackup\fR  /home/                       localhost/
 .Sp
-\&\fBbackup\fR  root@foo.com:/etc/           foo.com/etc/
+\&\fBbackup\fR  root@foo.com:/etc/           foo.com/
 .Sp
-\&\fBbackup\fR  root@foo.com:/home/          foo.com/home/
+\&\fBbackup\fR  root@foo.com:/home/          foo.com/
 .Sp
-\&\fBbackup\fR  root@mail.foo.com:/home/     mail.foo.com/home/
+\&\fBbackup\fR  root@mail.foo.com:/home/     mail.foo.com/
 .Sp
-\&\fBbackup\fR  rsync://example.com/pub/     example.com/pub/
+\&\fBbackup\fR  rsync://example.com/pub/     example.com/
 .Sp
 \&\fBbackup_script\fR    /usr/local/bin/backup_database.sh    db_backup/
 .RE
 .SH "USAGE"
 .IX Header "USAGE"
 \&\fBrsnapshot\fR can be used by any user, but for system-wide backups
-you will probably want to run it as root. Since backups tend to
-get neglected if human intervention is required, the preferred
-way is to run it from cron.
+you will probably want to run it as root.
+.PP
+Since backups usually get neglected if human intervention is
+required, the preferred way is to run it from cron.
+.PP
+When you are first setting up your backups, you will probably
+also want to run it from the command line once or twice to get
+a feel for what it's doing.
 .PP
 Here is an example crontab entry, assuming that intervals \fBhourly\fR,
 \&\fBdaily\fR, \fBweekly\fR and \fBmonthly\fR have been defined in \fB/etc/rsnapshot.conf\fR
@@ -573,10 +638,12 @@ This example will do the following:
 It is usually a good idea to schedule the larger intervals to run a bit before the
 lower ones. For example, in the crontab above, notice that \*(L"daily\*(R" runs 10 minutes
 before \*(L"hourly\*(R". This helps prevent race conditions where the \*(L"daily\*(R" would try to
-run before the \*(L"hourly\*(R" job had finished.
+run before the \*(L"hourly\*(R" job had finished. This is where the \fBlockfile\fR parameter
+really comes in handy.
 .PP
 Remember that these are just the times that the program runs.
-To set the number of backups stored, set the interval numbers in \fB/etc/rsnapshot.conf\fR
+To set the number of backups stored, set the \fBinterval\fR numbers in
+\&\fB/etc/rsnapshot.conf\fR
 .PP
 To check the disk space used by rsnapshot, you can call it with the \*(L"du\*(R" argument.
 .PP
@@ -587,7 +654,8 @@ For example:
 .RE
 .PP
 This will show you exactly how much disk space is taken up in the snapshot root. This
-feature requires the \s-1UNIX\s0 \fBdu\fR command to be installed on your system, and in your path.
+feature requires the \s-1UNIX\s0 \fBdu\fR command to be installed on your system, for it to
+support the \*(L"\-csh\*(R" command line arguments, and to be in your path.
 .SH "EXIT VALUES"
 .IX Header "EXIT VALUES"
 .RS 4
@@ -605,9 +673,17 @@ feature requires the \s-1UNIX\s0 \fBdu\fR command to be installed on your system
 \&\fIrsync\fR\|(1), \fIssh\fR\|(1), \fIlogger\fR\|(1), \fIsshd\fR\|(1), \fIssh\-keygen\fR\|(1), \fIperl\fR\|(1), \fIcp\fR\|(1), \fIdu\fR\|(1), \fIcrontab\fR\|(1)
 .SH "DIAGNOSTICS"
 .IX Header "DIAGNOSTICS"
-Use the \fB\-t\fR flag to see what commands would have been executed. The
-\&\fB\-v\fR, \fB\-V\fR, and \fB\-D\fR flags will print increasingly more information.
-Much weird behavior can probably be attributed to plain old file system
+Use the \fB\-t\fR flag to see what commands would have been executed. This will show
+you the commands rsnapshot would try to run. There are a few minor differences
+(for example, not showing an attempt to remove the lockfile because it wasn't
+really created in the test), but should give you a very good idea what will happen.
+.PP
+Using the \fB\-v\fR, \fB\-V\fR, and \fB\-D\fR flags will print increasingly more information
+to \s-1STDOUT\s0.
+.PP
+Make sure you don't have spaces in the config file that you think are actually tabs.
+.PP
+Much other weird behavior can probably be attributed to plain old file system
 permissions and ssh authentication issues.
 .SH "BUGS"
 .IX Header "BUGS"
@@ -622,11 +698,10 @@ If you don't, you may have extra directories created in your snapshots.
 For more information on how the trailing slash is handled, see the
 \&\fB\f(BIrsync\fB\|(1)\fR manpage.
 .PP
-If you do not plan on making the backups readable by regular users, be
-sure to make the snapshot directory chmod 700 root. If the snapshot
-directory is readable by other users, they will be able to modify the
-snapshots containing their files, thus destroying the integrity of the
-snapshots.
+Make sure to make the snapshot directory chmod 700 and owned by root
+(assuming backups are made by the root user). If the snapshot directory
+is readable by other users, they will be able to modify the snapshots
+containing their files, thus destroying the integrity of the snapshots.
 .PP
 If you would like regular users to be able to restore their own backups,
 there are a number of ways this can be accomplished. One such scenario
@@ -645,6 +720,9 @@ drwxr-xr-x    /.private/.snapshots
 Export the /.private/.snapshots directory over read-only \s-1NFS\s0, a read-only
 Samba share, etc.
 .PP
+See the rsnapshot \s-1HOWTO\s0 for more information on making backups
+accessible to non-privileged users.
+.PP
 For ssh to work unattended through cron, you will probably want to use
 public key logins. Create an ssh key with no passphrase for root, and
 install the public key on each machine you want to backup. If you are
@@ -653,7 +731,7 @@ unattended root logins. Another posibility is to create a second user
 on the machine just for backups. Give the user a different name such
 as \*(L"rsnapshot\*(R", but keep the \s-1UID\s0 and \s-1GID\s0 set to 0, to give root
 privileges. However, make logins more restrictive, either through ssh
-configuration, or using an alternate shell such as \fBscponly\fR.
+configuration, or using an alternate shell.
 .PP
 \&\s-1BE\s0 \s-1CAREFUL\s0! If the private key is obtained by an attacker, they will
 have free run of all the systems involved. If you are unclear on how
@@ -672,7 +750,10 @@ This means that user names and group names are ignored during transfers,
 but the \s-1UID/GID\s0 information is kept intact. The assumption is that the
 backups will be restored in the same environment they came from. Without
 this option, restoring backups for multiple heterogeneous servers would
-be unmanageable.
+be unmanageable. If you are archiving snapshots with \s-1GNU\s0 tar, you may
+want to use the \-\-numeric\-owner parameter. Also, keep a copy of the
+archived system's /etc/passwd and /etc/group files handy for the \s-1UID/GID\s0
+to name mapping.
 .PP
 If you remove backup points in the config file, the previously archived
 files under those points will permanently stay in the snapshots directory
@@ -680,12 +761,12 @@ unless you remove the files yourself. If you want to conserve disk space,
 you will need to go into the <snapshot_root> directory and manually
 remove the files from the smallest interval's \*(L".0\*(R" directory.
 .PP
-For example, if you were previously backing up /home/ in home/, and
-hourly is your smallest interval, you would need to do the following to
-reclaim that disk space:
+For example, if you were previously backing up /home/ with a destination
+of localhost/, and hourly is your smallest interval, you would need to do
+the following to reclaim that disk space:
 .Sp
 .RS 4
-rm \-rf <snapshot_root>/hourly.0/home/
+rm \-rf <snapshot_root>/hourly.0/localhost/home/
 .RE
 .PP
 Please note that the other snapshots previously made of /home/ will still
@@ -694,42 +775,73 @@ they will no longer be copied to the subsequent directories, and will thus
 be removed in due time as the rotations happen.
 .SH "AUTHORS"
 .IX Header "AUTHORS"
-Based on code originally by Mike Rubel
+Mike Rubel \- \fBhttp://www.mikerubel.org/computers/rsync_snapshots/\fR
 .Sp
 .RS 4
-\&\fBhttp://www.mikerubel.org/computers/rsync_snapshots/\fR
+\&\- Created the original shell scripts on which this project is based
 .RE
 .PP
-Rewritten and expanded in Perl by Nathan Rosenquist
+Nathan Rosenquist (\fBnathan@rsnapshot.org\fR)
 .Sp
 .RS 4
-\&\fBhttp://www.rsnapshot.org/\fR
+\&\- Primary author and maintainer of rsnapshot.
 .RE
 .PP
-Carl Wilhelm Soderstrom \fB(chrome@real\-time.com)\fR created the \s-1RPM\s0
-\&.spec file which allowed the \s-1RPM\s0 package to be built, among other
-things.
+Carl Wilhelm Soderstrom \fB(chrome@real\-time.com)\fR
+.Sp
+.RS 4
+\&\- Created the \s-1RPM\s0 .spec file which allowed the \s-1RPM\s0 package to be built, among
+other things.
+.RE
 .PP
-Ted Zlatanov (\fBtzz@lifelogs.com\fR) contributed code, advice, patches
-and many good ideas.
+Ted Zlatanov (\fBtzz@lifelogs.com\fR)
+.Sp
+.RS 4
+\&\- Added the one_fs feature, autoconf support, good advice, and much more.
+.RE
 .PP
-Ralf van Dooren (\fBr.vdooren@snow.nl\fR) added and maintains the
-rsnapshot entry in the FreeBSD ports tree.
+Ralf van Dooren (\fBr.vdooren@snow.nl\fR)
+.Sp
+.RS 4
+\&\- Added and maintains the rsnapshot entry in the FreeBSD ports tree.
+.RE
 .PP
-Carl Boe (\fBboe@demog.berkeley.edu\fR) Found several subtle bugs and
-provided fixes for them.
+SlapAyoda
+.Sp
+.RS 4
+\&\- Provided access to his computer museum for software testing.
+.RE
 .PP
-Shane Leibling (\fBshane@cryptio.net\fR) fixed a compatibility bug in
-utils/backup_smb_share.sh
+Carl Boe (\fBboe@demog.berkeley.edu\fR)
+.Sp
+.RS 4
+\&\- Found several subtle bugs and provided fixes for them.
+.RE
 .PP
-Christoph Wegscheider (\fBchristoph.wegscheider@wegi.net\fR) added and
-maintains the Debian rsnapshot package.
+Shane Leibling (\fBshane@cryptio.net\fR)
+.Sp
+.RS 4
+\&\- Fixed a compatibility bug in utils/backup_smb_share.sh
+.RE
 .PP
-Bharat Mediratta (\fBbharat@menalto.com\fR) improved the exclusion
-rules to avoid backing up the snapshot root (among other things).
+Christoph Wegscheider (\fBchristoph.wegscheider@wegi.net\fR)
+.Sp
+.RS 4
+\&\- Added and maintains the Debian rsnapshot package.
+.RE
 .PP
-Peter Palfrader (\fBweasel@debian.org\fR) enhanced error reporting to
-include command line options.
+Bharat Mediratta (\fBbharat@menalto.com\fR)
+.Sp
+.RS 4
+\&\- Improved the exclusion rules to avoid backing up the snapshot root (among
+other things).
+.RE
+.PP
+Peter Palfrader (\fBweasel@debian.org\fR)
+.Sp
+.RS 4
+\&\- Enhanced error reporting to include command line options.
+.RE
 .SH "COPYRIGHT"
 .IX Header "COPYRIGHT"
 Copyright (C) 2003\-2004 Nathan Rosenquist

@@ -2,16 +2,23 @@ Mike Rubel - http://www.mikerubel.org/computers/rsync_snapshots/
     - Created the original shell scripts on which this project is based
 
 Nathan Rosenquist <nathan@rsnapshot.org>
-    - Primary author and maintainer of rsnapshot
+    - Primary author and maintainer of rsnapshot.
 
 Carl Wilhelm Soderstrom <chrome@real-time.com>
-    - Created the RPM .spec file which allowed the RPM package to be built
+    - Created the RPM .spec file which allowed the RPM package to be built,
+      among other things.
 
 Ted Zlatanov <tzz@lifelogs.com>
-    - Added the one_fs feature, autoconf support, good advice, much more
+    - Added the one_fs feature, autoconf support, good advice, and much more.
 
 Ralf van Dooren <r.vdooren@snow.nl>
-    - Added and maintains the rsnapshot entry in the FreeBSD ports tree
+    - Added and maintains the rsnapshot entry in the FreeBSD ports tree.
+
+SlapAyoda
+    - Provided access to his computer museum for software testing.
+
+Carl Boe <boe@demog.berkeley.edu>
+    - Found several subtle bugs and provided fixes for them.
 
 Shane Liebling <shane@cryptio.net>
     - Fixed a compatibility bug in utils/backup_smb_share.sh
