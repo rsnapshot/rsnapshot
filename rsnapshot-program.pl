@@ -86,11 +86,12 @@ my $link_dest		= 0; # use the --link-dest option to rsync
 #	4	Extra verbose messages (individual actions inside some subroutines, output from rsync)
 #	5	Debug
 #
-my $verbose				= undef;
-my $default_verbose		= 2;
+# define verbose and loglevel
+my $verbose		= undef;
+my $loglevel	= undef;
 
-# same as verbose above, but for logging
-my $loglevel			= undef;
+# set defaults for verbose and loglevel
+my $default_verbose		= 2;
 my $default_loglevel	= 3;
 
 # assume the config file is valid
