@@ -3540,7 +3540,6 @@ sub file_diff   {
 		# exit this loop as soon as possible
 		if ($buf1 ne $buf2)	 {
 			$is_different = 1;
-			$done = 1;
 			last;
 		}
 	}
