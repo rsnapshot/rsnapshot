@@ -1430,6 +1430,7 @@ sub log_msg	{
 			$result = open (LOG, ">> $config_vars{'logfile'}");
 			if (!defined($result))	{
 				print STDERR "Could not open logfile $config_vars{'logfile'} for writing\n";
+				print STDERR "Do you have write permission for this file?\n";
 				exit(1);
 			}
 			
