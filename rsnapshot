@@ -472,7 +472,7 @@ sub backup_interval	{
 	if ( -d "$config_vars{'snapshot_root'}/$interval.$interval_max" )	{
 		if ($verbose)	{ print "rm -rf $config_vars{'snapshot_root'}/$interval.$interval_max/\n"; }
 		if ($test == 0)	{
-			my $result = rmtree( "$config_vars{'snapshot_root'}/$interval.$interval_max/", 0, 1 );
+			my $result = rmtree( "$config_vars{'snapshot_root'}/$interval.$interval_max/", 0, 0 );
 			if ($result == 0)	{
 				bail("Error! rmtree(\"$config_vars{'snapshot_root'}/$interval.$interval_max/\", 0, 1)\n");
 			}
