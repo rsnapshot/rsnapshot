@@ -1091,13 +1091,13 @@ sub backup_interval	{
 		# don't mkdir for dest unless we have to
 		my $destpath = "$config_vars{'snapshot_root'}/$interval.0/" . join('/', @dirs);
 		if ( ! -e "$destpath" )	{
-			if (1 == $verbose)	{ print "mkdir -m 0755 -p $destpath/\n"; }
+			if (1 == $verbose)	{ print "mkdir -m 0755 -p $destpath\n"; }
 			if (0 == $test)	{
 				eval	{
-					mkpath( "$destpath/", 0, 0755 );
+					mkpath( "$destpath", 0, 0755 );
 				};
 				if ($@)	{
-					bail("Could not mkpath(\"$destpath/\", 0, 0755);");
+					bail("Could not mkpath(\"$destpath\", 0, 0755);");
 				}
 			}
 		}
