@@ -129,7 +129,7 @@
 .\" ========================================================================
 .\"
 .IX Title "RSNAPSHOT 1"
-.TH RSNAPSHOT 1 "2003-08-30" "perl v5.8.0" "User Contributed Perl Documentation"
+.TH RSNAPSHOT 1 "2003-08-31" "perl v5.8.0" "User Contributed Perl Documentation"
 .SH "NAME"
 rsnapshot \- remote filesystem snapshot utility
 .SH "SYNOPSIS"
@@ -160,8 +160,9 @@ The command line options are as follows:
 .RE
 .SH "CONFIGURATION"
 .IX Header "CONFIGURATION"
-\&\fB/etc/rsnapshot.conf\fR is the default configuration file. What follows
-is a list of allowed parameters.
+\&\fB/etc/rsnapshot.conf\fR is the default configuration file. All parameters
+in this file must be seperated by tabs. What follows is a list of
+allowed parameters.
 .Sp
 .RS 4
 \&\fBsnapshot_root\fR local filesystem path to save all snapshots

@@ -1,16 +1,13 @@
 rsnapshot TODO list:
 
-figure out how best to handle file/folder names with spaces in them.
-quotes seems like a good solution, but so do tabs.
-
-come up with an elegant way to handle additional protocols,
+Come up with an elegant way to handle additional protocols,
 probably using a web style prefix (i.e. http://path/to/http/server).
-make sure that if the file downloaded is the same as the one yesterday,
-that it will link today's file to yesterdays. it seems unavoidable to
+Make sure that if the file downloaded is the same as the one yesterday,
+that it will link today's file to yesterdays. It seems unavoidable to
 waste bandwidth with a non rsync system, but at least we can prevent
 the wasting of disk space.
 
-decide on what to do about the slash issue with rsync/ssh. currently
+Decide on what to do about the slash issue with rsync/ssh. Currently
 rsnapshot.conf only supports directories as sources (since it adds
-a trailing slash to every entry). will having the slash at the end
+a trailing slash to every entry). Will having the slash at the end
 make this too confusing and error prone?

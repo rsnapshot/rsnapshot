@@ -89,7 +89,7 @@ if ( -f $config_file )	{
 		if ($line =~ /^#/)	{ next; }
 		
 		# parse line
-		my ($var, $value, $value2) = split(/\s+/, $line, 3);
+		my ($var, $value, $value2) = split(/\t+/, $line, 3);
 		
 		# ignore blank or incomplete lines
 		if (!defined($var))		{ next; }
@@ -145,7 +145,7 @@ if ( -f $config_file )	{
 			if ( !defined($config_vars{'snapshot_root'}) )	{	bail("snapshot_root needs to be defined before backup points"); }
 			
 			# validate path
-			if ( ! -d $src )	{
+			if ( ! -d "$src" )	{
 				# if it's an ssh path, make sure we have ssh
 				if ( $src =~ /^.*?\@.*?:\/.*$/)	{
 					if (!defined($config_vars{'cmd_ssh'}))	{
@@ -443,8 +443,9 @@ B<-c> specify an alternate config file
 
 =head1 CONFIGURATION
 
-B</etc/rsnapshot.conf> is the default configuration file. What follows
-is a list of allowed parameters.
+B</etc/rsnapshot.conf> is the default configuration file. All parameters
+in this file must be seperated by tabs. What follows is a list of
+allowed parameters.
 
 =over 4
 
