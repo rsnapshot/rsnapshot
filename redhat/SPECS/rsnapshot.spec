@@ -1,4 +1,4 @@
-# $Id: rsnapshot.spec,v 1.39 2005/04/02 07:37:06 scubaninja Exp $
+# $Id: rsnapshot.spec,v 1.40 2005/04/03 06:46:57 scubaninja Exp $
 
 Name: rsnapshot
 Summary: Local and remote filesystem snapshot utility
@@ -38,6 +38,7 @@ It uses hard links to save space on disk.
 %install
 install -d $RPM_BUILD_ROOT/%{_bindir}
 install -m 755 rsnapshot $RPM_BUILD_ROOT/usr/bin/rsnapshot
+install -m 755 rsnapshot-diff $RPM_BUILD_ROOT/usr/bin/rsnapshot-diff
 
 install -d $RPM_BUILD_ROOT/%{_mandir}/man1
 install -m 644 rsnapshot.1 $RPM_BUILD_ROOT/usr/share/man/man1/
@@ -83,6 +84,9 @@ rm -rf $RPM_BUILD_DIR/%{name}-%{version}/
 %verify(user group mode md5 size mtime) %{_mandir}/man1/rsnapshot.1*
 
 %changelog
+* Sat Apr 2 2005 Nathan Rosenquist <nathan@rsnapshot.org>
+- Added rsnapshot-diff to install
+
 * Sun Jan 29 2005 Nathan Rosenquist <nathan@rsnapshot.org>
 - Added upgrade script
 
