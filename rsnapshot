@@ -747,7 +747,7 @@ sub native_cp_al	{
 	if ( ! -d "$dest" )	{
 		$result = mkdir("$dest", $st->mode);
 		if ( ! $result )	{
-			print STDERR "Warning! Could not mkdir(\"$dest\");\n";
+			print STDERR "Warning! Could not mkdir(\"$dest\", $st->mode);\n";
 			return(0);
 		}
 	}
