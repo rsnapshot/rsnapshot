@@ -887,15 +887,6 @@ if (defined($rsync_include_file_args))	{
 	$config_vars{'rsync_long_args'} .= " $rsync_include_file_args";
 }
 
-########################
-### SET POSIX LOCALE ###
-########################
-
-# this may fix some potential problems with rmtree()
-# another solution is to enable "cmd_rm" in rsnapshot.conf
-print_msg("Setting locale to POSIX \"C\"", 4);
-setlocale(POSIX::LC_ALL, 'C');
-
 #############################################
 ### PREPARE TO RUN THE PROGRAM "FOR REAL" ###
 #############################################
@@ -951,6 +942,12 @@ if (!defined($interval_num))	{
 
 # log the beginning of this run
 log_msg("$run_string: started", 2);
+
+# set POSIX locale
+# this may fix some potential problems with rmtree()
+# another solution is to enable "cmd_rm" in rsnapshot.conf
+print_msg("Setting locale to POSIX \"C\"", 4);
+setlocale(POSIX::LC_ALL, 'C');
 
 # IF WE'RE USING A LOCKFILE, TRY TO ADD IT
 # the program will bail if one exists
