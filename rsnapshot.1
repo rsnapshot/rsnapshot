@@ -129,7 +129,7 @@
 .\" ========================================================================
 .\"
 .IX Title "RSNAPSHOT-PROGRAM 1"
-.TH RSNAPSHOT-PROGRAM 1 "2004-01-24" "perl v5.8.0" "User Contributed Perl Documentation"
+.TH RSNAPSHOT-PROGRAM 1 "2004-03-18" "perl v5.8.0" "User Contributed Perl Documentation"
 .SH "NAME"
 rsnapshot \- remote filesystem snapshot utility
 .SH "SYNOPSIS"
@@ -366,7 +366,8 @@ This gets passed directly to rsync using the \-\-exclude\-from directive. See th
 .Sp
 .RS 4
 List of short arguments to pass to rsync. If not specified,
-\&\*(L"\-a\*(R" is the default.
+\&\*(L"\-a\*(R" is the default. Please note that these must be all next to each other.
+For example, \*(L"\-an\*(R" is valid, while \*(L"\-a \-n\*(R" is not.
 .RE
 .RE
 .RS 4

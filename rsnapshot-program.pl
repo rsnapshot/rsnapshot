@@ -639,9 +639,14 @@ if ( -f "$config_file" )	{
 		}
 		# RSYNC SHORT ARGS
 		if ($var eq 'rsync_short_args')	{
-			$config_vars{'rsync_short_args'} = $value;
-			$line_syntax_ok = 1;
-			next;
+			# must be in the format '-abcde'
+			if (0 == is_valid_rsync_short_args($value))	{
+				config_err($file_line_num, "$line - rsync_short_args \"$value\" not in correct format");
+			} else	{
+				$config_vars{'rsync_short_args'} = $value;
+				$line_syntax_ok = 1;
+				next;
+			}
 		}
 		# RSYNC LONG ARGS
 		if ($var eq 'rsync_long_args')	{
@@ -1296,7 +1301,11 @@ sub parse_backup_opts	{
 			}
 		# rsync short args
 		} elsif ( $name eq 'rsync_short_args' )	{
-			# pass unchecked
+			# must be in the format '-abcde'
+			if (0 == is_valid_rsync_short_args($value))	{
+				print_err("rsync_short_args \"$value\" not in correct format", 2);
+				return (undef);
+			}
 			
 		# rsync long args
 		} elsif ( $name eq 'rsync_long_args' )	{
@@ -1566,6 +1575,24 @@ sub is_anon_rsync_path	{
 	if ($path =~ m/^rsync:\/\/.*$/)	{ return (1); }
 	
 	return (0);
+}
+
+# accepts proposed list for rsync_short_args
+# makes sure that rsync_short_args is in the format '-abcde'
+# (not '-a -b' or '-ab c', etc)
+# returns 1 if it's OK, or 0 otherwise
+sub is_valid_rsync_short_args	{
+	my $rsync_short_args = shift(@_);
+	
+	if (!defined($rsync_short_args))			{ return (0); }
+	
+	# no blank space allowed
+	if ($rsync_short_args =~ m/\s/)				{ return (0); }
+	
+	# first character must be a dash, followed by alphanumeric characters
+	if ($rsync_short_args !~ m/^\-{1,1}\w+$/)	{ return (0); }
+	
+	return (1);
 }
 
 # accepts path
@@ -3074,7 +3101,8 @@ B<rsync_short_args    -a>
 =over 4
 
 List of short arguments to pass to rsync. If not specified,
-"-a" is the default.
+"-a" is the default. Please note that these must be all next to each other.
+For example, "-an" is valid, while "-a -n" is not.
 
 =back
 
