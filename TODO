@@ -6,6 +6,10 @@ for version 1.1.x
 
 - Add rollback feature for link_dest
 
+- Look into using IPC to make backup calls asynchronous (with a configurable
+  limit on the upper number of simultaneous backups, and auto-limiting to
+  one backup job per remote or local host at once).
+
 - Add interactive mode to generate config files.
 
 - Add rsync STDOUT/STDERR output to logfile at higher log settings. This will
