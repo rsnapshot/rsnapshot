@@ -35,7 +35,7 @@ use File::stat;
 ### DECLARE VARIABLES ###
 #########################
 
-my $VERSION = '1.0.7';
+my $VERSION = '1.0.8';
 
 # default configuration file
 my $config_file	= '/etc/rsnapshot.conf';

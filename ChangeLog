@@ -3,6 +3,9 @@ rsnapshot changelog
 http://www.rsnapshot.org/
 ------------------------------------------------------------------------------
 
+VERSION 1.0.8
+
+
 VERSION 1.0.7
 - Added ssh_args parameter to pass arbitrary args to ssh
 - Fully integrated Autoconf build support for the program and config file
