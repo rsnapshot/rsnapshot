@@ -129,7 +129,7 @@
 .\" ========================================================================
 .\"
 .IX Title "rsnapshot 1"
-.TH rsnapshot 1 "2005-01-26" "" ""
+.TH rsnapshot 1 "2005-01-28" "" ""
 .SH "NAME"
 rsnapshot \- remote filesystem snapshot utility
 .SH "SYNOPSIS"
@@ -162,21 +162,15 @@ can be passed on the command line.
 .PP
 The command line options are as follows:
 .Sp
-.RS 4
-\&\fB\-v\fR verbose, show shell commands being executed
-.Sp
-\&\fB\-t\fR test, show shell commands that would be executed
-.Sp
-\&\fB\-c\fR path to alternate config file
-.Sp
-\&\fB\-x\fR one filesystem, don't cross partitions within each backup point
-.Sp
-\&\fB\-q\fR quiet, suppress non-fatal warnings
-.Sp
-\&\fB\-V\fR same as \-v, but with more detail
-.Sp
-\&\fB\-D\fR a firehose of diagnostic information
-.RE
+.Vb 7
+\&    -v verbose, show shell commands being executed
+\&    -t test, show shell commands that would be executed
+\&    -c path to alternate config file
+\&    -x one filesystem, don't cross partitions within each backup point
+\&    -q quiet, suppress non-fatal warnings
+\&    -V same as -v, but with more detail
+\&    -D a firehose of diagnostic information
+.Ve
 .SH "CONFIGURATION"
 .IX Header "CONFIGURATION"
 \&\fB/etc/rsnapshot.conf\fR is the default configuration file. All parameters
@@ -188,23 +182,17 @@ It is recommended that you copy \fB/etc/rsnapshot.conf.default\fR to
 your needs.
 .PP
 Here is a list of allowed parameters:
-.Sp
-.RS 4
-\&\fBsnapshot_root\fR  Local filesystem path to save all snapshots
-.Sp
-\&\fBno_create_root\fR If set to 1, rsnapshot won't create snapshot_root directory
-.Sp
-\&\fBcmd_rsync\fR      Full path to rsync (required)
-.Sp
-\&\fBcmd_ssh\fR        Full path to ssh (optional)
-.Sp
-\&\fBcmd_cp\fR         Full path to cp  (optional, but must be \s-1GNU\s0 version)
-.Sp
-\&\fBcmd_rm\fR         Full path to rm  (optional)
-.Sp
-\&\fBcmd_logger\fR     Full path to logger (optional, for syslog support)
-.Sp
-\&\fBcmd_du\fR         Full path to du (optional, for disk usage reports)
+.PP
+.Vb 8
+\&    B<snapshot_root>   Local filesystem path to save all snapshots
+\&    B<no_create_root>  If set to 1, rsnapshot won't create snapshot_root directory
+\&    B<cmd_rsync>       Full path to rsync (required)
+\&    B<cmd_ssh>         Full path to ssh (optional)
+\&    B<cmd_cp>          Full path to cp  (optional, but must be GNU version)
+\&    B<cmd_rm>          Full path to rm  (optional)
+\&    B<cmd_logger>      Full path to logger (optional, for syslog support)
+\&    B<cmd_du>          Full path to du (optional, for disk usage reports)
+.Ve
 .Sp
 .RS 4
 If you have \s-1GNU\s0 cp, you should uncomment cmd_cp, since you will get extra
@@ -232,9 +220,7 @@ Block / Character devices
 Furthermore, hard links to symlinks are not portable, so new symlinks
 will be created when they need to be copied.
 .RE
-.RE
-.RS 4
-.Sp
+.PP
 \&\fBinterval\fR      [name] [number]
 .Sp
 .RS 4
@@ -281,9 +267,7 @@ daily.0/ will be copied from hourly.5/, and weekly.0/ will be copied from daily.
 .Sp
 hourly.0/ will be rsynced directly from the filesystem.
 .RE
-.RE
-.RS 4
-.Sp
+.PP
 \&\fBlink_dest           1\fR
 .Sp
 .RS 4
@@ -293,9 +277,7 @@ otherwise do. The only drawback is that if a host becomes unavailable during
 a backup operation, the last good files will get rotated up, and a full re-sync
 will be required on the next pass.
 .RE
-.RE
-.RS 4
-.Sp
+.PP
 \&\fBverbose             2\fR
 .Sp
 .RS 4
@@ -312,9 +294,7 @@ are 1 through 5. The default is 2.
 .Sp
 5        Debug            All kinds of information
 .RE
-.RE
-.RS 4
-.Sp
+.PP
 \&\fBloglevel            3\fR
 .Sp
 .RS 4
@@ -324,9 +304,7 @@ much data is written to the logfile, if one is being written.
 The only thing missing from this at the higher levels is the direct output
 from rsync. We hope to add support for this in a future relase.
 .RE
-.RE
-.RS 4
-.Sp
+.PP
 \&\fBlogfile             /var/log/rsnapshot\fR
 .Sp
 .RS 4
@@ -334,9 +312,7 @@ Full filesystem path to the rsnapshot log file. If this is defined, a log file
 will be written, with the amount of data being controlled by \fBloglevel\fR. If
 this is commented out, no log file will be written.
 .RE
-.RE
-.RS 4
-.Sp
+.PP
 \&\fBinclude             ???\fR
 .Sp
 .RS 4
@@ -344,9 +320,7 @@ This gets passed directly to rsync using the \-\-include directive. This
 parameter can be specified as many times as needed, with one pattern defined
 per line. See the \fIrsync\fR\|(1) man page for the syntax.
 .RE
-.RE
-.RS 4
-.Sp
+.PP
 \&\fBexclude             ???\fR
 .Sp
 .RS 4
@@ -354,27 +328,21 @@ This gets passed directly to rsync using the \-\-exclude directive. This
 parameter can be specified as many times as needed, with one pattern defined
 per line. See the \fIrsync\fR\|(1) man page for the syntax.
 .RE
-.RE
-.RS 4
-.Sp
+.PP
 \&\fBinclude_file        /path/to/include/file\fR
 .Sp
 .RS 4
 This gets passed directly to rsync using the \-\-include\-from directive. See the
 \&\fIrsync\fR\|(1) man page for the syntax.
 .RE
-.RE
-.RS 4
-.Sp
+.PP
 \&\fBexclude_file        /path/to/exclude/file\fR
 .Sp
 .RS 4
 This gets passed directly to rsync using the \-\-exclude\-from directive. See the
 \&\fIrsync\fR\|(1) man page for the syntax.
 .RE
-.RE
-.RS 4
-.Sp
+.PP
 \&\fBrsync_short_args    \-a\fR
 .Sp
 .RS 4
@@ -382,9 +350,7 @@ List of short arguments to pass to rsync. If not specified,
 \&\*(L"\-a\*(R" is the default. Please note that these must be all next to each other.
 For example, \*(L"\-az\*(R" is valid, while \*(L"\-a \-z\*(R" is not.
 .RE
-.RE
-.RS 4
-.Sp
+.PP
 \&\fBrsync_long_args     \-\-delete \-\-numeric\-ids \-\-relative \-\-delete\-excluded\fR
 .Sp
 .RS 4
@@ -408,17 +374,13 @@ version. The newer settings are recommended if you're just starting. If
 you are upgrading, read the upgrade guide in the \s-1INSTALL\s0 file in the
 source distribution for more information.
 .RE
-.RE
-.RS 4
-.Sp
+.PP
 \&\fBssh_args			\-p 22\fR
 .Sp
 .RS 4
 Arguments to be passed to ssh. If not specified, the default is none.
 .RE
-.RE
-.RS 4
-.Sp
+.PP
 \&\fBlockfile    /var/run/rsnapshot.pid\fR
 .Sp
 .RS 4
@@ -427,9 +389,7 @@ from clobbering the first one. If not specified, no lock file is used.
 Make sure to use a directory that is not world writeable for security
 reasons.
 .RE
-.RE
-.RS 4
-.Sp
+.PP
 \&\fBone_fs  1\fR
 .Sp
 .RS 4
@@ -437,9 +397,7 @@ Prevents rsync from crossing filesystem partitions. Setting this to a value
 of 1 enables this feature. 0 turns it off. This parameter is optional.
 The default is off.
 .RE
-.RE
-.RS 4
-.Sp
+.PP
 \&\fB\s-1UPGRADE\s0 \s-1NOTICE:\s0\fR
 .Sp
 .RS 4
@@ -447,17 +405,15 @@ If you have used an older version of rsnapshot, you might notice that the
 destination paths on the backup points have changed. Please read the \s-1INSTALL\s0
 file in the source distribution for upgrade options.
 .RE
-.RE
-.RS 4
-.Sp
+.PP
 \&\fBbackup\fR  /etc/                       localhost/
-.Sp
+.PP
 \&\fBbackup\fR  root@example.com:/etc/      example.com/
-.Sp
+.PP
 \&\fBbackup\fR  rsync://example.com/path2/  example.com/
-.Sp
+.PP
 \&\fBbackup\fR  /var/                       localhost/      one_fs=1
-.Sp
+.PP
 \&\fBbackup_script\fR   /usr/local/bin/backup_pgsql.sh    pgsql_backup/
 .Sp
 .RS 4
@@ -545,9 +501,6 @@ rsnapshot checks the differences between the files created against the
 previous files. If the backup script generates the same output on the next
 run, the files will be hard linked against the previous ones, and no
 additional disk space will be taken up.
-.RE
-.RE
-.RS 4
 .RE
 .RE
 .RS 4

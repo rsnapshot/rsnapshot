@@ -107,6 +107,7 @@ my $exit_code = 0;
 my $default_rsync_short_args	= '-a';
 my $default_rsync_long_args		= '--delete --numeric-ids --relative --delete-excluded';
 my $default_ssh_args			= undef;
+my $default_du_args				= '-csh';
 
 # exactly how the program was called, with all arguments
 # this is set before getopts() modifies @ARGV
@@ -319,15 +320,6 @@ sub parse_cmd_line_opts {
 	# validate command line args
 	#
 	
-	# check for extra bogus arguments that getopts() didn't catch
-	if (scalar(@ARGV) > 1) {
-		for (my $i=1; $i<scalar(@ARGV); $i++) {
-			print STDERR "Unknown option: $ARGV[$i]\n";
-		}
-		
-		$result = undef;
-	}
-	
 	# make sure config file is a file
 	if (defined($opts{'c'})) {
 		if ( ! -r "$opts{'c'}" ) {
@@ -349,6 +341,20 @@ sub parse_cmd_line_opts {
 	
 	# set command
 	$cmd = $ARGV[0];
+	
+	# check for extra bogus arguments that getopts() didn't catch
+	if (defined($cmd) && ('du' ne $cmd)) {
+		if (scalar(@ARGV) > 1) {
+			for (my $i=1; $i<scalar(@ARGV); $i++) {
+				print STDERR "Unknown option: $ARGV[$i]\n";
+				print STDERR "Please make sure all switches come before commands\n";
+				print STDERR "(i.e. 'rsnapshot -v hourly', not 'rsnapshot hourly -v')\n";
+				exit(1);
+			}
+			
+			$result = undef;
+		}
+	}
 	
 	# alternate config file?
 	if (defined($opts{'c'})) {
@@ -969,6 +975,12 @@ sub parse_config_file {
 		# SSH ARGS
 		if ($var eq 'ssh_args') {
 			$config_vars{'ssh_args'} = $value;
+			$line_syntax_ok = 1;
+			next;
+		}
+		# DU ARGS
+		if ($var eq 'du_args') {
+			$config_vars{'du_args'} = $value;
 			$line_syntax_ok = 1;
 			next;
 		}
@@ -2952,6 +2964,7 @@ sub rollback_failed_backups {
 		}
 		
 		# copy hard links back from .1 to .0
+		# this will re-populate the .0 directory without taking up (much) additional space
 		display_cp_al(
 			"$config_vars{'snapshot_root'}/$interval.1/$rollback_point",
 			"$config_vars{'snapshot_root'}/$interval.0/$rollback_point"
@@ -2969,40 +2982,45 @@ sub rollback_failed_backups {
 			}
 		}
 		
-		# and if we don't have GNU cp, rsync for good measure
-		# this should catch the special files like FIFOs and device nodes
+		# if we don't have GNU cp, the previous cp -al won't have transferred all the files
+		# to make sure we don't miss them, take the additional step of rsyncing the files.
+		# this should catch the special files like FIFOs and device nodes.
+		# between this and the cp_al() above, this should catch everything, and unless the
+		# user has tons and tons of special files, the space difference shouldn't be much
 		#
-		# setup rsync command
-		@cmd_stack = ();
-		#
-		# rsync
-		push(@cmd_stack, $config_vars{'cmd_rsync'});
-		#
-		# short args
-		if (defined($rsync_short_args) && ($rsync_short_args ne '')) {
-			push(@cmd_stack, $rsync_short_args);
-		}
-		#
-		# long args (not the defaults)
-		push(@cmd_stack, '--delete');
-		push(@cmd_stack, '--numeric-ids');
-		#
-		# src
-		push(@cmd_stack, "$config_vars{'snapshot_root'}/$interval.1/$rollback_point");
-		#
-		# dest
-		push(@cmd_stack, "$config_vars{'snapshot_root'}/$interval.0/$rollback_point");
-		
-		print_cmd(@cmd_stack);
-		
-		if (0 == $test) {
-			$result = system(@cmd_stack);
+		if (!defined($config_vars{'cmd_cp'})) {
+			# setup rsync command
+			@cmd_stack = ();
+			#
+			# rsync
+			push(@cmd_stack, $config_vars{'cmd_rsync'});
+			#
+			# short args
+			if (defined($rsync_short_args) && ($rsync_short_args ne '')) {
+				push(@cmd_stack, $rsync_short_args);
+			}
+			#
+			# long args (not the defaults)
+			push(@cmd_stack, '--delete');
+			push(@cmd_stack, '--numeric-ids');
+			#
+			# src
+			push(@cmd_stack, "$config_vars{'snapshot_root'}/$interval.1/$rollback_point");
+			#
+			# dest
+			push(@cmd_stack, "$config_vars{'snapshot_root'}/$interval.0/$rollback_point");
 			
-			if ($result != 0) {
-				# bitmask return value
-				my $retval = get_retval($result);
+			print_cmd(@cmd_stack);
+			
+			if (0 == $test) {
+				$result = system(@cmd_stack);
 				
-				bail("Error while rolling back $rollback_point");
+				if ($result != 0) {
+					# bitmask return value
+					my $retval = get_retval($result);
+					
+					bail("Error while rolling back $rollback_point");
+				}
 			}
 		}
 	}
@@ -3468,13 +3486,40 @@ sub cmd_rm_rf {
 #
 sub show_disk_usage {
 	my $intervals_str = '';
-	my $cmd_du = 'du';
+	my $cmd_du	= 'du';
+	my $du_args	= '-csh';
+	my $dest_path = '';
+	my $retval;
+	
+	if (defined($ARGV[1])) {
+		$dest_path = $ARGV[1];
+	}
+	
+	if (is_directory_traversal($dest_path)) {
+		print STDERR "ERROR: Directory traversal is not allowed\n";
+		exit(1);
+	}
+	if (is_valid_local_abs_path($dest_path)) {
+		print STDERR "ERROR: Full paths are not allowed\n";
+		exit(1);
+	}
+	
+	# make sure we have permission first
+	if ( ! -r "$config_vars{'snapshot_root'}" ) {
+		print STDERR ("ERROR: Permission denied\n");
+		exit(1);
+	}
 	
 	# find the intervals that apply here
 	if (-r "$config_vars{'snapshot_root'}/") {
 		foreach my $interval_ref (@intervals) {
-			if (-r "$config_vars{'snapshot_root'}/$$interval_ref{'interval'}.0/") {
-				$intervals_str .= "$config_vars{'snapshot_root'}/$$interval_ref{'interval'}.* ";
+			my $interval			= $$interval_ref{'interval'};
+			my $max_interval_num	= $$interval_ref{'number'};
+			
+			for (my $i=0; $i < $max_interval_num; $i++) {
+				if (-r "$config_vars{'snapshot_root'}/$interval.$i/$dest_path") {
+					$intervals_str .= "$config_vars{'snapshot_root'}/$interval.$i/$dest_path ";
+				}
 			}
 		}
 	}
@@ -3482,27 +3527,38 @@ sub show_disk_usage {
 	
 	# check for 'du' program
 	if ( defined($config_vars{'cmd_du'}) ) {
-		# it was specified in the config file. use that version
+		# it was specified in the config file, use that version
 		$cmd_du = $config_vars{'cmd_du'};
-		
-	} else {
-		# it was not specified in the config file. just use the one from their path
-		$cmd_du = 'du';
+	}
+	
+	# check for du args
+	if ( defined($config_vars{'du_args'}) ) {
+		# it this was specified in the config file, use that version
+		$du_args = $config_vars{'du_args'};
 	}
 	
 	# if we can see any of the intervals, find out how much space they're taking up
 	if ('' ne $intervals_str) {
-		print "du -csh $intervals_str\n\n";
-		my $retval = system("du -csh $intervals_str");
-		if (0 == $retval) {
-			# exit with success
-			exit(0);
+		if (defined($verbose) && ($verbose >= 3)) {
+			print wrap_cmd("$cmd_du $du_args $intervals_str", 76, 4), "\n\n";
+		}
+		
+		if (0 == $test) {
+			$retval = system("$cmd_du $du_args $intervals_str");
+			if (0 == $retval) {
+				# exit showing success
+				exit(0);
+			} else {
+				# exit showing error
+				exit(1);
+			}
 		}
 	} else {
-		print STDERR ("No interval directories visible. Do you have permission to see the snapshot root?\n");
+		print STDERR ("No files or directories found\n");
+		exit(1);
 	}
 	
-	# exit showing error
+	# shouldn't happen
 	exit(1);
 }
 

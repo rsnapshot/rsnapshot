@@ -20,8 +20,8 @@ VERSION 1.2.0 (Jan ?? ??:?? 2005)
   or don't want to upgrade their destination paths in their backup points.
 - Bharat Mediratta <bharat@menalto.com> added a "+" feature to the per-backup
   point args to allow additive include/exclude rules.
-- Added safe_rename() subroutine to work around a semi-obscure bug in certain
-  Linux kernels
+- Added safe_rename() subroutine to work around a semi-obscure timestamp bug
+  in certain Linux kernels
 - Clarified error message about local/relative paths in config file parsing
 - Added check for leading/trailing spaces in remote (ssh) paths
 - Added du(1) and crontab(1) to man page references
@@ -39,19 +39,22 @@ VERSION 1.2.0 (Jan ?? ??:?? 2005)
 - Added check to make sure different backup_script destinations don't overlap
   and don't clobber backup point destinations
 - Added "cmd_du" parameter to allow specifying the path to "du"
-- Added upgrade script to RPM spec file
 - Nicolas Kaiser <nikai@nikai.net> provided various typo fixes in the program
   and man page
 - Fixed "missing rsync/configtest ok" bug
 - Added config_version parameter, which is now required
 - All autoconf files were updated with the ones from Debian sarge
 - Added upgrade-config-file feature for "make upgrade" target and manual use
+- Added upgrade feature to RPM spec file
 - Added check-config-version feature for use with shell scripts, etc.
 - Changed version_only argument to version-only, for consistency with new
   options
 - Conditionalized configure script to only advise the user to copy the
   rsnapshot.conf.default file to rsnapshot.conf if it's a new installation
 - Added rollback feature to restore interval.0 snapshots when using link_dest
+- Added second option for du, to compare subdirectories or files
+- Added "du_args" to pass arguments to du
+- Relaxed cmd line option validation, but only when du is the command
 
 VERSION 1.1.6 (Jul 05 16:35 2004)
 ------------------------------------------------------------------------------
