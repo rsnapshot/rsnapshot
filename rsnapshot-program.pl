@@ -30,7 +30,7 @@ use DirHandle;
 use Cwd;				# cwd()
 use Getopt::Std;		# getopt(), getopts()
 use File::Path;			# mkpath(), rmtree()
-use File::stat;			# lstat()
+use File::stat;			# stat(), lstat()
 use POSIX qw(locale_h);	# setlocale()
 
 ################################
@@ -41,6 +41,7 @@ use POSIX qw(locale_h);	# setlocale()
 my $VERSION = '1.1.6';
 
 # exactly how the program was called, with all arguments
+# this is set before getopt() can destroy it
 my $run_string = "$0 " . join(' ', @ARGV);
 
 # default configuration file
@@ -62,23 +63,9 @@ my @rollback_points;
 # and the number of snapshots to keep of it
 my @intervals;
 
-# which of the intervals are we operating on?
-# if we defined hourly, daily, weekly ... hourly = 0, daily = 1, weekly = 2
-my $interval_num;
-
-# the highest possible number for the current interval context
-# if we are working on hourly, and hourly is set to 6, this would be
-# equal to 5 (since we start at 0)
-my $interval_max;
-
-# this is the name of the previous interval, in relation to the one we're
-# working on. i.e. if we're operating on weekly, this should be "daily"
-my $prev_interval;
-
-# same as $interval_max, except for the previous interval.
-# this is used to determine which of the previous snapshots to pull from
-# i.e. cp -al hourly.$prev_interval_max/ daily.0/
-my $prev_interval_max;
+# store interval data (mostly info about which one we're on, what was before, etc.)
+# this is a convenient reference to some of the data from @intervals
+my $id_ref;
 
 # command or interval to execute (first cmd line arg)
 my $cmd;
@@ -204,7 +191,7 @@ if ($cmd eq 'du')	{
 
 # figure out which interval we're working on
 # make sure the user is requesting to run on an interval we understand
-get_current_interval($cmd);
+$id_ref = get_interval_data($cmd);
 
 # log the beginning of this run
 log_startup();
@@ -219,7 +206,7 @@ add_lockfile();
 create_snapshot_root();
 
 # actually run the backup job
-handle_interval($cmd);
+handle_interval($id_ref);
 
 # if we have a lockfile, remove it
 remove_lockfile();
@@ -1707,13 +1694,34 @@ sub create_snapshot_root	{
 }
 
 # accepts interval
-# returns no arguments
-# sets some global variables
-sub get_current_interval	{
+# returns a hash_ref containing information about the intervals
+# exits the program if we don't have good data to work with
+sub get_interval_data	{
 	my $interval = shift(@_);
 	
 	# make sure we were passed an interval
-	if (!defined($interval))	{ bail("Interval not specified in get_current_interval()\n"); }
+	if (!defined($interval))	{ bail("Interval not specified in get_interval_data()\n"); }
+	
+	# the hash to return
+	my %hash;
+	
+	# which of the intervals are we operating on?
+	# if we defined hourly, daily, weekly ... hourly = 0, daily = 1, weekly = 2
+	my $interval_num;
+	
+	# the highest possible number for the current interval context
+	# if we are working on hourly, and hourly is set to 6, this would be
+	# equal to 5 (since we start at 0)
+	my $interval_max;
+	
+	# this is the name of the previous interval, in relation to the one we're
+	# working on. i.e. if we're operating on weekly, this should be "daily"
+	my $prev_interval;
+	
+	# same as $interval_max, except for the previous interval.
+	# this is used to determine which of the previous snapshots to pull from
+	# i.e. cp -al hourly.$prev_interval_max/ daily.0/
+	my $prev_interval_max;
 	
 	# FIGURE OUT WHICH INTERVAL WE'RE RUNNING, AND HOW IT RELATES TO THE OTHERS
 	# THEN RUN THE ACTION FOR THE CHOSEN INTERVAL
@@ -1756,6 +1764,16 @@ sub get_current_interval	{
 	
 	# make sure we got something that makes sense
 	if (!defined($interval_num))	{ bail("Interval \"$interval\" unknown, check $config_file"); }
+	
+	# populate our hash
+	$hash{'interval'}			= $interval;
+	$hash{'interval_num'}		= $interval_num;
+	$hash{'interval_max'}		= $interval_max;
+	$hash{'prev_interval'}		= $prev_interval;
+	$hash{'prev_interval_max'}	= $prev_interval_max;
+	
+	# and return the values
+	return (\%hash);
 }
 
 # accepts no args
@@ -2009,26 +2027,27 @@ sub remove_trailing_slash	{
 	return ($str);
 }
 
-# accepts an interval
+# accepts an interval_data_ref
 # returns no arguments
 # calls the appropriate subroutine, depending on whether this is the lowest interval or a higher one
 #
 sub handle_interval	{
-	my $interval = shift(@_);
+	my $id_ref = shift(@_);
 	
-	if (!defined($interval))	{ bail('interval not defined in handle_interval()'); }
+	if (!defined($id_ref))	{ bail('id_ref not defined in handle_interval()'); }
 	
-	if (0 == $interval_num)	{
+	if (0 == $$id_ref{'interval_num'})	{
 		# if this is the most frequent interval, actually do the backups here
-		backup_lowest_interval($interval);
+		backup_lowest_interval( $id_ref );
 		
 	} else	{
 		# this is not the most frequent unit, just rotate
-		rotate_higher_interval($interval, $prev_interval);
+		rotate_higher_interval( $id_ref );
 	}
 }
 
-# accepts the interval to act on (i.e. hourly)
+# accepts an interval_data_ref
+# acts on the interval defined as $$id_ref{'interval'} (i.e. hourly)
 # this should be the smallest interval (i.e. hourly, not daily)
 #
 # rotates older dirs within this interval, hard links .0 to .1,
@@ -2036,30 +2055,26 @@ sub handle_interval	{
 #
 # does not return a value, it bails instantly if there's a problem
 sub backup_lowest_interval	{
-	my $interval = shift(@_);
+	my $id_ref = shift(@_);
 	
 	# this should never happen
-	if (!defined($interval))	{ bail('backup_lowest_interval() expects an argument'); }
+	if (!defined($id_ref))	{ bail('backup_lowest_interval() expects an argument'); }
 	
 	# rotate the higher directories in this interval
 	#
-	rotate_lowest_snapshots($interval);
+	rotate_lowest_snapshots( $$id_ref{'interval'} );
 	
 	# sync live filesystem data to $interval.0
 	# loop through each backup point and backup script
 	foreach my $bp_ref (@backup_points)	{
 		
-		# TODO: change the two seperate calls to handle_backup_point()
-		# into calls to rsync_backup_point() and exec_backup_script()
-		# when they are written
-		
 		# rsync the given backup point into the snapshot root
 		if ($$bp_ref{'src'})	{
-			rsync_backup_point( $interval, $bp_ref );
+			rsync_backup_point( $$id_ref{'interval'}, $bp_ref );
 			
 		# run the backup script
 		} elsif ($$bp_ref{'script'})	{
-			exec_backup_script( $interval, $bp_ref );
+			exec_backup_script( $$id_ref{'interval'}, $bp_ref );
 			
 		# this should never happen
 		} else	{
@@ -2069,10 +2084,10 @@ sub backup_lowest_interval	{
 	}
 	
 	# rollback failed backups
-	rollback_failed_backups($interval);
+	rollback_failed_backups( $$id_ref{'interval'} );
 	
 	# update mtime on $interval.0/
-	touch_interval_0($interval);
+	touch_interval_0( $$id_ref{'interval'} );
 }
 
 # accepts no arguments
@@ -2088,6 +2103,12 @@ sub rotate_lowest_snapshots	{
 	my $interval = shift(@_);
 	
 	if (!defined($interval))	{ bail('interval not defined in rotate_lowest_snapshots()'); }
+	
+	my $id_ref = get_interval_data($interval);
+	my $interval_num = $$id_ref{'interval_num'};
+	my $interval_max = $$id_ref{'interval_max'};
+	my $prev_interval = $$id_ref{'prev_interval'};
+	my $prev_interval_max = $$id_ref{'prev_interval_max'};
 	
 	# ROTATE DIRECTORIES
 	#
@@ -2637,21 +2658,27 @@ sub touch_interval_0	{
 	}
 }
 
-# accepts the interval to act on, and the previous interval (i.e. daily, hourly)
-# this should not be the lowest interval, but any of the higher ones
+# accepts an interval_data_ref
+# looks at $$id_ref{'interval'} as the interval to act on,
+# and the previous interval $$id_ref{'prev_interval'} to pull up the directory from (i.e. daily, hourly)
+# the interval being acted upon should not be the lowest one.
 #
 # rotates older dirs within this interval, and hard links
 # the previous interval's highest numbered dir to this interval's .0,
 #
 # does not return a value, it bails instantly if there's a problem
 sub rotate_higher_interval	{
-	my $interval		= shift(@_);	# i.e. daily
-	my $prev_interval	= shift(@_);	# i.e. hourly
+	my $id_ref = shift(@_);
 	
 	# this should never happen
-	if (!defined($interval) or !defined($prev_interval))	{
-		bail('rotate_higher_interval() expects 2 arguments');
-	}
+	if (!defined($id_ref))	{ bail('rotate_higher_interval() expects an interval_data_ref'); }
+	
+	# set up variables for convenience since we refer to them extensively
+	my $interval			= $$id_ref{'interval'};
+	my $interval_num		= $$id_ref{'interval_num'};
+	my $interval_max		= $$id_ref{'interval_max'};
+	my $prev_interval		= $$id_ref{'prev_interval'};
+	my $prev_interval_max	= $$id_ref{'prev_interval_max'};
 	
 	# ROTATE DIRECTORIES
 	#
@@ -2855,7 +2882,6 @@ sub native_cp_al	{
 	
 	# READ DIR CONTENTS
 	$dh = new DirHandle( "$src" );
-	
 	if (defined($dh))	{
 		my @nodes = $dh->read();
 		
