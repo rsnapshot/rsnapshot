@@ -8,6 +8,13 @@ rsnapshot comes with ABSOLUTELY NO WARRANTY.  This is free software,
 and you are welcome to redistribute it under certain conditions.
 See the GNU General Public Licence for details.
 
+UPGRADING
+	If you are upgrading from version 0.9.1, please note that the
+	format of /etc/rsnapshot.conf has changed. Tabs are now the
+	required delimiters instead of spaces, and all directory entries
+	require a trailing slash. See /etc/rsnapshot.conf.default for
+	a syntactically valid example.
+	
 INSTALLATION
 	
 	QUICK INSTALLATION
