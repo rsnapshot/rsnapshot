@@ -1408,6 +1408,37 @@ sub get_perms	{
 	return ($mode);
 }
 
+# accepts two file paths
+# returns 0 if they're the same, 1 if they're different
+# returns undef if one or both of the files can't be found or opened
+sub file_diff   {
+	my $file1   = shift(@_);
+	my $file2   = shift(@_);
+	
+	my $buf1 = undef;
+	my $buf2 = undef;
+	my $done = 0;
+	my $different = 0;
+	
+	if (! -r "$file1")  { return (undef); }
+	if (! -r "$file2")  { return (undef); }
+	
+	open(FILE1, "$file1") or return (undef);
+	open(FILE2, "$file2") or return (undef);
+	
+	while ((0 == $done) && (read(FILE1, $buf1, 16384)) && (read(FILE2, $buf2, 16384)))  {
+		if ($buf1 ne $buf2)	 {
+			$different = 1;
+			$done = 1;
+		}
+	}
+	
+	close(FILE2) or return (undef);
+	close(FILE1) or return (undef);
+	
+	return ($different);
+}
+
 #####################
 ### PERLDOC / POD ###
 #####################
