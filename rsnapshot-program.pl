@@ -2199,7 +2199,7 @@ sub handle_backup_point	{
 	if ($verbose > 3)	{ $rsync_short_args .= 'v'; }
 	
 	# split up rsync long args into an array
-	@rsync_long_args_stack	= ( split(/\s/, $default_rsync_long_args) );
+	@rsync_long_args_stack	= ( split(/\s/, $rsync_long_args) );
 	
 	# append a trailing slash if src is a directory
 	if (defined($$bp_ref{'src'}))	{
