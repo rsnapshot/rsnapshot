@@ -10,14 +10,11 @@ for version 1.0.x
 
 - Add an file exclusion list feature
 
-- Implement a generalized way to pass arbitrary args to rsync and ssh
+- Implement a generalized way to pass arbitrary args to ssh
 
 - Add support for rsh using this syntax: rsh://[user@]domain:/foo/bar/
 
 - Also support ssh:// syntax in the same fashion
-
-- Add support for connecting to an rsync daemon requiring authentication,
-  either using the --password-file flag or RSYNC_PASSWORD env var
 
 - Add support for arbitrary programs to handle certain types of connections;
   i.e. http_handler gets set to wget, to handle http downloads, which are
