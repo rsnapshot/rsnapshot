@@ -1,5 +1,5 @@
 Package: rsnapshot
-Version: 0.9.2-1
+Version: 0.9.3-1
 Priority: optional
 Section: utils
 Maintainer: Nathan Rosenquist <rsnapshot@scubaninja.com>
