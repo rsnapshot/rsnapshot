@@ -2172,13 +2172,13 @@ sub rotate_lowest_snapshots	{
 							"$config_vars{'snapshot_root'}/$interval." . ($i+1) . "/");
 				
 				if (0 == $test)	{
-					my $result = rename(
+					my $result = safe_rename(
 									"$config_vars{'snapshot_root'}/$interval.$i",
 									("$config_vars{'snapshot_root'}/$interval." . ($i+1))
 					);
 					if (0 == $result)	{
 						my $errstr = '';
-						$errstr .= "Error! rename(\"$config_vars{'snapshot_root'}/$interval.$i/\", \"";
+						$errstr .= "Error! safe_rename(\"$config_vars{'snapshot_root'}/$interval.$i/\", \"";
 						$errstr .= "$config_vars{'snapshot_root'}/$interval." . ($i+1) . '/' . "\")";
 						bail($errstr);
 					}
@@ -2197,13 +2197,13 @@ sub rotate_lowest_snapshots	{
 			
 			# move .0 to .1
 			if (0 == $test)	{
-				my $result = rename(
+				my $result = safe_rename(
 								"$config_vars{'snapshot_root'}/$interval.0",
 								"$config_vars{'snapshot_root'}/$interval.1"
 				);
 				if (0 == $result)	{
 					my $errstr = '';
-					$errstr .= "Error! rename(\"$config_vars{'snapshot_root'}/$interval.0/\", ";
+					$errstr .= "Error! safe_rename(\"$config_vars{'snapshot_root'}/$interval.0/\", ";
 					$errstr .= "\"$config_vars{'snapshot_root'}/$interval.1/\")";
 					bail($errstr);
 				}
@@ -2762,13 +2762,13 @@ sub rotate_higher_interval	{
 						"$config_vars{'snapshot_root'}/$interval." . ($i+1) . "/");
 			
 			if (0 == $test)	{
-				my $result = rename(
+				my $result = safe_rename(
 								"$config_vars{'snapshot_root'}/$interval.$i",
 								("$config_vars{'snapshot_root'}/$interval." . ($i+1))
 				);
 				if (0 == $result)	{
 					my $errstr = '';
-					$errstr .= "Error! rename(\"$config_vars{'snapshot_root'}/$interval.$i/\", \"";
+					$errstr .= "Error! safe_rename(\"$config_vars{'snapshot_root'}/$interval.$i/\", \"";
 					$errstr .= "$config_vars{'snapshot_root'}/$interval." . ($i+1) . '/' . "\")";
 					bail($errstr);
 				}
@@ -2791,13 +2791,13 @@ sub rotate_higher_interval	{
 						"$config_vars{'snapshot_root'}/$interval.0/");
 			
 			if (0 == $test)	{
-				$result = rename(
+				$result = safe_rename(
 								"$config_vars{'snapshot_root'}/$prev_interval.$prev_interval_max",
 								"$config_vars{'snapshot_root'}/$interval.0"
 				);
 				if (0 == $result)	{
 					my $errstr = '';
-					$errstr .= "Error! rename(\"$config_vars{'snapshot_root'}/$prev_interval.$prev_interval_max/\", ";
+					$errstr .= "Error! safe_rename(\"$config_vars{'snapshot_root'}/$prev_interval.$prev_interval_max/\", ";
 					$errstr .= "\"$config_vars{'snapshot_root'}/$interval.0/\")";
 					bail($errstr);
 				}
@@ -3637,6 +3637,52 @@ sub file_diff   {
 	
 	# return our findings
 	return ($is_different);
+}
+
+# accepts src, dest (file paths)
+# calls rename(), forcing the mtime to be correct (to work around a bug in rare versions of the Linux 2.4 kernel)
+# returns 1 on success, 0 on failure, just like the real rename() command
+sub safe_rename	{
+	my $src		= shift(@_);
+	my $dest	= shift(@_);
+	
+	my $st;
+	my $retval;
+	my $result;
+	
+	# validate src and dest paths
+	if (!defined($src) or (! -e $src))		{
+		print_err("safe_rename() needs a valid source file path as an argument", 2);
+		return (0);
+	}
+	if (!defined($dest) or (! -e $dest))	{
+		print_err("safe_rename() needs a valid source file path as an argument", 2);
+		return (0);
+	}
+	
+	# stat file before rename
+	$st = stat($src);
+	if (!defined($st))	{
+		print_err("Could not stat() \"$src\"", 2);
+		return (0);
+	}
+	
+	# rename the file
+	$retval = rename( "$src", "$dest" );
+	if (0 != $retval)	{
+		print_err("Could not rename(\"$src\", \"$dest\")", 2);
+		return (0);
+	}
+	
+	# give it back the old mtime and atime values
+	$result = utime( $st->atime, $st->mtime, "$dest" );
+	if (!defined($result))	{
+		print_err("Could not utime( $st->atime, $st->mtime, \"$dest\")", 2);
+		return (0);
+	}
+	
+	# return whatever we got
+	return (1);
 }
 
 ########################################

@@ -10,6 +10,8 @@ VERSION 1.1.7 (??? ?? ??:?? 2004)
 - Clarified man page licensing (GPL)
 - Fixed is_real_local_abs_path() to handle dangling symlinks
 - Changed utils/backup_smb_share.sh to re-order the smbtar arguments
+- New safe_rename() function wraps around rename() calls to workaround a bug
+  in a few Linux kernels
 
 VERSION 1.1.6 (Jul 05 16:35 2004)
 ------------------------------------------------------------------------------
