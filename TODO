@@ -1,6 +1,7 @@
 rsnapshot TODO list:
 
 Handle additional protocols, using a web style prefix (i.e. http://path/to/http/server).
+rsync is already included. http, ftp, cvs, and more would be nice.
 Make sure that if the file downloaded is the same as the one yesterday,
 that it will link today's file to yesterdays. It seems unavoidable to
 waste bandwidth with a non rsync system, but at least we can prevent
