@@ -5,10 +5,11 @@ http://rsnapshot.scubaninja.com/
 
 VERSION 1.0.5
 ------------------------------------------------------------------------------
-- Updated man page to include the one_fs feature, did general clean up
-- Moved most remaining regexes into dedicated subroutines
 - Added lockfile feature, with patch to enable it by default in the RPM
+- Updated man page to include the one_fs feature, did general clean up
 - Fixed '..' pattern matching bug that would exclude valid files
+- Updated Makefile to use "install", now allows "make tar" as a non-root user
+- Moved most remaining regexes into dedicated subroutines
 
 VERSION 1.0.4 (Nov 6 23:18)
 ------------------------------------------------------------------------------
