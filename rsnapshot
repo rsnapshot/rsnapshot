@@ -531,7 +531,7 @@ sub backup_interval	{
 		# don't mkdir unless we have to
 		my $destpath = "$config_vars{'snapshot_root'}/$interval.0/" . join('/', @dirs);
 		if ( ! -e "$destpath" )	{
-			if ($verbose)	{ print "mkdir -m 0755 -p $destpath/"; }
+			if ($verbose)	{ print "mkdir -m 0755 -p $destpath/\n"; }
 			if ($test == 0)	{
 				eval	{
 					mkpath( "$destpath/", 0, 0755 );
