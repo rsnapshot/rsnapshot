@@ -1,5 +1,5 @@
 Package: rsnapshot
-Version: 1.0.11-1
+Version: 1.1.0-1
 Priority: optional
 Section: utils
 Maintainer: Nathan Rosenquist <nathan@rsnapshot.org>

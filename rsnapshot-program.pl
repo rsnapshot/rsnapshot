@@ -37,7 +37,7 @@ use File::stat;
 #########################
 
 # version of rsnapshot
-my $VERSION = '1.0.11';
+my $VERSION = '1.1.0';
 
 # exactly how the program was called, with all arguments
 my $run_string = "$0 " . join(' ', @ARGV);
