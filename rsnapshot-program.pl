@@ -1239,8 +1239,8 @@ sub print_cmd	{
 }
 
 # accepts a string
-# formats it to STDOUT wrapping to fit in 80 columns
-# with backslashes at the end of each wrapping line and returns it
+# wraps the text to fit in 80 columns with backslashes at the end of each wrapping line
+# returns the wrapped string
 sub wrap_cmd	{
 	my $str		= shift(@_);
 	my $colmax	= shift(@_);
@@ -1471,8 +1471,8 @@ sub syslog_msg	{
 		if (0 == $test)	{
 			$result = system($config_vars{'cmd_logger'}, '-i', '-p', "$facility.$level", '-t', 'rsnapshot', $msg);
 			if (0 != $result)	{
-				print_err("Warning! Could not log to syslog:", 2);
-				print_err("$config_vars{'cmd_logger'} -i -p $facility.$level -t rsnapshot $msg", 2);
+				print_warn("Could not log to syslog:", 2);
+				print_warn("$config_vars{'cmd_logger'} -i -p $facility.$level -t rsnapshot $msg", 2);
 			}
 		}
 	}
@@ -1665,21 +1665,23 @@ sub set_posix_locale	{
 
 # accepts no arguments
 # returns no arguments
-# creates the snapshot_root directory (chmod 0700), if it doesn't exist and no_create_root = 0
+# creates the snapshot_root directory (chmod 0700), if it doesn't exist and no_create_root == 0
 sub create_snapshot_root	{
-	# make sure no_create_root == 0
-	if (defined($config_vars{'no_create_root'}))	{
-		if (1 == $config_vars{'no_create_root'})	{
-			print_err ("rsnapshot refuses to create snapshot_root when no_create_root is enabled", 1);
-			syslog_err("rsnapshot refuses to create snapshot_root when no_create_root is enabled");
-			bail();
-		}
-	}
 	
-	# create the directory
+	# attempt to create the directory if it doesn't exist
 	if ( ! -d "$config_vars{'snapshot_root'}" )	{
-		print_cmd("mkdir -m 0700 -p $config_vars{'snapshot_root'}/");
 		
+		# make sure no_create_root == 0
+		if (defined($config_vars{'no_create_root'}))	{
+			if (1 == $config_vars{'no_create_root'})	{
+				print_err ("rsnapshot refuses to create snapshot_root when no_create_root is enabled", 1);
+				syslog_err("rsnapshot refuses to create snapshot_root when no_create_root is enabled");
+				bail();
+			}
+		}
+		
+		# actually create the directory
+		print_cmd("mkdir -m 0700 -p $config_vars{'snapshot_root'}/");
 		if (0 == $test)	{
 			eval	{
 				mkpath( "$config_vars{'snapshot_root'}/", 0, 0700 );
@@ -1733,7 +1735,7 @@ sub get_interval_data	{
 	foreach my $i_ref (@intervals)	{
 		
 		# this is the interval we're set to run
-		if ($$i_ref{'interval'} eq $cmd)	{
+		if ($$i_ref{'interval'} eq $cur_interval)	{
 			$interval_num = $i;
 			
 			# how many of these intervals should we keep?
