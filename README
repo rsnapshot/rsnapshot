@@ -99,6 +99,6 @@ Nathan Rosenquist <rsnapshot@scubaninja.com>
 Carl Wilhelm Soderstrom <chrome@real-time.com>
 	- Created the RPM .spec file which allowed the RPM package to be built
 
-Ted Zlatanov
+Ted Zlatanov <tzz@lifelogs.com>
 	- wrote the one_fs patch (-x, keeps rsync from spanning partitions)
 
