@@ -77,6 +77,9 @@ my $prev_interval_max;
 # by default, we use native perl
 my $use_gnu_cp = 0;
 
+# make sure we have rsync
+my $have_rsync = 0;
+
 # command line flags
 my %opts;
 
@@ -196,7 +199,7 @@ if ( -f $config_file )	{
 		
 		# warn about entries we don't understand, and prevent the program from running
 		if (!defined($var) or !defined($value))	{
-			print STDERR "Error in $config_file on line $file_line_num: $line\n";
+			config_error($file_line_num, $line);
 			$file_syntax_ok = 0;
 			next;
 		}
@@ -205,7 +208,7 @@ if ( -f $config_file )	{
 		if ($var eq 'snapshot_root')	{
 			# make sure this is a full path
 			if ($value !~ /^\//)	{
-				print STDERR "Error in $config_file on line $file_line_num: $line - snapshot_root must be a full path\n";
+				config_error($file_line_num, "$line - snapshot_root must be a full path");
 				$file_syntax_ok = 0;
 				next;
 			}
@@ -213,7 +216,8 @@ if ( -f $config_file )	{
 			my $buf = $value;
 			$buf =~ s/\/$//;
 			if ((-e "$buf") && (! -d "$buf"))	{
-				bail("Error in $config_file on line $file_line_num: $line - snapshot_root must be a directory");
+				config_error($file_line_num, $line);
+				bail("snapshot_root must be a directory");
 			}
 			
 			# remove the trailing slash, if present
@@ -229,9 +233,11 @@ if ( -f $config_file )	{
 		if ($var eq 'cmd_rsync')	{
 			if ( -x $value )	{
 				$config_vars{'cmd_rsync'} = $value;
+				$have_rsync = 1;
 				$line_syntax_ok = 1;
 			} else	{
-				bail("Could not find $value, please fix cmd_rsync in $config_file");
+				config_error($file_line_num, $line);
+				bail("could not find $value, please fix cmd_rsync in $config_file");
 			}
 		}
 		
@@ -241,7 +247,8 @@ if ( -f $config_file )	{
 				$config_vars{'cmd_ssh'} = $value;
 				$line_syntax_ok = 1;
 			} else	{
-				bail("Could not find $value, please fix cmd_ssh in $config_file");
+				config_error($file_line_num, $line);
+				bail("could not find $value, please fix cmd_ssh in $config_file");
 			}
 		}
 		
@@ -252,6 +259,7 @@ if ( -f $config_file )	{
 				$line_syntax_ok = 1;
 				$use_gnu_cp = 1;
 			} else	{
+				config_error($file_line_num, $line);
 				bail("Could not find $value, please fix cmd_cp in $config_file");
 			}
 		}
@@ -335,14 +343,31 @@ if ( -f $config_file )	{
 			}
 		}
 		
+		# VARIOUS OTHER OPTIONS
+		#
+		# ONE_FS
+		if ($var eq 'one_fs')	{
+			if (!defined($value))		{ bail("one_fs can not be blank"); }
+			if (!is_boolean($value))	{ bail("\"$value\" is not a valid entry, must be 0 or 1 only"); }
+			
+			if (1 == $value)	{ $one_fs = 1; }
+			$line_syntax_ok = 1;
+		}
+		
 		# make sure we understood this line
 		# if not, warn the user, and prevent the program from executing
 		if (0 == $line_syntax_ok)	{
-			print STDERR "Error in $config_file on line $file_line_num: $line\n";
+			config_error($file_line_num, $line);
 			$file_syntax_ok = 0;
 		}
 	}
 	close(CONFIG);
+	
+	# make sure we got rsync in there somewhere
+	if (0 == $have_rsync)	{
+		print STDERR "cmd_rsync was not defined.\n";
+		$file_syntax_ok = 0;
+	}
 	
 	# CONFIG TEST?
 	if ($do_configtest && $file_syntax_ok)	{
@@ -609,10 +634,42 @@ sub rotate_interval	{
 	}
 }
 
+# accepts an error string
+# prints to STDERR, and exits safely and consistently
 sub bail	{
 	my $str = shift(@_);
-	print STDERR $str . "\n";
+	
+	if ($str)	{
+		print STDERR $str . "\n";
+	}
+	
 	exit(-1);
+}
+
+# accepts line number, errstr
+# prints a config file error
+sub config_error	{
+	my $line_num	= shift(@_);
+	my $errstr		= shift(@_);
+	
+	if (!defined($line_num))	{ $line_num = -1; }
+	if (!defined($errstr))		{ $errstr = 'config_error() called without an error string!'; }
+	
+	print STDERR "Error in $config_file on line $line_num: $errstr\n";
+}
+
+# accepts one argument
+# checks to see if that argument is set to 1 or 0
+# returns 1 on success, undef on failure
+sub is_boolean	{
+	my $var = shift(@_);
+	
+	if (!defined($var))	{ return (undef); }
+	
+	if (1 == $var)	{ return (1); }
+	if (0 == $var)	{ return (1); }
+	
+	return (undef);
 }
 
 sub show_help	{
