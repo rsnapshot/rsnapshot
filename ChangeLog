@@ -9,6 +9,7 @@ VERSION 1.0.6
 - added rsync_short_args and rsync_long_args to config file
 - improved parse_backup_opts() validation code
 - Fixed "make install" vs. INSTALL bug for Mac OS X
+- Ted Zlatanov <tzz@lifelogs.com> added Autoconf support!
 
 VERSION 1.0.5 (Nov 14 00:22 2003)
 ------------------------------------------------------------------------------
