@@ -19,3 +19,10 @@ backup_rsnapshot_cvsroot.sh
     which is hosted on SourceForge. This script is a good example of using
     the wget program to archive web content in your backups. This script is
     designed to be invoked from rsnapshot using the "backup_script" parameter.
+
+backup_smb_share.sh
+------------------------------------------------------------------------------
+    An example script to backup a Microsoft SMB share, to be invoked from
+    rsnapshot using the "backup_script" parameter. This requires the Samba
+    program. You will definitely need to modify this for your system.
+
