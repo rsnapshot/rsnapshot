@@ -2,13 +2,8 @@ rsnapshot TODO list:
 
 for version 1.0.x
 ------------------------------------------------------------------------------
-- Tie up loose ends with the autoconf build system
-  - $sysconfdir/rsnapshot.conf should only be installed if it doesn't exist,
-    if at all. There should be zero chance that the users config will ever
-    be overwritten.
-  - $sysconfdir/rsnapshot.conf.default should be installed on "make install"
-  - Test install process on Debian, Redhat, Fedora, Solaris, Mac OS X, *BSD,
-    and maybe IRIX if it's convenient
+- Test autoconf install process on Debian, Redhat, Fedora, Solaris, Mac OS X,
+  *BSD, and maybe IRIX if it's convenient
 
 - Update string manipulations and comparisons of paths to use File::Spec and
   File::Basename functions where possible. Double check they're fully
