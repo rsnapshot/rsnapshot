@@ -99,6 +99,9 @@ my $link_dest		= 0; # use the --link-dest option to rsync
 
 # how much noise should we make? the default is 2
 #
+# please note that direct rsync output does not get written to the log file, only to STDOUT
+# this is because we're not intercepting STDOUT while rsync runs
+#
 #	0	Absolutely quiet (reserved, but not implemented)
 #	1	Don't display warnings about FIFOs and special files
 #	2	Default (errors only)
@@ -122,9 +125,11 @@ my $global_default_ssh_args			= undef;
 my $rsync_include_args		= undef;
 my $rsync_include_file_args	= undef;
 
-# assume everything will go well. one slip up and the flag will be toggled
-my $run_perfect		= 1;
-my $config_perfect	= 1;
+# exit code for rsnapshot
+my $exit_code = 0;
+
+# assume the config file is valid
+my $config_perfect = 1;
 
 # display variable for "rm". this gets set to the full path if we have the command
 my $display_rm = 'rm';
@@ -224,7 +229,7 @@ if (defined($opts{'x'}))	{
 # COMMAND LINE ARGS
 if ( ! $cmd )	{
 	show_usage();
-	exit(0);
+	exit(1);
 }
 if ($cmd eq 'help')	{
 	show_help();
@@ -972,16 +977,28 @@ if (defined($config_vars{'lockfile'}))	{
 
 # IF WE GOT THIS FAR, THE PROGRAM IS DONE RUNNING
 # WRITE TO THE LOG AND SYSLOG WITH THE STATUS OF THE OUTCOME
-if (1 == $run_perfect)	{
+if (0 == get_exit_code())	{
 	syslog_msg("$run_string: completed successfully");
 	log_msg   ("$run_string: completed successfully", 2);
-} else	{
+	exit (get_exit_code());
+	
+} elsif (1 == get_exit_code())	{
 	syslog_err("$run_string: completed, but with some errors");
 	log_err   ("$run_string: completed, but with some errors", 2);
+	exit (get_exit_code());
+	
+} elsif (2 == get_exit_code())	{
+	syslog_warn("$run_string: completed, but with some warnings");
+	log_warn   ("$run_string: completed, but with some warnings", 2);
+	exit (get_exit_code());
+	
+# this should never happen
+} else	{
+	syslog_err("$run_string: completed, but with no definite status");
+	log_err   ("$run_string: completed, but with no definite status", 2);
 	exit (1);
+	
 }
-
-exit(0);
 
 ###################
 ### SUBROUTINES ###
@@ -1147,7 +1164,32 @@ sub print_msg	{
 # accepts string, and level
 # prints string if level is as high as verbose
 # logs string if level is as high as loglevel
-# also sets global $run_perfect to 0
+# also raises a warning for the exit code
+sub print_warn	{
+	my $str		= shift(@_);
+	my $level	= shift(@_);
+	
+	if (!defined($str))		{ return (undef); }
+	if (!defined($level))	{ $level = 0; }
+	
+	# we can no longer say the execution of the program has been error free
+	raise_warning();
+	
+	chomp($str);
+	
+	# print to STDERR
+	if ((!defined($verbose)) or ($level <= $verbose))	{
+		print STDERR 'WARNING: ', $str, "\n";
+	}
+	
+	# write to log
+	log_msg($str, $level);
+}
+
+# accepts string, and level
+# prints string if level is as high as verbose
+# logs string if level is as high as loglevel
+# also raises an error for the exit code
 sub print_err	{
 	my $str		= shift(@_);
 	my $level	= shift(@_);
@@ -1156,7 +1198,7 @@ sub print_err	{
 	if (!defined($level))	{ $level = 0; }
 	
 	# we can no longer say the execution of the program has been error free
-	$run_perfect = 0;
+	raise_error();
 	
 	chomp($str);
 	
@@ -1208,7 +1250,26 @@ sub log_msg	{
 
 # accepts string, and level
 # logs string if level is as high as loglevel
-# also sets global var $run_perfect to 0
+# also raises a warning for the exit code
+sub log_warn	{
+	my $str		= shift(@_);
+	my $level	= shift(@_);
+	
+	if (!defined($str))		{ return (undef); }
+	if (!defined($level))	{ return (undef); }
+	
+	# this run is no longer perfect since we have an error
+	raise_warning();
+	
+	chomp($str);
+	
+	$str = 'WARNING: ' . $str;
+	log_msg($str, $level);
+}
+
+# accepts string, and level
+# logs string if level is as high as loglevel
+# also raises an error for the exit code
 sub log_err	{
 	my $str		= shift(@_);
 	my $level	= shift(@_);
@@ -1217,7 +1278,7 @@ sub log_err	{
 	if (!defined($level))	{ return (undef); }
 	
 	# this run is no longer perfect since we have an error
-	$run_perfect = 0;
+	raise_error();
 	
 	chomp($str);
 	
@@ -1256,17 +1317,47 @@ sub syslog_msg	{
 	return (1);
 }
 
+# log warnings to syslog
+# accepts warning message
+# returns 1 on success, undef on failure
+# also raises a warning for the exit code
+sub syslog_warn	{
+	my $msg = shift(@_);
+	
+	# this run is no longer perfect since we have an error
+	raise_warning();
+	
+	return syslog_msg("WARNING: $msg", 'user', 'err');
+}
+
 # log errors to syslog
 # accepts error message
 # returns 1 on success, undef on failure
-# also sets global var $run_perfect to 0
+# also raises an error for the exit code
 sub syslog_err	{
 	my $msg = shift(@_);
 	
 	# this run is no longer perfect since we have an error
-	$run_perfect = 0;
+	raise_error();
 	
 	return syslog_msg("ERROR: $msg", 'user', 'err');
+}
+
+# sets exit code for at least a warning
+sub raise_warning	{
+	if ($exit_code != 1)	{
+		$exit_code = 2;
+	}
+}
+
+# sets exit code for error
+sub raise_error	{
+	$exit_code = 1;
+}
+
+# returns the exit code for rsnapshot
+sub get_exit_code	{
+	return ($exit_code);
 }
 
 # accepts no arguments
@@ -1986,6 +2077,7 @@ sub backup_interval	{
 					#
 					# 0		Success
 					# 1		Syntax or usage error
+					# 23	Partial transfer due to error
 					# 24	Partial transfer due to vanished source files
 					#
 					# if we got error 1 and we were attempting --link-dest, there's
@@ -1994,6 +2086,17 @@ sub backup_interval	{
 					if ((1 == $link_dest) && (1 == $retval))	{
 						print_err ("$config_vars{'cmd_rsync'} returned $retval. Does this version of rsync support --link-dest?", 2);
 						syslog_err("$config_vars{'cmd_rsync'} returned $retval. Does this version of rsync support --link-dest?");
+						
+					# 23 and 24 are treated as warnings because users might be using the filesystem during the backup
+					# if you want perfect backups, don't allow the source to be modified while the backups are running :)
+					} elsif (23 == $retval)	{
+						print_warn ("Some files and/or directories in $src only transferred partially during rsync operation", 4);
+						syslog_warn("Some files and/or directories in $src only transferred partially during rsync operation");
+						
+					} elsif (24 == $retval)	{
+						print_warn ("Some files and/or directories in $src vanished during rsync operation", 4);
+						syslog_warn("Some files and/or directories in $src vanished during rsync operation");
+						
 					} else	{
 						print_err ("$config_vars{'cmd_rsync'} returned $retval", 2);
 						syslog_err("$config_vars{'cmd_rsync'} returned $retval");
@@ -3471,57 +3574,17 @@ This example will do the following:
 Remember that these are just the times that the program runs.
 To set the number of backups stored, set the interval numbers in B</etc/rsnapshot.conf>
 
-=head1 AUTHORS
-
-Based on code originally by Mike Rubel
+=head1 EXIT VALUES
 
 =over 4
 
-B<http://www.mikerubel.org/computers/rsync_snapshots/>
+B<0>  All operations completed successfully
+
+B<1>  A fatal error occured
+
+B<2>  Some warnings occured, but the backup still finished
 
 =back
-
-Rewritten and expanded in Perl by Nathan Rosenquist
-
-=over 4
-
-B<http://www.rsnapshot.org/>
-
-=back
-
-Carl Wilhelm Soderstrom B<(chrome@real-time.com)> created the RPM
-.spec file which allowed the RPM package to be built, among other
-things.
-
-Ted Zlatanov (B<tzz@lifelogs.com>) contributed code, advice, patches
-and many good ideas.
-
-Ralf van Dooren (B<r.vdooren@snow.nl>) added and maintains the
-rsnapshot entry in the FreeBSD ports tree.
-
-Carl Boe (B<boe@demog.berkeley.edu>) Found several subtle bugs and
-provided fixes for them.
-
-=head1 COPYRIGHT
-
-Copyright (C) 2003-2004 Nathan Rosenquist
-
-Portions Copyright (C) 2002-2003 Mike Rubel, Carl Wilhelm Soderstrom,
-Ted Zlatanov
-
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 =head1 FILES
 
@@ -3626,6 +3689,58 @@ Please note that the other snapshots previously made of /home/ will still
 be using that disk space, but since the files are flushed out of hourly.0/,
 they will no longer be copied to the subsequent directories, and will thus
 be removed in due time as the rotations happen.
+
+=head1 AUTHORS
+
+Based on code originally by Mike Rubel
+
+=over 4
+
+B<http://www.mikerubel.org/computers/rsync_snapshots/>
+
+=back
+
+Rewritten and expanded in Perl by Nathan Rosenquist
+
+=over 4
+
+B<http://www.rsnapshot.org/>
+
+=back
+
+Carl Wilhelm Soderstrom B<(chrome@real-time.com)> created the RPM
+.spec file which allowed the RPM package to be built, among other
+things.
+
+Ted Zlatanov (B<tzz@lifelogs.com>) contributed code, advice, patches
+and many good ideas.
+
+Ralf van Dooren (B<r.vdooren@snow.nl>) added and maintains the
+rsnapshot entry in the FreeBSD ports tree.
+
+Carl Boe (B<boe@demog.berkeley.edu>) Found several subtle bugs and
+provided fixes for them.
+
+=head1 COPYRIGHT
+
+Copyright (C) 2003-2004 Nathan Rosenquist
+
+Portions Copyright (C) 2002-2003 Mike Rubel, Carl Wilhelm Soderstrom,
+Ted Zlatanov
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 =cut
 

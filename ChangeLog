@@ -7,11 +7,14 @@ VERSION 1.1.5 (??? ?? ??:?? 2004)
 ------------------------------------------------------------------------------
 - /bin/rm is the default for deleting directories (in the default config file)
 - Removed redundant validation (re: intervals) in execution section
-- Exit 1 if we basically finish ok, but with some minor errors
 - Print PID in lockfile
 - Added a few more comments, clarified some existing comments
 - Made some minor updates to the man page
 - Fix display formatting double-slash bug when '/' is a backup point
+- Changed return value when called with no cmd line args to 1
+- Added a new exit code, for warnings (2)
+- rsync exit codes 23 and 24 make rsnapshot return a warning exit code
+- Changed link_dest comment in config file to mention "cross-platform"
 
 VERSION 1.1.4 (May 16 23:44 2004)
 ------------------------------------------------------------------------------

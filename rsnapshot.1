@@ -129,7 +129,7 @@
 .\" ========================================================================
 .\"
 .IX Title "RSNAPSHOT 1"
-.TH RSNAPSHOT 1 "2004-06-11" "perl v5.8.0" "User Contributed Perl Documentation"
+.TH RSNAPSHOT 1 "2004-06-12" "perl v5.8.0" "User Contributed Perl Documentation"
 .SH "NAME"
 rsnapshot \- remote filesystem snapshot utility
 .SH "SYNOPSIS"
@@ -572,52 +572,15 @@ This example will do the following:
 .PP
 Remember that these are just the times that the program runs.
 To set the number of backups stored, set the interval numbers in \fB/etc/rsnapshot.conf\fR
-.SH "AUTHORS"
-.IX Header "AUTHORS"
-Based on code originally by Mike Rubel
-.Sp
+.SH "EXIT VALUES"
+.IX Header "EXIT VALUES"
 .RS 4
-\&\fBhttp://www.mikerubel.org/computers/rsync_snapshots/\fR
-.RE
-.PP
-Rewritten and expanded in Perl by Nathan Rosenquist
+\&\fB0\fR  All operations completed successfully
 .Sp
-.RS 4
-\&\fBhttp://www.rsnapshot.org/\fR
+\&\fB1\fR  A fatal error occured
+.Sp
+\&\fB2\fR  Some warnings occured, but the backup still finished
 .RE
-.PP
-Carl Wilhelm Soderstrom \fB(chrome@real\-time.com)\fR created the \s-1RPM\s0
-\&.spec file which allowed the \s-1RPM\s0 package to be built, among other
-things.
-.PP
-Ted Zlatanov (\fBtzz@lifelogs.com\fR) contributed code, advice, patches
-and many good ideas.
-.PP
-Ralf van Dooren (\fBr.vdooren@snow.nl\fR) added and maintains the
-rsnapshot entry in the FreeBSD ports tree.
-.PP
-Carl Boe (\fBboe@demog.berkeley.edu\fR) Found several subtle bugs and
-provided fixes for them.
-.SH "COPYRIGHT"
-.IX Header "COPYRIGHT"
-Copyright (C) 2003\-2004 Nathan Rosenquist
-.PP
-Portions Copyright (C) 2002\-2003 Mike Rubel, Carl Wilhelm Soderstrom,
-Ted Zlatanov
-.PP
-This program is free software; you can redistribute it and/or modify
-it under the terms of the \s-1GNU\s0 General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-.PP
-This program is distributed in the hope that it will be useful,
-but \s-1WITHOUT\s0 \s-1ANY\s0 \s-1WARRANTY\s0; without even the implied warranty of
-\&\s-1MERCHANTABILITY\s0 or \s-1FITNESS\s0 \s-1FOR\s0 A \s-1PARTICULAR\s0 \s-1PURPOSE\s0.  See the
-\&\s-1GNU\s0 General Public License for more details.
-.PP
-You should have received a copy of the \s-1GNU\s0 General Public License
-along with this program; if not, write to the Free Software
-Foundation, Inc., 59 Temple Place, Suite 330, Boston, \s-1MA\s0  02111\-1307  \s-1USA\s0
 .SH "FILES"
 .IX Header "FILES"
 /etc/rsnapshot.conf
@@ -713,3 +676,49 @@ Please note that the other snapshots previously made of /home/ will still
 be using that disk space, but since the files are flushed out of hourly.0/,
 they will no longer be copied to the subsequent directories, and will thus
 be removed in due time as the rotations happen.
+.SH "AUTHORS"
+.IX Header "AUTHORS"
+Based on code originally by Mike Rubel
+.Sp
+.RS 4
+\&\fBhttp://www.mikerubel.org/computers/rsync_snapshots/\fR
+.RE
+.PP
+Rewritten and expanded in Perl by Nathan Rosenquist
+.Sp
+.RS 4
+\&\fBhttp://www.rsnapshot.org/\fR
+.RE
+.PP
+Carl Wilhelm Soderstrom \fB(chrome@real\-time.com)\fR created the \s-1RPM\s0
+\&.spec file which allowed the \s-1RPM\s0 package to be built, among other
+things.
+.PP
+Ted Zlatanov (\fBtzz@lifelogs.com\fR) contributed code, advice, patches
+and many good ideas.
+.PP
+Ralf van Dooren (\fBr.vdooren@snow.nl\fR) added and maintains the
+rsnapshot entry in the FreeBSD ports tree.
+.PP
+Carl Boe (\fBboe@demog.berkeley.edu\fR) Found several subtle bugs and
+provided fixes for them.
+.SH "COPYRIGHT"
+.IX Header "COPYRIGHT"
+Copyright (C) 2003\-2004 Nathan Rosenquist
+.PP
+Portions Copyright (C) 2002\-2003 Mike Rubel, Carl Wilhelm Soderstrom,
+Ted Zlatanov
+.PP
+This program is free software; you can redistribute it and/or modify
+it under the terms of the \s-1GNU\s0 General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+.PP
+This program is distributed in the hope that it will be useful,
+but \s-1WITHOUT\s0 \s-1ANY\s0 \s-1WARRANTY\s0; without even the implied warranty of
+\&\s-1MERCHANTABILITY\s0 or \s-1FITNESS\s0 \s-1FOR\s0 A \s-1PARTICULAR\s0 \s-1PURPOSE\s0.  See the
+\&\s-1GNU\s0 General Public License for more details.
+.PP
+You should have received a copy of the \s-1GNU\s0 General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place, Suite 330, Boston, \s-1MA\s0  02111\-1307  \s-1USA\s0
