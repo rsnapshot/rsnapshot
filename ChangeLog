@@ -22,6 +22,7 @@ VERSION CVS-unstable-post-1.1.6 (??? ?? ??:?? ????)
 - Added safe_rename() subroutine to work around a semi-obscure bug in certain
   Linux kernels
 - Clarified error message about local/relative paths in config file parsing
+- Added check for leading/trailing spaces in remote (ssh) paths
 
 VERSION 1.1.6 (Jul 05 16:35 2004)
 ------------------------------------------------------------------------------

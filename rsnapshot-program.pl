@@ -1963,6 +1963,12 @@ sub is_ssh_path {
 	my $path	= shift(@_);
 	
 	if (!defined($path))				{ return (undef); }
+	
+	# make sure we don't have leading/trailing spaces
+	if ($path =~ m/^\s/)				{ return (undef); }
+	if ($path =~ m/\s$/)				{ return (undef); }
+	
+	# must have user@host:/path syntax
 	if ($path =~ m/^.*?\@.*?:\/.*$/)	{ return (1); }
 	
 	return (0);
