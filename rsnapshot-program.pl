@@ -2171,38 +2171,34 @@ sub handle_backup_point	{
 	if (!defined($interval))	{ bail('interval not defined in handle_backup_point()'); }
 	if (!defined($bp_ref))		{ bail('bp_ref not defined in handle_backup_point()'); }
 	
+	# set up default args for rsync and ssh
+	my $ssh_args			= $global_default_ssh_args;
+	my $rsync_short_args	= $global_default_rsync_short_args;
+	my $rsync_long_args		= $global_default_rsync_long_args;
+	
 	# other misc variables
-	my @cmd_stack				= ();
-	my $ssh_args				= undef;
-	my $rsync_short_args		= undef;
+	my @cmd_stack				= undef;
 	my @rsync_long_args_stack	= undef;
 	my $src						= undef;
 	my $script					= undef;
 	my $tmpdir					= undef;
 	my $result					= undef;
 	
-	# set up default args for rsync and ssh
-	my $default_rsync_short_args	= $global_default_rsync_short_args;
-	my $default_rsync_long_args		= $global_default_rsync_long_args;
-	my $default_ssh_args			= $global_default_ssh_args;
-	
-	# if the config file specified rsync or ssh args, use those instead
+	# if the config file specified rsync or ssh args, use those instead of the hard-coded defaults in the program
 	if (defined($config_vars{'rsync_short_args'}))	{
-		$default_rsync_short_args = $config_vars{'rsync_short_args'};
+		$rsync_short_args = $config_vars{'rsync_short_args'};
 	}
 	if (defined($config_vars{'rsync_long_args'}))	{
-		$default_rsync_long_args = $config_vars{'rsync_long_args'};
+		$rsync_long_args = $config_vars{'rsync_long_args'};
 	}
 	if (defined($config_vars{'ssh_args'}))	{
-		$default_ssh_args = $config_vars{'ssh_args'};
+		$ssh_args = $config_vars{'ssh_args'};
 	}
 	
 	# extra verbose?
-	if ($verbose > 3)	{ $default_rsync_short_args .= 'v'; }
+	if ($verbose > 3)	{ $rsync_short_args .= 'v'; }
 	
-	# TODO: fix this mess
-	$ssh_args				= $default_ssh_args;
-	$rsync_short_args		= $default_rsync_short_args;
+	# split up rsync long args into an array
 	@rsync_long_args_stack	= ( split(/\s/, $default_rsync_long_args) );
 	
 	# append a trailing slash if src is a directory
