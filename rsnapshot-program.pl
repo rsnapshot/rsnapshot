@@ -86,9 +86,6 @@ my %opts;
 # command or interval to execute (first cmd line arg)
 my $cmd;
 
-# count the lines in the config file, so the user can pinpoint errors more precisely
-my $file_line_num = 0;
-
 # assume we don't have any of these programs
 my $have_gnu_cp	= 0;
 my $have_rm		= 0;
@@ -372,6 +369,9 @@ sub get_cmd_line_opts	{
 # it used to be in the main program and not a subroutine, perhaps we'll make it accept/return some args later
 #
 sub parse_config_file	{
+	# count the lines in the config file, so the user can pinpoint errors more precisely
+	my $file_line_num = 0;
+	
 	open(CONFIG, $config_file)
 		or bail("Could not open config file \"$config_file\"\nAre you sure you have permission?");
 	
