@@ -17,7 +17,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.264 2005/04/02 23:53:36 scubaninja Exp $
+# $Id: rsnapshot-program.pl,v 1.265 2005/04/03 00:02:49 scubaninja Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -3850,6 +3850,9 @@ sub show_disk_usage {
 				print STDERR "GNU du is recommended.\n";
 				exit(1);
 			}
+		} else {
+			# test was successful
+			exit(0);
 		}
 	} else {
 		print STDERR ("No files or directories found\n");
@@ -3860,7 +3863,6 @@ sub show_disk_usage {
 	exit(1);
 }
 
-# TODO: add cmd_rsnapshot_diff argument to config file
 # accept two args from $ARGV[1] and [2], like "daily.0" "daily.1" etc.
 # stick the full snapshot_root path on the beginning, and call rsnapshot-diff with these args
 # NOTE: since this is a read-only operation, we're not concerned with directory traversals and relative paths
@@ -3931,7 +3933,13 @@ sub show_rsnapshot_diff {
 			print STDERR "Error while calling $cmd_rsnapshot_diff\n";
 			exit(1);
 		}
+	} else {
+		# test was successful
+		exit(0);
 	}
+	
+	# shouldn't happen
+	exit(1);
 }
 
 # This subroutine works the way I hoped rsync would under certain conditions.
