@@ -1,7 +1,7 @@
 These are the necessary files to build an RPM file.
 
 Copy the source code tarball to your SOURCES directory.
-Copy SOURCES/* to your SOURCES directory.
+Copy SOURCES/rsnapshot.patch to your SOURCES directory.
 Copy SPECS/rsnapshot.spec to your SPECS directory.
 
 rpm -bb /path/to/your/SPECS/rsnapshot.spec
