@@ -493,9 +493,9 @@ sub backup_interval	{
 		if ($verbose)	{ print "cp -al $config_vars{'snapshot_root'}/$interval.0/ $config_vars{'snapshot_root'}/$interval.1/\n"; }
 		if ($test == 0)	{
 			$result = cp_al( "$config_vars{'snapshot_root'}/$interval.0/", "$config_vars{'snapshot_root'}/$interval.1/" );
-		}
-		if (! $result)	{
-			bail("Error! cp_al(\"$config_vars{'snapshot_root'}/$interval.0/\", \"$config_vars{'snapshot_root'}/$interval.1/\")");
+			if (! $result)	{
+				bail("Error! cp_al(\"$config_vars{'snapshot_root'}/$interval.0/\", \"$config_vars{'snapshot_root'}/$interval.1/\")");
+			}
 		}
 	}
 	
