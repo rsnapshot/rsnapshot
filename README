@@ -118,6 +118,9 @@ Carl Wilhelm Soderstrom <chrome@real-time.com>
 Ted Zlatanov <tzz@lifelogs.com>
     - Added the one_fs feature, autoconf support, many others
 
+Ralf van Dooren <r.vdooren@snow.nl>
+    - Added and maintains the rsnapshot entry in the FreeBSD ports tree
+
 SlapAyoda
     - Provided access to his computer museum for software testing
 

@@ -2374,7 +2374,7 @@ This example will do the following:
 Remember that these are just the times that the program runs.
 To set the number of backups stored, set the interval numbers in B</etc/rsnapshot.conf>
 
-=head1 AUTHOR
+=head1 AUTHORS
 
 Based on code originally by Mike Rubel
 
@@ -2398,6 +2398,9 @@ things.
 
 Ted Zlatanov (B<tzz@lifelogs.com>) contributed code, advice, patches
 and many good ideas.
+
+Ralf van Dooren (B<r.vdooren@snow.nl>) added and maintains the
+rsnapshot entry in the FreeBSD ports tree.
 
 =head1 COPYRIGHT
 
