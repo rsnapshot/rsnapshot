@@ -30,6 +30,7 @@ VERSION 1.1.6 (??? ?? ??:?? 2004)
 - Changed description of -V mode
 - Removed perl defaults from man page
 - Clarified crontab entry timing in man page
+- Removed trailing slashes on calls to mkpath() to fix bug with NetBSD
 
 VERSION 1.1.5 (Jun 20 20:56 2004)
 ------------------------------------------------------------------------------

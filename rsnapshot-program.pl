@@ -1715,7 +1715,8 @@ sub create_snapshot_root	{
 		print_cmd("mkdir -m 0700 -p $config_vars{'snapshot_root'}/");
 		if (0 == $test)	{
 			eval	{
-				mkpath( "$config_vars{'snapshot_root'}/", 0, 0700 );
+				# don't pass a trailing slash to mkpath
+				mkpath( "$config_vars{'snapshot_root'}", 0, 0700 );
 			};
 			if ($@)	{
 				bail(
@@ -2493,30 +2494,31 @@ sub exec_backup_script	{
 	# remove the tmp directory if it's still there for some reason
 	# (this shouldn't happen unless the program was killed prematurely, etc)
 	if ( -e "$tmpdir" )	{
-		display_rm_rf("$tmpdir");
+		display_rm_rf("$tmpdir/");
 		
 		if (0 == $test)	{
-			$result = rm_rf("$tmpdir");
+			$result = rm_rf("$tmpdir/");
 			if (0 == $result)	{
-				bail("Could not rm_rf(\"$tmpdir\");");
+				bail("Could not rm_rf(\"$tmpdir/\");");
 			}
 		}
 	}
 	
-	# we're creating now, not destroying. the tmp dir needs a trailing slash
-	$tmpdir .= '/';
-	
 	# create the tmp directory
-	print_cmd("mkdir -m 0755 -p $tmpdir");
+	print_cmd("mkdir -m 0755 -p $tmpdir/");
 	
 	if (0 == $test)	{
 		eval	{
+			# don't ever pass a trailing slash to mkpath
 			mkpath( "$tmpdir", 0, 0755 );
 		};
 		if ($@)	{
-			bail("Unable to create \"$tmpdir\",\nPlease make sure you have the right permissions.");
+			bail("Unable to create \"$tmpdir/\",\nPlease make sure you have the right permissions.");
 		}
 	}
+	
+	# no more calls to mkpath here. the tmp dir needs a trailing slash
+	$tmpdir .= '/';
 	
 	# change to the tmp directory
 	print_cmd("cd $tmpdir");
@@ -2633,21 +2635,21 @@ sub create_backup_point_dir	{
 	# don't mkdir for dest unless we have to
 	my $destpath = "$config_vars{'snapshot_root'}/$interval.0/" . join('/', @dirs);
 	
-	# make sure we have a trailing slash
-	if ($destpath !~ m/\/$/)	{
-		$destpath .= '/';
+	# make sure we DON'T have a trailing slash (for mkpath)
+	if ($destpath =~ m/\/$/)	{
+		$destpath =~ s/\/$//;
 	}
 	
 	# create the directory if it doesn't exist
 	if ( ! -e "$destpath" )	{
-		print_cmd("mkdir -m 0755 -p $destpath");
+		print_cmd("mkdir -m 0755 -p $destpath/");
 		
 		if (0 == $test)	{
 			eval	{
 				mkpath( "$destpath", 0, 0755 );
 			};
 			if ($@)	{
-				bail("Could not mkpath(\"$destpath\", 0, 0755);");
+				bail("Could not mkpath(\"$destpath/\", 0, 0755);");
 			}
 		}
 	}
