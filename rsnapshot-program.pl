@@ -2451,8 +2451,10 @@ sub rsync_backup_point {
 	my $bp_ref		= shift(@_);
 	
 	# validate subroutine args
-	if (!defined($interval))	{ bail('interval not defined in handle_backup_point()'); }
-	if (!defined($bp_ref))		{ bail('bp_ref not defined in handle_backup_point()'); }
+	if (!defined($interval))		{ bail('interval not defined in rsync_backup_point()'); }
+	if (!defined($bp_ref))			{ bail('bp_ref not defined in rsync_backup_point()'); }
+	if (!defined($$bp_ref{'src'}))	{ bail('src not defined in rsync_backup_point()'); }
+	if (!defined($$bp_ref{'dest'}))	{ bail('dest not defined in rsync_backup_point()'); }
 	
 	# set up default args for rsync and ssh
 	my $ssh_args			= $default_ssh_args;
@@ -2464,6 +2466,25 @@ sub rsync_backup_point {
 	my @rsync_long_args_stack	= undef;
 	my $src						= undef;
 	my $result					= undef;
+	
+	# check to see if this destination path has already failed
+	# if it's set to be rolled back, skip out now
+	foreach my $rollback_point (@rollback_points) {
+		if (defined($rollback_point)) {
+			my $tmp_dest			= $$bp_ref{'dest'};
+			my $tmp_rollback_point	= $rollback_point;
+			
+			# don't compare the slashes at the end
+			$tmp_dest			=~ s/\/+$//o;
+			$tmp_rollback_point	=~ s/\/+$//o;
+			
+			if ("$tmp_dest" eq "$tmp_rollback_point") {
+				print_warn ("$$bp_ref{'src'} skipped due to rollback plan", 3);
+				syslog_warn("$$bp_ref{'src'} skipped due to rollback plan");
+				return (undef);
+			}
+		}
+	}
 	
 	# if the config file specified rsync or ssh args, use those instead of the hard-coded defaults in the program
 	if (defined($config_vars{'rsync_short_args'})) {
@@ -2634,7 +2655,7 @@ sub rsync_backup_point {
 			# bitmask return value
 			my $retval = get_retval($result);
 			
-			# print warnings, maybe set this backup point to rollback if we're using --link-dest
+			# print warnings, and set this backup point to rollback if we're using --link-dest
 			#
 			handle_rsync_error($retval, $bp_ref);
 		}
@@ -2895,6 +2916,9 @@ sub create_backup_point_dir {
 # this is only necessary if we're using link_dest, since it moves the .0 to .1 directory,
 # instead of recursively copying links to the files
 #
+# TODO: flesh this out and do proper error checking
+# right now this is experimental
+#
 sub rollback_failed_backups {
 	my $interval = shift(@_);
 	
@@ -2902,16 +2926,29 @@ sub rollback_failed_backups {
 	
 	# rollback failed backups (if we're using link_dest)
 	foreach my $rollback_point (@rollback_points) {
-		# TODO: flesh this out and do proper error checking
 		#
-		# print STDERR "rolling back $rollback_point\n";
+		print STDERR "rolling back $rollback_point\n";
+		
+		# using link-dest, this probably won't happen
+		if ( -e "$config_vars{'snapshot_root'}/$interval.0/$rollback_point" ) {
+			rm_rf("$config_vars{'snapshot_root'}/$interval.0/$rollback_point");
+		}
 		#
-		# rm_rf("$config_vars{'snapshot_root'}/$interval.0/$rollback_point");
-		#
-		# cp_al(
-		#	"$config_vars{'snapshot_root'}/$interval.1/$rollback_point",
-		#	"$config_vars{'snapshot_root'}/$interval.0/$rollback_point"
-		# );
+		cp_al(
+			"$config_vars{'snapshot_root'}/$interval.1/$rollback_point",
+			"$config_vars{'snapshot_root'}/$interval.0/$rollback_point"
+		);
+		
+		# and then an rsync for good measure (special files)
+		print "rsync -al --delete --numeric-ids --relative --delete-excluded \ \n";
+		print "  $config_vars{'snapshot_root'}/$interval.1/$rollback_point \ \n";
+		print "  $config_vars{'snapshot_root'}/$interval.0/$rollback_point \ \n";
+		
+		system(
+			'rsync', '-al', '--delete', '--numeric-ids', '--relative', '--delete-excluded',
+			"$config_vars{'snapshot_root'}/$interval.1/$rollback_point",
+			"$config_vars{'snapshot_root'}/$interval.0/$rollback_point"
+		);
 	}
 }
 
