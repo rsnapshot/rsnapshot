@@ -1,32 +1,11 @@
 rsnapshot TODO list:
 
 for version 1.0.x
----------------------------------------------------------------------------
-Handle platforms other than Linux and GNU. cp -al seems to be the crux of
-this incompatibility, since the -al flags do not exist on BSD or Solaris.
-Probably any non-GNU system will have this issue. I believe the best
-replacement will be native Perl functions, with the option to use GNU cp
-if it is available. What follows is a mapping of the old to the new:
-	
-	mkdir -p  -> File::Path -> mkpath('foo/bar', 0, 0755);
-	touch     -> utime(time(), time(), 'foo');
-	cp -al    -> still use it, or a custom subroutine (default)
-	mv        -> rename('old', 'new');
-	rm -rf    -> File::Path -> rmtree('foo', 0, 1);
-	
-	rsync and ssh should continue to be handled by external commands, since
-	we want to avoid non-standard Perl modules at all costs.
-	
-	cmd_{mkdir,touch,mv,rm} entries in /etc/rsnapshot.conf should cause
-	warnings to be displayed, but still allow the program to run. They
-	will be removed in the final stable version of this branch.
-	
-	If cmd_cp is set, it will imply GNU cp. If it is not specified, or
-	if it fails, we will fall back to the native Perl implementation,
-	with the only drawback being the handling of special files (/dev
-	entries, fifo, etc).
-	
+------------------------------------------------------------------------------
+Test 0.9.x versions thoroughly on as many obscure UNIX platforms as possible.
+Remove deprecated cruft before final 1.0 release.
+
 for version 2.0.x
----------------------------------------------------------------------------
+------------------------------------------------------------------------------
 Possibly rewrite it in C, if there's time or inclination. This would allow
 all the benefits of GNU cp combined with total compatibility.

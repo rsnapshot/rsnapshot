@@ -33,9 +33,13 @@ INSTALLATION
 		chown 0:0 /usr/local/man/man1/rsnapshot.1.gz
 		chmod 644 /usr/local/man/man1/rsnapshot.1.gz
 		
-		cp -i rsnapshot.conf /etc/rsnapshot.conf
-		chown 0:0 /etc/rsnapshot.conf
-		chmod 600 /etc/rsnapshot.conf
+		cp rsnapshot.conf /etc/rsnapshot.conf.default
+		
+		# if you don't already have a config file
+		# cp -i rsnapshot.conf /etc/rsnapshot.conf
+		
+		chown 0:0 /etc/rsnapshot.conf /etc/rsnapshot.conf.default
+		chmod 600 /etc/rsnapshot.conf /etc/rsnapshot.conf.default
 		
 		cp /etc/rsnapshot.conf.default /etc/rsnapshot.conf
 		
