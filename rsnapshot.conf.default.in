@@ -28,7 +28,7 @@ snapshot_root	/.snapshots/
 #
 # See the README file or the man page for more details.
 #
-#@CMD_CP@
+#cmd_cp		/bin/cp
 
 # rsync must be enabled for anything to work.
 @CMD_RSYNC@
