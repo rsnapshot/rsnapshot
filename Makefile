@@ -40,13 +40,14 @@ tar:
 	cp redhat/SOURCES/rsnapshot.patch rsnapshot-${VERSION}/redhat/SOURCES/
 	cp redhat/SPECS/rsnapshot.spec rsnapshot-${VERSION}/redhat/SPECS/
 	
-	chown -R root:root rsnapshot-${VERSION}/
-	tar czf rsnapshot-${VERSION}.tar.gz rsnapshot-${VERSION}/
-	rm -rf rsnapshot-${VERSION}/
-	
 	# utils
 	mkdir rsnapshot-${VERSION}/utils/
 	cp utils/rsnaptar rsnapshot-${VERSION}/utils/
+	
+	# change ownership to root, and delete build dir
+	chown -R root:root rsnapshot-${VERSION}/
+	tar czf rsnapshot-${VERSION}.tar.gz rsnapshot-${VERSION}/
+	rm -rf rsnapshot-${VERSION}/
 	
 debian:
 	mkdir -p ${DEB_BUILD_DIR}/{DEBIAN,usr/bin,etc,usr/share/man/man1}
