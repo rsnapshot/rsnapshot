@@ -53,12 +53,13 @@ debian:
 	rm -rf ${DPKG_BUILD_DIR}/
 	
 install:
+	mkdir -p /usr/local/bin/
 	cp -f rsnapshot /usr/local/bin/rsnapshot
 	chmod 755 /usr/local/bin/rsnapshot
 	chown 0:0 /usr/local/bin/rsnapshot
 	
 	mkdir -p /usr/local/man/man1/
-	cp rsnapshot.1 /usr/local/man/man1/rsnapshot.1
+	cp -f rsnapshot.1 /usr/local/man/man1/rsnapshot.1
 	chmod 644 /usr/local/man/man1/rsnapshot.1
 	chown 0:0 /usr/local/man/man1/rsnapshot.1
 	
