@@ -1,4 +1,4 @@
-rsnapshot 1.0.3
+rsnapshot 1.0.4
 http://rsnapshot.scubaninja.com/
 
 rsnapshot is a filesystem snapshot utility. It can take incremental
@@ -90,7 +90,7 @@ or visit http://rsnapshot.scubaninja.com/
 ------------------------------------------------------------------------------
 CONTRIBUTORS
 ------------------------------------------------------------------------------
-Mike Rubel
+Mike Rubel - http://www.mikerubel.org/computers/rsync_snapshots/
 	- Created the original shell scripts on which this project is based
 
 Nathan Rosenquist <rsnapshot@scubaninja.com>

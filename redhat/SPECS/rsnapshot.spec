@@ -1,11 +1,11 @@
 Summary: rsync backup snapshot program
 Name: rsnapshot
-Version: 1.0.3
+Version: 1.0.4
 Release: 1
 BuildArch: noarch
 Copyright: GPL
 Group: Applications/System
-Source: http://rsnapshot.scubaninja.com/downloads/rsnapshot-1.0.3.tar.gz
+Source: http://rsnapshot.scubaninja.com/downloads/rsnapshot-1.0.4.tar.gz
 Patch: rsnapshot.patch
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
 Requires: perl, fileutils, rsync
@@ -49,6 +49,9 @@ rm -rf $RPM_BUILD_DIR/%{name}-%{version}/
 %{_mandir}/man1/rsnapshot.1*
 
 %changelog
+* Tue Nov 04 2003 Nathan Rosenquist <rsnapshot@scubaninja.com>
+- fixed anonymous rsync error
+
 * Thu Oct 30 2003 Nathan Rosenquist <rsnapshot@scubaninja.com>
 - update to 1.0.3
 

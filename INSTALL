@@ -1,4 +1,4 @@
-rsnapshot 1.0.3
+rsnapshot 1.0.4
 http://rsnapshot.scubaninja.com/
 
 rsnapshot is a filesystem snapshot utility. It can take incremental
@@ -8,17 +8,9 @@ rsnapshot comes with ABSOLUTELY NO WARRANTY.  This is free software,
 and you are welcome to redistribute it under certain conditions.
 See the GNU General Public Licence for details.
 
-UPGRADING
-	If you are upgrading from version 0.9.1, please note that the
-	format of /etc/rsnapshot.conf has changed. Tabs are now the
-	required delimiters instead of spaces, and all directory entries
-	require a trailing slash. See /etc/rsnapshot.conf.default for
-	a syntactically valid example.
-	
-	If you are upgrading from 0.9.4 or later, please note that
-    several commands are now deprecated. Please see README for more
-    information.
-	
+QUICK START (for the impatient)
+	see the README file if you want the 30 second overview
+		
 INSTALLATION
 	
 	THE EASY WAY
@@ -48,9 +40,6 @@ INSTALLATION
 		
 		chown 0:0 /etc/rsnapshot.conf /etc/rsnapshot.conf.default
 		chmod 600 /etc/rsnapshot.conf /etc/rsnapshot.conf.default
-		
-QUICK START (for the impatient)
-	see the README file if you want the 30 second overview
 		
 CONFIGURATION
 	edit /etc/rsnapshot.conf to suit your tastes
