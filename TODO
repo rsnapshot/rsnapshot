@@ -5,8 +5,8 @@ for version 1.1.x
 - Add interactive mode to generate config files.
 
 - Add rsync STDOUT/STDERR output to logfile at higher log settings. This will
-  be accomplished by redirecting filehandles or opening the program into a
-  pipe and reading the output.
+  be accomplished by opening the rsync command as a pipe to a filehandle and
+  printing / logging the output.
 
 - Add warning about link_dest and unmounted volumes.
 
