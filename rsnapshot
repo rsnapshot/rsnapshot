@@ -35,7 +35,7 @@ use File::stat;
 ### DECLARE VARIABLES ###
 #########################
 
-my $VERSION = '1.0.5';
+my $VERSION = '1.0.4';
 
 # default configuration file
 my $config_file	= '/etc/rsnapshot.conf';
@@ -78,7 +78,7 @@ my $cmd;
 # assume the config file syntax is OK unless we encounter problems
 my $file_syntax_ok = 1;
 
-# count the lines in the config file, so we can pinpoint errors more precisely
+# count the lines in the config file, so the user can pinpoint errors more precisely
 my $file_line_num = 0;
 
 # assume we don't have any of these programs
@@ -1274,13 +1274,13 @@ B<daily>, B<weekly> and B<monthly> have been defined in B</etc/rsnapshot.conf>
 
 =over 4
 
-B<0 */4 * * *         /usr/local/bin/rsnapshot hourly>
+B<0 */4 * * *         /usr/bin/rsnapshot hourly>
 
-B<50 23 * * *         /usr/local/bin/rsnapshot daily>
+B<50 23 * * *         /usr/bin/rsnapshot daily>
 
-B<40 23 1,8,15,22 * * /usr/local/bin/rsnapshot weekly>
+B<40 23 1,8,15,22 * * /usr/bin/rsnapshot weekly>
 
-B<30 23 1 * *         /usr/local/bin/rsnapshot monthly>
+B<30 23 1 * *         /usr/bin/rsnapshot monthly>
 
 =back
 
