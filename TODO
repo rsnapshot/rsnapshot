@@ -4,7 +4,8 @@ for version 1.1.x
 ------------------------------------------------------------------------------
 - Add interactive mode to generate config files.
 
-- Fix rmtree() locale issue, and test the POSIX module usage on all platforms
+- Test fix? for rmtree() locale issue, and test the POSIX module usage on all
+  platforms
 
 - Add warning about link_dest and unmounted volumes.
 
