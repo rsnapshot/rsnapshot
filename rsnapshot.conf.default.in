@@ -107,7 +107,7 @@ loglevel	3
 # Default rsync args. All rsync commands have at least these options set.
 #
 #rsync_short_args	-a
-#rsync_long_args	--delete --numeric-ids
+#rsync_long_args	--delete --numeric-ids --relative
 
 # ssh has no args passed by default, but you can specify some here.
 #

@@ -32,7 +32,6 @@ use Getopt::Std;		# getopts()
 use File::Path;			# mkpath(), rmtree()
 use File::stat;			# stat(), lstat()
 use POSIX qw(locale_h);	# setlocale()
-use Text::ParseWords;	# parse_line()
 
 ########################################
 ###     DECLARE GLOBAL VARIABLES     ###
@@ -42,7 +41,7 @@ use Text::ParseWords;	# parse_line()
 $| = 1;
 
 # version of rsnapshot
-my $VERSION = '1.?.?';
+my $VERSION = 'CVS-unstable-post-1.1.6';
 
 # command or interval to execute (first cmd line arg)
 my $cmd;
@@ -106,7 +105,7 @@ my $exit_code = 0;
 
 # global defaults for external programs
 my $default_rsync_short_args	= '-a';
-my $default_rsync_long_args		= '--delete --numeric-ids';
+my $default_rsync_long_args		= '--delete --numeric-ids --relative';
 my $default_ssh_args			= undef;
 
 # exactly how the program was called, with all arguments
@@ -405,7 +404,7 @@ sub parse_config_file {
 		if (is_blank($line)) { next; }
 		
 		# parse line
-		my ($var, $value, $value2, $value3) = parse_line('\s+', 0, $line);
+		my ($var, $value, $value2, $value3) = split(/\t+/, $line, 4);
 		
 		# warn about entries we don't understand, and immediately prevent the
 		# program from running or parsing anything else
@@ -650,6 +649,7 @@ sub parse_config_file {
 			# also, first check to see that we're not backing up the snapshot directory
 			if ((is_real_local_abs_path("$src")) && ($config_vars{'snapshot_root'} =~ m/^$src/)) {
 				my %hash;
+				my $exclude_path;
 				
 				$hash{'src'}	= $src;
 				$hash{'dest'}	= $dest;
@@ -657,9 +657,25 @@ sub parse_config_file {
 					$hash{'opts'} = $opts_ref;
 				}
 				
-				(my $snapshot_path = $config_vars{'snapshot_root'}) =~ s/^$src//;
+				# dynamically generate an exclude path to avoid backing up the snapshot root.
+				# depending on the backup point and the snapshot_root location, this could be
+				# almost anything. it's tempting to think that just using the snapshot_root as
+				# the exclude path will work, but it doesn't. instead, this an exclude path that
+				# starts relative to the backup point. for example, if snapshot_root is set to
+				# /backup/private/snapshots/, and the backup point is /backup/, the exclude path
+				# will be private/snapshots/. the trailing slash does not appear to matter.
+				#
+				# it's also worth noting that this doesn't work at all without the --relative
+				# flag being passed to rsync (which is now the default).
+				#
+				# this method was added by bharat mediratta, and replaces my older, less elegant
+				# attempt to run multiple invocations of rsync instead.
+				#
+				$exclude_path = $config_vars{'snapshot_root'};
+				$exclude_path =~ s/^$src//;
 				
-				$hash{'opts'}{'extra_rsync_long_args'} .= sprintf(' --exclude=%s', $snapshot_path);
+				# pass it to rsync on this backup point only
+				$hash{'opts'}{'extra_rsync_long_args'} .= sprintf(' --exclude=%s', $exclude_path);
 				
 				push(@backup_points, \%hash);
 				
@@ -4330,6 +4346,9 @@ utils/backup_smb_share.sh
 
 Christoph Wegscheider (B<christoph.wegscheider@wegi.net>) added and
 maintains the Debian rsnapshot package.
+
+Bharat Mediratta (B<bharat@menalto.com>) improved the exclusion
+rules to avoid backing up the snapshot root (among other things).
 
 Peter Palfrader (B<weasel@debian.org>) enhanced error reporting to
 include command line options.

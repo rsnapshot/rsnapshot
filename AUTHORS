@@ -19,5 +19,9 @@ Shane Liebling <shane@cryptio.net>
 Christoph Wegscheider <christoph.wegscheider@wegi.net>
     - Added and maintains the Debian rsnapshot package
 
+Bharat Mediratta <bharat@menalto.com>
+    - Improved the exclusion rules to avoid backing up the snapshot root
+      (among other things).
+
 Peter Palfrader <weasel@debian.org>
     - Enhanced error reporting to include command line options
