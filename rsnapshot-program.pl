@@ -2762,7 +2762,7 @@ sub rotate_higher_interval	{
 				}
 			}
 		} else	{
-			print_msg("$config_vars{'snapshot_root'}/$interval.$i not present (yet), nothing to delete", 4);
+			print_msg("$config_vars{'snapshot_root'}/$interval.$i not present (yet), nothing to rotate", 4);
 		}
 	}
 	
