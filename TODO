@@ -7,8 +7,6 @@ for version 1.0.x
     if at all. There should be zero chance that the users config will ever
     be overwritten.
   - $sysconfdir/rsnapshot.conf.default should be installed on "make install"
-  - It would be nice to parse rsnapshot during ./configure to set the default
-    config file based on the --sysconfdir value
   - Test install process on Debian, Redhat, Fedora, Solaris, Mac OS X, *BSD,
     and maybe IRIX if it's convenient
 

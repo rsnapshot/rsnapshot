@@ -97,6 +97,17 @@ my $verbose			= 0; # show the shell commands being executed
 my $extra_verbose	= 0; # show extra verbose messages
 my $debug			= 0; # super verbose debugging messages
 
+######################
+### AUTOCONF STUFF ###
+######################
+
+# if this script has been run through autoconf, use the appropriate config file
+if ('@sysconfdir@' eq '${prefix}/etc')	{
+	$config_file = '@prefix@/etc/rsnapshot.conf';
+} elsif ('@sysconfdir@' ne ('@' . 'sysconfdir' . '@'))	{
+	$config_file = '@sysconfdir@/rsnapshot.conf';
+}
+
 ###############
 ### SIGNALS ###
 ###############
