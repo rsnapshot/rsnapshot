@@ -1,0 +1,36 @@
+rsnapshot 0.9.0
+
+rsnapshot is a filesystem snapshot utility. It can take incremental
+snapshots of local and remote filesystems for any number of machines.
+
+rsnapshot comes with ABSOLUTELY NO WARRANTY.  This is free software,
+and you are welcome to redistribute it under certain conditions.
+See the GNU General Public Licence for details.
+
+INSTALLATION
+	
+	QUICK INSTALLATION
+		su root
+		make install
+
+	THE HARD WAY
+		su root
+		cp rsnapshot /usr/local/bin/rsnapshot
+		chown 0:0 /usr/local/bin/rsnapshot
+		chmod 755 /usr/local/bin/rsnapshot
+		
+		mkdir -p /usr/local/man/man1/
+		cp rsnapshot.1 /usr/local/man/man1/
+		chown 0:0 /usr/local/man/man1/rsnapshot.1
+		chmod 644 /usr/local/man/man1/rsnapshot.1
+		
+		cp rsnapshot.conf /etc/rsnapshot.conf
+		chown 0:0 /etc/rsnapshot.conf
+		chmod 600 /etc/rsnapshot.conf
+		
+QUICK START (for the impatient)
+	see the README file if you want the 30 second version
+		
+CONFIGURATION
+	edit /etc/rsnapshot.conf to suit your tastes
+	"man rsnapshot" for the full documentation

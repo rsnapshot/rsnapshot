@@ -1,0 +1,684 @@
+#!/usr/bin/perl
+
+# attention vi users: set ts=4 sw=4
+
+########################
+### STANDARD MODULES ###
+########################
+
+use strict;
+use warnings;
+use Getopt::Std;
+
+#########################
+### DECLARE VARIABLES ###
+#########################
+
+my $VERSION = '0.9.0';
+
+my $config_file	= '/etc/rsnapshot.conf'; 
+
+my %config_vars;
+my @snapshot_points;
+
+my @intervals;
+my $interval_num;
+my $interval_max;
+my $prev_interval;
+my $prev_interval_max;
+
+my %opts; 
+my $cmd;
+
+my $do_configtest = 0;
+my $verbose = 0;
+my $test = 0;
+ 
+##############################
+### CORE PROGRAM STRUCTURE ###
+##############################
+
+# GET COMMAND LINE OPTIONS 
+getopt('c', \%opts);
+getopts('vt', \%opts);
+$cmd = $ARGV[0];
+
+# ALTERNATE CONFIG FILE
+if (defined($opts{'c'}) && ( -f $opts{'c'}))	{
+	$config_file = $opts{'c'};
+}
+
+# VERBOSE?
+if (defined($opts{'v'}))	{
+	$verbose = 1;
+}
+
+# TEST?
+if (defined($opts{'t'}))	{
+	$test = 1;
+	$verbose = 1;
+}
+
+# COMMAND LINE ARGS 
+if ( ! $cmd )	{
+	show_usage();
+	exit(0);
+}
+if ($cmd eq 'help')	{
+	show_help();
+}
+if ($cmd eq 'configtest')	{
+	$do_configtest = 1;
+} 
+if ($cmd eq 'version')	{
+	print "rsnapshot $VERSION\n";
+	exit(0);
+}
+if ($cmd eq 'version_only')	{
+	print $VERSION;
+	exit(0);
+}
+ 
+# PARSE CONFIG FILE 
+if ( -f $config_file )	{
+	open(CONFIG, $config_file) or die "could not open config file \"$config_file\"";
+	while (my $line = <CONFIG>)	{
+		chomp($line);
+		
+		# ignore comments
+		if ($line =~ /^#/)	{ next; }
+		
+		# parse line
+		my ($var, $value, $value2) = split(/\s+/, $line, 3);
+		
+		# ignore blank or incomplete lines
+		if (!defined($var))		{ next; }
+		if (!defined($value))	{ next; }
+		
+		# SNAPSHOT_ROOT
+		if ($var eq 'snapshot_root')	{
+			$config_vars{'snapshot_root'} = $value;
+			next;
+		}
+		
+		# REQUIRED EXTERNAL COMMANDS
+		foreach my $command (qw( rsync mkdir touch cp mv rm ))	{
+			if ($var eq "cmd_$command")	{
+				if ( -x $value )	{
+					$config_vars{"cmd_$command"} = $value;
+				} else	{
+					bail("could not find $value ... please fix cmd_$command in $config_file");
+				}
+			}
+		}
+		# OPTIONAL EXTERNAL COMMANDS
+		foreach my $command (qw( ssh ))	{
+			if ($var eq "cmd_$command")	{
+				if ( -x $value )	{
+					$config_vars{"cmd_$command"} = $value;
+				} else	{
+					bail("could not find $value ... please fix cmd_$command in $config_file");
+				}
+			}
+		}
+		
+		# INTERVALS
+		if ($var eq 'interval')	{
+			if (!defined($value))		{ bail("interval can not be blank"); }
+			if ($value !~ m/^[\w\d]+$/)	{ bail("\"$value\" is not a valid entry"); }
+			
+			if (!defined($value2))		{ bail("\$value\" number can not be blank"); }
+			if ($value2 !~ m/^\d+$/)	{ bail("$value2 is not an integer"); }
+			if ($value2 == 0)			{ bail("\"$value\" can not be 0"); }
+			
+			my %hash;
+			$hash{'interval'}	= $value;
+			$hash{'number'}		= $value2;
+			push(@intervals, \%hash);
+		}
+		
+		# BACKUP points
+		if ($var eq 'backup')	{
+			my $src = $value;
+			my $dest = $value2;
+			
+			if ( !defined($config_vars{'snapshot_root'}) )	{	bail("snapshot_root needs to be defined before backup points"); }
+			
+			# validate path
+			if ( ! -d $src )	{
+				# if it's an ssh path, make sure we have ssh
+				if ( $src =~ /^.*?\@.*?:\/.*$/)	{
+					if (!defined($config_vars{'cmd_ssh'}))	{
+						bail("cannot handle $src ... ssh not found in $config_file");
+					}
+				} else	{
+					# if it's not an ssh path, make sure it's a valid local directory
+					bail("source directory \"$src\" doesn't exist");
+				}
+			}
+			if ($dest =~ /^\//)	{ bail("full paths not allowed for backup destinations"); }
+			
+			# make sure we don't backup the backup!
+			if ($config_vars{'snapshot_root'} =~ $src)	{
+				opendir(SRC, $src) or bail("could not open $src");
+				readdir(SRC);	# .
+				readdir(SRC);	# ..
+				
+				while (my $dir = readdir(SRC))	{
+					if ("$src/$dir" ne $config_vars{'snapshot_root'})	{
+						my %hash;
+						$hash{'src'}	= "$src/$dir";
+						$hash{'dest'}	= "$dest/$dir";
+						push(@snapshot_points, \%hash);
+					}
+				}
+				closedir(SRC);
+			} else	{
+				my %hash;
+				$hash{'src'}	= $src;
+				$hash{'dest'}	= $dest;
+				push(@snapshot_points, \%hash);
+			}
+		}
+	}
+	close(CONFIG);
+	
+	# CONFIG TEST?
+	if ($do_configtest)	{
+		print "syntax ok\n";
+		exit(0);
+	}
+} else	{
+	print STDERR "config file \"$config_file\" does not exist or is not readable\n";
+	exit(-1);
+}
+ 
+# FIGURE OUT WHICH INTERVAL WE'RE RUNNING, AND HOW IT RELATES TO THE OTHERS 
+# THEN RUN THE ACTION FOR THE CHOSEN INTERVAL
+my $i = 0;
+foreach my $i_ref (@intervals)	{
+	if ($$i_ref{'interval'} eq $cmd)	{
+		$interval_num = $i;
+		
+		if ($$i_ref{'number'} > 0)	{
+			$interval_max = $$i_ref{'number'} - 1;
+		} else	{
+			bail("$$i_ref{'interval'} can not be 0");
+		}
+		
+		last;
+	}
+	
+	# this WILL be previous next time through
+	$prev_interval = $$i_ref{'interval'};
+	
+	if ($$i_ref{'number'} > 0)	{
+		$prev_interval_max = $$i_ref{'number'} - 1;
+	} else	{
+		bail("$$i_ref{'interval'} can not be 0");
+	}
+	
+	$i++;
+}
+undef($i);
+
+if (!defined($interval_num))	{
+	bail("interval \"$cmd\" unknown, check $config_file");
+}
+
+# RUN THE BACKUP
+if ($interval_num == 0)	{
+	# if this is the most frequent interval, actually do the backups here
+	backup_interval($cmd);
+	
+} else	{
+	# this is not the most frequent unit, just rotate
+	rotate_interval($cmd, $prev_interval);
+}
+
+# if we got this far, assume success
+exit(0);
+
+###################
+### SUBROUTINES ###
+###################
+
+sub backup_interval	{
+	my $interval = shift(@_);
+	
+	if (!defined($interval))	{ bail('backup_interval() expects an argument'); }
+	
+	# ROTATE DIRECTORIES
+	#
+	# delete the oldest directory
+	if ( -d "$config_vars{'snapshot_root'}/$interval.$interval_max" )	{
+		
+		if ($verbose)	{ print "$config_vars{'cmd_rm'} -rf $config_vars{'snapshot_root'}/$interval.$interval_max\n"; }
+		if ($test == 0)	{
+			system( $config_vars{'cmd_rm'}, '-rf', "$config_vars{'snapshot_root'}/$interval.$interval_max" );
+		}
+	}
+	
+	# rotate the middle ones
+	for (my $i=($interval_max-1); $i>0; $i--)	{
+		if ( -d "$config_vars{'snapshot_root'}/$interval.$i" )	{
+			
+			if ($verbose)	{
+				print "$config_vars{'cmd_mv'} $config_vars{'snapshot_root'}/$interval.$i $config_vars{'snapshot_root'}/$interval." . ($i+1) . "\n";
+			}
+			if ($test == 0)	{
+				system( $config_vars{'cmd_mv'}, "$config_vars{'snapshot_root'}/$interval.$i", ("$config_vars{'snapshot_root'}/$interval." . ($i+1)) );
+			}
+		}
+	}
+	
+	# WE HAVE AN $interval.0 DIRECTORY
+	if ( -d "$config_vars{'snapshot_root'}/$interval.0" )	{
+		# hard link (except for directories) .0 over to .1
+		if ($verbose)	{ print "$config_vars{'cmd_cp'} -al $config_vars{'snapshot_root'}/$interval.0/ $config_vars{'snapshot_root'}/$interval.1\n"; }
+		if ($test == 0)	{
+			system( $config_vars{'cmd_cp'}, '-al', "$config_vars{'snapshot_root'}/$interval.0/", "$config_vars{'snapshot_root'}/$interval.1" );
+		}
+		
+	}
+	
+	# SYNC LIVE DATA TO $interval.0
+	foreach my $sp_ref (@snapshot_points)	{
+		my $src;
+		
+		# append a trailing slash if it's a directory
+		if ( (-d $$sp_ref{'src'}) && ($$sp_ref{'src'} !~ /\/$/) )	{
+			$src = $$sp_ref{'src'} . '/';
+		} else	{
+			$src = $$sp_ref{'src'};
+		}
+		
+		# create missing parent directories inside the $interval.x directory
+		my @dirs = split(/\//, $$sp_ref{'dest'});
+		pop(@dirs);
+		
+		# don't mkdir unless we have to
+		my $destpath = "$config_vars{'snapshot_root'}/$interval.0/" . join('/', @dirs);
+		if ( ! -e $destpath )	{
+			if ($verbose)	{ print "$config_vars{'cmd_mkdir'} -p $destpath\n"; }
+			if ($test == 0)	{
+				system( $config_vars{'cmd_mkdir'}, '-p', $destpath );
+			}
+		}
+		
+		# if this is a user@host:/path, use ssh
+		if ($src =~ /^.*?\@.*?:\/.*$/)	{
+			if ($src !~ /\/$/)	{
+				$src .= '/';
+			}
+			if ($verbose)	{ print "$config_vars{'cmd_rsync'} -al --delete --numeric-ids --devices --rsh=$config_vars{'cmd_ssh'} $src $config_vars{'snapshot_root'}/$interval.0/$$sp_ref{'dest'}\n"; }
+			if ($test == 0)	{
+				system( $config_vars{'cmd_rsync'}, '-al', '--delete', '--numeric-ids', '--devices', "--rsh=$config_vars{'cmd_ssh'}", $src, "$config_vars{'snapshot_root'}/$interval.0/$$sp_ref{'dest'}" );
+			}
+		# local filesystem
+		} else	{
+			if ($verbose)	{ print "$config_vars{'cmd_rsync'} -al --delete --numeric-ids --devices $src $config_vars{'snapshot_root'}/$interval.0/$$sp_ref{'dest'}\n"; }
+			if ($test == 0)	{
+				system( $config_vars{'cmd_rsync'}, '-al', '--delete', '--numeric-ids', '--devices', $src, "$config_vars{'snapshot_root'}/$interval.0/$$sp_ref{'dest'}" );
+			}
+		}
+	}
+	
+	# update mtime of $interval.0 to reflect snapshot time
+	if ($verbose)	{ print "$config_vars{'cmd_touch'} $config_vars{'snapshot_root'}/$interval.0/\n"; }
+	if ($test == 0)	{
+		system( $config_vars{'cmd_touch'}, "$config_vars{'snapshot_root'}/$interval.0/" );
+	}
+}
+
+sub rotate_interval	{
+	my $interval		= shift(@_);
+	my $prev_interval	= shift(@_);
+	
+	if (!defined($interval) or !defined($prev_interval))	{
+		bail('rotate_interval() expects 2 arguments');
+	}
+	
+	# ROTATE DIRECTORIES
+	#
+	# delete the oldest one
+	if ( -d "$config_vars{'snapshot_root'}/$interval.$interval_max" )	{
+		if ($verbose)	{ print "$config_vars{'cmd_rm'} -rf $config_vars{'snapshot_root'}/$interval.$interval_max\n"; }
+		if ($test == 0)	{
+			system( $config_vars{'cmd_rm'}, '-rf', "$config_vars{'snapshot_root'}/$interval.$interval_max" );
+		}
+	}
+	
+	# rotate the middle ones
+	for (my $i=($interval_max-1); $i>=0; $i--)	{
+		if ( -d "$config_vars{'snapshot_root'}/$interval.$i" )	{
+			if ($verbose)	{ print "$config_vars{'cmd_mv'} $config_vars{'snapshot_root'}/$interval.$i $config_vars{'snapshot_root'}/$interval." . ($i+1) . "\n"; }
+			if ($test == 0)	{
+				system( $config_vars{'cmd_mv'}, "$config_vars{'snapshot_root'}/$interval.$i", ("$config_vars{'snapshot_root'}/$interval." . ($i+1)) );
+			}
+		}
+	}
+	
+	# hard link (except for directories) previous interval over to .0
+	if ( -d "$config_vars{'snapshot_root'}/$prev_interval.$prev_interval_max" )	{
+		if ($verbose)	{ print "$config_vars{'cmd_cp'} -al $config_vars{'snapshot_root'}/$prev_interval.$prev_interval_max $config_vars{'snapshot_root'}/$interval.0\n"; }
+		if ($test == 0)	{
+			system( $config_vars{'cmd_cp'}, '-al', "$config_vars{'snapshot_root'}/$prev_interval.$prev_interval_max", "$config_vars{'snapshot_root'}/$interval.0" );
+		}
+	}
+}
+
+sub bail	{
+	my $str = shift(@_);
+	print STDERR $str . "\n";
+	exit(-1);
+} 
+ 
+sub show_help	{
+	show_usage();
+	
+	print<<HERE;
+
+rsnapshot is a filesystem snapshot utility. It can take incremental
+snapshots of local and remote filesystems for any number of machines.
+
+rsnapshot comes with ABSOLUTELY NO WARRANTY.  This is free software,
+and you are welcome to redistribute it under certain conditions.
+See the GNU General Public Licence for details.
+
+Options:
+    -v verbose
+    -t test
+    -c specify alternate config file (-c /path/to/file)
+HERE
+	
+	exit(0);
+}
+
+sub show_usage	{
+	print "rsnapshot $VERSION\n";
+	print "usage: rsnapshot [-v] [-t] [-c /alt/config/file] <interval>|configtest|help|version\n";
+	print "type \"man rsnapshot\" for full details\n";
+} 
+ 
+#####################
+### PERLDOC / POD ###
+#####################
+ 
+=head1 NAME
+
+B<rsnapshot> - remote filesystem snapshot utility
+
+=head1 SYNOPSIS
+
+B<rsnapshot> [B<-v>] [B<-t>] [B<-c> /alt/config/file] [command]
+
+=head1 DESCRIPTION
+
+B<rsnapshot> is a filesystem snapshot utility. It can take incremental
+snapshots of local and remote filesystems for any number of machines.
+Remote connections are handled with B<ssh(1)>. Both remote and local
+transfers also make heavy use of B<rsync(1)>.
+
+B<rsnapshot> will typically be invoked as root by a cron job, or series
+of cron jobs.
+
+All important options are specified in a configuration file, which is
+located by default at B</etc/rsnapshot.conf>. There are also additional
+options which can be passed on the command line.
+
+The command line options are as follows:
+
+=over 4
+
+B<-v> verbose, show shell commands being executed
+
+B<-t> test, show shell commands that would be executed
+
+B<-c> specify an alternate config file
+
+=back
+
+=head1 CONFIGURATION
+
+B</etc/rsnapshot.conf> is the default configuration file. What follows
+is a list of allowed parameters.
+
+=over 4
+
+B<snapshot_root> local filesystem path to save all snapshots
+
+B<cmd_rsync> full path to rsync
+
+B<cmd_ssh>   full path to ssh
+
+B<cmd_mkdir> full path to mkdir
+
+B<cmd_touch> full path to touch
+
+B<cmd_cp>    full path to cp
+
+B<cmd_mv>    full path to mv
+
+B<cmd_rm>    full path to rm
+
+B<interval>  [name] [number]
+
+=over 4
+
+"name" refers to the name of this interval (i.e. hourly, daily). "number"
+is the number of snapshots for this type of interval that will be stored.
+The value of "name" will be the command passed to B<rsnapshot> to perform
+this type of backup.
+
+Example: B<interval hourly 6>
+
+[root@localhost]# B<rsnapshot hourly>
+
+For this example, every time this is run, the following will happen:
+
+<snapshot_root>/hourly.5/ will be deleted
+
+<snapshot_root>/hourly.{1,2,3,4} will all be rotated +1
+
+<snapshot_root>/hourly.0/<backup_points> will be rsynced with the
+backup points specified in this config file later.
+
+Intervals must be specified in the config file in order, from most
+frequent to least frequent. The first entry is the one which will be
+synced with the backup points. The subsequent intervals (i.e. daily,
+weekly, etc) simply rotate, with each higher interval pulling from the
+one below it for its .0 directory.
+
+Example:
+
+=over 4
+
+B<interval  hourly 6>
+
+B<interval  daily  7>
+
+B<interval  weekly 4>
+
+=back
+
+daily.0 will be copied from hourly.5, and weekly.0 will be copied from daily.6
+
+hourly.0 will, of course, be copied directly from the filesystem.
+
+B<rsnapshot> makes extensive use of hard links, so the actual space
+taken up is basically one full snapshot, plus each changed file.
+
+=back
+
+B<backup>  /local/path             relative/path
+
+B<backup>  root@example.com:/path  relative/path
+
+=over 4
+
+Examples:
+
+B<backup /etc     etc>
+
+=over 4
+
+Backs up /etc to <snapshot_root>/<interval>.0/etc
+
+=back
+
+B<backup root@example.com:/home example.com/home>
+
+=over 4
+
+Backs up /etc to <snapshot_root>/<interval>.0/example.com/home
+
+=back
+
+=back
+
+=back
+
+Putting it all together (an example file):
+
+=over 4
+
+# comments are allowed
+
+B<snapshot_root>   /.snapshots
+
+B<cmd_rsync>       /usr/bin/rsync
+
+B<cmd_ssh>         /usr/bin/ssh
+
+B<cmd_mkdir>       /bin/mkdir
+
+B<cmd_touch>       /bin/touch
+
+B<cmd_cp>          /bin/cp
+
+B<cmd_mv>          /bin/mv
+
+B<cmd_rm>          /bin/rm
+
+B<interval>        hourly  6
+
+B<interval>        daily   7
+
+B<interval>        weekly  7
+
+B<interval>        monthly 3
+
+B<backup>  /etc                        localhost/etc
+
+B<backup>  /home                       localhost/home
+
+B<backup>  root@foo.com:/etc           example.com/etc
+
+B<backup>  root@foo.com:/home          example.com/home
+
+B<backup>  root@mail.foo.com.com:/home mail.foo.com/home
+
+=back
+
+=head1 USAGE
+
+B<rsnapshot> can be used by any user, but for system-wide backups
+you will probably want to run it as root. Since backups tend to
+get neglected if human intervention is required, the preferred
+way is to run it from cron.
+
+Here is an example crontab entry, assuming that intervals B<hourly>,
+B<daily>, B<weekly> and B<monthly> have been defined in B</etc/rsnapshot.conf>
+
+=over 4
+
+B<0 */4 * * *         /usr/local/bin/rsnapshot hourly>
+
+B<50 23 * * *         /usr/local/bin/rsnapshot daily>
+
+B<40 23 1,8,15,22 * * /usr/local/bin/rsnapshot weekly>
+
+B<30 23 1 * *         /usr/local/bin/rsnapshot monthly>
+
+=back
+
+=head1 AUTHOR
+
+Based on code originally by Mike Rubel B<http://www.mikerubel.org/computers/rsync_snapshots/>
+
+Rewritten and expanded in Perl by Nathan Rosenquist B<http://rsnapshot.sourceforge.net/>
+
+Copyright (C) 2003 Nathan Rosenquist, Mike Rubel
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
+=head1 FILES
+
+/etc/rsnapshot.conf
+
+=head1 SEE ALSO
+
+rsync(1), ssh(1), sshd(1), ssh-keygen(1), perl(1), touch(1), mkdir(1),
+cp(1), mv(1), rm(1)
+
+=head1 DIAGNOSTICS
+
+Use the B<-t> flag to see what commands would have been executed. The
+B<-v> flag will print the shell commands as they are being executed.
+Much weird behavior can probably be attributed to plain old file system
+permissions and ssh authentication issues.
+
+=head1 BUGS
+
+Swat them, or report them to rsnapshot@scubaninja.com
+
+=head1 NOTES
+
+Make sure your snapshot directory is only readable by root. If you would
+like regular users to be able to restore their own backups, there are a
+number of ways this can be accomplished. One such scenario would be:
+
+snapshot_root  /.private/.snapshots
+
+drwx------    /.private
+
+drwxr-xr-x    /.private/.snapshots
+
+Mount the /.private/.snapshots directory over read-only NFS, a read-only
+samba share, etc.
+
+If you do not plan on making the backups readable by regular users, be
+sure to make the snapshot directory chmod 700 root. If the snapshot
+directory is readable by other users, they will be able to modify the
+snapshots containing their files, thus destroying the integrity of the
+snapshots.
+
+For ssh to work unattended through cron, you will probably want to use
+public key logins. Create an ssh key with no passphrase for root, and
+install the public key on each machine you want to backup. If you are
+backing up system files from remote machines, this probably means
+unattended root logins. If the private key is obtained by an attacker,
+they will have free run of all your systems. BE CAREFUL! If you are
+unclear on how to do this, see B<ssh(1)>, B<sshd(1)>, and B<ssh-keygen(1)>.
+
+rsync transfers are done using the --numeric-ids option. This means that
+user names and group names are ignored during transfers, but the UID/GID
+information is kept intact. The assumption is that the backups will be
+restored in the same environment they came from. Without this option,
+multi-server backups would be unmanageable.
+
+=cut
+
