@@ -5,6 +5,8 @@ http://www.rsnapshot.org/
 
 VERSION 1.0.11 (? ? ??:?? 2004)
 ------------------------------------------------------------------------------
+- The first interval must now have a value of at least 2 if more than one
+  interval is being used
 - Now allows "/" as a backup point on the local drive
 - Cleaned up command formatting to consolidate slashes
 - Added subroutines for centralized print/logging

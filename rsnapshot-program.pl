@@ -1685,14 +1685,16 @@ sub rotate_interval	{
 	
 	# ROTATE DIRECTORIES
 	#
-	# delete the oldest one
-	if ( -d "$config_vars{'snapshot_root'}/$interval.$interval_max" )	{
-		print_cmd("rm -rf $config_vars{'snapshot_root'}/$interval.$interval_max/");
-		
-		if (0 == $test)	{
-			my $result = rmtree( "$config_vars{'snapshot_root'}/$interval.$interval_max/", 0, 0 );
-			if (0 == $result)	{
-				bail("Could not rmtree(\"$config_vars{'snapshot_root'}/$interval.$interval_max/\",0,0);");
+	# delete the oldest one (if we're keeping more than one)
+	if ($interval_max > 0)	{
+		if ( -d "$config_vars{'snapshot_root'}/$interval.$interval_max" )	{
+			print_cmd("rm -rf $config_vars{'snapshot_root'}/$interval.$interval_max/");
+			
+			if (0 == $test)	{
+				my $result = rmtree( "$config_vars{'snapshot_root'}/$interval.$interval_max/", 0, 0 );
+				if (0 == $result)	{
+					bail("Could not rmtree(\"$config_vars{'snapshot_root'}/$interval.$interval_max/\",0,0);");
+				}
 			}
 		}
 	}
