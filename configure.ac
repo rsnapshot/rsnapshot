@@ -1,4 +1,4 @@
-AC_INIT(rsnapshot, 1.1.1, nathan@rsnapshot.org)
+AC_INIT(rsnapshot, 1.1.2, nathan@rsnapshot.org)
 AM_INIT_AUTOMAKE
 AC_PROG_MAKE_SET
 AC_PROG_INSTALL
