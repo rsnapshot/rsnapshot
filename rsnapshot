@@ -330,7 +330,9 @@ if ( -f "$config_file" )	{
 			# if we have special options specified for this backup point, remember them
 			if (defined($opt_str))	{
 				$opts_ref = parse_backup_opts($opt_str);
-				# TODO check that this didn't return undef
+				if (!defined($opts_ref))	{
+					bail("Syntax error on line $file_line_num in extra opts: $opt_str");
+				}
 			}
 			
 			# remember src/dest
@@ -386,6 +388,16 @@ if ( -f "$config_file" )	{
 			}
 			$config_vars{'lockfile'} = $value;
 			
+			$line_syntax_ok = 1;
+		}
+		# RSYNC SHORT ARGS
+		if ($var eq 'rsync_short_args')	{
+			$config_vars{'rsync_short_args'} = $value;
+			$line_syntax_ok = 1;
+		}
+		# RSYNC LONG ARGS
+		if ($var eq 'rsync_long_args')	{
+			$config_vars{'rsync_long_args'} = $value;
 			$line_syntax_ok = 1;
 		}
 		
@@ -522,6 +534,16 @@ sub backup_interval	{
 	# set up default args for rsync
 	my $default_rsync_short_args	= '-al';
 	my $default_rsync_long_args		= '--delete --numeric-ids --devices';
+	
+	# if the config file specified rsync args, use those instead
+	if (defined($config_vars{'rsync_short_args'}))	{
+		$default_rsync_short_args = $config_vars{'rsync_short_args'};
+	}
+	if (defined($config_vars{'rsync_long_args'}))	{
+		$default_rsync_long_args = $config_vars{'rsync_long_args'};
+	}
+	
+	# extra verbose?
 	if (1 == $extra_verbose)	{ $default_rsync_short_args .= 'v'; }
 	
 	# ROTATE DIRECTORIES
@@ -611,6 +633,17 @@ sub backup_interval	{
 		# that isn't specified, we attempt to use the global setting as
 		# a fallback plan
 		#
+		# we do the rsync args first since they overwrite the rsync_* variables,
+		# whereas the subsequent options append to them
+		#
+		# RSYNC SHORT ARGS
+		if ( defined($$sp_ref{'opts'}) && defined($$sp_ref{'opts'}->{'rsync_short_args'}) )	{
+			$rsync_short_args = $$sp_ref{'opts'}->{'rsync_short_args'};
+		}
+		# RSYNC LONG ARGS
+		if ( defined($$sp_ref{'opts'}) && defined($$sp_ref{'opts'}->{'rsync_long_args'}) )	{
+			@rsync_long_args_stack = split(/\s/, $$sp_ref{'opts'}->{'rsync_long_args'});
+		}
 		# ONE_FS
 		if ( defined($$sp_ref{'opts'}) && defined($$sp_ref{'opts'}->{'one_fs'}) )	{
 			if (1 == $$sp_ref{'opts'}->{'one_fs'})	{
@@ -1089,16 +1122,45 @@ sub parse_backup_opts	{
 	if (!$opts_str)				{ return (undef); }
 	
 	# split on commas first
-	@pairs = split(',', $opts_str);
+	@pairs = split(/,/, $opts_str);
 	
 	# then loop through and split on equals
 	foreach my $pair (@pairs)	{
-		my ($name, $value) = split('=', $pair, 2);
+		my ($name, $value) = split(/=/, $pair, 2);
+		if ( !defined($name) or !defined($value) )	{
+			return (undef);
+		}
+		
+		# parameters can't have spaces in them
+		$name =~ s/\s//go;
+		
+		# strip whitespace from both ends
+		$value =~ s/^\s{0,}//o;
+		$value =~ s/\s{0,}$//o;
+		
+		# ok, it's a name/value pair and it's ready for more validation
 		$parsed_opts{$name} = $value;
 	}
 	
-	# TODO strictly validate all args as much as possible
-	# return undef if one of them fails
+	# validate args
+	# ONE_FS
+	if ( defined($parsed_opts{'one_fs'}) )	{
+		if (!is_boolean($parsed_opts{'one_fs'}))	{
+			return (undef);
+		}
+	# RSYNC SHORT ARGS
+	} elsif ( defined($parsed_opts{'rsync_short_args'}) )	{
+		# pass unchecked
+		
+	# RSYNC LONG ARGS
+	} elsif ( defined($parsed_opts{'rsync_long_args'}) )	{
+		# pass unchecked
+	
+	# if we don't know about it, it doesn't exist
+	} else	{
+		return (undef);
+	}
+	
 	
 	# if we got anything, return it as an array_ref
 	if (%parsed_opts)	{
