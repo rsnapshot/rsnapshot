@@ -93,7 +93,7 @@ if test "$CP" = "no"; then
 	CP=/bin/cp
 fi
 dnl either way, set the cmd_ssh var
-AC_SUBST(CMD_CP, "cmd_cp    	$CP")
+AC_SUBST(CMD_CP, "cmd_cp	$CP")
 
 
 
@@ -126,7 +126,7 @@ if test "$RM" = "no"; then
 	RM=/bin/rm
 fi
 dnl either way, set the cmd_ssh var
-AC_SUBST(CMD_RM, "cmd_rm    	$RM")
+AC_SUBST(CMD_RM, "cmd_rm		$RM")
 
 
 

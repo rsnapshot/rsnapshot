@@ -1745,7 +1745,7 @@ fi
 if test "$CP" = "no"; then
 	CP=/bin/cp
 fi
-CMD_CP="cmd_cp    	$CP"
+CMD_CP="cmd_cp	$CP"
 
 
 
@@ -1816,7 +1816,7 @@ fi
 if test "$RM" = "no"; then
 	RM=/bin/rm
 fi
-CMD_RM="cmd_rm    	$RM"
+CMD_RM="cmd_rm		$RM"
 
 
 
