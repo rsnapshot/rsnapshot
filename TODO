@@ -2,13 +2,9 @@ rsnapshot TODO list:
 
 for version 1.1.x
 ------------------------------------------------------------------------------
-- Figure out how to handle rsync_short_args when seperated out (i.e. -v -x -y)
-  Some combination of validation, prohibiting, fixing and documenting
-
-- Figure out details of system(@cmd_stack) VS. system(join(' ', @cmd_stack))
-  and the potential implications, possible regression errors, etc
-
-- Add auto-quoting to ssh if any args are used (i.e. --rsh="/usr/bin/ssh -v")
+- Add verbose output (at higher verbose settings) on higher intervals (i.e. 
+  when rsnapshot -V daily is run, the user will get some confirmation even
+  if no directories were moved or modified)
 
 - Add interactive mode to generate config files.
 
