@@ -32,6 +32,7 @@ DATE=`/bin/date +%Y-%m-%d`
 # uncomment this to gpg encrypt files
 # the e-mail address the notification is being sent to must have their GPG key
 # in the public keyring of the user running this backup
+#
 #GPG="/usr/bin/gpg"
 
 # GET E-MAIL ADDRESS
