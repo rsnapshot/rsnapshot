@@ -2,6 +2,8 @@ bin_SCRIPTS = rsnapshot
 man_MANS = rsnapshot.1
 sysconf_DATA = rsnapshot.conf.default
 
+VERSION = 1.0.7
+
 DEB_BUILD_DIR = deb_build_dir
 
 man:
@@ -31,7 +33,7 @@ debian:
 	pod2man ${DEB_BUILD_DIR}/usr/bin/rsnapshot | gzip -9c > ${DEB_BUILD_DIR}/usr/share/man/man1/rsnapshot.1.gz
 	/bin/chmod 644 ${DEB_BUILD_DIR}/usr/share/man/man1/rsnapshot.1.gz
 	
-	/bin/cat rsnapshot.conf | sed 's/#cmd_cp/cmd_cp/' > ${DEB_BUILD_DIR}/etc/rsnapshot.conf
+	/bin/cat rsnapshot.conf.default | sed 's/#cmd_cp/cmd_cp/' > ${DEB_BUILD_DIR}/etc/rsnapshot.conf
 	/bin/cp ${DEB_BUILD_DIR}/etc/rsnapshot.conf ${DEB_BUILD_DIR}/etc/rsnapshot.conf.default
 	/bin/chmod 600 ${DEB_BUILD_DIR}/etc/rsnapshot.conf
 	/bin/chmod 644 ${DEB_BUILD_DIR}/etc/rsnapshot.conf.default
@@ -45,8 +47,13 @@ tar:
 	
 	@# core files
 	/bin/mkdir rsnapshot-$(VERSION)
-	/bin/cp rsnapshot rsnapshot.conf Makefile COPYING INSTALL README TODO ChangeLog rsnapshot-$(VERSION)/
+	/bin/cp rsnapshot-preamble.pl rsnapshot-program.pl rsnapshot.conf.default \
+		AUTHORS COPYING INSTALL README TODO NEWS ChangeLog rsnapshot-$(VERSION)/
 	pod2man rsnapshot > rsnapshot-$(VERSION)/rsnapshot.1
+	
+	@# autoconf files
+	/bin/cp Makefile.am Makefile.in aclocal.m4 configure configure.ac install-sh \
+		missing mkinstalldirs rsnapshot-$(VERSION)/
 	
 	@# debian
 	/bin/mkdir rsnapshot-$(VERSION)/DEBIAN/
@@ -68,3 +75,4 @@ tar:
 	/bin/chown -R root:root rsnapshot-$(VERSION)/
 	/bin/tar czf rsnapshot-$(VERSION).tar.gz rsnapshot-$(VERSION)/
 	/bin/rm -rf rsnapshot-$(VERSION)/
+
