@@ -15,7 +15,8 @@
 #                                                                      #
 ########################################################################
 
-# attention vi users: set ts=4 sw=4
+# tabstops are set to 4 spaces
+# in vi, do: set ts=4 sw=4
 
 ########################
 ### STANDARD MODULES ###
