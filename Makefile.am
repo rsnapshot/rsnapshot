@@ -1,7 +1,3 @@
-bin_SCRIPTS = rsnapshot
-man_MANS = rsnapshot.1
-sysconf_DATA = rsnapshot.conf.default
-
 VERSION = 1.0.7
 
 DEB_BUILD_DIR = deb_build_dir
@@ -14,11 +10,12 @@ html:
 	/bin/rm -f pod2htmd.*
 	/bin/rm -f pod2htmi.*
 
-clean:
+cleanup:
 	/bin/rm -rf rsnapshot-$(VERSION)/
 	/bin/rm -rf ${DEB_BUILD_DIR}/
 	/bin/rm -f rsnapshot-$(VERSION).tar.gz
 	/bin/rm -f rsnapshot-$(VERSION)-1.deb
+	/bin/rm -f rsnapshot.conf.default
 	/bin/rm -f rsnapshot.html
 	/bin/rm -f pod2htmd.*
 	/bin/rm -f pod2htmi.*
@@ -79,4 +76,8 @@ tar:
 	chown -R root:root rsnapshot-$(VERSION)/
 	/bin/tar czf rsnapshot-$(VERSION).tar.gz rsnapshot-$(VERSION)/
 	/bin/rm -rf rsnapshot-$(VERSION)/
+
+bin_SCRIPTS = rsnapshot
+man_MANS = rsnapshot.1
+sysconf_DATA = rsnapshot.conf.default
 

@@ -57,20 +57,24 @@ POST_INSTALL = :
 NORMAL_UNINSTALL = :
 PRE_UNINSTALL = :
 POST_UNINSTALL = :
+CMD_RSYNC = @CMD_RSYNC@
+CMD_SSH = @CMD_SSH@
 MAKEINFO = @MAKEINFO@
 PACKAGE = @PACKAGE@
 PERL = @PERL@
-
-bin_SCRIPTS = rsnapshot
-man_MANS = rsnapshot.1
-sysconf_DATA = rsnapshot.conf.default
+RSYNC = @RSYNC@
+SSH = @SSH@
 
 VERSION = 1.0.7
 
 DEB_BUILD_DIR = deb_build_dir
+
+bin_SCRIPTS = rsnapshot
+man_MANS = rsnapshot.1
+sysconf_DATA = rsnapshot.conf.default
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
-CONFIG_CLEAN_FILES =  rsnapshot
+CONFIG_CLEAN_FILES =  rsnapshot rsnapshot.conf.default
 SCRIPTS =  $(bin_SCRIPTS)
 
 man1dir = $(mandir)/man1
@@ -81,7 +85,8 @@ DATA =  $(sysconf_DATA)
 
 DIST_COMMON =  README AUTHORS COPYING ChangeLog INSTALL Makefile.am \
 Makefile.in NEWS TODO aclocal.m4 configure configure.ac install-sh \
-missing mkinstalldirs rsnapshot-preamble.pl rsnapshot-program.pl
+missing mkinstalldirs rsnapshot-preamble.pl rsnapshot-program.pl \
+rsnapshot.conf.default.in
 
 
 DISTFILES = $(DIST_COMMON) $(SOURCES) $(HEADERS) $(TEXINFOS) $(EXTRA_DIST)
@@ -106,6 +111,8 @@ $(srcdir)/configure: $(srcdir)/configure.ac $(ACLOCAL_M4) $(CONFIGURE_DEPENDENCI
 	cd $(srcdir) && $(AUTOCONF)
 rsnapshot: $(top_builddir)/config.status rsnapshot-preamble.pl rsnapshot-program.pl
 	cd $(top_builddir) && CONFIG_FILES=$@:rsnapshot-preamble.pl:rsnapshot-program.pl CONFIG_HEADERS= $(SHELL) ./config.status
+rsnapshot.conf.default: $(top_builddir)/config.status rsnapshot.conf.default.in
+	cd $(top_builddir) && CONFIG_FILES=$@:rsnapshot.conf.default.in CONFIG_HEADERS= $(SHELL) ./config.status
 
 install-binSCRIPTS: $(bin_SCRIPTS)
 	@$(NORMAL_INSTALL)
@@ -315,11 +322,12 @@ html:
 	/bin/rm -f pod2htmd.*
 	/bin/rm -f pod2htmi.*
 
-clean:
+cleanup:
 	/bin/rm -rf rsnapshot-$(VERSION)/
 	/bin/rm -rf ${DEB_BUILD_DIR}/
 	/bin/rm -f rsnapshot-$(VERSION).tar.gz
 	/bin/rm -f rsnapshot-$(VERSION)-1.deb
+	/bin/rm -f rsnapshot.conf.default
 	/bin/rm -f rsnapshot.html
 	/bin/rm -f pod2htmd.*
 	/bin/rm -f pod2htmi.*

@@ -770,6 +770,13 @@ if test -n "$ac_init_help"; then
    esac
   cat <<\_ACEOF
 
+Optional Packages:
+  --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
+  --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
+  --with-perl=PATH		Specify the path to perl
+  --with-rsync=PATH       Specify the path to rsync
+  --with-ssh=PATH         Specify the path to ssh
+
 Report bugs to <nathan@rsnapshot.org>.
 _ACEOF
 fi
@@ -1523,7 +1530,29 @@ test -z "$INSTALL_DATA" && INSTALL_DATA='${INSTALL} -m 644'
 ac_config_files="$ac_config_files Makefile"
 
 
-# Extract the first word of "perl", so it can be a program name with args.
+
+# Check whether --with-perl or --without-perl was given.
+if test "${with_perl+set}" = set; then
+  withval="$with_perl"
+
+		if test "x$withval" != "xno"; then
+			if test -x "$withval"; then
+				PERL=$withval
+			else
+				{ { echo "$as_me:$LINENO: error: perl is required" >&5
+echo "$as_me: error: perl is required" >&2;}
+   { (exit 1); exit 1; }; }
+			fi
+		else
+			{ { echo "$as_me:$LINENO: error: perl is required" >&5
+echo "$as_me: error: perl is required" >&2;}
+   { (exit 1); exit 1; }; }
+		fi
+
+
+fi;
+if test "$PERL" = ""; then
+	# Extract the first word of "perl", so it can be a program name with args.
 set dummy perl; ac_word=$2
 echo "$as_me:$LINENO: checking for $ac_word" >&5
 echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
@@ -1563,13 +1592,168 @@ else
 echo "${ECHO_T}no" >&6
 fi
 
+fi
 if test "$PERL" = "no"; then
 	{ { echo "$as_me:$LINENO: error: perl is required" >&5
 echo "$as_me: error: perl is required" >&2;}
    { (exit 1); exit 1; }; }
 fi
 
+
+
+
+# Check whether --with-rsync or --without-rsync was given.
+if test "${with_rsync+set}" = set; then
+  withval="$with_rsync"
+
+		if test "x$withval" != "xno"; then
+			if test -x "$withval"; then
+				RSYNC=$withval
+				CMD_RSYNC="cmd_rsync	$RSYNC"
+
+			else
+				{ { echo "$as_me:$LINENO: error: rsync is required" >&5
+echo "$as_me: error: rsync is required" >&2;}
+   { (exit 1); exit 1; }; }
+			fi
+		else
+			{ { echo "$as_me:$LINENO: error: rsync is required" >&5
+echo "$as_me: error: rsync is required" >&2;}
+   { (exit 1); exit 1; }; }
+		fi
+
+
+fi;
+if test "$RSYNC" = ""; then
+	# Extract the first word of "rsync", so it can be a program name with args.
+set dummy rsync; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_path_RSYNC+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  case $RSYNC in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_RSYNC="$RSYNC" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_RSYNC="$as_dir/$ac_word$ac_exec_ext"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+  test -z "$ac_cv_path_RSYNC" && ac_cv_path_RSYNC="no"
+  ;;
+esac
+fi
+RSYNC=$ac_cv_path_RSYNC
+
+if test -n "$RSYNC"; then
+  echo "$as_me:$LINENO: result: $RSYNC" >&5
+echo "${ECHO_T}$RSYNC" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
+	CMD_RSYNC="cmd_rsync	$RSYNC"
+
+fi
+if test "$RSYNC" = "no"; then
+	{ { echo "$as_me:$LINENO: error: rsync is required" >&5
+echo "$as_me: error: rsync is required" >&2;}
+   { (exit 1); exit 1; }; }
+fi
+
+
+
+
+# Check whether --with-ssh or --without-ssh was given.
+if test "${with_ssh+set}" = set; then
+  withval="$with_ssh"
+
+		if test "x$withval" != "xno"; then
+			if test -x "$withval"; then
+				SSH=$withval
+				CMD_SSH="cmd_ssh		$SSH"
+
+			else
+				{ { echo "$as_me:$LINENO: error: ssh is required" >&5
+echo "$as_me: error: ssh is required" >&2;}
+   { (exit 1); exit 1; }; }
+			fi
+		else
+			SSH=no
+		fi
+
+
+fi;
+if test "$SSH" != "no"; then
+	if test "$SSH" = ""; then
+		# Extract the first word of "ssh", so it can be a program name with args.
+set dummy ssh; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_path_SSH+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  case $SSH in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_SSH="$SSH" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_SSH="$as_dir/$ac_word$ac_exec_ext"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+  test -z "$ac_cv_path_SSH" && ac_cv_path_SSH="no"
+  ;;
+esac
+fi
+SSH=$ac_cv_path_SSH
+
+if test -n "$SSH"; then
+  echo "$as_me:$LINENO: result: $SSH" >&5
+echo "${ECHO_T}$SSH" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
+		CMD_SSH="cmd_ssh		$SSH"
+
+	fi
+fi
+if test "$SSH" = "no"; then
+	SSH=/path/to/ssh
+	CMD_SSH="cmd_ssh		$SSH"
+
+fi
+
 ac_config_files="$ac_config_files rsnapshot:rsnapshot-preamble.pl:rsnapshot-program.pl"
+
+
+ac_config_files="$ac_config_files rsnapshot.conf.default:rsnapshot.conf.default.in"
+
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -2070,6 +2254,7 @@ do
   # Handling of arguments.
   "Makefile" ) CONFIG_FILES="$CONFIG_FILES Makefile" ;;
   "rsnapshot" ) CONFIG_FILES="$CONFIG_FILES rsnapshot:rsnapshot-preamble.pl:rsnapshot-program.pl" ;;
+  "rsnapshot.conf.default" ) CONFIG_FILES="$CONFIG_FILES rsnapshot.conf.default:rsnapshot.conf.default.in" ;;
   *) { { echo "$as_me:$LINENO: error: invalid argument: $ac_config_target" >&5
 echo "$as_me: error: invalid argument: $ac_config_target" >&2;}
    { (exit 1); exit 1; }; };;
@@ -2162,6 +2347,10 @@ s,@AUTOHEADER@,$AUTOHEADER,;t t
 s,@MAKEINFO@,$MAKEINFO,;t t
 s,@SET_MAKE@,$SET_MAKE,;t t
 s,@PERL@,$PERL,;t t
+s,@CMD_RSYNC@,$CMD_RSYNC,;t t
+s,@RSYNC@,$RSYNC,;t t
+s,@CMD_SSH@,$CMD_SSH,;t t
+s,@SSH@,$SSH,;t t
 CEOF
 
 _ACEOF
