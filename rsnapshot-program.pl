@@ -1284,7 +1284,7 @@ sub wrap_cmd	{
 	
 	# number of spaces to indent subsequent lines
 	if (!defined($indent))	{
-		$indent = 2;
+		$indent = 4;
 	}
 	
 	# break up string into individual pieces
