@@ -2196,8 +2196,8 @@ sub rotate_lowest_snapshots	{
 			# move .0 to .1
 			if (0 == $test)	{
 				my $result = rename(
-								"$config_vars{'snapshot_root'}/$interval.0/",
-								"$config_vars{'snapshot_root'}/$interval.1/"
+								"$config_vars{'snapshot_root'}/$interval.0",
+								"$config_vars{'snapshot_root'}/$interval.1"
 				);
 				if (0 == $result)	{
 					my $errstr = '';
@@ -2751,8 +2751,8 @@ sub rotate_higher_interval	{
 			
 			if (0 == $test)	{
 				my $result = rename(
-								"$config_vars{'snapshot_root'}/$interval.$i/",
-								("$config_vars{'snapshot_root'}/$interval." . ($i+1) . '/')
+								"$config_vars{'snapshot_root'}/$interval.$i",
+								("$config_vars{'snapshot_root'}/$interval." . ($i+1))
 				);
 				if (0 == $result)	{
 					my $errstr = '';
@@ -2780,8 +2780,8 @@ sub rotate_higher_interval	{
 			
 			if (0 == $test)	{
 				$result = rename(
-								"$config_vars{'snapshot_root'}/$prev_interval.$prev_interval_max/",
-								"$config_vars{'snapshot_root'}/$interval.0/"
+								"$config_vars{'snapshot_root'}/$prev_interval.$prev_interval_max",
+								"$config_vars{'snapshot_root'}/$interval.0"
 				);
 				if (0 == $result)	{
 					my $errstr = '';
