@@ -1981,7 +1981,9 @@ sub is_real_local_abs_path	{
 	
 	if (!defined($path))	{ return (undef); }
 	if (1 == is_valid_local_abs_path($path))	{
-		if (-e "$path")	{
+		# check to see if it's a symlink or a local path that exists
+		# this prevents dangling symlinks from being rejected
+		if ((-l "$path") or (-e "$path"))	{
 			return (1);
 		}
 	}
