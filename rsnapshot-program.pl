@@ -106,21 +106,36 @@ my $cwd = cwd();
 ### AUTOCONF STUFF ###
 ######################
 
-# this file works "as-is", and when it has been parsed by autoconf for installation
+# this file works both "as-is", and when it has been parsed by autoconf for installation
 # the variables with "@" symbols on both sides get replaced during ./configure
 
+# autoconf variables (may have too many slashes)
+my $autoconf_sysconfdir	= '@sysconfdir@';
+my $autoconf_prefix		= '@prefix@';
+
+# consolidate multiple slashes
+$autoconf_sysconfdir	=~ s/\/+/\//g;
+$autoconf_prefix		=~ s/\/+/\//g;
+
+# remove trailing slashes
+$autoconf_sysconfdir	=~ s/\/$//g;
+$autoconf_prefix		=~ s/\/$//g;
+
 # if --sysconfdir was not set explicitly during ./configure, but we did use autoconf
-if ('@sysconfdir@' eq '${prefix}/etc')	{
-	$config_file = '@prefix@/etc/rsnapshot.conf';
+if ($autoconf_sysconfdir eq '${prefix}/etc')	{
+	$config_file = "$autoconf_prefix/etc/rsnapshot.conf";
 	
 # if --sysconfdir was set explicitly at ./configure, overriding the --prefix setting
-} elsif ('@sysconfdir@' ne ('@' . 'sysconfdir' . '@'))	{
-	$config_file = '@sysconfdir@/rsnapshot.conf';
+} elsif ($autoconf_sysconfdir ne ('@' . 'sysconfdir' . '@'))	{
+	$config_file = "$autoconf_sysconfdir/rsnapshot.conf";
 	
 # if all else fails, use the old standard from the pre-autoconf versions
 } else	{
 	$config_file = '/etc/rsnapshot.conf';
 }
+
+undef ($autoconf_sysconfdir);
+undef ($autoconf_prefix);
 
 ###############
 ### SIGNALS ###
