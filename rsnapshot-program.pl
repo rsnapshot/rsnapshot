@@ -408,8 +408,12 @@ if ( -f "$config_file" )	{
 			# also, first check to see that we're not backing up the snapshot directory
 			if ((is_real_local_abs_path("$src")) && ($config_vars{'snapshot_root'} =~ $src))	{
 				
-				# remove trailing slash from source, since we will be using our own
-				$src = remove_trailing_slash($src);
+				# remove trailing slash from source, since we will be using our own,
+				# unless the user is trying to backup the root filesystem itself...
+				# and if they are they'd better be using one_fs!
+				if ($src ne '/')	{
+					$src = remove_trailing_slash($src);
+				}
 				
 				opendir(SRC, "$src") or bail("Could not open $src");
 				
