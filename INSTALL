@@ -9,7 +9,7 @@ and you are welcome to redistribute it under certain conditions.
 See the GNU General Public Licence for details.
 
 QUICK START (for the impatient)
-	see the README file if you want the 30 second overview
+	see the README file and the man page for all the background details
 		
 INSTALLATION
 	
@@ -23,23 +23,24 @@ INSTALLATION
 		mkdir -p /usr/local/bin/
 		cp -f rsnapshot /usr/local/bin/rsnapshot
 		chmod 755 /usr/local/bin/rsnapshot
-		chown 0:0 /usr/local/bin/rsnapshot
+		chown root:root /usr/local/bin/rsnapshot
 		
 		mkdir -p /usr/local/man/man1/
 		rm -f /usr/local/man/man1/rsnapshot.1.gz
 		cp -f rsnapshot.1 /usr/local/man/man1/rsnapshot.1
 		chmod 644 /usr/local/man/man1/rsnapshot.1
-		chown 0:0 /usr/local/man/man1/rsnapshot.1
+		chown root:root /usr/local/man/man1/rsnapshot.1
 		
 		cp -f rsnapshot.conf /etc/rsnapshot.conf.default
 		chmod 600 /etc/rsnapshot.conf.default
-		chown 0:0 /etc/rsnapshot.conf.default
+		chown root:root /etc/rsnapshot.conf.default
 		
 		# if you are installing for the first time
 		# cp -i rsnapshot.conf /etc/rsnapshot.conf
 		
-		chown 0:0 /etc/rsnapshot.conf /etc/rsnapshot.conf.default
-		chmod 600 /etc/rsnapshot.conf /etc/rsnapshot.conf.default
+		chown root:root /etc/rsnapshot.conf /etc/rsnapshot.conf.default
+		chmod 600 /etc/rsnapshot.conf
+		chmod 644 /etc/rsnapshot.conf.default
 		
 CONFIGURATION
 	edit /etc/rsnapshot.conf to suit your tastes
