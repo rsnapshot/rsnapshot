@@ -10,7 +10,6 @@ html:
 	rm -f pod2htmi.x~~
 	
 clean:
-	rm -f rsnapshot.1
 	rm -rf rsnapshot-0.9.1/
 	rm -f rsnapshot-0.9.1.tar.gz
 	rm -f rsnapshot-0.9.1-1.deb
@@ -26,7 +25,7 @@ tar:
 	rm -rf rsnapshot-0.9.1/
 	rm -f rsnapshot.1
 	
-dpkg:
+debian:
 	mkdir -p rsnapshot_dpkg/{DEBIAN,usr/bin,etc,usr/share/man/man1}
 	cp DEBIAN/{control,conffiles} rsnapshot_dpkg/DEBIAN/
 	cat rsnapshot | sed 's/\/usr\/local\/bin/\/usr\/bin/g' > rsnapshot_dpkg/usr/bin/rsnapshot
