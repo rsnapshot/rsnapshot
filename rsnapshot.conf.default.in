@@ -64,7 +64,7 @@ interval	weekly	4
 # All are optional, with sensible defaults #
 ############################################
 
-# If your version of rsync supports --link-dest, you should enable this.
+# If your version of rsync supports --link-dest, consider enable this.
 # This is the best way to support special files (FIFOs, etc) cross-platform.
 # The default is 0 (off).
 #
@@ -129,21 +129,21 @@ loglevel	3
 ###############################
 
 # LOCALHOST
-backup	/home/		localhost/home/
-backup	/etc/		localhost/etc/
-backup	/usr/local/	localhost/usr/local/
-#backup	/etc/passwd	localhost/etc/passwd
-#backup	/home/foo/My Documents/		localhost/home/foo/My Documents/
-#backup	/foo/bar/	localhost/foo/bar/	one_fs=1, rsync_short_args=-urltvpog
+backup	/home/		localhost/
+backup	/etc/		localhost/
+backup	/usr/local/	localhost/
+#backup	/etc/passwd	localhost/
+#backup	/home/foo/My Documents/		localhost/
+#backup	/foo/bar/	localhost/	one_fs=1, rsync_short_args=-urltvpog
 #backup_script		/usr/local/bin/backup_pgsql.sh	localhost/postgres/
 
 # EXAMPLE.COM
-#backup	root@example.com:/home/	example.com/home/
-#backup	root@example.com:/etc/	example.com/home/
+#backup	root@example.com:/home/	example.com/
+#backup	root@example.com:/etc/	example.com/
 
 # CVS.SOURCEFORGE.NET
 #backup_script	/usr/local/bin/backup_rsnapshot_cvsroot.sh	cvs.sourceforge.net/
 
 # RSYNC.SAMBA.ORG
-#backup	rsync://rsync.samba.org/rsyncftp/	rsync.samba.org/rsyncftp/
+#backup	rsync://rsync.samba.org/rsyncftp/	rsync.samba.org/
 
