@@ -57,13 +57,19 @@ POST_INSTALL = :
 NORMAL_UNINSTALL = :
 PRE_UNINSTALL = :
 POST_UNINSTALL = :
+host_alias = @host_alias@
+host_triplet = @host@
+CC = @CC@
 CMD_CP = @CMD_CP@
 CMD_LOGGER = @CMD_LOGGER@
 CMD_RM = @CMD_RM@
 CMD_RSYNC = @CMD_RSYNC@
 CMD_SSH = @CMD_SSH@
 CP = @CP@
+HAVE_LIB = @HAVE_LIB@
+LIB = @LIB@
 LOGGER = @LOGGER@
+LTLIB = @LTLIB@
 MAKEINFO = @MAKEINFO@
 PACKAGE = @PACKAGE@
 PERL = @PERL@
@@ -71,7 +77,7 @@ RM = @RM@
 RSYNC = @RSYNC@
 SSH = @SSH@
 
-VERSION = 1.1.6
+VERSION = 1.2.0
 
 RPM_BASE_DIR = /usr/src/redhat
 
@@ -90,9 +96,9 @@ NROFF = nroff
 DATA =  $(sysconf_DATA)
 
 DIST_COMMON =  README AUTHORS COPYING ChangeLog INSTALL Makefile.am \
-Makefile.in NEWS TODO aclocal.m4 configure configure.ac install-sh \
-missing mkinstalldirs rsnapshot-preamble.pl rsnapshot-program.pl \
-rsnapshot.conf.default.in
+Makefile.in NEWS TODO aclocal.m4 config.guess config.sub configure \
+configure.ac install-sh missing mkinstalldirs rsnapshot-preamble.pl \
+rsnapshot-program.pl rsnapshot.conf.default.in
 
 
 DISTFILES = $(DIST_COMMON) $(SOURCES) $(HEADERS) $(TEXINFOS) $(EXTRA_DIST)
@@ -357,8 +363,8 @@ tar: man
 		rsnapshot.1 AUTHORS COPYING INSTALL README TODO NEWS ChangeLog rsnapshot-$(VERSION)/
 
 	@# autoconf files
-	/bin/cp Makefile.am Makefile.in aclocal.m4 configure configure.ac install-sh \
-		missing mkinstalldirs rsnapshot-$(VERSION)/
+	/bin/cp Makefile.am Makefile.in aclocal.m4 configure configure.ac config.guess config.sub \
+		install-sh missing mkinstalldirs rsnapshot-$(VERSION)/
 
 	@# redhat
 	/bin/mkdir rsnapshot-$(VERSION)/redhat/

@@ -41,7 +41,7 @@ use POSIX qw(locale_h);	# setlocale()
 $| = 1;
 
 # version of rsnapshot
-my $VERSION = 'CVS-unstable-post-1.1.6';
+my $VERSION = '1.2.0';
 
 # command or interval to execute (first cmd line arg)
 my $cmd;

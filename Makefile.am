@@ -1,4 +1,4 @@
-VERSION = 1.1.6
+VERSION = 1.2.0
 
 RPM_BASE_DIR  = /usr/src/redhat
 
@@ -39,8 +39,8 @@ tar: man
 		rsnapshot.1 AUTHORS COPYING INSTALL README TODO NEWS ChangeLog rsnapshot-$(VERSION)/
 	
 	@# autoconf files
-	/bin/cp Makefile.am Makefile.in aclocal.m4 configure configure.ac install-sh \
-		missing mkinstalldirs rsnapshot-$(VERSION)/
+	/bin/cp Makefile.am Makefile.in aclocal.m4 configure configure.ac config.guess config.sub \
+		install-sh missing mkinstalldirs rsnapshot-$(VERSION)/
 	
 	@# redhat
 	/bin/mkdir rsnapshot-$(VERSION)/redhat/
