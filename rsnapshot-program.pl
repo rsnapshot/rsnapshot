@@ -2004,7 +2004,12 @@ sub backup_interval	{
 			}
 			
 			# change back to the previous directory
-			print_cmd("cd $cwd/");
+			# (/ is a special case)
+			if ('/' eq $cwd)	{
+				print_cmd("cd $cwd");
+			} else	{
+				print_cmd("cd $cwd/");
+			}
 			
 			if (0 == $test)	{
 				chdir($cwd);
