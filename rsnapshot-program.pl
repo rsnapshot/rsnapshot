@@ -1761,7 +1761,7 @@ sub backup_interval	{
 	# SYNC LIVE FILESYSTEM DATA TO $interval.0
 	# loop through each backup point and backup script
 	foreach my $sp_ref (@backup_points)	{
-		my @cmd_stack				= undef;
+		my @cmd_stack				= ();
 		my $src						= undef;
 		my $script					= undef;
 		my $tmpdir					= undef;
@@ -1871,11 +1871,37 @@ sub backup_interval	{
 				}
 			}
 			
-			# assemble the final command
-			@cmd_stack = (
-				$config_vars{'cmd_rsync'}, $rsync_short_args, @rsync_long_args_stack,
-					$src, "$config_vars{'snapshot_root'}/$interval.0/$$sp_ref{'dest'}"
-			);
+			# BEGIN RSYNC COMMAND ASSEMBLY
+			#   take care not to introduce blank elements into the array,
+			#   since it can confuse rsync, which in turn causes strange errors
+			#
+			@cmd_stack = ();
+			#
+			# rsync command
+			push(@cmd_stack, $config_vars{'cmd_rsync'});
+			#
+			# rsync short args
+			if (defined($rsync_short_args) && ($rsync_short_args ne ''))	{
+				push(@cmd_stack, $rsync_short_args);
+			}
+			#
+			# rsync long args
+			if (@rsync_long_args_stack && (scalar(@rsync_long_args_stack) > 0))	{
+				foreach my $tmp_long_arg (@rsync_long_args_stack)	{
+					if (defined($tmp_long_arg) && ($tmp_long_arg ne ''))	{
+						push(@cmd_stack, $tmp_long_arg);
+					}
+				}
+			}
+			#
+			# src
+			push(@cmd_stack, $src);
+			#
+			# dest
+			push(@cmd_stack, "$config_vars{'snapshot_root'}/$interval.0/$$sp_ref{'dest'}");
+			#
+			# END RSYNC COMMAND ASSEMBLY
+			
 			
 			# RUN THE RSYNC COMMAND FOR THIS BACKUP POINT BASED ON THE @cmd_stack VARS
 			print_cmd(@cmd_stack);
