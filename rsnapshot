@@ -103,10 +103,10 @@ my $debug			= 0; # super verbose debugging messages
 
 # shut down gracefully if necessary
 $SIG{'HUP'}		= 'IGNORE';
-$SIG{'INT'}		= sub { bail('rsnapshot sent INT signal... cleaning up'); };
-$SIG{'QUIT'}	= sub { bail('rsnapshot sent QUIT signal... cleaning up'); };
-$SIG{'ABRT'}	= sub { bail('rsnapshot sent ABRT signal... cleaning up'); };
-$SIG{'TERM'}	= sub { bail('rsnapshot sent TERM signal... cleaning up'); };
+$SIG{'INT'}		= sub { bail('rsnapshot was sent INT signal... cleaning up'); };
+$SIG{'QUIT'}	= sub { bail('rsnapshot was sent QUIT signal... cleaning up'); };
+$SIG{'ABRT'}	= sub { bail('rsnapshot was sent ABRT signal... cleaning up'); };
+$SIG{'TERM'}	= sub { bail('rsnapshot was sent TERM signal... cleaning up'); };
 
 ##############################
 ### GET COMMAND LINE INPUT ###
@@ -862,18 +862,19 @@ See the GNU General Public License for details.
 
 Options:
     -v verbose       - show equivalent shell commands being executed
-    -V extra verbose - same as -v, but show rsync output as well
     -t test          - show equivalent shell commands that would be executed
-    -q quiet         - supress non-fatal warnings
-    -x one_fs        - don't cross filesystems (-x option to rsync)
     -c [file]        - specify alternate config file (-c /path/to/file)
+    -x one_fs        - don't cross filesystems (same as -x option to rsync)
+    -q quiet         - supress non-fatal warnings
+    -V extra verbose - same as -v, but show rsync output as well
+    -D debug         - a firehose of diagnostic information
 HERE
 }
 
 sub show_usage	{
 	print "rsnapshot $VERSION\n";
-	print "Usage: rsnapshot [-vVtqx] [-c /alt/config/file] <interval>|configtest|help|version\n";
-	print "Type \"man rsnapshot\" for full details.\n";
+	print "Usage: rsnapshot [-vtxqVD] [-c /alt/config/file] <interval>|configtest|help|version\n";
+	print "Type \"rsnapshot help\" or \"man rsnapshot\" for more information.\n";
 }
 
 # stub subroutine
@@ -964,7 +965,7 @@ sub native_cp_al	{
 			print STDERR "Warning! Could not mkdir(\"$dest\", $st->mode);\n";
 			return(0);
 		}
-		if (1 == $debug)	{ print "mkdir(\"$dest\", " . $st->mode . ");\n"; }
+		if (1 == $debug)	{ print "mkdir(\"$dest\", " . get_perms($st->mode) . ");\n"; }
 	}
 	# CHOWN DEST
 	$result = chown($st->uid, $st->gid, "$dest");
@@ -1170,6 +1171,21 @@ sub remove_lockfile	{
 	}
 }
 
+# accepts a file permission number from $st->mode (i.e. 33188)
+# returns a "normal" file permission number (i.e. 644)
+# do the appropriate bit shifting to get a "normal" UNIX file permission mode
+sub get_perms	{
+	my $raw_mode = shift(@_);
+	
+	if (!defined($raw_mode))	{ return (undef); }
+	
+	# a lot of voodoo for just one line
+	# http://www.perlmonks.org/index.pl?node_id=159906
+	my $mode = sprintf("%04o", ($raw_mode & 07777));
+	
+	return ($mode);
+}
+
 #####################
 ### PERLDOC / POD ###
 #####################
@@ -1182,7 +1198,7 @@ rsnapshot - remote filesystem snapshot utility
 
 =head1 SYNOPSIS
 
-B<rsnapshot> [B<-vVtqx>] [B<-c> /alt/config/file] [command]
+B<rsnapshot> [B<-vtxqVD>] [B<-c> /alt/config/file] [command]
 
 =head1 DESCRIPTION
 
@@ -1215,15 +1231,17 @@ The command line options are as follows:
 
 B<-v> verbose, show shell commands being executed
 
-B<-V> same as -v, but show rsync output as well
-
 B<-t> test, show shell commands that would be executed
 
-B<-q> quiet, supress non-fatal warnings
+B<-c> path to alternate config file
 
 B<-x> one filesystem, don't cross partitions within each backup point
 
-B<-c> path to alternate config file
+B<-q> quiet, supress non-fatal warnings
+
+B<-V> same as -v, but show rsync output as well
+
+B<-D> a firehose of diagnostic information
 
 =back
 
@@ -1241,20 +1259,25 @@ your needs. What follows here is a list of allowed parameters:
 
 B<snapshot_root> local filesystem path to save all snapshots
 
-B<cmd_rsync>     full path to rsync
+B<cmd_rsync>     full path to rsync (required)
 
-B<cmd_ssh>       full path to ssh (optional, only required for remote backups)
+B<cmd_ssh>       full path to ssh (optional)
 
 B<cmd_cp>        full path to cp  (optional, but must be GNU version)
 
 =over 4
 
-cmd_cp is a special case. It should be uncommented if the GNU version of cp
-is available. If you are on a platform with a different version of cp (BSD,
-Solaris, IRIX, Mac OS X, etc.), it should be commented out. If you do not
-specify a path to GNU cp, rsnapshot will use a native implementation instead.
-However, because of cross-platform issues, the native Perl version is not
-able to take snapshots of the following special filetypes:
+If you have GNU cp, you should uncomment cmd_cp, since you will get extra
+functionality. If you don't have GNU cp, leave it commented out, and
+rsnapshot will work almost as well. If you are using Linux, you have GNU
+cp. If you're on BSD, Solaris, IRIX, etc., then there's a good chance you
+don't have the right version. Never fear, you still have options. You can
+get GNU cp set up on your system (possibly in an alternate path so as to
+not conflict with your existing version). Or, if you only need support
+for normal files, directories, and symlinks, you can just leave cmd_cp
+commented out and rsnapshot will use a built-in perl substitute. This
+will run about 40% slower, and will not let you back up the following
+types of files:
 
 =over 4
 
@@ -1320,17 +1343,29 @@ hourly.0/ will be rsynced directly from the filesystem.
 
 =back
 
+B<one_fs  1>
+
+=over 4
+
+Prevents rsync from crossing filesystem partitions. Setting this to a value
+of 1 enables this feature. 0 turns it off. This parameter is optional.
+The default is off.
+
+=back
+
 B<backup>  /local/path/                localhost/path/
 
 B<backup>  root@example.com:/path/     example.com/path/
 
-B<backup>  rsync://example.com/path2/ example.com/path2/
+B<backup>  rsync://example.com/path2/  example.com/path2/
+
+B<backup>  /local/path2/               localhost/path2/      one_fs=1
 
 =over 4
 
 Examples:
 
-B<backup /etc/     etc/>
+B<backup   /etc/     etc/>
 
 =over 4
 
@@ -1338,7 +1373,7 @@ Backs up /etc/ to <snapshot_root>/<interval>.0/etc/ using rsync on the local fil
 
 =back
 
-B<backup root@example.com:/home/ example.com/home/>
+B<backup   root@example.com:/home/       example.com/home/>
 
 =over 4
 
@@ -1347,7 +1382,7 @@ using rsync over ssh
 
 =back
 
-B<backup rsync://example.com/pub/  example.com/pub/>
+B<backup   rsync://example.com/pub/      example.com/pub/>
 
 =over 4
 
@@ -1355,6 +1390,17 @@ Backs up rsync://example.com/pub/ to <snapshot_root>/<interval>.0/example.com/pu
 using an anonymous rsync server
 
 =back
+
+B<backup   /local/path2/       localhost/path2/         one_fs=1>
+
+=over 4
+
+This is the same as the first example, but notice how the fourth parameter is passed.
+This sets this backup point to not span filesystem partitions. If the global one_fs
+has been set, this will override it locally.
+
+=back
+
 
 =back
 
@@ -1370,7 +1416,7 @@ Putting it all together (an example file):
 
 =over 4
 
-# THIS IS A COMMENT, TO REMIND YOU THAT TABS MUST SEPERATE ALL ELEMENTS
+# THIS IS A COMMENT, REMEMBER TABS MUST SEPERATE ALL ELEMENTS
 
 B<snapshot_root>   /.snapshots/
 
@@ -1392,9 +1438,9 @@ B<backup>  /etc/                        localhost/etc/
 
 B<backup>  /home/                       localhost/home/
 
-B<backup>  root@foo.com:/etc/           example.com/etc/
+B<backup>  root@foo.com:/etc/           foo.com/etc/
 
-B<backup>  root@foo.com:/home/          example.com/home/
+B<backup>  root@foo.com:/home/          foo.com/home/
 
 B<backup>  root@mail.foo.com.com:/home/ mail.foo.com/home/
 
@@ -1443,13 +1489,28 @@ To set the number of backups stored, set the interval numbers in B</etc/rsnapsho
 
 =head1 AUTHOR
 
-Based on code originally by Mike Rubel B<http://www.mikerubel.org/computers/rsync_snapshots/>
+Based on code originally by Mike Rubel
 
-Rewritten and expanded in Perl by Nathan Rosenquist B<http://rsnapshot.scubaninja.com/>
+=over 4
 
-Carl Wilhelm Soderstrom B<(chrome@real-time.com)> created the RPM .spec file which allowed the RPM package to be built
+B<http://www.mikerubel.org/computers/rsync_snapshots/>
 
-Ted Zlatanov (B<tzz@lifelogs.com>) wrote the one_fs patch (-x, keeps rsync from spanning partitions)
+=back
+
+Rewritten and expanded in Perl by Nathan Rosenquist
+
+=over 4
+
+B<http://rsnapshot.scubaninja.com/>
+
+=back
+
+Carl Wilhelm Soderstrom B<(chrome@real-time.com)> created the RPM
+.spec file which allowed the RPM package to be built, among other
+things.
+
+Ted Zlatanov (B<tzz@lifelogs.com>) contributed code, advice, patches
+and many good ideas.
 
 =head1 COPYRIGHT
 
@@ -1483,13 +1544,13 @@ rsync(1), ssh(1), sshd(1), ssh-keygen(1), perl(1), cp(1)
 =head1 DIAGNOSTICS
 
 Use the B<-t> flag to see what commands would have been executed. The
-B<-v> flag will print the shell commands as they are being executed.
+B<-v>, B<-V>, and B<-D> flags will print increasingly more information.
 Much weird behavior can probably be attributed to plain old file system
 permissions and ssh authentication issues.
 
 =head1 BUGS
 
-Swat them, or report them to rsnapshot@scubaninja.com
+Swat them, or report them to B<rsnapshot@scubaninja.com>
 
 =head1 NOTES
 
@@ -1530,11 +1591,15 @@ For ssh to work unattended through cron, you will probably want to use
 public key logins. Create an ssh key with no passphrase for root, and
 install the public key on each machine you want to backup. If you are
 backing up system files from remote machines, this probably means
-unattended root logins.
+unattended root logins. Another posibility is to create a second user
+on the machine just for backups. Give the user a different name such
+as "rsnapshot", but keep the UID and GID set to 0, to give root
+privileges. However, make logins more restrictive, either through ssh
+configuration, or using an alternate shell such as B<scponly>.
 
 BE CAREFUL! If the private key is obtained by an attacker, they will
-have free run of all your systems. If you are unclear on how to do this,
-see B<ssh(1)>, B<sshd(1)>, and B<ssh-keygen(1)>.
+have free run of all the systems involved. If you are unclear on how
+to do this, see B<ssh(1)>, B<sshd(1)>, and B<ssh-keygen(1)>.
 
 rsync transfers are done using the --numeric-ids option. This means that
 user names and group names are ignored during transfers, but the UID/GID
