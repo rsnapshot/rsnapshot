@@ -3,7 +3,7 @@ rsnapshot changelog
 http://www.rsnapshot.org/
 ------------------------------------------------------------------------------
 
-VERSION 1.1.5 (??? ?? ??:?? 2004)
+VERSION 1.1.5 (Jun 20 20:56 2004)
 ------------------------------------------------------------------------------
 - /bin/rm is the default for deleting directories (in the default config file)
 - Removed redundant validation (re: intervals) in execution section
