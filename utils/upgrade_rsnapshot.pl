@@ -33,7 +33,7 @@ if (!defined($real_file) or ('' eq $real_file)) {
 	exit(1);
 }
 
-print "Trying to upgrade $real_file for compatibility with version 1.2.0...\n";
+print "Trying to upgrade $real_file for compatibility with version 1.2.0\n";
 
 # make sure we have a file to upgrade
 if ( ! -r "$real_file" ) {
@@ -93,14 +93,14 @@ if (1 == $new_format) {
 	print "$real_file appears to be in the new format. No changes made.\n";
 } elsif (1 == $found) {
 	if (1 == $enabled) {
-		print "Found rsync_long_args uncommented. No changes made.\n";
+		print "Found \"rsync_long_args\" uncommented. No changes made.\n";
 	} else {
-		print "Found rsync_long_args commented out. Attempting upgrade...\n";
+		print "Found \"rsync_long_args\" commented out. Attempting upgrade...\n";
 		backup_config_file();
 		write_upgraded_file(1);
 	}
 } else {
-	print "Could not find old rsync_long_args parameter. Attempting upgrade...\n";
+	print "Could not find old \"rsync_long_args\" parameter. Attempting upgrade...\n";
 	backup_config_file();
 	write_upgraded_file(0);
 }
@@ -135,14 +135,17 @@ sub backup_config_file {
 		exit(1);
 	}
 	
-	print "$real_file was backed up to $backup_file\n";
+	#print "$real_file was backed up to $backup_file\n";
 }
 
 sub write_upgraded_file {
 	my $scan_file = shift(@_);
 	my $result;
 	
-	my $upgrade_message = "\n";
+	my $upgrade_message = '';
+	
+	my $rsync_long_args_compat = "rsync_long_args\t--delete --numeric-ids\n";
+	
 	$upgrade_message .= "#-----------------------------------------------------------------------------\n";
 	$upgrade_message .= "# UPGRADE NOTICE:\n";
 	$upgrade_message .= "#\n";
@@ -177,7 +180,6 @@ sub write_upgraded_file {
 	$upgrade_message .= "# See the INSTALL file that came with the program, or visit\n";
 	$upgrade_message .= "# http://www.rsnapshot.org for more information.\n";
 	$upgrade_message .= "#-----------------------------------------------------------------------------\n";
-	$upgrade_message .= "rsync_long_args\t--delete --numeric-ids\n";
 	$upgrade_message .= "\n";
 	
 	if (!defined($scan_file)) {
@@ -195,9 +197,11 @@ sub write_upgraded_file {
 	
 	# scan the file to uncomment rsync_long_args
 	if (1 == $scan_file) {
+		print OUTFILE $upgrade_message;
+		
 		foreach my $line (@lines) {
 			if ($line =~ m/^#rsync_long_args\s*?\-\-delete\s*?\-\-numeric\-ids$/o) {
-				print OUTFILE $upgrade_message;
+				print OUTFILE $rsync_long_args_compat;
 			} else {
 				print OUTFILE $line;
 			}
@@ -206,6 +210,8 @@ sub write_upgraded_file {
 	# rsync_long_args isn't here, just add it to the top
 	} else {
 		print OUTFILE $upgrade_message;
+		print OUTFILE $rsync_long_args_compat;
+		print OUTFILE "\n";
 		
 		foreach my $line (@lines) {
 			print OUTFILE $line;
@@ -221,6 +227,5 @@ sub write_upgraded_file {
 	}
 	
 	print "$real_file upgraded successfully.\n";
-	print "\n";
 }
 
