@@ -200,15 +200,14 @@ if ($cmd eq 'du')	{
 	show_disk_usage();
 }
 
-#
 # IF WE GOT THIS FAR, PREPARE TO RUN A BACKUP
 #
+# what follows is a linear sequence of events.
+# all of these subroutines will either succeed or terminate the program safely.
 
 # figure out which interval we're working on
-get_current_interval();
-
 # make sure the user is requesting to run on an interval we understand
-check_valid_interval($cmd);
+get_current_interval($cmd);
 
 # log the beginning of this run
 log_startup();
@@ -1707,10 +1706,14 @@ sub create_snapshot_root	{
 	}
 }
 
-# accepts no arguments
+# accepts interval
 # returns no arguments
 # sets some global variables
 sub get_current_interval	{
+	my $interval = shift(@_);
+	
+	# make sure we were passed an interval
+	if (!defined($interval))	{ bail("Interval not specified in get_current_interval()\n"); }
 	
 	# FIGURE OUT WHICH INTERVAL WE'RE RUNNING, AND HOW IT RELATES TO THE OTHERS
 	# THEN RUN THE ACTION FOR THE CHOSEN INTERVAL
@@ -1750,15 +1753,8 @@ sub get_current_interval	{
 		
 		$i++;
 	}
-}
-
-# accepts the name of the interval to check
-# checks the $interval_num global variable, and exits if it hasn't been set
-# ($interval_num being set would prove we've already validated the intervals)
-sub check_valid_interval	{
-	my $interval = shift(@_);
 	
-	if (!defined($interval))		{ bail("Interval not specified in check_valid_interval()\n"); }
+	# make sure we got something that makes sense
 	if (!defined($interval_num))	{ bail("Interval \"$interval\" unknown, check $config_file"); }
 }
 
