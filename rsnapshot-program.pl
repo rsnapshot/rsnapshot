@@ -107,8 +107,12 @@ my $link_dest		= 0; # use the --link-dest option to rsync
 #	4	Extra verbose messages (individual actions inside some subroutines, output from rsync)
 #	5	Debug
 #
-my $verbose			= undef;
-my $default_verbose	= 2;
+my $verbose				= undef;
+my $default_verbose		= 2;
+
+# same as verbose above, but for logging
+my $loglevel			= undef;
+my $default_loglevel	= 3;
 
 # assume everything will go well. one slip up and the flag will be toggled
 my $run_perfect	= 1;
@@ -532,21 +536,44 @@ if ( -f "$config_file" )	{
 			$line_syntax_ok = 1;
 			next;
 		}
+		# LOGFILE
+		if ($var eq 'logfile')	{
+			if (0 == is_valid_local_abs_path($value))	{
+				bail("logfile must be a valid absolute path");
+			} elsif (1 == is_directory_traversal($value))	{
+				bail("Directory traversal attempted in $value");
+			} elsif (( -e "$value" ) && ( ! -f "$value" ))	{
+				bail("logfile $value exists, but is not a file");
+			} else	{
+				$config_vars{'logfile'} = $value;
+				$line_syntax_ok = 1;
+				next;
+			}
+		}
 		# VERBOSE
 		if ($var eq 'verbose')	{
-			if ($value =~ m/^\d$/)	{
-				if (($value >= 1) && ($value <= 5))	{
-					# if we didn't override this with a command line flag, set it here
-					if (!defined($verbose))	{
-						$verbose = $value;
-					}
-					$line_syntax_ok = 1;
-					next;
-				} else	{
-					bail("verbose must be a value between 1 and 5");
+			if (1 == is_valid_loglevel($value))	{
+				if (!defined($verbose))	{
+					$verbose = $value;
 				}
+				
+				$line_syntax_ok = 1;
+				next;
 			} else	{
-				bail("verbose must be a value between 1 and 5");
+				bail('verbose must be a value between 1 and 5');
+			}
+		}
+		# LOGLEVEL
+		if ($var eq 'loglevel')	{
+			if (1 == is_valid_loglevel($value))	{
+				if (!defined($loglevel))	{
+					$loglevel = $value;
+				}
+				
+				$line_syntax_ok = 1;
+				next;
+			} else	{
+				bail('loglevel must be a value between 1 and 5');
 			}
 		}
 		
@@ -702,8 +729,13 @@ if (defined($config_vars{'lockfile'}))	{
 	remove_lockfile($config_vars{'lockfile'});
 }
 
-# IF WE GOT THIS FAR, ASSUME SUCCESS. THE PROGRAM IS DONE RUNNING
-syslog_msg("$run_string: completed successfully");
+# IF WE GOT THIS FAR, THE PROGRAM IS DONE RUNNING
+# WRITE TO SYSLOG WITH THE STATUS OF THE OUTCOME
+if (1 == $run_perfect)	{
+	syslog_msg("$run_string: completed successfully");
+} else	{
+	syslog_err("$run_string: completed, but with some errors");
+}
 
 exit(0);
 
@@ -783,9 +815,10 @@ sub print_cmd	{
 	
 	if (!defined($str))	{ return (undef); }
 	
-	# remove newline and consolidate slashes
+	# remove newline and consolidate slashes and spaces
 	chomp($str);
 	$str =~ s/\/+/\//g;
+	$str =~ s/\s+/ /g;
 	
 	# break up string into individual pieces
 	@tokens = split(/\s+/, $str);
@@ -851,13 +884,13 @@ sub print_err	{
 	if (!defined($str))		{ return (undef); }
 	if (!defined($level))	{ return (undef); }
 	
-	# this is an error. there goes our pristine record.
+	# this run is no longer perfect since we have an error
 	$run_perfect = 0;
 	
 	chomp($str);
 	
 	# print to STDERR
-	if ((!defined($verbose)) or ($level >= $verbose))	{
+	if ((!defined($verbose)) or ($level <= $verbose))	{
 		print STDERR 'ERROR: ', $str, "\n";
 	}
 	
@@ -870,14 +903,31 @@ sub print_err	{
 sub log_msg	{
 	my $str		= shift(@_);
 	my $level	= shift(@_);
+	my $result	= undef;
 	
 	if (!defined($str))		{ return (undef); }
 	if (!defined($level))	{ return (undef); }
 	
 	chomp($str);
 	
-	# TODO: log this
-	# print '[', get_cur_date(), '] ', $str, "\n";
+	# open logfile, write to it, close it back up
+	# if we fail, don't use the usual print_* functions, since they just call this again
+	if (defined($config_vars{'logfile'}))	{
+		$result = open (LOG, ">> $config_vars{'logfile'}");
+		if (0 == $result)	{
+			print STDERR "Could not open logfile $config_vars{'logfile'} for writing";
+			syslog_err  ("Could not open logfile $config_vars{'logfile'} for writing");
+			exit(-1);
+		}
+		
+		print LOG '[', get_cur_date(), '] ', $str, "\n";
+		
+		$result = close(LOG);
+		if (0 == $result)	{
+			print STDERR "Could not close logfile $config_vars{'logfile'}";
+			syslog_err  ("Could not close logfile $config_vars{'logfile'}");
+		}
+	}
 }
 
 # accepts string, and level
@@ -889,10 +939,13 @@ sub log_err	{
 	if (!defined($str))		{ return (undef); }
 	if (!defined($level))	{ return (undef); }
 	
+	# this run is no longer perfect since we have an error
+	$run_perfect = 0;
+	
 	chomp($str);
 	
-	# TODO: log this
-	# print '[', get_cur_date(), '] ERROR: ', $str, "\n";
+	$str = 'ERROR: ' . $str;
+	log_msg($str, $level);
 }
 
 # log messages to syslog
@@ -911,7 +964,7 @@ sub syslog_msg	{
 	
 	if (defined($config_vars{'cmd_logger'}))	{
 		# extra verbose to display messages, verbose to display errors
-		if ( ($verbose > 3) or (($verbose > 2) && ($level ne 'err')) )	{
+		if ( (!defined($verbose)) or (($verbose > 3) or (($verbose > 2) && ($level ne 'err'))) )	{
 			print_cmd("$config_vars{'cmd_logger'} -i -p $facility.$level -t rsnapshot $msg");
 		}
 		# log to syslog
@@ -932,6 +985,10 @@ sub syslog_msg	{
 # returns 1 on success, undef on failure
 sub syslog_err	{
 	my $msg = shift(@_);
+	
+	# this run is no longer perfect since we have an error
+	$run_perfect = 0;
+	
 	return syslog_msg($msg, 'user', 'err');
 }
 
@@ -1112,6 +1169,22 @@ sub remove_lockfile	{
 			}
 		}
 	}
+}
+
+# accepts a loglevel
+# returns 1 if it's valid, 0 otherwise
+sub is_valid_loglevel	{
+	my $value	= shift(@_);
+	
+	if (!defined($value))	{ return (0); }
+	
+	if ($value =~ m/^\d$/)	{
+		if (($value >= 1) && ($value <= 5))	{
+			return (1);
+		}
+	}
+	
+	return (0);
 }
 
 # accepts one argument
@@ -1458,7 +1531,13 @@ sub backup_interval	{
 			if (0 == $test)	{
 				$result = system(@cmd_stack);
 				if ($result != 0)	{
-					if (1 == $link_dest)	{
+					# 0 signifies success
+					# 1 is the return code for "syntax or usage error"
+					#
+					# if we got this error and we were attempting --link-dest, there's
+					# a very good chance that this version of rsync is too old.
+					#
+					if ((1 == $link_dest) && (1 == $result))	{
 						print_err ("rsync returned $result. Does this version of rsync support --link-dest?", 2);
 						syslog_err("rsync returned $result. Does this version of rsync support --link-dest?");
 					} else	{

@@ -6,6 +6,11 @@ http://www.rsnapshot.org/
 VERSION 1.0.11 (? ? ??:?? 2004)
 ------------------------------------------------------------------------------
 - Now allows "/" as a backup point on the local drive
+- Cleaned up command formatting to consolidate slashes
+- Added subroutines for centralized print/logging
+- Added logfile and loglevel parameters to the config file
+- Added logging feature
+- Moved loglevel/verbose number validation into a seperate subroutine
 
 VERSION 1.0.10 (Jan 20 00:43 2004)
 ------------------------------------------------------------------------------
