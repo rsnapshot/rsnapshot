@@ -20,12 +20,16 @@ clean:
 	/bin/rm -f rsnapshot.html
 	
 tar:
-	make man
-	mkdir rsnapshot-${VERSION}
 	/bin/rm -f rsnapshot-${VERSION}.tar.gz
+	
+	mkdir rsnapshot-${VERSION}
 	mkdir rsnapshot-${VERSION}/DEBIAN/
-	/bin/cp rsnapshot rsnapshot.conf Makefile rsnapshot.1 GPL INSTALL README TODO rsnapshot-${VERSION}/
+	
+	/bin/cp rsnapshot rsnapshot.conf Makefile GPL INSTALL README TODO rsnapshot-${VERSION}/
 	/bin/cp DEBIAN/{control,conffiles} rsnapshot-${VERSION}/DEBIAN/
+	
+	pod2man rsnapshot > rsnapshot-${VERSION}/rsnapshot.1
+	
 	chown -R 0:0 rsnapshot-${VERSION}/
 	tar czf rsnapshot-${VERSION}.tar.gz rsnapshot-${VERSION}/
 	rm -rf rsnapshot-${VERSION}/
@@ -33,12 +37,18 @@ tar:
 debian:
 	mkdir -p ${DPKG_BUILD_DIR}/{DEBIAN,usr/bin,etc,usr/share/man/man1}
 	/bin/cp DEBIAN/{control,conffiles} ${DPKG_BUILD_DIR}/DEBIAN/
+	
 	cat rsnapshot | sed 's/\/usr\/local\/bin/\/usr\/bin/g' > ${DPKG_BUILD_DIR}/usr/bin/rsnapshot
-	pod2man ${DPKG_BUILD_DIR}/usr/bin/rsnapshot | gzip -9c > ${DPKG_BUILD_DIR}/usr/share/man/man1/rsnapshot.1.gz
-	/bin/cp rsnapshot.conf ${DPKG_BUILD_DIR}/etc/
-	chmod 600 ${DPKG_BUILD_DIR}/etc/rsnapshot.conf
 	chmod 755 ${DPKG_BUILD_DIR}/usr/bin/rsnapshot
+	
+	pod2man ${DPKG_BUILD_DIR}/usr/bin/rsnapshot | gzip -9c > ${DPKG_BUILD_DIR}/usr/share/man/man1/rsnapshot.1.gz
 	chmod 644 ${DPKG_BUILD_DIR}/usr/share/man/man1/rsnapshot.1.gz
+	
+	/bin/cp rsnapshot.conf ${DPKG_BUILD_DIR}/etc/rsnapshot.conf
+	/bin/cp rsnapshot.conf ${DPKG_BUILD_DIR}/etc/rsnapshot.conf.default
+	chmod 600 ${DPKG_BUILD_DIR}/etc/rsnapshot.conf
+	chmod 600 ${DPKG_BUILD_DIR}/etc/rsnapshot.conf.default
+	
 	chown -R root:root ${DPKG_BUILD_DIR}/
 	dpkg -b ${DPKG_BUILD_DIR}/ rsnapshot-${VERSION}-1.deb
 	/bin/rm -rf ${DPKG_BUILD_DIR}/
