@@ -576,6 +576,16 @@ sub parse_config_file {
 				next;
 			}
 			
+			if (!defined($src))	{
+				config_err($file_line_num, "$line - no source path specified for backup point");
+				next;
+			}
+			
+			if (!defined($dest))	{
+				config_err($file_line_num, "$line - no destination path specified for backup point");
+				next;
+			}
+			
 			# make sure we have a local path for the destination
 			# (we do NOT want an absolute path)
 			if ( is_valid_local_abs_path($dest) ) {
