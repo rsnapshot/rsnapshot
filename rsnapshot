@@ -1,5 +1,20 @@
 #!/usr/bin/perl
 
+########################################################################
+#                                                                      #
+# rsnapshot                                                            #
+#                                                                      #
+# by Nathan Rosenquist                                                 #
+# based on code originally by Mike Rubel                               #
+#                                                                      #
+# http://rsnapshot.sourceforge.net/                                    #
+#                                                                      #
+# rsnapshot comes with ABSOLUTELY NO WARRANTY.  This is free software, #
+# and you are welcome to redistribute it under certain conditions.     #
+# See the GNU General Public Licence for details.                      #
+#                                                                      #
+########################################################################
+
 # attention vi users: set ts=4 sw=4
 
 ########################
@@ -16,22 +31,57 @@ use Getopt::Std;
 
 my $VERSION = '0.9.4';
 
+# default configuration file
 my $config_file	= '/etc/rsnapshot.conf'; 
 
+# assume the config file syntax is OK unless we encounter problems
+my $file_syntax_ok = 1;
+
+# count the lines in the config file, so we can pinpoint errors more precisely
+my $file_line_num = 0;
+
+# hash to hold variables from the configuration file
 my %config_vars;
+
+# array of hash_refs containing the source -> destination backup points
 my @snapshot_points;
 
+# "intervals" are user defined time periods (i.e. hourly, daily)
+# this array holds hash_refs containing the name of the interval,
+# and the number of snapshots to keep of it
 my @intervals;
+
+# which of the intervals are we operating on?
+# if we defined hourly, daily, weekly ... hourly = 0, daily = 1, weekly = 2
 my $interval_num;
+
+# the highest possible number for the current interval context
+# if we are working on hourly, and hourly is set to 6, this would be
+# equal to 5 (since we start at 0)
 my $interval_max;
+
+# this is the name of the previous interval, in relation to the one we're
+# working on. i.e. if we're operating on weekly, this should be "daily"
 my $prev_interval;
+
+# same as $interval_max, except for the previous interval.
+# this is used to determine which of the previous snapshots to pull from
+# i.e. cp -al hourly.$prev_interval_max/ daily.0/
 my $prev_interval_max;
 
+# command line flags
 my %opts; 
+
+# command or interval to execute
 my $cmd;
 
+# parse config file and exit
 my $do_configtest = 0;
+
+# show the shell commands being executed
 my $verbose = 0;
+
+# turn verbose on, but don't execute the commands
 my $test = 0;
  
 ##############################
@@ -81,19 +131,34 @@ if ($cmd eq 'version_only')	{
  
 # PARSE CONFIG FILE 
 if ( -f $config_file )	{
-	open(CONFIG, $config_file) or bail("could not open config file \"$config_file\"");
+	open(CONFIG, $config_file) or bail("Could not open config file \"$config_file\"");
 	while (my $line = <CONFIG>)	{
 		chomp($line);
+		
+		# count line numbers
+		$file_line_num++;
+		
+		# assume the line is formatted incorrectly
+		my $line_syntax_ok = 0;
 		
 		# ignore comments
 		if ($line =~ /^#/)	{ next; }
 		
+		# ignore blank lines
+		if ($line =~ /^$/)	{ next; }
+		
+		# ignore lines that are pure white space
+		if ($line =~ /^\s*$/)	{ next; }
+		
 		# parse line
 		my ($var, $value, $value2) = split(/\t+/, $line, 3);
 		
-		# ignore blank or incomplete lines
-		if (!defined($var))		{ next; }
-		if (!defined($value))	{ next; }
+		# warn about entries we don't understand, and prevent the program from running
+		if (!defined($var) or !defined($value))	{
+			print STDERR "Error in $config_file on line $file_line_num: $line\n";
+			$file_syntax_ok = 0;
+			next;
+		}
 		
 		# SNAPSHOT_ROOT
 		if ($var eq 'snapshot_root')	{
@@ -106,6 +171,7 @@ if ( -f $config_file )	{
 			} else	{
 				$config_vars{'snapshot_root'} = $value;
 			}
+			$line_syntax_ok = 1;
 			next;
 		}
 		
@@ -114,8 +180,9 @@ if ( -f $config_file )	{
 			if ($var eq "cmd_$command")	{
 				if ( -x $value )	{
 					$config_vars{"cmd_$command"} = $value;
+					$line_syntax_ok = 1;
 				} else	{
-					bail("could not find $value ... please fix cmd_$command in $config_file");
+					bail("Could not find $value, please fix cmd_$command in $config_file");
 				}
 			}
 		}
@@ -124,15 +191,16 @@ if ( -f $config_file )	{
 			if ($var eq "cmd_$command")	{
 				if ( -x $value )	{
 					$config_vars{"cmd_$command"} = $value;
+					$line_syntax_ok = 1;
 				} else	{
-					bail("could not find $value ... please fix cmd_$command in $config_file");
+					bail("Could not find $value, please fix cmd_$command in $config_file");
 				}
 			}
 		}
 		
 		# INTERVALS
 		if ($var eq 'interval')	{
-			if (!defined($value))		{ bail("interval can not be blank"); }
+			if (!defined($value))		{ bail("Interval can not be blank"); }
 			if ($value !~ m/^[\w\d]+$/)	{ bail("\"$value\" is not a valid entry"); }
 			
 			if (!defined($value2))		{ bail("\$value\" number can not be blank"); }
@@ -143,6 +211,7 @@ if ( -f $config_file )	{
 			$hash{'interval'}	= $value;
 			$hash{'number'}		= $value2;
 			push(@intervals, \%hash);
+			$line_syntax_ok = 1;
 		}
 		
 		# BACKUP points
@@ -152,29 +221,36 @@ if ( -f $config_file )	{
 			
 			if ( !defined($config_vars{'snapshot_root'}) )	{	bail("snapshot_root needs to be defined before backup points"); }
 			
-			# validate path
-			if ( ! -d "$src" )	{
+			# we have a valid file path
+			if ( -d "$src" )	{
+				$line_syntax_ok = 1;
+				
+			# this wasn't on the filesystem
+			# let's see if it matches a remote pattern we know about
+			} else	{
 				
 				# if it's an ssh path, make sure we have ssh
 				if ( $src =~ /^.*?\@.*?:\/.*$/ )	{
 					if (!defined($config_vars{'cmd_ssh'}))	{
-						bail("cannot handle $src ... ssh not found in $config_file");
+						bail("Cannot handle $src, cmd_ssh not defined in $config_file");
 					}
-				
+					$line_syntax_ok = 1;
+					
 				# if it's anonymous rsync, we're ok
 				} elsif ( $src =~ /^rsync:\/\/.*$/ )	{
-					# nothing to see here
+					$line_syntax_ok = 1;
 					
+				# we don't know what this is, it must be bad
 				} else	{
-					# if it's not an ssh path, make sure it's a valid local directory
-					bail("source directory \"$src\" doesn't exist");
+					bail("Source directory \"$src\" doesn't exist");
 				}
+				
 			}
-			if ($dest =~ /^\//)	{ bail("full paths not allowed for backup destinations"); }
+			if ($dest =~ /^\//)	{ bail("Full paths not allowed for backup destinations"); }
 			
 			# make sure we don't backup the backup!
 			if ($config_vars{'snapshot_root'} =~ $src)	{
-				opendir(SRC, $src) or bail("could not open $src");
+				opendir(SRC, $src) or bail("Could not open $src");
 				readdir(SRC);	# .
 				readdir(SRC);	# ..
 				
@@ -194,16 +270,30 @@ if ( -f $config_file )	{
 				push(@snapshot_points, \%hash);
 			}
 		}
+		
+		# CHECK TO SEE THAT WE UNDERSTOOD THIS LINE
+		if ($line_syntax_ok == 0)	{
+			print STDERR "Error in $config_file on line $file_line_num: $line\n";
+			$file_syntax_ok = 0;
+		}
 	}
 	close(CONFIG);
 	
 	# CONFIG TEST?
-	if ($do_configtest)	{
-		print "syntax ok\n";
+	if ($do_configtest && $file_syntax_ok)	{
+		print "Syntax OK\n";
 		exit(0);
 	}
 } else	{
-	print STDERR "config file \"$config_file\" does not exist or is not readable\n";
+	print STDERR "Config file \"$config_file\" does not exist or is not readable.\n";
+	exit(-1);
+}
+
+# BAIL OUT HERE IF THERE WERE ERRORS IN THE CONFIG FILE
+if ($file_syntax_ok == 0)	{
+	print STDERR "-----------------------------------\n";
+	print STDERR "Errors were found in $config_file, rsnapshot can not continue.\n";
+	print STDERR "If you think an entry looks right, check to make sure you haven't confused spaces with tabs.\n";
 	exit(-1);
 }
  
@@ -230,7 +320,7 @@ foreach my $i_ref (@intervals)	{
 		if ($$i_ref{'number'} > 0)	{
 			$interval_max = $$i_ref{'number'} - 1;
 		} else	{
-			bail("$$i_ref{'interval'} can not be 0");
+			bail("$$i_ref{'interval'} can not be set to 0");
 		}
 		
 		last;
@@ -242,7 +332,7 @@ foreach my $i_ref (@intervals)	{
 	if ($$i_ref{'number'} > 0)	{
 		$prev_interval_max = $$i_ref{'number'} - 1;
 	} else	{
-		bail("$$i_ref{'interval'} can not be 0");
+		bail("$$i_ref{'interval'} can not be set to 0");
 	}
 	
 	$i++;
@@ -250,7 +340,7 @@ foreach my $i_ref (@intervals)	{
 undef($i);
 
 if (!defined($interval_num))	{
-	bail("interval \"$cmd\" unknown, check $config_file");
+	bail("Interval \"$cmd\" unknown, check $config_file");
 }
 
 # RUN THE BACKUP
@@ -273,6 +363,7 @@ exit(0);
 sub backup_interval	{
 	my $interval = shift(@_);
 	
+	# this should never happen
 	if (!defined($interval))	{ bail('backup_interval() expects an argument'); }
 	
 	# ROTATE DIRECTORIES
@@ -367,6 +458,7 @@ sub rotate_interval	{
 	my $interval		= shift(@_);
 	my $prev_interval	= shift(@_);
 	
+	# this should never happen
 	if (!defined($interval) or !defined($prev_interval))	{
 		bail('rotate_interval() expects 2 arguments');
 	}
@@ -375,27 +467,27 @@ sub rotate_interval	{
 	#
 	# delete the oldest one
 	if ( -d "$config_vars{'snapshot_root'}/$interval.$interval_max" )	{
-		if ($verbose)	{ print "$config_vars{'cmd_rm'} -rf $config_vars{'snapshot_root'}/$interval.$interval_max\n"; }
+		if ($verbose)	{ print "$config_vars{'cmd_rm'} -rf $config_vars{'snapshot_root'}/$interval.$interval_max/\n"; }
 		if ($test == 0)	{
-			system( $config_vars{'cmd_rm'}, '-rf', "$config_vars{'snapshot_root'}/$interval.$interval_max" );
+			system( $config_vars{'cmd_rm'}, '-rf', "$config_vars{'snapshot_root'}/$interval.$interval_max/" );
 		}
 	}
 	
 	# rotate the middle ones
 	for (my $i=($interval_max-1); $i>=0; $i--)	{
 		if ( -d "$config_vars{'snapshot_root'}/$interval.$i" )	{
-			if ($verbose)	{ print "$config_vars{'cmd_mv'} $config_vars{'snapshot_root'}/$interval.$i $config_vars{'snapshot_root'}/$interval." . ($i+1) . "\n"; }
+			if ($verbose)	{ print "$config_vars{'cmd_mv'} $config_vars{'snapshot_root'}/$interval.$i/ $config_vars{'snapshot_root'}/$interval." . ($i+1) . "/\n"; }
 			if ($test == 0)	{
-				system( $config_vars{'cmd_mv'}, "$config_vars{'snapshot_root'}/$interval.$i", ("$config_vars{'snapshot_root'}/$interval." . ($i+1)) );
+				system( $config_vars{'cmd_mv'}, "$config_vars{'snapshot_root'}/$interval.$i/", ("$config_vars{'snapshot_root'}/$interval." . ($i+1) . '/') );
 			}
 		}
 	}
 	
 	# hard link (except for directories) previous interval over to .0
 	if ( -d "$config_vars{'snapshot_root'}/$prev_interval.$prev_interval_max" )	{
-		if ($verbose)	{ print "$config_vars{'cmd_cp'} -al $config_vars{'snapshot_root'}/$prev_interval.$prev_interval_max $config_vars{'snapshot_root'}/$interval.0\n"; }
+		if ($verbose)	{ print "$config_vars{'cmd_cp'} -al $config_vars{'snapshot_root'}/$prev_interval.$prev_interval_max/ $config_vars{'snapshot_root'}/$interval.0/\n"; }
 		if ($test == 0)	{
-			system( $config_vars{'cmd_cp'}, '-al', "$config_vars{'snapshot_root'}/$prev_interval.$prev_interval_max", "$config_vars{'snapshot_root'}/$interval.0" );
+			system( $config_vars{'cmd_cp'}, '-al', "$config_vars{'snapshot_root'}/$prev_interval.$prev_interval_max/", "$config_vars{'snapshot_root'}/$interval.0/" );
 		}
 	}
 }
@@ -429,8 +521,8 @@ HERE
 
 sub show_usage	{
 	print "rsnapshot $VERSION\n";
-	print "usage: rsnapshot [-v] [-t] [-c /alt/config/file] <interval>|configtest|help|version\n";
-	print "type \"man rsnapshot\" for full details\n";
+	print "Usage: rsnapshot [-v] [-t] [-c /alt/config/file] <interval>|configtest|help|version\n";
+	print "Type \"man rsnapshot\" for full details.\n";
 } 
  
 #####################
