@@ -105,7 +105,7 @@ my $exit_code = 0;
 
 # global defaults for external programs
 my $default_rsync_short_args	= '-a';
-my $default_rsync_long_args		= '--delete --numeric-ids --relative';
+my $default_rsync_long_args		= '--delete --numeric-ids --relative --delete-excluded';
 my $default_ssh_args			= undef;
 
 # exactly how the program was called, with all arguments
@@ -2687,8 +2687,16 @@ sub exec_backup_script {
 	# from .1 back to .0 if possible. these will be used as a baseline for diff comparisons by
 	# sync_if_different() down below.
 	if (1 == $link_dest) {
-		my $lastdir	= "$config_vars{'snapshot_root'}/$interval.1/$$bp_ref{'dest'}/";
-		my $curdir	= "$config_vars{'snapshot_root'}/$interval.0/$$bp_ref{'dest'}/";
+		my $lastdir	= "$config_vars{'snapshot_root'}/$interval.1/$$bp_ref{'dest'}";
+		my $curdir	= "$config_vars{'snapshot_root'}/$interval.0/$$bp_ref{'dest'}";
+		
+		# make sure we have a slash at the end
+		if ($lastdir !~ m/\/$/) {
+			$lastdir .= '/';
+		}
+		if ($curdir !~ m/\/$/) {
+			$curdir .= '/';
+		}
 		
 		# if we even have files from last time
 		if ( -e "$lastdir" ) {

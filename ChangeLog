@@ -28,6 +28,11 @@ VERSION 1.2.0 (Jan ?? ??:?? 2005)
 - Added config.guess and config.sub for automake/autoconf build process
 - Changed default destination paths for backup points in example config file
   for compatibility with --relative rsync flag
+- Added formatting fix to show one slash only when invoking backup_script
+  with link_dest option enabled
+- Broke backwards compatibility for the benefit of fixing several outstanding
+  issues.
+- Added utils/upgrade_to_120.pl / "make upgrade" util for easy upgrade.
 
 VERSION 1.1.6 (Jul 05 16:35 2004)
 ------------------------------------------------------------------------------

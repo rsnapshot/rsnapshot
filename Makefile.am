@@ -4,7 +4,7 @@ RPM_BASE_DIR  = /usr/src/redhat
 
 man:
 	@# perl 5.8 for this
-	/usr/local/bin/pod2man -c '' -n 'rsnapshot' -r '' rsnapshot > rsnapshot.1
+	/usr/bin/pod2man -c '' -n 'rsnapshot' -r '' rsnapshot > rsnapshot.1
 	
 html:
 	pod2html rsnapshot | grep -v 'link rev' > rsnapshot.html
@@ -52,7 +52,7 @@ tar: man
 	
 	@# utils
 	/bin/mkdir rsnapshot-$(VERSION)/utils/
-	/bin/cp utils/{rsnaptar,*.sh,README} rsnapshot-$(VERSION)/utils/
+	/bin/cp utils/{rsnaptar,*.sh,*.pl,README} rsnapshot-$(VERSION)/utils/
 	
 	@# change ownership to root, and delete build dir
 	chown -R root:root rsnapshot-$(VERSION)/
