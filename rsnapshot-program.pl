@@ -811,7 +811,11 @@ sub backup_interval	{
 				}
 			}
 			
-			# run backup script
+			# run the backup script
+			#
+			# the assumption here is that the backup script is written in such a way
+			# that it creates files in it's current working directory.
+			#
 			if (1 == $verbose)	{ print "$$sp_ref{'script'}\n"; }
 			if (0 == $test)	{
 				system($$sp_ref{'script'});
@@ -837,15 +841,13 @@ sub backup_interval	{
 				}
 			}
 			
-			# remove the tmp directory if we created one
-			if (defined($tmpdir))	{
-				if ( -e "$tmpdir" )	{
-					if (1 == $verbose)	{ print "rm -rf $tmpdir\n"; }
-					if (0 == $test)	{
-						$result = rmtree("$tmpdir", 0, 0);
-						if (0 == $result)	{
-							bail("Could not rmtree(\"$tmpdir\",0,0);");
-						}
+			# remove the tmp directory
+			if ( -e "$tmpdir" )	{
+				if (1 == $verbose)	{ print "rm -rf $tmpdir\n"; }
+				if (0 == $test)	{
+					$result = rmtree("$tmpdir", 0, 0);
+					if (0 == $result)	{
+						bail("Could not rmtree(\"$tmpdir\",0,0);");
 					}
 				}
 			}
@@ -934,9 +936,9 @@ sub rotate_interval	{
 #
 # This subroutine accepts two arguments, a source path and a destination path.
 # It traverses both recursively.
-#   If a file is in the source, but not the destination, it is copied using File::Copy
-#   If a file is in the destination, but not the source, it is deleted with rmtree()
-#   If a file is in both locations and is different, dest is unlinked and src is copied
+#   If a file is in the source, but not the destination, it is hard linked into dest
+#   If a file is in the destination, but not the source, it is deleted
+#   If a file is in both locations and is different, dest is unlinked and src is linked to dest
 #   If a file is in both locations and is the same, nothing happens
 #
 # What makes this different than rsync is that it looks only at the file contents to
@@ -947,6 +949,42 @@ sub rotate_interval	{
 # If anyone knows of a better way (that doesn't add dependencies) i'd love to hear it!
 
 sub sync_if_different	{
+	my $src		= shift(@_);
+	my $dest	= shift(@_);
+	my $result	= 0;
+	
+	# make sure we were passed two arguments
+	if (!defined($src))  { return(0); }
+	if (!defined($dest)) { return(0); }
+	
+	# make sure we have a source directory
+	if ( ! -d "$src" )	{
+		print STDERR "sync_if_different() needs a valid source directory as its first argument\n";
+		return (0);
+	}
+	
+	# strip trailing slashes off the directories,
+	# since we'll add them back on later
+	$src  = remove_trailing_slash($src);
+	$dest = remove_trailing_slash($dest);
+	
+	# copy everything from src to dest
+	$result = sync_cp_src_dest("$src", "$dest");
+	if ( ! $result )	{
+		bail("sync_cp_src_dest(\"$src\", \"$dest\")");
+	}
+	
+	# delete everything from dest that isn't in src
+	$result = sync_rm_dest("$src", "$dest");
+	if ( ! $result )	{
+		bail("sync_rm_dest(\"$src\", \"$dest\")");
+	}
+	
+	return (1);
+}
+
+# accepts src, dest
+sub sync_cp_src_dest	{
 	my $src		= shift(@_);
 	my $dest	= shift(@_);
 	my $dh		= undef;
@@ -991,12 +1029,6 @@ sub sync_if_different	{
 	}
 	if (1 == $debug)	{ print "chown(" . $st->uid . ", " . $st->gid . ", \"$dest\");\n"; }
 	
-	# READ DIR CONTENTS
-	# we do this in two passes:
-	#   first, we loop through src, copying anything necessary into dest
-	#   then, we loop through dest, deleting anything that's not in src
-	
-	# SOURCE FIRST
 	# copy anything different from src into dest
 	$dh = new DirHandle( "$src" );
 	if (defined($dh))	{
@@ -1019,14 +1051,16 @@ sub sync_if_different	{
 			# this check must be done before dir and file because it will
 			# pretend to be a file or a directory as well as a symlink
 			if ( -l "$src/$node" )	{
-				# FIXME
-				print STDERR "not done yet\n";
+				$result = copy_symlink("$src/$node", "$dest/$node");
+				if (0 == $result)	{
+					print STDERR "Warning! copy_symlink(\"$src/$node\", \"$dest/$node\")\n";
+				}
 				
 			# if it's a directory, recurse!
 			} elsif ( -d "$src/$node" )	{
-				$result = sync_if_different("$src/$node", "$dest/$node");
+				$result = sync_cp_src_dest("$src/$node", "$dest/$node");
 				if (! $result)	{
-					print STDERR "Error! recursion error in sync_if_different(\"$src/$node\", \"$dest/$node\")\n";
+					print STDERR "Error! recursion error in sync_cp_src_dest(\"$src/$node\", \"$dest/$node\")\n";
 					return (0);
 				}
 				
@@ -1038,14 +1072,18 @@ sub sync_if_different	{
 					
 					# if they are different, unlink dest and link src to dest
 					if (1 == file_diff("$src/$node", "$dest/$node"))	{
-						$result = rmtree( "$dest/$node", 0, 0 );
+						$result = unlink("$dest/$node");
 						if (0 == $result)	{
-							print "Error! rmtree(\"$dest/$node\", 0, 0)\n";
+							print "Error! unlink(\"$dest/$node\")\n";
 							return (0);
 						}
 						$result = link("$src/$node", "$dest/$node");
+						if (0 == $result)	{
+							print "Error! link(\"$src/$node\", \"$dest/$node\")\n";
+							return (0);
+						}
 						
-					# if they aren't different, we just leave dest alone
+					# if they are the same, just leave dest alone
 					} else	{
 						next;
 					}
@@ -1070,9 +1108,38 @@ sub sync_if_different	{
 	if (defined($dh))	{ $dh->close(); }
 	undef( $dh );
 	
-	# DESTINATION SECOND
+	return (1);
+}
+
+# accepts src, dest
+sub sync_rm_dest	{
+	my $src		= shift(@_);
+	my $dest	= shift(@_);
+	my $dh		= undef;
+	my $result	= 0;
+	
+	# make sure we were passed two arguments
+	if (!defined($src))  { return(0); }
+	if (!defined($dest)) { return(0); }
+	
+	# make sure we have a source directory
+	if ( ! -d "$src" )	{
+		print STDERR "sync_rm_dest() needs a valid source directory as its first argument\n";
+		return (0);
+	}
+	
+	# make sure we have a destination directory
+	if ( ! -d "$dest" )	{
+		print STDERR "sync_rm_dest() needs a valid destination directory as its first argument\n";
+		return (0);
+	}
+	
+	# strip trailing slashes off the directories,
+	# since we'll add them back on later
+	$src  = remove_trailing_slash($src);
+	$dest = remove_trailing_slash($dest);
+	
 	# delete anything from dest that isn't found in src
-	# anything in both places should be identical after the previous block
 	$dh = new DirHandle( "$dest" );
 	if (defined($dh))	{
 		my @nodes = $dh->read();
@@ -1084,9 +1151,9 @@ sub sync_if_different	{
 			next if ($node =~ m/^\.\.?$/o);
 			
 			# make sure the node we just got is valid (this is highly unlikely to fail)
-			my $st = lstat("$src/$node");
+			my $st = lstat("$dest/$node");
 			if (!defined($st))	{
-				print STDERR "Error! Could not lstat(\"$src/$node\")\n";
+				print STDERR "Error! Could not lstat(\"$dest/$node\")\n";
 				return(0);
 			}
 			
@@ -1097,8 +1164,16 @@ sub sync_if_different	{
 					print STDERR "Error! Could not delete \"$dest/$node\"";
 					return (0);
 				}
+				
+			# ok, this also exists in src
+			# if it's a directory, let's recurse into it and compare files there
+			} elsif ( -d "$src/$node" )	{
+				$result = sync_rm_dest("$src/$node", "$dest/$node");
+				if ( ! $result )	{
+					print STDERR "Error! recursion error in sync_rm_dest(\"$src/$node\", \"$dest/$node\")\n";
+					return (0);
+				}
 			}
-			
 		}
 	}
 	# close open dir handle
@@ -1106,6 +1181,7 @@ sub sync_if_different	{
 	undef( $dh );
 	
 	return (1);
+	
 }
 
 # accepts an error string
@@ -1405,22 +1481,10 @@ sub native_cp_al	{
 			
 			# SYMLINK (must be tested for first, because it will also pass the file and dir tests)
 			if ( -l "$src/$node" )	{
-				# SYMLINK
-				$result = symlink(readlink("$src/$node"), "$dest/$node");
-				if (! $result)	{
-					print STDERR "Warning! Could not symlink(readlink(\"$src/$node\"), \"$dest/$node\")\n";
-					return (0);
+				$result = copy_symlink("$src/$node", "$dest/$node");
+				if (0 == $result)	{
+					bail("Error! copy_symlink(\"$src/$node\", \"$dest/$node\")");
 				}
-				if (1 == $debug)	{ print "symlink(\"" . readlink("$src/$node") . "\", \"$dest/$node\");\n"; }
-				# CHOWN
-				if ( -e "$dest/$node" )	{
-					$result = chown($st->uid, $st->gid, "$dest/$node");
-					if (! $result)	{
-						print STDERR "Warning! Could not chown(" . $st->uid . ", " . $st->gid . ", \"$dest/$node\")\n";
-						return (0);
-					}
-				}
-				if (1 == $debug)	{ print "chown(" . $st->uid . ", " . $st->gid . ", \"$dest/$node\");\n"; }
 				
 			# FILE
 			} elsif ( -f "$src/$node" )	{
@@ -1479,6 +1543,56 @@ sub native_cp_al	{
 		return(0);
 	}
 	if (1 == $debug)	{ print "utime(" . $st->atime . ", " . $st->mtime . ", \"$dest\");\n"; }
+	
+	return (1);
+}
+
+# accepts src, dest
+# copies a symlink
+# returns 1 on success, 0 on failure
+sub copy_symlink	{
+	my $src		= shift(@_);
+	my $dest	= shift(@_);
+	my $st		= undef;
+	my $result	= undef;
+	
+	# make sure it's actually a symlink
+	if ( ! -l "$src" )	{
+		print STDERR "Warning! \"$src\" not a symlink in copy_symlink()\n";
+		return (0);
+	}
+	
+	# make sure we aren't clobbering the destination
+	if ( -e "$dest" )	{
+		print STDERR "Warning! \"$dest\" exists!\n";
+	}
+	
+	# LSTAT
+	$st = lstat("$src");
+	if (!defined($st))	{
+		print STDERR "Warning! lstat(\"$src\")\n";
+		return (0);
+	}
+	
+	# SYMLINK
+	$result = symlink(readlink("$src"), "$dest");
+	if (! $result)	{
+		print STDERR "Warning! Could not symlink(readlink(\"$src\"), \"$dest\")\n";
+		return (0);
+	}
+	if (1 == $debug)	{ print "symlink(\"" . readlink("$src") . "\", \"$dest\");\n"; }
+	
+	# CHOWN (if we're root ($< is the uid))
+	if (0 == $<)	{
+		if ( -e "$dest" )	{
+			$result = chown($st->uid, $st->gid, "$dest");
+			if (! $result)	{
+				print STDERR "Warning! Could not chown(" . $st->uid . ", " . $st->gid . ", \"$dest\")\n";
+				return (0);
+			}
+		}
+		if (1 == $debug)	{ print "chown(" . $st->uid . ", " . $st->gid . ", \"$dest\");\n"; }
+	}
 	
 	return (1);
 }
