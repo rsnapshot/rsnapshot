@@ -22,6 +22,7 @@ This program should work on any reasonably modern UNIX compatible OS. It
 has been tested successfully on the following operating systems:
  - Debian: 3.0 (woody), unstable
  - Redhat: 7.x, 8.0
+ - Fedora Core 1
  - Solaris 8
  - Mac OS X
  - IRIX 6.5
