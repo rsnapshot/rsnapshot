@@ -3140,7 +3140,7 @@ sub show_disk_usage	{
 			return (1);
 		}
 	} else	{
-		print STDERR ("No intervals visible! Do you have permission to see the snapshot root?\n");
+		print STDERR ("No intervals directories visible. Do you have permission to see the snapshot root?\n");
 	}
 	
 	return (undef);
