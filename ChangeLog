@@ -40,6 +40,7 @@ VERSION 1.2.0 (Jan ?? ??:?? 2005)
 - Added check to make sure different backup_script destinations don't overlap
   and don't clobber backup point destinations
 - Added "cmd_du" parameter to allow specifying the path to "du"
+- Added upgrade script to RPM spec file
 
 VERSION 1.1.6 (Jul 05 16:35 2004)
 ------------------------------------------------------------------------------
