@@ -2186,14 +2186,6 @@ sub rotate_lowest_snapshots	{
 	}
 }
 
-# TODO: break out the guts of this subroutine into two more subs:
-#  rsync_backup_point()
-#  exec_backup_script()
-#
-# they will each be called from inside handle_backup_point(), as appropriate
-
-# TODO: audit this subroutine for possible redundancy
-
 # accepts interval, backup_point_ref, ssh_rsync_args_ref
 # returns no args
 # runs rsync on the given backup point
@@ -2453,18 +2445,9 @@ sub exec_backup_script	{
 		print_cmd("$display_rm -rf $tmpdir");
 		
 		if (0 == $test)	{
-			# if it's a dir, delete it
-			if ( -d "$tmpdir" )	{
-				$result = rm_rf("$tmpdir");
-				if (0 == $result)	{
-					bail("Could not rm_rf(\"$tmpdir\");");
-				}
-			# if for some stupid reason it's a file, unlink it
-			} else	{
-				$result = unlink("$tmpdir");
-				if (0 == $result)	{
-					bail("unlink(\"$tmpdir\")");
-				}
+			$result = rm_rf("$tmpdir");
+			if (0 == $result)	{
+				bail("Could not rm_rf(\"$tmpdir\");");
 			}
 		}
 	}
@@ -3018,7 +3001,7 @@ sub rm_rf	{
 	
 	# extra bonus safety feature!
 	# confirm that whatever we're deleting must be inside the snapshot_root
-	if ("$path" !~ "^$config_vars{'snapshot_root'}")	{
+	if ("$path" !~ m/^$config_vars{'snapshot_root'}/o)	{
 		bail("rm_rf() tried to delete something outside of $config_vars{'snapshot_root'}! Quitting now!");
 	}
 	
