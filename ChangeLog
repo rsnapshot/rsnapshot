@@ -8,6 +8,7 @@ VERSION 1.0.6
 - moved all rsync calls into dynamically populated arrays
 - added rsync_short_args and rsync_long_args to config file
 - improved parse_backup_opts() validation code
+- Fixed "make install" vs. INSTALL bug for Mac OS X
 
 VERSION 1.0.5 (Nov 14 00:22 2003)
 ------------------------------------------------------------------------------
