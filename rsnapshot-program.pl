@@ -446,7 +446,6 @@ if ( -f "$config_file" )	{
 				 bail("lockfile must be a full path");
 			}
 			$config_vars{'lockfile'} = $value;
-			
 			$line_syntax_ok = 1;
 		}
 		# RSYNC SHORT ARGS
@@ -512,25 +511,38 @@ if (defined($config_vars{'lockfile'}))	{
 # THEN RUN THE ACTION FOR THE CHOSEN INTERVAL
 # remember, in each hashref in this loop:
 #   interval is something like "daily", "weekly", etc.
-#   number is the number of these intervals to keep
+#   number is the number of these intervals to keep on the filesystem
 #
 my $i = 0;
 foreach my $i_ref (@intervals)	{
+	
+	# this is the interval we're set to run
 	if ($$i_ref{'interval'} eq $cmd)	{
 		$interval_num = $i;
 		
+		# how many of these intervals should we keep?
 		if ($$i_ref{'number'} > 0)	{
 			$interval_max = $$i_ref{'number'} - 1;
 		} else	{
 			bail("$$i_ref{'interval'} can not be set to 0");
 		}
 		
+		# ok, exit this entire block
 		last;
 	}
 	
-	# this WILL be previous next time through
+	# since the "last" command above breaks from this entire block,
+	# and since we loop through the intervals in order, if we got this
+	# far in the first place it means that we're looking at an interval
+	# which isn't selected to run, and that there will be more intervals in the loop.
+	# therefore, this WILL be the previous interval's information, the next time through.
+	#
 	$prev_interval = $$i_ref{'interval'};
 	
+	# which of the previous interval's numbered directories should we pull from
+	# for the interval we're currently set to run?
+	# i.e. daily.0/ might get pulled from hourly.6/
+	#
 	if ($$i_ref{'number'} > 0)	{
 		$prev_interval_max = $$i_ref{'number'} - 1;
 	} else	{
