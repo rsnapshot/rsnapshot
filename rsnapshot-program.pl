@@ -86,13 +86,9 @@ my %opts;
 # command or interval to execute (first cmd line arg)
 my $cmd;
 
-# assume we don't have any of these programs
-my $have_gnu_cp	= 0;
-my $have_rm		= 0;
-my $have_rsync	= 0;
-my $have_ssh	= 0;
-
-# flags that change the outcome of the program, and configurable by both cmd line and config flags
+# global flags that change the outcome of the program,
+# and are configurable by both cmd line and config flags
+#
 my $test			= 0; # turn verbose on, but don't execute any filesystem commands
 my $do_configtest	= 0; # parse config file and exit
 my $one_fs			= 0; # one file system (don't cross partitions within a backup point)
@@ -457,7 +453,6 @@ sub parse_config_file	{
 		if ($var eq 'cmd_rsync')	{
 			if ((-f "$value") && (-x "$value") && (1 == is_real_local_abs_path($value)))	{
 				$config_vars{'cmd_rsync'} = $value;
-				$have_rsync = 1;
 				$line_syntax_ok = 1;
 				next;
 			} else	{
@@ -470,7 +465,6 @@ sub parse_config_file	{
 		if ($var eq 'cmd_ssh')	{
 			if ((-f "$value") && (-x "$value") && (1 == is_real_local_abs_path($value)))	{
 				$config_vars{'cmd_ssh'} = $value;
-				$have_ssh = 1;
 				$line_syntax_ok = 1;
 				next;
 			} else	{
@@ -483,7 +477,6 @@ sub parse_config_file	{
 		if ($var eq 'cmd_cp')	{
 			if ((-f "$value") && (-x "$value") && (1 == is_real_local_abs_path($value)))	{
 				$config_vars{'cmd_cp'} = $value;
-				$have_gnu_cp = 1;
 				$line_syntax_ok = 1;
 				next;
 			} else	{
@@ -595,7 +588,7 @@ sub parse_config_file	{
 			# syntactically valid remote ssh?
 			} elsif ( is_ssh_path($src) )	{
 				# if it's an absolute ssh path, make sure we have ssh
-				if (0 == $have_ssh)	{
+				if (defined($config_vars{'cmd_ssh'}))	{
 					config_err($file_line_num, "$line - Cannot handle $src, cmd_ssh not defined in $config_file");
 					next;
 				}
@@ -976,8 +969,8 @@ sub parse_config_file	{
 	# SINS OF OMISSION
 	# (things that should be in the config file that aren't)
 	#
-	# make sure we got rsync in there somewhere
-	if (0 == $have_rsync)	{
+	# make sure rsync was defined
+	if (defined($config_vars{'cmd_rsync'}))	{
 		print_err("cmd_rsync was not defined.", 1);
 	}
 	# make sure we got a snapshot_root
@@ -2727,10 +2720,12 @@ sub cp_al	{
 	my $dest = shift(@_);
 	my $result = 0;
 	
-	if (1 == $have_gnu_cp)	{
+	# use gnu cp if we have it
+	if (defined($config_vars{'cmd_cp'}))	{
 		print_cmd("$config_vars{'cmd_cp'} -al $src $dest");
 		$result = gnu_cp_al("$src", "$dest");
 		
+	# fall back to the built-in native perl replacement
 	} else	{
 		print_cmd("native_cp_al(\"$src\", \"$dest\")");
 		$result = native_cp_al("$src", "$dest");
@@ -2985,8 +2980,11 @@ sub rm_rf	{
 		bail("rm_rf() tried to delete something outside of $config_vars{'snapshot_root'}! Quitting now!");
 	}
 	
-	if (1 == $have_rm)	{
+	# use the rm command if we have it
+	if (defined($config_vars{'cmd_rm'}))	{
 		$result = cmd_rm_rf("$path");
+		
+	# fall back on rmtree()
 	} else	{
 		$result = rmtree("$path", 0, 0);
 	}
