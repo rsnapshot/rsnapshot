@@ -1015,25 +1015,55 @@ sub sync_if_different	{
 				return(0);
 			}
 			
-			# TODO:
-			# fill in these blocks
-			
-			# if this isn't present in dest, copy it
-			if ( ! -e "$dest/$node" )	{
+			# if it's a symlink, create the link
+			# this check must be done before dir and file because it will
+			# pretend to be a file or a directory as well as a symlink
+			if ( -l "$src/$node" )	{
+				# FIXME
+				print STDERR "not done yet\n";
 				
-				
-			# if this is present in dest, see if they're different
-			} elsif ( -e "$dest/$node" )	{
-				# TODO: check if it's a directory before doing a diff!
-				
-				# if they are different, unlink in dest and copy from src
-				if (1 == file_diff("$src/$node", "$dest/$node"))	{
-					# rmtree( "$dest/$node", 0, 0 );
-					# copy("$src/$node", "$dest/$node");
+			# if it's a directory, recurse!
+			} elsif ( -d "$src/$node" )	{
+				$result = sync_if_different("$src/$node", "$dest/$node");
+				if (! $result)	{
+					print STDERR "Error! recursion error in sync_if_different(\"$src/$node\", \"$dest/$node\")\n";
+					return (0);
 				}
-				# if they're the same, do nothing
+				
+			# if it's a file...
+			} elsif ( -f "$src/$node" )	{
+				
+				# if dest exists, check for differences
+				if ( -e "$dest/$node" )	{
+					
+					# if they are different, unlink dest and link src to dest
+					if (1 == file_diff("$src/$node", "$dest/$node"))	{
+						$result = rmtree( "$dest/$node", 0, 0 );
+						if (0 == $result)	{
+							print "Error! rmtree(\"$dest/$node\", 0, 0)\n";
+							return (0);
+						}
+						$result = link("$src/$node", "$dest/$node");
+						
+					# if they aren't different, we just leave dest alone
+					} else	{
+						next;
+					}
+					
+				# ok, dest doesn't exist. just link src to dest
+				} else	{
+					$result = link("$src/$node", "$dest/$node");
+					if (0 == $result)	{
+						print STDERR "Error! link(\"$src/$node\", \"$dest/$node\")\n";
+						return (0);
+					}
+				}
+				
+			# FIXME: do all the checks for different file types
+			# it's some goofy file like a FIFO, complain but keep going
+			} elsif (1)	{
+				print "other file type: not done yet\n";
 			}
-			
 		}
 	}
 	# close open dir handle
@@ -1056,18 +1086,20 @@ sub sync_if_different	{
 			# make sure the node we just got is valid (this is highly unlikely to fail)
 			my $st = lstat("$src/$node");
 			if (!defined($st))	{
-				print STDERR "Could not lstat(\"$src/$node\")\n";
+				print STDERR "Error! Could not lstat(\"$src/$node\")\n";
 				return(0);
 			}
 			
-			# TODO:
-			# if this isn't present in src, delete it
+			# if this node isn't present in src, delete it
 			if ( ! -e "$src/$node" )	{
-				
+				$result = rmtree("$dest/$node", 0, 0);
+				if (0 == $result)	{
+					print STDERR "Error! Could not delete \"$dest/$node\"";
+					return (0);
+				}
 			}
 			
 		}
-		
 	}
 	# close open dir handle
 	if (defined($dh))	{ $dh->close(); }
@@ -1319,7 +1351,7 @@ sub native_cp_al	{
 	
 	# make sure we have a source directory
 	if ( ! -d "$src" )	{
-		print STDERR "native_cp_al() needs a valid directory as an argument\n";
+		print STDERR "native_cp_al() needs a valid source directory as an argument\n";
 		return (0);
 	}
 	
