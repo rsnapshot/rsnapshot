@@ -188,28 +188,15 @@ if ($cmd eq 'configtest')	{
 	$do_configtest = 1;
 }
 
-# PARSE CONFIG FILE
+# parse config file (if it exists)
 if (defined($config_file) && (-f "$config_file") && (-r "$config_file"))	{
-	# parse the config file
 	# if there is a problem, this subroutine will exit the program and notify the user of the error
-	#
 	parse_config_file();
 	
-# no config file found. warn user and exit the program
+# no config file found
 } else	{
-	# warn that the config file could not be found
-	print STDERR "Config file \"$config_file\" does not exist or is not readable.\n";
-	if (0 == $do_configtest)	{
-		syslog_err("Config file \"$config_file\" does not exist or is not readable.");
-	}
-	
-	# if we have the default config from the install, remind the user to create the real config
-	if (-e "$config_file.default")	{
-		print STDERR "Did you copy $config_file.default to $config_file yet?\n";
-	}
-	
-	# exit showing an error
-	exit(1);
+	# warn user and exit the program
+	exit_no_config_file();
 }
 
 # if we're just doing a configtest, exit here with the results
@@ -219,8 +206,8 @@ if (1 == $do_configtest)	{
 
 # if we're just using "du" to check the disk space, do it now
 # this is orphaned down here because it needs to know the contents of the config file
-# show_disk_usage() will exit the program with an appropriate exit code either way
 if ($cmd eq 'du')	{
+	# this will exit the program with an appropriate exit code either way
 	show_disk_usage();
 }
 
@@ -232,9 +219,7 @@ if ($cmd eq 'du')	{
 get_current_interval();
 
 # make sure the user is requesting to run on an interval we understand
-if (!defined($interval_num))	{
-	bail("Interval \"$cmd\" unknown, check $config_file");
-}
+check_valid_interval($cmd);
 
 # log the beginning of this run
 log_msg("$run_string: started", 2);
@@ -242,13 +227,10 @@ log_msg("$run_string: started", 2);
 # this is reported to fix some semi-obscure problems with rmtree()
 set_posix_locale();
 
-# if we're using a lockfile, try to add it
-# the program will bail if one exists
-if (defined($config_vars{'lockfile'}))	{
-	add_lockfile( $config_vars{'lockfile'} );
-}
+# if we're using a lockfile, try to add it (the program will bail if one exists)
+add_lockfile();
 
-# create snapshot_root if it doesn't exist
+# create snapshot_root if it doesn't exist (and no_create_root != 1)
 create_snapshot_root();
 
 # actually run the backup job
@@ -262,9 +244,7 @@ if (0 == $interval_num)	{
 }
 
 # if we have a lockfile, remove it
-if (defined($config_vars{'lockfile'}))	{
-	remove_lockfile($config_vars{'lockfile'});
-}
+remove_lockfile();
 
 # if we got this far, the program is done running
 # write to the log and syslog with the status of the outcome
@@ -1581,19 +1561,19 @@ sub get_current_date	{
 	return ($datestr);
 }
 
-# accepts the path to the lockfile we will try to create
-# this either works, or exits the program with a return value of 1
+# accepts no arguments
+# returns undef if lockfile isn't defined in the config file, and 1 upon success
+# also, it can make the program exit with 1 as the return value if it can't create the lockfile
 #
 # we don't use bail() to exit on error, because that would remove the
 # lockfile that may exist from another invocation
 sub add_lockfile	{
-	my $lockfile = shift(@_);
-	
-	if (!defined($lockfile))	{
-		print_err ('add_lockfile() requires a value', 1);
-		syslog_err('add_lockfile() requires a value');
-		exit(1);
+	# if we don't have a lockfile defined, just return undef
+	if (!defined($config_vars{'lockfile'}))	{
+		return (undef);
 	}
+	
+	my $lockfile = $config_vars{'lockfile'};
 	
 	# valid?
 	if (0 == is_valid_local_abs_path($lockfile))	{
@@ -1628,30 +1608,39 @@ sub add_lockfile	{
 			print_err("Warning! Could not close lockfile $lockfile", 2);
 		}
 	}
+	
+	return (1);
 }
 
+# accepts no arguments
 # accepts the path to a lockfile and tries to remove it
-# this subroutine either works, or it exits with a return value of 1
+# returns undef if lockfile isn't defined in the config file, and 1 upon success
+# also, it can exit the program with a value of 1 if it can't remove the lockfile
 #
 # we don't use bail() to exit on error, because that would call
 # this subroutine twice in the event of a failure
 sub remove_lockfile	{
-	my $lockfile	= shift(@_);
-	my $result		= undef;
+	# if we don't have a lockfile defined, return undef
+	if (!defined($config_vars{'lockfile'}))	{
+		return (undef);
+	}
 	
-	if (defined($lockfile))	{
-		if ( -e "$lockfile" )	{
-			print_cmd("rm -f $lockfile");
-			if (0 == $test)	{
-				$result = unlink($lockfile);
-				if (0 == $result)	{
-					print_err ("Could not remove lockfile $lockfile", 1);
-					syslog_err("Error! Could not remove lockfile $lockfile");
-					exit(1);
-				}
+	my $lockfile = $config_vars{'lockfile'};
+	my $result = undef;
+	
+	if ( -e "$lockfile" )	{
+		print_cmd("rm -f $lockfile");
+		if (0 == $test)	{
+			$result = unlink($lockfile);
+			if (0 == $result)	{
+				print_err ("Could not remove lockfile $lockfile", 1);
+				syslog_err("Error! Could not remove lockfile $lockfile");
+				exit(1);
 			}
 		}
 	}
+	
+	return (1);
 }
 
 # accepts no arguments
@@ -1741,6 +1730,16 @@ sub get_current_interval	{
 	}
 }
 
+# accepts the name of the interval to check
+# checks the $interval_num global variable, and exits if it hasn't been set
+# ($interval_num being set would prove we've already validated the intervals)
+sub check_valid_interval	{
+	my $interval = shift(@_);
+	
+	if (!defined($interval))		{ bail("Interval not specified in check_valid_interval()\n"); }
+	if (!defined($interval_num))	{ bail("Interval \"$interval\" unknown, check $config_file"); }
+}
+
 # accepts no args
 # prints out status to the logs, then exits the program with the current exit code
 sub exit_with_status	{
@@ -1785,6 +1784,25 @@ sub exit_configtest	{
 			exit(1);
 		}
 	}
+}
+
+# accepts no arguments
+# prints out error messages since we can't find the config file
+# exits with a return code of 1
+sub exit_no_config_file	{
+	# warn that the config file could not be found
+	print STDERR "Config file \"$config_file\" does not exist or is not readable.\n";
+	if (0 == $do_configtest)	{
+		syslog_err("Config file \"$config_file\" does not exist or is not readable.");
+	}
+	
+	# if we have the default config from the install, remind the user to create the real config
+	if (-e "$config_file.default")	{
+		print STDERR "Did you copy $config_file.default to $config_file yet?\n";
+	}
+	
+	# exit showing an error
+	exit(1);
 }
 
 # accepts a loglevel
