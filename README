@@ -57,26 +57,29 @@ GNU COMPATIBILITY NOTICE (Please read)
 ------------------------------------------------------------------------------
 
 Once you have installed rsnapshot, you will need to configure it.
-The default configuration file is /etc/rsnapshot.conf. If this
+The default configuration file is /etc/rsnapshot.conf, although the exact path
+may be different depending on how the program was installed. If this
 file does not exist, copy /etc/rsnapshot.conf.default over to
-/etc/rsnapshot.conf and edit it to suit your tastes.
+/etc/rsnapshot.conf and edit it to suit your tastes. See the man page for
+the full list of configuration options.
 
 When /etc/rsnapshot.conf contains your chosen settings, do a quick sanity
 check to make sure everything is ready to go:
 
-	rsnapshot configtest
+    rsnapshot configtest
 
 If this works, you can see essentially what will happen when you run it for
 real by executing the following command (where interval is hourly, daily, etc):
 
-	rsnapshot -t [interval]
+    rsnapshot -t [interval]
 
 Once you are happy with everything, the final step is to setup a cron job to
-automate your backups. Here is a quick example if you just can't wait:
-	
-	0 */4 * * *     /usr/local/bin/rsnapshot hourly
-	50 23 * * *     /usr/local/bin/rsnapshot daily
-	
+automate your backups. Here is a quick example which makes backups every four
+hours, and daily backups for a week:
+    
+    0 */4 * * *     /usr/local/bin/rsnapshot hourly
+    50 23 * * *     /usr/local/bin/rsnapshot daily
+    
 In the previous example, there will be six "hourly" snapshots
 taken each day (at 0,4,8,12,16, and 20 hours). There will also
 be daily snapshots taken every night at 11:50PM. The number of
@@ -84,9 +87,9 @@ snapshots that are saved depends on the "interval" settings in
 /etc/rsnapshot.conf.
 
 For example:
-	
-	interval	hourly	6
-	
+    
+    interval    hourly    6
+    
 This means that every time "rsnapshot hourly" is run, it will make a
 new snapshot, rotate the old ones, and retain the most recent six
 (hourly.0 - hourly.5).
@@ -98,16 +101,16 @@ or visit http://www.rsnapshot.org/
 CONTRIBUTORS
 ------------------------------------------------------------------------------
 Mike Rubel - http://www.mikerubel.org/computers/rsync_snapshots/
-	- Created the original shell scripts on which this project is based
+    - Created the original shell scripts on which this project is based
 
 Nathan Rosenquist <nathan@rsnapshot.org>
-	- Primary author and maintainer
+    - Primary author and maintainer
 
 Carl Wilhelm Soderstrom <chrome@real-time.com>
-	- Created the RPM .spec file which allowed the RPM package to be built
+    - Created the RPM .spec file which allowed the RPM package to be built
 
 Ted Zlatanov <tzz@lifelogs.com>
-	- Added the one_fs feature, autoconf support, many others
+    - Added the one_fs feature, autoconf support, many others
 
 SlapAyoda
-	- Provided access to his computer museum for software testing
+    - Provided access to his computer museum for software testing
