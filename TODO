@@ -2,11 +2,13 @@ rsnapshot TODO list:
 
 for version 1.1.x
 ------------------------------------------------------------------------------
-- Add verbose output (at higher verbose settings) on higher intervals (i.e. 
-  when rsnapshot -V daily is run, the user will get some confirmation even
-  if no directories were moved or modified)
-
 - Add interactive mode to generate config files.
+
+- Is it possible to have 'mv hourly.N  hourly.tmp' as the first step and
+  then, once the rsync is completed successfully, a call can go out to delete
+  hourly.tmp, even backgrounding the process? At present, if the job fails
+  at the rsync stage, the oldest hourly is already gone, and rollback is not
+  possible.
 
 - Figure out a good solution to this: when an rsync transfer fails, and
   link_dest is being used, the smallest interval files are still moved up
