@@ -130,9 +130,9 @@ $SIG{'TERM'}	= sub { bail('rsnapshot was sent TERM signal... cleaning up'); };
 # this sets $config_file to the full config file path
 find_config_file();
 
-# get command line options
+# parse command line options
 # (this can override $config_file, if the -c flag is used on the command line)
-get_cmd_line_opts();
+parse_cmd_line_opts();
 
 # if we were called with no arguments, show the usage information
 if (!defined($cmd) or ((! $cmd) && ('0' ne $cmd)) )	{
@@ -286,19 +286,40 @@ sub find_config_file	{
 # accepts no args
 # returns no args
 # sets some global flag variables
-sub get_cmd_line_opts	{
+sub parse_cmd_line_opts	{
 	my %opts;
 	my $result;
 	
 	# get command line options
 	$result = getopts('vVtqxc:', \%opts);
 	
+	# make sure config file is a file
+	if (defined($opts{'c'}))	{
+		if ( ! -r "$opts{'c'}" )	{
+			print STDERR "File not found: $opts{'c'}\n";
+			$result = undef;
+		}
+	}
+	
+	# check for extra bogus ones too
+	if (scalar(@ARGV) > 1)	{
+		for (my $i=1; $i<scalar(@ARGV); $i++)	{
+			print STDERR "Unknown option: $ARGV[$i]\n";
+		}
+		
+		$result = undef;
+	}
+	
 	# die if we don't understand all the flags
-	if (1 != $result)	{
-		# At this point, getopts() will have printed out "Unknown option: -X"
-		print "Type \"rsnapshot help\" or \"man rsnapshot\" for more information.\n";
+	if (!defined($result) or (1 != $result))	{
+		# At this point, getopts() or our @ARGV check will have printed out "Unknown option: -X"
+		print STDERR "Type \"rsnapshot help\" or \"man rsnapshot\" for more information.\n";
 		exit(1);
 	}
+	
+	#
+	# with that out of the way, we can go about the business of setting global variables
+	#
 	
 	# set command
 	$cmd = $ARGV[0];
