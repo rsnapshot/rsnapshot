@@ -402,8 +402,7 @@ if ( -f "$config_file" )	{
 			
 			if ( !defined($config_vars{'snapshot_root'}) )	{	bail("snapshot_root needs to be defined before backup points"); }
 			
-			# make sure we have a local path for the destination
-			# (we do NOT want a local path)
+			# make sure the script is a full path
 			if (1 == is_valid_local_abs_path($dest))	{
 				bail("Backup destination $dest must be a local path");
 			}
@@ -817,7 +816,7 @@ sub backup_interval	{
 			#
 			if (1 == $verbose)	{ print "$$sp_ref{'script'}\n"; }
 			if (0 == $test)	{
-				system($$sp_ref{'script'});
+				system( $$sp_ref{'script'} );
 			}
 			
 			# change back to previous directory
@@ -968,12 +967,14 @@ sub sync_if_different	{
 	$dest = remove_trailing_slash($dest);
 	
 	# copy everything from src to dest
+	if (1 == $debug)	{ print "sync_cp_src_dest(\"$src\", \"$dest\")\n"; }
 	$result = sync_cp_src_dest("$src", "$dest");
 	if ( ! $result )	{
 		bail("sync_cp_src_dest(\"$src\", \"$dest\")");
 	}
 	
 	# delete everything from dest that isn't in src
+	if (1 == $debug)	{ print "sync_rm_dest(\"$src\", \"$dest\")\n"; }
 	$result = sync_rm_dest("$src", "$dest");
 	if ( ! $result )	{
 		bail("sync_rm_dest(\"$src\", \"$dest\")");
@@ -983,6 +984,7 @@ sub sync_if_different	{
 }
 
 # accepts src, dest
+# called only from sync_if_different()
 sub sync_cp_src_dest	{
 	my $src		= shift(@_);
 	my $dest	= shift(@_);
@@ -1018,15 +1020,16 @@ sub sync_cp_src_dest	{
 			print STDERR "Warning! Could not mkdir(\"$dest\", $st->mode);\n";
 			return(0);
 		}
-		if (1 == $debug)	{ print "mkdir(\"$dest\", " . get_perms($st->mode) . ");\n"; }
 	}
-	# CHOWN DEST
-	$result = chown($st->uid, $st->gid, "$dest");
-	if (! $result)	{
-		print STDERR "Warning! Could not chown(" . $st->uid . ", " . $st->gid . ", \"$dest\");\n";
-		return(0);
+	
+	# CHOWN DEST (if root)
+	if (0 == $<)	{
+		$result = chown($st->uid, $st->gid, "$dest");
+		if (! $result)	{
+			print STDERR "Warning! Could not chown(" . $st->uid . ", " . $st->gid . ", \"$dest\");\n";
+			return(0);
+		}
 	}
-	if (1 == $debug)	{ print "chown(" . $st->uid . ", " . $st->gid . ", \"$dest\");\n"; }
 	
 	# copy anything different from src into dest
 	$dh = new DirHandle( "$src" );
@@ -1122,6 +1125,7 @@ sub sync_cp_src_dest	{
 }
 
 # accepts src, dest
+# called only from sync_if_different()
 sub sync_rm_dest	{
 	my $src		= shift(@_);
 	my $dest	= shift(@_);
@@ -1462,13 +1466,16 @@ sub native_cp_al	{
 		}
 		if (1 == $debug)	{ print "mkdir(\"$dest\", " . get_perms($st->mode) . ");\n"; }
 	}
-	# CHOWN DEST
-	$result = chown($st->uid, $st->gid, "$dest");
-	if (! $result)	{
-		print STDERR "Warning! Could not chown(" . $st->uid . ", " . $st->gid . ", \"$dest\");\n";
-		return(0);
+	
+	# CHOWN DEST (if root)
+	if (0 == $<)	{
+		if (1 == $debug)	{ print "chown(" . $st->uid . ", " . $st->gid . ", \"$dest\");\n"; }
+		$result = chown($st->uid, $st->gid, "$dest");
+		if (! $result)	{
+			print STDERR "Warning! Could not chown(" . $st->uid . ", " . $st->gid . ", \"$dest\");\n";
+			return(0);
+		}
 	}
-	if (1 == $debug)	{ print "chown(" . $st->uid . ", " . $st->gid . ", \"$dest\");\n"; }
 	
 	# READ DIR CONTENTS
 	$dh = new DirHandle( "$src" );
@@ -1592,7 +1599,7 @@ sub copy_symlink	{
 	}
 	if (1 == $debug)	{ print "symlink(\"" . readlink("$src") . "\", \"$dest\");\n"; }
 	
-	# CHOWN (if we're root ($< is the uid))
+	# CHOWN DEST (if root)
 	if (0 == $<)	{
 		if ( -e "$dest" )	{
 			$result = chown($st->uid, $st->gid, "$dest");
