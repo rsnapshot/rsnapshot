@@ -10,4 +10,8 @@
 # This script simply needs to dump a file into the current working directory.
 # rsnapshot handles everything else.
 
+# backup the database
 /usr/local/pgsql/bin/pg_dumpall -Upostgres > pg_dumpall.sql
+
+# make the backup readable only by root
+/bin/chmod 600 pg_dumpall.sql
