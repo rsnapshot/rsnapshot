@@ -20,6 +20,7 @@ VERSION 1.1.6 (??? ?? ??:?? 2004)
 - Removed $cwd from global namespace
 - Fixed bug where cp_al() commands would not be displayed in test mode
 - Removed redundant $done flag from file_diff() while loop
+- Downgraded close() file errors to warnings
 
 VERSION 1.1.5 (Jun 20 20:56 2004)
 ------------------------------------------------------------------------------

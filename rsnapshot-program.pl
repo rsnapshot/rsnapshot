@@ -885,7 +885,7 @@ sub parse_config_file	{
 			}
 		}
 	}
-	close(CONFIG) or print_err("Warning! Could not close $config_file", 2);
+	close(CONFIG) or print_warn("Could not close $config_file", 2);
 	
 	####################################################################
 	# SET SOME SENSIBLE DEFAULTS FOR VALUES THAT MAY NOT HAVE BEEN SET #
@@ -1606,7 +1606,7 @@ sub add_lockfile	{
 		
 		$result = close(LOCKFILE);
 		if (!defined($result))	{
-			print_err("Warning! Could not close lockfile $lockfile", 2);
+			print_warn("Could not close lockfile $lockfile", 2);
 		}
 	}
 	
@@ -2790,7 +2790,7 @@ sub gnu_cp_al	{
 	# make the system call to GNU cp
 	$result = system( $config_vars{'cmd_cp'}, '-al', "$src", "$dest" );
 	if ($result != 0)	{
-		print_err("Warning! $config_vars{'cmd_cp'} failed. Perhaps this is not GNU cp?", 2);
+		print_err("$config_vars{'cmd_cp'} failed. Perhaps this is not GNU cp?", 2);
 		return (0);
 	}
 	
