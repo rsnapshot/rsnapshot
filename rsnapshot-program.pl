@@ -543,6 +543,18 @@ sub parse_config_file {
 			}
 		}
 		
+		# CHECK FOR du (optional)
+		if ($var eq 'cmd_du') {
+			if ((-f "$value") && (-x "$value") && (1 == is_real_local_abs_path($value))) {
+				$config_vars{'cmd_du'} = $value;
+				$line_syntax_ok = 1;
+				next;
+			} else {
+				config_err($file_line_num, "$line - $value is not executable");
+				next;
+			}
+		}
+		
 		# INTERVALS
 		if ($var eq 'interval') {
 			# check if interval is blank
@@ -1120,15 +1132,21 @@ sub parse_config_file {
 		my @backup_dest			= ();
 		my @backup_script_dest	= ();
 		
-		# remember where the destination paths are, using the paths as values
+		# remember where the destination paths are...
 		foreach my $bp_ref (@backup_points) {
+			my $tmp_dest_path = $$bp_ref{'dest'};
+			
+			# normalize multiple slashes, and strip trailing slash
+			$tmp_dest_path =~ s/\/+/\//g;
+			$tmp_dest_path =~ s/\/$//;
+			
 			# backup
 			if (defined($$bp_ref{'src'})) {
-				push(@backup_dest, $$bp_ref{'dest'});
+				push(@backup_dest, $tmp_dest_path);
 				
 			# backup_script
 			} elsif (defined($$bp_ref{'script'})) {
-				push(@backup_script_dest, $$bp_ref{'dest'});
+				push(@backup_script_dest, $tmp_dest_path);
 				
 			# something else is wrong
 			} else {
@@ -1138,20 +1156,57 @@ sub parse_config_file {
 			}
 		}
 		
-		# loop through and check for dupes
+		# loop through and check for conflicts between backup and backup_script destination paths
 		foreach my $b_dest (@backup_dest) {
 			foreach my $bs_dest (@backup_script_dest) {
 				if (defined($b_dest) && defined($bs_dest)) {
-					if ($b_dest eq $bs_dest) {
+					my $tmp_b  = $b_dest;
+					my $tmp_bs = $bs_dest;
+					
+					# add trailing slashes back in so similarly named directories don't match
+					# i.e. localhost/abc/ and localhost/ab/
+					$tmp_b  .= '/';
+					$tmp_bs .= '/';
+					
+					if ("$b_dest" =~ m/^$bs_dest/) {
 						# duplicate entries, stop here
-						print_err ("$b_dest destination conflict between backup and backup_script entries", 1);
-						syslog_err("$b_dest destination conflict between backup and backup_script entries");
+						print_err (
+							"destination conflict between \"$tmp_b/\" and \"$tmp_bs/\" in backup / backup_script entries",
+							1
+						);
+						syslog_err(
+							"destination conflict between \"$tmp_b/\" and \"$tmp_bs/\" in backup / backup_script entries"
+						);
 						exit(1);
 					}
 				} else {
 					print_err ("logic error in parse_config_file(): unique destination check failed unexpectedly", 1);
 					syslog_err("logic error in parse_config_file(): unique destination check failed unexpectedly");
 					exit(1);
+				}
+			}
+		}
+		# loop through and check for conflicts between different backup_scripts
+		for (my $i=0; $i<scalar(@backup_script_dest); $i++) {
+			for (my $j=0; $j<scalar(@backup_script_dest); $j++) {
+				if ($i != $j) {
+					my $path1 = $backup_script_dest[$i];
+					my $path2 = $backup_script_dest[$j];
+					
+					# add trailing slashes back in so similarly named directories don't match
+					# i.e. localhost/abc/ and localhost/ab/
+					$path1 .= '/';
+					$path2 .= '/';
+					
+					if (("$path1" =~ m/$path2/) or ("$path2" =~ m/$path1/)) {
+						print_err (
+							"destination conflict between \"$path1\" and \"$path2\" in multiple backup_script entries", 1
+						);
+						syslog_err(
+							"destination conflict between \"$path1\" and \"$path2\" in multiple backup_script entries"
+						);
+						exit(1);
+					}
 				}
 			}
 		}
@@ -1541,8 +1596,7 @@ sub print_err {
 	
 	# print to STDERR
 	if ((!defined($verbose)) or ($level <= $verbose)) {
-		print STDERR $run_string, ":\n";
-		print STDERR "ERROR: ", $str, "\n";
+		print STDERR $run_string, ": ERROR: ", $str, "\n";
 	}
 	
 	# write to log
@@ -3310,6 +3364,7 @@ sub cmd_rm_rf {
 #
 sub show_disk_usage {
 	my $intervals_str = '';
+	my $cmd_du = 'du';
 	
 	# find the intervals that apply here
 	if (-r "$config_vars{'snapshot_root'}/") {
@@ -3321,7 +3376,17 @@ sub show_disk_usage {
 	}
 	chop($intervals_str);
 	
-	# if we can see any of them, find out how much space they're taking up
+	# check for 'du' program
+	if ( defined($config_vars{'cmd_du'}) ) {
+		# it was specified in the config file. use that version
+		$cmd_du = $config_vars{'cmd_du'};
+		
+	} else {
+		# it was not specified in the config file. just use the one from their path
+		$cmd_du = 'du';
+	}
+	
+	# if we can see any of the intervals, find out how much space they're taking up
 	if ('' ne $intervals_str) {
 		print "du -csh $intervals_str\n\n";
 		my $retval = system("du -csh $intervals_str");
@@ -3330,7 +3395,7 @@ sub show_disk_usage {
 			exit(0);
 		}
 	} else {
-		print STDERR ("No intervals directories visible. Do you have permission to see the snapshot root?\n");
+		print STDERR ("No interval directories visible. Do you have permission to see the snapshot root?\n");
 	}
 	
 	# exit showing error
