@@ -1115,6 +1115,47 @@ sub parse_config_file {
 			}
 		}
 	}
+	# make sure that the backup_script destination paths don't nuke data copied over for backup points
+	{
+		my @backup_dest			= ();
+		my @backup_script_dest	= ();
+		
+		# remember where the destination paths are, using the paths as values
+		foreach my $bp_ref (@backup_points) {
+			# backup
+			if (defined($$bp_ref{'src'})) {
+				push(@backup_dest, $$bp_ref{'dest'});
+				
+			# backup_script
+			} elsif (defined($$bp_ref{'script'})) {
+				push(@backup_script_dest, $$bp_ref{'dest'});
+				
+			# something else is wrong
+			} else {
+				print_err ("logic error in parse_config_file(): a backup point has no src and no script", 1);
+				syslog_err("logic error in parse_config_file(): a backup point has no src and no script");
+				exit(1);
+			}
+		}
+		
+		# loop through and check for dupes
+		foreach my $b_dest (@backup_dest) {
+			foreach my $bs_dest (@backup_script_dest) {
+				if (defined($b_dest) && defined($bs_dest)) {
+					if ($b_dest eq $bs_dest) {
+						# duplicate entries, stop here
+						print_err ("$b_dest destination conflict between backup and backup_script entries", 1);
+						syslog_err("$b_dest destination conflict between backup and backup_script entries");
+						exit(1);
+					}
+				} else {
+					print_err ("logic error in parse_config_file(): unique destination check failed unexpectedly", 1);
+					syslog_err("logic error in parse_config_file(): unique destination check failed unexpectedly");
+					exit(1);
+				}
+			}
+		}
+	}
 }
 
 # accepts a string of options
@@ -1500,7 +1541,8 @@ sub print_err {
 	
 	# print to STDERR
 	if ((!defined($verbose)) or ($level <= $verbose)) {
-		print STDERR "$run_string: ERROR: ", $str, "\n";
+		print STDERR $run_string, ":\n";
+		print STDERR "ERROR: ", $str, "\n";
 	}
 	
 	# write to log
