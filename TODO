@@ -8,8 +8,6 @@ for version 1.1.x
   be accomplished by opening the rsync command as a pipe to a filehandle and
   printing / logging the output.
 
-- Add warning about link_dest and unmounted volumes.
-
 - Is it possible to have 'mv hourly.N  hourly.tmp' as the first step and
   then, once the rsync is completed successfully, a call can go out to delete
   hourly.tmp, even backgrounding the process? At present, if the job fails
@@ -42,9 +40,6 @@ for version 1.1.x
 - Update string manipulations and comparisons of paths to use File::Spec and
   File::Basename functions where possible. Double check they're fully
   compatible with Perl 5.004.
-
-- Add an option to prevent rsnapshot from creating the snapshot_root directory
-  if it doesn't exist.
 
 for version 2.0.x
 ------------------------------------------------------------------------------
