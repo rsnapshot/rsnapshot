@@ -3539,9 +3539,15 @@ If you don't, you may have extra directories created in your snapshots.
 For more information on how the trailing slash is handled, see the
 B<rsync(1)> manpage.
 
-Make sure your snapshot directory is only readable by root. If you would
-like regular users to be able to restore their own backups, there are a
-number of ways this can be accomplished. One such scenario would be:
+If you do not plan on making the backups readable by regular users, be
+sure to make the snapshot directory chmod 700 root. If the snapshot
+directory is readable by other users, they will be able to modify the
+snapshots containing their files, thus destroying the integrity of the
+snapshots.
+
+If you would like regular users to be able to restore their own backups,
+there are a number of ways this can be accomplished. One such scenario
+would be:
 
 Set B<snapshot_root> to B</.private/.snapshots> in B</etc/rsnapshot.conf>
 
@@ -3557,12 +3563,6 @@ drwxr-xr-x    /.private/.snapshots
 
 Export the /.private/.snapshots directory over read-only NFS, a read-only
 Samba share, etc.
-
-If you do not plan on making the backups readable by regular users, be
-sure to make the snapshot directory chmod 700 root. If the snapshot
-directory is readable by other users, they will be able to modify the
-snapshots containing their files, thus destroying the integrity of the
-snapshots.
 
 For ssh to work unattended through cron, you will probably want to use
 public key logins. Create an ssh key with no passphrase for root, and
@@ -3586,11 +3586,12 @@ write to the backup script or any program it calls can fully take
 over the machine. Of course, this is not a situation unique to
 rsnapshot.
 
-rsync transfers are done using the --numeric-ids option. This means that
-user names and group names are ignored during transfers, but the UID/GID
-information is kept intact. The assumption is that the backups will be
-restored in the same environment they came from. Without this option,
-multi-server backups would be unmanageable.
+By default, rsync transfers are done using the --numeric-ids option.
+This means that user names and group names are ignored during transfers,
+but the UID/GID information is kept intact. The assumption is that the
+backups will be restored in the same environment they came from. Without
+this option, restoring backups for multiple heterogeneous servers would
+be unmanageable.
 
 If you remove backup points in the config file, the previously archived
 files under those points will permanently stay in the snapshots directory
