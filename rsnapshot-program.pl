@@ -1438,53 +1438,34 @@ sub rotate_interval	{
 				);
 				if (0 == $result)	{
 					my $errstr = '';
-					$errstr .= "Error! rename(\"$config_vars{'snapshot_root'}/$interval.$i/)\", \"";
-					$errstr .= "$config_vars{'snapshot_root'}/$interval." . ($i+1) . '/' . "\");";
+					$errstr .= "Error! rename(\"$config_vars{'snapshot_root'}/$interval.$i/\", \"";
+					$errstr .= "$config_vars{'snapshot_root'}/$interval." . ($i+1) . '/' . "\")";
 					bail($errstr);
 				}
 			}
 		}
 	}
 	
-	# .0 and .1 require more attention:
+	# pull up the previous interval's max directory for this interval's .0
 	if ( -d "$config_vars{'snapshot_root'}/$prev_interval.$prev_interval_max" )	{
 		my $result;
 		
-		##################################################################
-		# TODO: fix --link-dest operations so things are always hard links
-		##################################################################
-		
-		# if we're using rsync --link-dest, we need to mv .0 to .1 now
-		# then we'll use rsync with --link-dest
-		if (0)	{
-			
-			
-		# otherwise, we hard link (except for directories, symlinks, and special files) .0 over to .1
-		# using GNU cp (or equivalent)
-		} else	{
-			# decide which verbose message to show, if at all
-			if ($verbose > 2)	{
-				if (1 == $have_gnu_cp)	{
-					print "$config_vars{'cmd_cp'} -al $config_vars{'snapshot_root'}/$prev_interval.$prev_interval_max/ ";
-					print "$config_vars{'snapshot_root'}/$interval.0/\n";
-				} else	{
-					print "native_cp_al(\"$config_vars{'snapshot_root'}/$prev_interval.$prev_interval_max/\", ";
-					print "\"$config_vars{'snapshot_root'}/$interval.0/\")\n";
-				}
-			}
-			# call generic cp_al() subroutine
-			if (0 == $test)	{
-				$result = cp_al(
+		# mv hourly.5 to daily.0 (or whatever intervals we're using)
+		if ($verbose > 2)	{
+			print "mv $config_vars{'snapshot_root'}/$prev_interval.$prev_interval_max/ ";
+			print "$config_vars{'snapshot_root'}/$interval.0/\n";
+		}
+		if (0 == $test)	{
+			$result = rename(
 							"$config_vars{'snapshot_root'}/$prev_interval.$prev_interval_max/",
 							"$config_vars{'snapshot_root'}/$interval.0/"
-				);
-				if (! $result)	{
-					my $errstr = '';
-					$errstr .= "Error! cp_al(\"$config_vars{'snapshot_root'}/$prev_interval.$prev_interval_max/\", ";
-					$errstr .= \"$config_vars{'snapshot_root'}/$interval.0/\")";
-					bail($errstr);
-				}
-			}
+			);
+		}
+		if (0 == $result)	{
+			my $errstr = '';
+			$errstr .= "Error! rename(\"$config_vars{'snapshot_root'}/$prev_interval.$prev_interval_max/\", ";
+			$errstr .= "\"$config_vars{'snapshot_root'}/$interval.0/\")";
+			bail($errstr);
 		}
 	}
 }
