@@ -3,10 +3,12 @@
 ########################################################################
 #                                                                      #
 # rsnapshot                                                            #
-#                                                                      #
 # by Nathan Rosenquist                                                 #
-# based on code originally by Mike Rubel                               #
 #                                                                      #
+# Based on code originally by Mike Rubel                               #
+# http://www.mikerubel.org/computers/rsync_snapshots/                  #
+#                                                                      #
+# The official rsnapshot website is located at                         #
 # http://rsnapshot.scubaninja.com/                                     #
 #                                                                      #
 # rsnapshot comes with ABSOLUTELY NO WARRANTY.  This is free software, #
