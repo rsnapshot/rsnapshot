@@ -65,10 +65,43 @@ fi
 
 
 dnl
+dnl CP CHECK (optional program)
+dnl
+dnl if the user specified a path, try that first
+AC_ARG_WITH(cp,
+	[  --with-cp=PATH          Specify the path to cp ],
+	[
+		if test "x$withval" != "xno"; then
+			if test -x "$withval"; then
+				CP=$withval
+			else
+				AC_MSG_ERROR(cp not found)
+			fi
+		else
+			CP=no
+		fi
+	]
+)
+dnl if the user didn't specify a path, hunt for it
+if test "$CP" != "no"; then
+	if test "$CP" = ""; then
+		AC_PATH_PROG(CP, cp, no)
+	fi
+fi
+dnl if we couldn't find it, provide an example
+if test "$CP" = "no"; then
+	CP=/bin/cp
+fi
+dnl either way, set the cmd_ssh var
+AC_SUBST(CMD_CP, "cmd_cp    	$CP")
+
+
+
+dnl
 dnl RM CHECK (optional program)
 dnl
 dnl if the user specified a path, try that first
-AC_ARG_WITH(logger,
+AC_ARG_WITH(rm,
 	[  --with-rm=PATH          Specify the path to rm ],
 	[
 		if test "x$withval" != "xno"; then

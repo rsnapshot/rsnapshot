@@ -775,6 +775,7 @@ Optional Packages:
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
   --with-perl=PATH	  Specify the path to perl
   --with-rsync=PATH       Specify the path to rsync
+  --with-cp=PATH          Specify the path to cp
   --with-rm=PATH          Specify the path to rm
   --with-ssh=PATH         Specify the path to ssh
   --with-logger=PATH      Specify the path to logger
@@ -1679,9 +1680,80 @@ fi
 
 
 
-# Check whether --with-logger or --without-logger was given.
-if test "${with_logger+set}" = set; then
-  withval="$with_logger"
+# Check whether --with-cp or --without-cp was given.
+if test "${with_cp+set}" = set; then
+  withval="$with_cp"
+
+		if test "x$withval" != "xno"; then
+			if test -x "$withval"; then
+				CP=$withval
+			else
+				{ { echo "$as_me:$LINENO: error: cp not found" >&5
+echo "$as_me: error: cp not found" >&2;}
+   { (exit 1); exit 1; }; }
+			fi
+		else
+			CP=no
+		fi
+
+
+fi;
+if test "$CP" != "no"; then
+	if test "$CP" = ""; then
+		# Extract the first word of "cp", so it can be a program name with args.
+set dummy cp; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_path_CP+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  case $CP in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_CP="$CP" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_CP="$as_dir/$ac_word$ac_exec_ext"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+  test -z "$ac_cv_path_CP" && ac_cv_path_CP="no"
+  ;;
+esac
+fi
+CP=$ac_cv_path_CP
+
+if test -n "$CP"; then
+  echo "$as_me:$LINENO: result: $CP" >&5
+echo "${ECHO_T}$CP" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
+	fi
+fi
+if test "$CP" = "no"; then
+	CP=/bin/cp
+fi
+CMD_CP="cmd_cp    	$CP"
+
+
+
+
+
+# Check whether --with-rm or --without-rm was given.
+if test "${with_rm+set}" = set; then
+  withval="$with_rm"
 
 		if test "x$withval" != "xno"; then
 			if test -x "$withval"; then
@@ -2491,6 +2563,8 @@ s,@SET_MAKE@,$SET_MAKE,;t t
 s,@PERL@,$PERL,;t t
 s,@CMD_RSYNC@,$CMD_RSYNC,;t t
 s,@RSYNC@,$RSYNC,;t t
+s,@CP@,$CP,;t t
+s,@CMD_CP@,$CMD_CP,;t t
 s,@RM@,$RM,;t t
 s,@CMD_RM@,$CMD_RM,;t t
 s,@SSH@,$SSH,;t t
