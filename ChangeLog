@@ -25,6 +25,7 @@ VERSION 1.1.6 (??? ?? ??:?? 2004)
 - Simplified the utils/ section of the Makefile under "make tar"
 - Now exits with an error if unknown command line flags are found
 - Added a check in parse_cmd_line_opts() for the config file if specified
+- Changed link_dest rsync error message to description instead of number
 
 VERSION 1.1.5 (Jun 20 20:56 2004)
 ------------------------------------------------------------------------------

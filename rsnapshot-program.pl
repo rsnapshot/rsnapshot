@@ -2265,9 +2265,7 @@ sub rsync_backup_point	{
 	# append a trailing slash if src is a directory
 	if (defined($$bp_ref{'src'}))	{
 		if ((-d "$$bp_ref{'src'}") && ($$bp_ref{'src'} !~ /\/$/))	{
-			$src = $$bp_ref{'src'} . '/';
-		} else	{
-			$src = $$bp_ref{'src'};
+			$$bp_ref{'src'} .= '/';
 		}
 	}
 	
@@ -2308,11 +2306,11 @@ sub rsync_backup_point	{
 	# SEE WHAT KIND OF SOURCE WE'RE DEALING WITH
 	#
 	# local filesystem
-	if ( is_real_local_abs_path($src) )	{
+	if ( is_real_local_abs_path($$bp_ref{'src'}) )	{
 		# no change
 		
 	# if this is a user@host:/path, use ssh
-	} elsif ( is_ssh_path($src) )	{
+	} elsif ( is_ssh_path($$bp_ref{'src'}) )	{
 		
 		# if we have any args for SSH, add them
 		if ( defined($ssh_args) )	{
@@ -2324,13 +2322,13 @@ sub rsync_backup_point	{
 		}
 		
 	# anonymous rsync
-	} elsif ( is_anon_rsync_path($src) )	{
+	} elsif ( is_anon_rsync_path($$bp_ref{'src'}) )	{
 		# make rsync quiet if we're not running EXTRA verbose
 		if ($verbose < 4)	{ $rsync_short_args .= 'q'; }
 		
 	# this should have already been validated once, but better safe than sorry
 	} else	{
-		bail("Could not understand source \"$src\" in backup_lowest_interval()");
+		bail("Could not understand source \"$$bp_ref{'src'}\" in backup_lowest_interval()");
 	}
 	
 	# if we're using --link-dest, we'll need to specify .1 as the link-dest directory
@@ -2346,7 +2344,7 @@ sub rsync_backup_point	{
 	#
 	#   This is necessary because --link-dest only works on directories
 	#
-	if ((1 == $link_dest) && (is_file($src)) && (-f "$config_vars{'snapshot_root'}/$interval.1/$$bp_ref{'dest'}"))	{
+	if ((1 == $link_dest) && (is_file($$bp_ref{'src'})) && (-f "$config_vars{'snapshot_root'}/$interval.1/$$bp_ref{'dest'}"))	{
 		# these are both "destination" paths, but we're moving from .1 to .0
 		my $srcpath		= "$config_vars{'snapshot_root'}/$interval.1/$$bp_ref{'dest'}";
 		my $destpath	= "$config_vars{'snapshot_root'}/$interval.0/$$bp_ref{'dest'}";
@@ -2387,7 +2385,7 @@ sub rsync_backup_point	{
 	}
 	#
 	# src
-	push(@cmd_stack, $src);
+	push(@cmd_stack, $$bp_ref{'src'});
 	#
 	# dest
 	push(@cmd_stack, "$config_vars{'snapshot_root'}/$interval.0/$$bp_ref{'dest'}");
@@ -2406,41 +2404,57 @@ sub rsync_backup_point	{
 			# bitmask return value
 			my $retval = get_retval($result);
 			
-			# a partial list of rsync exit values (from the rsync 2.6.0 man page)
+			# print warnings, maybe set this backup point to rollback if we're using --link-dest
 			#
-			# 0		Success
-			# 1		Syntax or usage error
-			# 23	Partial transfer due to error
-			# 24	Partial transfer due to vanished source files
-			#
-			# if we got error 1 and we were attempting --link-dest, there's
-			# a very good chance that this version of rsync is too old.
-			#
-			if ((1 == $link_dest) && (1 == $retval))	{
-				print_err ("$config_vars{'cmd_rsync'} returned $retval. Does this version of rsync support --link-dest?", 2);
-				syslog_err("$config_vars{'cmd_rsync'} returned $retval. Does this version of rsync support --link-dest?");
-				
-			# 23 and 24 are treated as warnings because users might be using the filesystem during the backup
-			# if you want perfect backups, don't allow the source to be modified while the backups are running :)
-			} elsif (23 == $retval)	{
-				print_warn ("Some files and/or directories in $src only transferred partially during rsync operation", 4);
-				syslog_warn("Some files and/or directories in $src only transferred partially during rsync operation");
-				
-			} elsif (24 == $retval)	{
-				print_warn ("Some files and/or directories in $src vanished during rsync operation", 4);
-				syslog_warn("Some files and/or directories in $src vanished during rsync operation");
-				
-			# other error
-			} else	{
-				print_err ("$config_vars{'cmd_rsync'} returned $retval", 2);
-				syslog_err("$config_vars{'cmd_rsync'} returned $retval");
-				
-				# set this directory to rollback if we're using link_dest
-				# (since $interval.0/ will have been moved to $interval.1/ by now)
-				if (1 == $link_dest)	{
-					push(@rollback_points, $$bp_ref{'dest'});
-				}
-			}
+			handle_rsync_error($retval, $bp_ref);
+		}
+	}
+}
+
+# accepts rsync exit code, backup_point_ref
+# prints out an appropriate error message (and logs it)
+# if we're using link_dest, we might set this up for rollback later
+sub handle_rsync_error	{
+	my $retval	= shift(@_);
+	my $bp_ref	= shift(@_);
+	
+	# shouldn't ever happen
+	if (!defined($retval))	{ bail('retval undefined in warn_rsync_error()'); }
+	if (!defined($bp_ref))	{ bail('bp_ref undefined in warn_rsync_error()'); }
+	
+	# a partial list of rsync exit values (from the rsync 2.6.0 man page)
+	#
+	# 0		Success
+	# 1		Syntax or usage error
+	# 23	Partial transfer due to error
+	# 24	Partial transfer due to vanished source files
+	#
+	# if we got error 1 and we were attempting --link-dest, there's
+	# a very good chance that this version of rsync is too old.
+	#
+	if ((1 == $link_dest) && (1 == $retval))	{
+		print_err ("$config_vars{'cmd_rsync'} syntax or usage error. Does this version of rsync support --link-dest?", 2);
+		syslog_err("$config_vars{'cmd_rsync'} syntax or usage error. Does this version of rsync support --link-dest?");
+		
+	# 23 and 24 are treated as warnings because users might be using the filesystem during the backup
+	# if you want perfect backups, don't allow the source to be modified while the backups are running :)
+	} elsif (23 == $retval)	{
+		print_warn ("Some files and/or directories in $$bp_ref{'src'} only transferred partially during rsync operation", 4);
+		syslog_warn("Some files and/or directories in $$bp_ref{'src'} only transferred partially during rsync operation");
+		
+	} elsif (24 == $retval)	{
+		print_warn ("Some files and/or directories in $$bp_ref{'src'} vanished during rsync operation", 4);
+		syslog_warn("Some files and/or directories in $$bp_ref{'src'} vanished during rsync operation");
+		
+	# other error
+	} else	{
+		print_err ("$config_vars{'cmd_rsync'} returned $retval", 2);
+		syslog_err("$config_vars{'cmd_rsync'} returned $retval");
+		
+		# set this directory to rollback if we're using link_dest
+		# (since $interval.0/ will have been moved to $interval.1/ by now)
+		if (1 == $link_dest)	{
+			push(@rollback_points, $$bp_ref{'dest'});
 		}
 	}
 }
