@@ -1,7 +1,4 @@
-TODO:
-
-update the Makefile to use variables, ideally by calling
-./rsnapshot version_only for the app version number
+rsnapshot TODO list:
 
 figure out how best to handle file/folder names with spaces in them.
 quotes seems like a good solution, but so do tabs.
