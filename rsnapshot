@@ -328,7 +328,7 @@ if ( -f "$config_file" )	{
 			if ( is_valid_local_abs_path($dest) )	{ bail("Full paths not allowed for backup destinations"); }
 			
 			# if we have special options specified for this backup point, remember them
-			if (defined($opt_str))	{
+			if (defined($opt_str) && $opt_str)	{
 				$opts_ref = parse_backup_opts($opt_str);
 				if (!defined($opts_ref))	{
 					bail("Syntax error on line $file_line_num in extra opts: $opt_str");
