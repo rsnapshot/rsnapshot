@@ -587,7 +587,7 @@ sub parse_config_file	{
 			# syntactically valid remote ssh?
 			} elsif ( is_ssh_path($src) )	{
 				# if it's an absolute ssh path, make sure we have ssh
-				if (defined($config_vars{'cmd_ssh'}))	{
+				if (!defined($config_vars{'cmd_ssh'}))	{
 					config_err($file_line_num, "$line - Cannot handle $src, cmd_ssh not defined in $config_file");
 					next;
 				}
@@ -969,7 +969,7 @@ sub parse_config_file	{
 	# (things that should be in the config file that aren't)
 	#
 	# make sure rsync was defined
-	if (defined($config_vars{'cmd_rsync'}))	{
+	if (!defined($config_vars{'cmd_rsync'}))	{
 		print_err("cmd_rsync was not defined.", 1);
 	}
 	# make sure we got a snapshot_root
