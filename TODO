@@ -4,9 +4,6 @@ for version 1.1.x
 ------------------------------------------------------------------------------
 - Add interactive mode to generate config files.
 
-- Test fix? for rmtree() locale issue, and test the POSIX module usage on all
-  platforms
-
 - Add warning about link_dest and unmounted volumes.
 
 - Is it possible to have 'mv hourly.N  hourly.tmp' as the first step and
