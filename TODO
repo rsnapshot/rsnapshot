@@ -7,6 +7,8 @@ for version 1.0.x
 - Keep track of whether we hit any non-fatal errors during the run, then
   report at the end whether the run was successful.
 
+- Add and test logging feature
+
 - Figure out a way to do transfers the other way: from clients to the server
   instead of just from the server to the clients. Of course it will have to
   be very secure. Ideally we could support chroot environments for the
