@@ -10,23 +10,23 @@ man:
 	
 html:
 	pod2html rsnapshot > rsnapshot.html
-	/bin/rm -f pod2htmd.x~~
-	/bin/rm -f pod2htmi.x~~
+	rm -f pod2htmd.x~~
+	rm -f pod2htmi.x~~
 	
 clean:
-	/bin/rm -rf rsnapshot-${VERSION}/
-	/bin/rm -f rsnapshot-${VERSION}.tar.gz
-	/bin/rm -f rsnapshot-${VERSION}-1.deb
-	/bin/rm -f rsnapshot.html
+	rm -rf rsnapshot-${VERSION}/
+	rm -f rsnapshot-${VERSION}.tar.gz
+	rm -f rsnapshot-${VERSION}-1.deb
+	rm -f rsnapshot.html
 	
 tar:
-	/bin/rm -f rsnapshot-${VERSION}.tar.gz
+	rm -f rsnapshot-${VERSION}.tar.gz
 	
 	mkdir rsnapshot-${VERSION}
 	mkdir rsnapshot-${VERSION}/DEBIAN/
 	
-	/bin/cp rsnapshot rsnapshot.conf Makefile GPL INSTALL README TODO rsnapshot-${VERSION}/
-	/bin/cp DEBIAN/{control,conffiles} rsnapshot-${VERSION}/DEBIAN/
+	cp rsnapshot rsnapshot.conf Makefile GPL INSTALL README TODO rsnapshot-${VERSION}/
+	cp DEBIAN/{control,conffiles} rsnapshot-${VERSION}/DEBIAN/
 	
 	pod2man rsnapshot > rsnapshot-${VERSION}/rsnapshot.1
 	
@@ -36,7 +36,7 @@ tar:
 	
 debian:
 	mkdir -p ${DPKG_BUILD_DIR}/{DEBIAN,usr/bin,etc,usr/share/man/man1}
-	/bin/cp DEBIAN/{control,conffiles} ${DPKG_BUILD_DIR}/DEBIAN/
+	cp DEBIAN/{control,conffiles} ${DPKG_BUILD_DIR}/DEBIAN/
 	
 	cat rsnapshot | sed 's/\/usr\/local\/bin/\/usr\/bin/g' > ${DPKG_BUILD_DIR}/usr/bin/rsnapshot
 	chmod 755 ${DPKG_BUILD_DIR}/usr/bin/rsnapshot
@@ -45,15 +45,16 @@ debian:
 	chmod 644 ${DPKG_BUILD_DIR}/usr/share/man/man1/rsnapshot.1.gz
 	
 	cat rsnapshot.conf | sed s/#cmd_cp/cmd_cp/ > ${DPKG_BUILD_DIR}/etc/rsnapshot.conf
-	/bin/cp ${DPKG_BUILD_DIR}/etc/rsnapshot.conf ${DPKG_BUILD_DIR}/etc/rsnapshot.conf.default
+	cp ${DPKG_BUILD_DIR}/etc/rsnapshot.conf ${DPKG_BUILD_DIR}/etc/rsnapshot.conf.default
 	chmod 600 ${DPKG_BUILD_DIR}/etc/rsnapshot.conf ${DPKG_BUILD_DIR}/etc/rsnapshot.conf.default
 	
 	chown -R root:root ${DPKG_BUILD_DIR}/
 	dpkg -b ${DPKG_BUILD_DIR}/ rsnapshot-${VERSION}-1.deb
-	/bin/rm -rf ${DPKG_BUILD_DIR}/
+	rm -rf ${DPKG_BUILD_DIR}/
 	
 install:
-	/bin/cp -f rsnapshot /usr/local/bin/rsnapshot
+	rm -f /usr/local/bin/rsnapshot
+	cp rsnapshot /usr/local/bin/rsnapshot
 	chmod 755 /usr/local/bin/rsnapshot
 	chown 0:0 /usr/local/bin/rsnapshot
 	
@@ -62,7 +63,8 @@ install:
 	chmod 644 /usr/local/man/man1/rsnapshot.1.gz
 	chown 0:0 /usr/local/man/man1/rsnapshot.1.gz
 	
-	/bin/cp -f rsnapshot.conf /etc/rsnapshot.conf.default
+	rm -f /etc/rsnapshot.conf.default
+	cp rsnapshot.conf /etc/rsnapshot.conf.default
 	chmod 600 /etc/rsnapshot.conf.default
 	chown 0:0 /etc/rsnapshot.conf.default
 	@echo
