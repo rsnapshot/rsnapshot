@@ -5,7 +5,7 @@ http://www.rsnapshot.org/
 
 VERSION 1.1.5 (??? ?? ??:?? 2004)
 ------------------------------------------------------------------------------
-- Made /bin/rm the default way to delete directories
+- /bin/rm is the default for deleting directories (in the default config file)
 - Removed redundant validation (re: intervals) in execution section
 - Exit 1 if we basically finish ok, but with some minor errors
 - Print PID in lockfile
