@@ -392,368 +392,6 @@ sub get_cmd_line_opts	{
 	}
 }
 
-# accepts an error string
-# prints to STDERR and maybe syslog. removes the lockfile if it exists.
-# exits the program safely and consistently
-sub bail	{
-	my $str = shift(@_);
-	
-	# print out error
-	if ($str)	{
-		print_err($str, 1);
-	}
-	
-	# write to syslog if we're running for real (and we have a message)
-	if ((0 == $do_configtest) && (0 == $test) && ('' ne $str))	{
-		syslog_err($str);
-	}
-	
-	# get rid of the lockfile, if it exists
-	remove_lockfile($config_vars{'lockfile'});
-	
-	# exit showing an error
-	exit(1);
-}
-
-# accepts line number, errstr
-# prints a config file error
-# also sets global $config_perfect var off
-sub config_err	{
-	my $line_num	= shift(@_);
-	my $errstr		= shift(@_);
-	
-	if (!defined($line_num))	{ $line_num = -1; }
-	if (!defined($errstr))		{ $errstr = 'config_err() called without an error string!'; }
-	
-	print_err("$config_file on line $line_num: $errstr", 1);
-	
-	# invalidate entire config file
-	$config_perfect = 0;
-}
-
-# accepts a string (or an array)
-# prints the string, but seperates it across multiple lines with backslashes if necessary
-# also logs the command, but on a single line
-sub print_cmd	{
-	# take all arguments and make them into one string
-	my $str = join(' ', @_);
-	
-	my @tokens;
-	my $chars = 0;		# character tally
-	my $colmax = 76;	# max chars before wrap
-	
-	if (!defined($str))	{ return (undef); }
-	
-	# remove newline and consolidate spaces
-	chomp($str);
-	$str =~ s/\s+/ /g;
-	
-	# break up string into individual pieces
-	@tokens = split(/\s+/, $str);
-	
-	# stop here if we don't have anything
-	if (0 == scalar(@tokens))	{ return (undef); }
-	
-	# write to log (level 3 is where we start showing commands)
-	log_msg($str, 3);
-	
-	if (!defined($verbose) or ($verbose >= 3))	{
-		
-		# print the first token as a special exception, since we should never start out by line wrapping
-		if (defined($tokens[0]))	{
-			$chars = (length($tokens[0]) + 1);
-			print $tokens[0];
-			
-			# don't forget to put the space back in
-			if (scalar(@tokens) > 1)	{
-				print ' ';
-			}
-		}
-		
-		# loop through the rest of the tokens and print them out, wrapping when necessary
-		for (my $i=1; $i<scalar(@tokens); $i++)	{
-			# keep track of where we are (plus a space)
-			$chars += (length($tokens[$i]) + 1);
-			
-			# wrap if we're at the edge
-			if ($chars > $colmax)	{
-				print "\\\n    ";
-				
-				# 4 spaces + string length
-				$chars = 4 + length($tokens[$i]);
-			}
-			
-			# print out this token
-			print $tokens[$i];
-			
-			# print out a space unless this is the last one
-			if ($i < scalar(@tokens))	{
-				print ' ';
-			}
-		}
-		print "\n";
-	}
-}
-
-# accepts string, and level
-# prints string if level is as high as verbose
-# logs string if level is as high as loglevel
-sub print_msg	{
-	my $str		= shift(@_);
-	my $level	= shift(@_);
-	
-	if (!defined($str))		{ return (undef); }
-	if (!defined($level))	{ $level = 0; }
-	
-	chomp($str);
-	
-	# print to STDOUT
-	if ((!defined($verbose)) or ($verbose >= $level))	{
-		print $str, "\n";
-	}
-	
-	# write to log
-	log_msg($str, $level);
-}
-
-# accepts string, and level
-# prints string if level is as high as verbose
-# logs string if level is as high as loglevel
-# also raises a warning for the exit code
-sub print_warn	{
-	my $str		= shift(@_);
-	my $level	= shift(@_);
-	
-	if (!defined($str))		{ return (undef); }
-	if (!defined($level))	{ $level = 0; }
-	
-	# we can no longer say the execution of the program has been error free
-	raise_warning();
-	
-	chomp($str);
-	
-	# print to STDERR
-	if ((!defined($verbose)) or ($level <= $verbose))	{
-		print STDERR 'WARNING: ', $str, "\n";
-	}
-	
-	# write to log
-	log_msg($str, $level);
-}
-
-# accepts string, and level
-# prints string if level is as high as verbose
-# logs string if level is as high as loglevel
-# also raises an error for the exit code
-sub print_err	{
-	my $str		= shift(@_);
-	my $level	= shift(@_);
-	
-	if (!defined($str))		{ return (undef); }
-	if (!defined($level))	{ $level = 0; }
-	
-	# we can no longer say the execution of the program has been error free
-	raise_error();
-	
-	chomp($str);
-	
-	# print to STDERR
-	if ((!defined($verbose)) or ($level <= $verbose))	{
-		print STDERR 'ERROR: ', $str, "\n";
-	}
-	
-	# write to log
-	log_err($str, $level);
-}
-
-# accepts string, and level
-# logs string if level is as high as loglevel
-sub log_msg	{
-	my $str		= shift(@_);
-	my $level	= shift(@_);
-	my $result	= undef;
-	
-	if (!defined($str))		{ return (undef); }
-	if (!defined($level))	{ return (undef); }
-	
-	chomp($str);
-	
-	# if this is just noise, don't log it
-	if (defined($loglevel) && ($level > $loglevel))	{
-		return (undef);
-	}
-	
-	# open logfile, write to it, close it back up
-	# if we fail, don't use the usual print_* functions, since they just call this again
-	if ((0 == $test) && (0 == $do_configtest))	{
-		if (defined($config_vars{'logfile'}))	{
-			$result = open (LOG, ">> $config_vars{'logfile'}");
-			if (!defined($result))	{
-				print STDERR "Could not open logfile $config_vars{'logfile'} for writing\n";
-				exit(1);
-			}
-			
-			print LOG '[', get_current_date(), '] ', $str, "\n";
-			
-			$result = close(LOG);
-			if (!defined($result))	{
-				print STDERR "Could not close logfile $config_vars{'logfile'}\n";
-			}
-		}
-	}
-}
-
-# accepts string, and level
-# logs string if level is as high as loglevel
-# also raises a warning for the exit code
-sub log_warn	{
-	my $str		= shift(@_);
-	my $level	= shift(@_);
-	
-	if (!defined($str))		{ return (undef); }
-	if (!defined($level))	{ return (undef); }
-	
-	# this run is no longer perfect since we have an error
-	raise_warning();
-	
-	chomp($str);
-	
-	$str = 'WARNING: ' . $str;
-	log_msg($str, $level);
-}
-
-# accepts string, and level
-# logs string if level is as high as loglevel
-# also raises an error for the exit code
-sub log_err	{
-	my $str		= shift(@_);
-	my $level	= shift(@_);
-	
-	if (!defined($str))		{ return (undef); }
-	if (!defined($level))	{ return (undef); }
-	
-	# this run is no longer perfect since we have an error
-	raise_error();
-	
-	chomp($str);
-	
-	$str = 'ERROR: ' . $str;
-	log_msg($str, $level);
-}
-
-# log messages to syslog
-# accepts message, facility, level
-# only message is required
-# return 1 on success, undef on failure
-sub syslog_msg	{
-	my $msg			= shift(@_);
-	my $facility	= shift(@_);
-	my $level		= shift(@_);
-	my $result		= undef;
-	
-	if (!defined($msg))			{ return (undef); }
-	if (!defined($facility))	{ $facility	= 'user'; }
-	if (!defined($level))		{ $level	= 'notice'; }
-	
-	if (defined($config_vars{'cmd_logger'}))	{
-		# extra verbose to display messages, verbose to display errors
-		print_cmd("$config_vars{'cmd_logger'} -i -p $facility.$level -t rsnapshot $msg");
-		
-		# log to syslog
-		if (0 == $test)	{
-			$result = system($config_vars{'cmd_logger'}, '-i', '-p', "$facility.$level", '-t', 'rsnapshot', $msg);
-			if (0 != $result)	{
-				print_err("Warning! Could not log to syslog:", 2);
-				print_err("$config_vars{'cmd_logger'} -i -p $facility.$level -t rsnapshot $msg", 2);
-			}
-		}
-	}
-	
-	return (1);
-}
-
-# log warnings to syslog
-# accepts warning message
-# returns 1 on success, undef on failure
-# also raises a warning for the exit code
-sub syslog_warn	{
-	my $msg = shift(@_);
-	
-	# this run is no longer perfect since we have an error
-	raise_warning();
-	
-	return syslog_msg("WARNING: $msg", 'user', 'err');
-}
-
-# log errors to syslog
-# accepts error message
-# returns 1 on success, undef on failure
-# also raises an error for the exit code
-sub syslog_err	{
-	my $msg = shift(@_);
-	
-	# this run is no longer perfect since we have an error
-	raise_error();
-	
-	return syslog_msg("ERROR: $msg", 'user', 'err');
-}
-
-# sets exit code for at least a warning
-sub raise_warning	{
-	if ($exit_code != 1)	{
-		$exit_code = 2;
-	}
-}
-
-# sets exit code for error
-sub raise_error	{
-	$exit_code = 1;
-}
-
-# accepts no arguments
-# returns the current date (for the logfile)
-#
-# there's probably a wonderful module that can do this all for me,
-# but unless it comes standard with perl 5.004 and later, i'd rather do it this way :)
-#
-sub get_current_date	{
-	# localtime() gives us an array with these elements:
-	# 0 = seconds
-	# 1 = minutes
-	# 2 = hours
-	# 3 = day of month
-	# 4 = month + 1
-	# 5 = year + 1900
-	
-	# example date format (just like Apache logs)
-	# 28/Feb/2004:23:45:59
-	
-	my @months = ('Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec');
-	
-	my @fields = localtime(time());
-	
-	my $datestr =
-					# day of month
-					sprintf("%02i", $fields[3]) .
-					'/' .
-					# name of month
-					$months[$fields[4]] .
-					'/' .
-					# year
-					($fields[5]+1900) .
-					':' .
-					# hours (24 hour clock)
-					sprintf("%02i", $fields[2]) .
-					':' .
-					# minutes
-					sprintf("%02i", $fields[1]) .
-					':' .
-					# seconds
-					sprintf("%02i", $fields[0]);
-	
-	return ($datestr);
-}
-
 # accepts no arguments
 # returns no value
 # this subroutine parses the config file (rsnapshot.conf)
@@ -1586,6 +1224,368 @@ sub parse_backup_opts	{
 	}
 	
 	return (undef);
+}
+
+# accepts line number, errstr
+# prints a config file error
+# also sets global $config_perfect var off
+sub config_err	{
+	my $line_num	= shift(@_);
+	my $errstr		= shift(@_);
+	
+	if (!defined($line_num))	{ $line_num = -1; }
+	if (!defined($errstr))		{ $errstr = 'config_err() called without an error string!'; }
+	
+	print_err("$config_file on line $line_num: $errstr", 1);
+	
+	# invalidate entire config file
+	$config_perfect = 0;
+}
+
+# accepts an error string
+# prints to STDERR and maybe syslog. removes the lockfile if it exists.
+# exits the program safely and consistently
+sub bail	{
+	my $str = shift(@_);
+	
+	# print out error
+	if ($str)	{
+		print_err($str, 1);
+	}
+	
+	# write to syslog if we're running for real (and we have a message)
+	if ((0 == $do_configtest) && (0 == $test) && ('' ne $str))	{
+		syslog_err($str);
+	}
+	
+	# get rid of the lockfile, if it exists
+	remove_lockfile($config_vars{'lockfile'});
+	
+	# exit showing an error
+	exit(1);
+}
+
+# accepts a string (or an array)
+# prints the string, but seperates it across multiple lines with backslashes if necessary
+# also logs the command, but on a single line
+sub print_cmd	{
+	# take all arguments and make them into one string
+	my $str = join(' ', @_);
+	
+	my @tokens;
+	my $chars = 0;		# character tally
+	my $colmax = 76;	# max chars before wrap
+	
+	if (!defined($str))	{ return (undef); }
+	
+	# remove newline and consolidate spaces
+	chomp($str);
+	$str =~ s/\s+/ /g;
+	
+	# break up string into individual pieces
+	@tokens = split(/\s+/, $str);
+	
+	# stop here if we don't have anything
+	if (0 == scalar(@tokens))	{ return (undef); }
+	
+	# write to log (level 3 is where we start showing commands)
+	log_msg($str, 3);
+	
+	if (!defined($verbose) or ($verbose >= 3))	{
+		
+		# print the first token as a special exception, since we should never start out by line wrapping
+		if (defined($tokens[0]))	{
+			$chars = (length($tokens[0]) + 1);
+			print $tokens[0];
+			
+			# don't forget to put the space back in
+			if (scalar(@tokens) > 1)	{
+				print ' ';
+			}
+		}
+		
+		# loop through the rest of the tokens and print them out, wrapping when necessary
+		for (my $i=1; $i<scalar(@tokens); $i++)	{
+			# keep track of where we are (plus a space)
+			$chars += (length($tokens[$i]) + 1);
+			
+			# wrap if we're at the edge
+			if ($chars > $colmax)	{
+				print "\\\n    ";
+				
+				# 4 spaces + string length
+				$chars = 4 + length($tokens[$i]);
+			}
+			
+			# print out this token
+			print $tokens[$i];
+			
+			# print out a space unless this is the last one
+			if ($i < scalar(@tokens))	{
+				print ' ';
+			}
+		}
+		print "\n";
+	}
+}
+
+# accepts string, and level
+# prints string if level is as high as verbose
+# logs string if level is as high as loglevel
+sub print_msg	{
+	my $str		= shift(@_);
+	my $level	= shift(@_);
+	
+	if (!defined($str))		{ return (undef); }
+	if (!defined($level))	{ $level = 0; }
+	
+	chomp($str);
+	
+	# print to STDOUT
+	if ((!defined($verbose)) or ($verbose >= $level))	{
+		print $str, "\n";
+	}
+	
+	# write to log
+	log_msg($str, $level);
+}
+
+# accepts string, and level
+# prints string if level is as high as verbose
+# logs string if level is as high as loglevel
+# also raises a warning for the exit code
+sub print_warn	{
+	my $str		= shift(@_);
+	my $level	= shift(@_);
+	
+	if (!defined($str))		{ return (undef); }
+	if (!defined($level))	{ $level = 0; }
+	
+	# we can no longer say the execution of the program has been error free
+	raise_warning();
+	
+	chomp($str);
+	
+	# print to STDERR
+	if ((!defined($verbose)) or ($level <= $verbose))	{
+		print STDERR 'WARNING: ', $str, "\n";
+	}
+	
+	# write to log
+	log_msg($str, $level);
+}
+
+# accepts string, and level
+# prints string if level is as high as verbose
+# logs string if level is as high as loglevel
+# also raises an error for the exit code
+sub print_err	{
+	my $str		= shift(@_);
+	my $level	= shift(@_);
+	
+	if (!defined($str))		{ return (undef); }
+	if (!defined($level))	{ $level = 0; }
+	
+	# we can no longer say the execution of the program has been error free
+	raise_error();
+	
+	chomp($str);
+	
+	# print to STDERR
+	if ((!defined($verbose)) or ($level <= $verbose))	{
+		print STDERR 'ERROR: ', $str, "\n";
+	}
+	
+	# write to log
+	log_err($str, $level);
+}
+
+# accepts string, and level
+# logs string if level is as high as loglevel
+sub log_msg	{
+	my $str		= shift(@_);
+	my $level	= shift(@_);
+	my $result	= undef;
+	
+	if (!defined($str))		{ return (undef); }
+	if (!defined($level))	{ return (undef); }
+	
+	chomp($str);
+	
+	# if this is just noise, don't log it
+	if (defined($loglevel) && ($level > $loglevel))	{
+		return (undef);
+	}
+	
+	# open logfile, write to it, close it back up
+	# if we fail, don't use the usual print_* functions, since they just call this again
+	if ((0 == $test) && (0 == $do_configtest))	{
+		if (defined($config_vars{'logfile'}))	{
+			$result = open (LOG, ">> $config_vars{'logfile'}");
+			if (!defined($result))	{
+				print STDERR "Could not open logfile $config_vars{'logfile'} for writing\n";
+				exit(1);
+			}
+			
+			print LOG '[', get_current_date(), '] ', $str, "\n";
+			
+			$result = close(LOG);
+			if (!defined($result))	{
+				print STDERR "Could not close logfile $config_vars{'logfile'}\n";
+			}
+		}
+	}
+}
+
+# accepts string, and level
+# logs string if level is as high as loglevel
+# also raises a warning for the exit code
+sub log_warn	{
+	my $str		= shift(@_);
+	my $level	= shift(@_);
+	
+	if (!defined($str))		{ return (undef); }
+	if (!defined($level))	{ return (undef); }
+	
+	# this run is no longer perfect since we have an error
+	raise_warning();
+	
+	chomp($str);
+	
+	$str = 'WARNING: ' . $str;
+	log_msg($str, $level);
+}
+
+# accepts string, and level
+# logs string if level is as high as loglevel
+# also raises an error for the exit code
+sub log_err	{
+	my $str		= shift(@_);
+	my $level	= shift(@_);
+	
+	if (!defined($str))		{ return (undef); }
+	if (!defined($level))	{ return (undef); }
+	
+	# this run is no longer perfect since we have an error
+	raise_error();
+	
+	chomp($str);
+	
+	$str = 'ERROR: ' . $str;
+	log_msg($str, $level);
+}
+
+# log messages to syslog
+# accepts message, facility, level
+# only message is required
+# return 1 on success, undef on failure
+sub syslog_msg	{
+	my $msg			= shift(@_);
+	my $facility	= shift(@_);
+	my $level		= shift(@_);
+	my $result		= undef;
+	
+	if (!defined($msg))			{ return (undef); }
+	if (!defined($facility))	{ $facility	= 'user'; }
+	if (!defined($level))		{ $level	= 'notice'; }
+	
+	if (defined($config_vars{'cmd_logger'}))	{
+		# extra verbose to display messages, verbose to display errors
+		print_cmd("$config_vars{'cmd_logger'} -i -p $facility.$level -t rsnapshot $msg");
+		
+		# log to syslog
+		if (0 == $test)	{
+			$result = system($config_vars{'cmd_logger'}, '-i', '-p', "$facility.$level", '-t', 'rsnapshot', $msg);
+			if (0 != $result)	{
+				print_err("Warning! Could not log to syslog:", 2);
+				print_err("$config_vars{'cmd_logger'} -i -p $facility.$level -t rsnapshot $msg", 2);
+			}
+		}
+	}
+	
+	return (1);
+}
+
+# log warnings to syslog
+# accepts warning message
+# returns 1 on success, undef on failure
+# also raises a warning for the exit code
+sub syslog_warn	{
+	my $msg = shift(@_);
+	
+	# this run is no longer perfect since we have an error
+	raise_warning();
+	
+	return syslog_msg("WARNING: $msg", 'user', 'err');
+}
+
+# log errors to syslog
+# accepts error message
+# returns 1 on success, undef on failure
+# also raises an error for the exit code
+sub syslog_err	{
+	my $msg = shift(@_);
+	
+	# this run is no longer perfect since we have an error
+	raise_error();
+	
+	return syslog_msg("ERROR: $msg", 'user', 'err');
+}
+
+# sets exit code for at least a warning
+sub raise_warning	{
+	if ($exit_code != 1)	{
+		$exit_code = 2;
+	}
+}
+
+# sets exit code for error
+sub raise_error	{
+	$exit_code = 1;
+}
+
+# accepts no arguments
+# returns the current date (for the logfile)
+#
+# there's probably a wonderful module that can do this all for me,
+# but unless it comes standard with perl 5.004 and later, i'd rather do it this way :)
+#
+sub get_current_date	{
+	# localtime() gives us an array with these elements:
+	# 0 = seconds
+	# 1 = minutes
+	# 2 = hours
+	# 3 = day of month
+	# 4 = month + 1
+	# 5 = year + 1900
+	
+	# example date format (just like Apache logs)
+	# 28/Feb/2004:23:45:59
+	
+	my @months = ('Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec');
+	
+	my @fields = localtime(time());
+	
+	my $datestr =
+					# day of month
+					sprintf("%02i", $fields[3]) .
+					'/' .
+					# name of month
+					$months[$fields[4]] .
+					'/' .
+					# year
+					($fields[5]+1900) .
+					':' .
+					# hours (24 hour clock)
+					sprintf("%02i", $fields[2]) .
+					':' .
+					# minutes
+					sprintf("%02i", $fields[1]) .
+					':' .
+					# seconds
+					sprintf("%02i", $fields[0]);
+	
+	return ($datestr);
 }
 
 # accepts the path to the lockfile we will try to create
@@ -2842,6 +2842,42 @@ sub cmd_rm_rf	{
 	return (1);
 }
 
+# accepts no arguments
+# calls the 'du' command to show rsnapshot's disk usage
+# exits the program with 0 for success, 1 for failure
+#
+# this subroutine isn't like a lot of the "real" ones that write to logfiles, etc.
+# that's why the print_* subroutines aren't used here.
+#
+sub show_disk_usage	{
+	my $intervals_str = '';
+	
+	# find the intervals that apply here
+	if (-r "$config_vars{'snapshot_root'}/")	{
+		foreach my $interval_ref (@intervals)	{
+			if (-r "$config_vars{'snapshot_root'}/$$interval_ref{'interval'}.0/")	{
+				$intervals_str .= "$config_vars{'snapshot_root'}/$$interval_ref{'interval'}.* ";
+			}
+		}
+	}
+	chop($intervals_str);
+	
+	# if we can see any of them, find out how much space they're taking up
+	if ('' ne $intervals_str)	{
+		print "du -csh $intervals_str\n\n";
+		my $retval = system("du -csh $intervals_str");
+		if (0 == $retval)	{
+			# exit with success
+			exit(0);
+		}
+	} else	{
+		print STDERR ("No intervals directories visible. Do you have permission to see the snapshot root?\n");
+	}
+	
+	# exit showing error
+	exit(1);
+}
+
 # This subroutine works the way I hoped rsync would under certain conditions.
 # This is no fault of rsync, I just had something slightly different in mind :)
 #
@@ -3303,42 +3339,6 @@ sub file_diff   {
 	
 	# return our findings
 	return ($is_different);
-}
-
-# accepts no arguments
-# calls the 'du' command to show rsnapshot's disk usage
-# exits the program with 0 for success, 1 for failure
-#
-# this subroutine isn't like a lot of the "real" ones that write to logfiles, etc.
-# that's why the print_* subroutines aren't used here.
-#
-sub show_disk_usage	{
-	my $intervals_str = '';
-	
-	# find the intervals that apply here
-	if (-r "$config_vars{'snapshot_root'}/")	{
-		foreach my $interval_ref (@intervals)	{
-			if (-r "$config_vars{'snapshot_root'}/$$interval_ref{'interval'}.0/")	{
-				$intervals_str .= "$config_vars{'snapshot_root'}/$$interval_ref{'interval'}.* ";
-			}
-		}
-	}
-	chop($intervals_str);
-	
-	# if we can see any of them, find out how much space they're taking up
-	if ('' ne $intervals_str)	{
-		print "du -csh $intervals_str\n\n";
-		my $retval = system("du -csh $intervals_str");
-		if (0 == $retval)	{
-			# exit with success
-			exit(0);
-		}
-	} else	{
-		print STDERR ("No intervals directories visible. Do you have permission to see the snapshot root?\n");
-	}
-	
-	# exit showing error
-	exit(1);
 }
 
 #####################
