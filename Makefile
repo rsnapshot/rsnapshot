@@ -1,6 +1,6 @@
 # GET THE VERSION NUMBER DIRECTLY FROM THE PROGRAM
 VERSION=`./rsnapshot version_only`
-DPKG_BUILD_DIR="rsnapshot_dpkg"
+DEB_BUILD_DIR="rsnapshot_deb"
 
 default:
 	@echo "it's written in perl, just type make install"
@@ -18,39 +18,50 @@ clean:
 	rm -f rsnapshot-${VERSION}.tar.gz
 	rm -f rsnapshot-${VERSION}-1.deb
 	rm -f rsnapshot.html
+	rm -rf ${DEB_BUILD_DIR}/
 	
 tar:
 	rm -f rsnapshot-${VERSION}.tar.gz
 	
-	mkdir rsnapshot-${VERSION}
-	mkdir rsnapshot-${VERSION}/DEBIAN/
 	
+	# core files
+	mkdir rsnapshot-${VERSION}
 	cp rsnapshot rsnapshot.conf Makefile GPL INSTALL README TODO rsnapshot-${VERSION}/
+	pod2man rsnapshot > rsnapshot-${VERSION}/rsnapshot.1
+	
+	# debian
+	mkdir rsnapshot-${VERSION}/DEBIAN/
 	cp DEBIAN/{control,conffiles} rsnapshot-${VERSION}/DEBIAN/
 	
-	pod2man rsnapshot > rsnapshot-${VERSION}/rsnapshot.1
+	# redhat
+	mkdir rsnapshot-${VERSION}/redhat/
+	mkdir rsnapshot-${VERSION}/redhat/SOURCES/
+	mkdir rsnapshot-${VERSION}/redhat/SPECS/
+	cp redhat/README rsnapshot-${VERSION}/redhat/
+	cp redhat/SOURCES/config.patch rsnapshot-${VERSION}/redhat/SOURCES/
+	cp redhat/SPECS/rsnapshot.spec rsnapshot-${VERSION}/redhat/SPECS/
 	
 	chown -R 0:0 rsnapshot-${VERSION}/
 	tar czf rsnapshot-${VERSION}.tar.gz rsnapshot-${VERSION}/
 	rm -rf rsnapshot-${VERSION}/
 	
 debian:
-	mkdir -p ${DPKG_BUILD_DIR}/{DEBIAN,usr/bin,etc,usr/share/man/man1}
-	cp DEBIAN/{control,conffiles} ${DPKG_BUILD_DIR}/DEBIAN/
+	mkdir -p ${DEB_BUILD_DIR}/{DEBIAN,usr/bin,etc,usr/share/man/man1}
+	cp DEBIAN/{control,conffiles} ${DEB_BUILD_DIR}/DEBIAN/
 	
-	cat rsnapshot | sed 's/\/usr\/local\/bin/\/usr\/bin/g' > ${DPKG_BUILD_DIR}/usr/bin/rsnapshot
-	chmod 755 ${DPKG_BUILD_DIR}/usr/bin/rsnapshot
+	cat rsnapshot | sed 's/\/usr\/local\/bin/\/usr\/bin/g' > ${DEB_BUILD_DIR}/usr/bin/rsnapshot
+	chmod 755 ${DEB_BUILD_DIR}/usr/bin/rsnapshot
 	
-	pod2man ${DPKG_BUILD_DIR}/usr/bin/rsnapshot | gzip -9c > ${DPKG_BUILD_DIR}/usr/share/man/man1/rsnapshot.1.gz
-	chmod 644 ${DPKG_BUILD_DIR}/usr/share/man/man1/rsnapshot.1.gz
+	pod2man ${DEB_BUILD_DIR}/usr/bin/rsnapshot | gzip -9c > ${DEB_BUILD_DIR}/usr/share/man/man1/rsnapshot.1.gz
+	chmod 644 ${DEB_BUILD_DIR}/usr/share/man/man1/rsnapshot.1.gz
 	
-	cat rsnapshot.conf | sed s/#cmd_cp/cmd_cp/ > ${DPKG_BUILD_DIR}/etc/rsnapshot.conf
-	cp ${DPKG_BUILD_DIR}/etc/rsnapshot.conf ${DPKG_BUILD_DIR}/etc/rsnapshot.conf.default
-	chmod 600 ${DPKG_BUILD_DIR}/etc/rsnapshot.conf ${DPKG_BUILD_DIR}/etc/rsnapshot.conf.default
+	cat rsnapshot.conf | sed s/#cmd_cp/cmd_cp/ > ${DEB_BUILD_DIR}/etc/rsnapshot.conf
+	cp ${DEB_BUILD_DIR}/etc/rsnapshot.conf ${DEB_BUILD_DIR}/etc/rsnapshot.conf.default
+	chmod 600 ${DEB_BUILD_DIR}/etc/rsnapshot.conf ${DEB_BUILD_DIR}/etc/rsnapshot.conf.default
 	
-	chown -R root:root ${DPKG_BUILD_DIR}/
-	dpkg -b ${DPKG_BUILD_DIR}/ rsnapshot-${VERSION}-1.deb
-	rm -rf ${DPKG_BUILD_DIR}/
+	chown -R root:root ${DEB_BUILD_DIR}/
+	dpkg -b ${DEB_BUILD_DIR}/ rsnapshot-${VERSION}-1.deb
+	rm -rf ${DEB_BUILD_DIR}/
 	
 install:
 	mkdir -p /usr/local/bin/
