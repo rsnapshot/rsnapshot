@@ -355,27 +355,17 @@ sub parse_cmd_line_opts	{
 	}
 	
 	# quiet?
-	if (defined($opts{'q'}))	{
-		$verbose = 1;
-	}
+	if (defined($opts{'q'}))	{ $verbose = 1; }
 	
 	# verbose (or extra verbose)?
-	if (defined($opts{'v'}))	{
-		$verbose = 3;
-	}
-	if (defined($opts{'V'}))	{
-		$verbose = 4;
-	}
+	if (defined($opts{'v'}))	{ $verbose = 3; }
+	if (defined($opts{'V'}))	{ $verbose = 4; }
 	
 	# debug
-	if (defined($opts{'D'}))	{
-		$verbose = 5;
-	}
+	if (defined($opts{'D'}))	{ $verbose = 5; }
 	
 	# one file system? (don't span partitions with rsync)
-	if (defined($opts{'x'}))	{
-		$one_fs = 1;
-	}
+	if (defined($opts{'x'}))	{ $one_fs = 1; }
 }
 
 # accepts no arguments
@@ -1052,7 +1042,7 @@ sub parse_backup_opts	{
 	my $rsync_include_args		= undef;
 	my $rsync_include_file_args	= undef;
 	
-	# make sure we got something
+	# make sure we got something (it's quite likely that we didn't)
 	if (!defined($opts_str))	{ return (undef); }
 	if (!$opts_str)				{ return (undef); }
 	
@@ -1067,7 +1057,7 @@ sub parse_backup_opts	{
 		}
 		
 		# parameters can't have spaces in them
-		$name =~ s/\s//go;
+		$name =~ s/\s+//go;
 		
 		# strip whitespace from both ends
 		$value =~ s/^\s{0,}//o;
@@ -1082,7 +1072,7 @@ sub parse_backup_opts	{
 			if (!is_boolean($parsed_opts{'one_fs'}))	{
 				return (undef);
 			}
-		# rsync short args
+		# rsync_short_args
 		} elsif ( $name eq 'rsync_short_args' )	{
 			# must be in the format '-abcde'
 			if (0 == is_valid_rsync_short_args($value))	{
@@ -1090,11 +1080,11 @@ sub parse_backup_opts	{
 				return (undef);
 			}
 			
-		# rsync long args
+		# rsync_long_args
 		} elsif ( $name eq 'rsync_long_args' )	{
 			# pass unchecked
 			
-		# ssh args
+		# ssh_args
 		} elsif ( $name eq 'ssh_args' )	{
 			# pass unchecked
 			
