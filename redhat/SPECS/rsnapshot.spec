@@ -1,11 +1,11 @@
 Name: rsnapshot
 Summary: Local and remote filesystem snapshot utility
-Version: 1.0.6
+Version: 1.0.7
 Release: 1
 BuildArch: noarch
 Copyright: GPL
 Group: Applications/System
-Source: http://www.rsnapshot.org/downloads/rsnapshot-1.0.6.tar.gz
+Source: http://www.rsnapshot.org/downloads/rsnapshot-1.0.7.tar.gz
 Patch: rsnapshot.patch
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
 Requires: perl, rsync
@@ -31,8 +31,8 @@ install -d $RPM_BUILD_ROOT/%{_mandir}/man1
 install -m 644 rsnapshot.1 $RPM_BUILD_ROOT/usr/share/man/man1/
 
 install -d $RPM_BUILD_ROOT/%{_sysconfdir}
-install -m 644 rsnapshot.conf $RPM_BUILD_ROOT/etc/rsnapshot.conf.default
-install -m 600 rsnapshot.conf $RPM_BUILD_ROOT/etc/rsnapshot.conf
+install -m 644 rsnapshot.conf.default $RPM_BUILD_ROOT/etc/rsnapshot.conf.default
+install -m 600 rsnapshot.conf.default $RPM_BUILD_ROOT/etc/rsnapshot.conf
 
 %post
 
@@ -49,6 +49,9 @@ rm -rf $RPM_BUILD_DIR/%{name}-%{version}/
 %verify(user group mode md5 size mtime) %{_mandir}/man1/rsnapshot.1*
 
 %changelog
+* Tue Dec 16 2003 Nathan Rosenquist <nathan@rsnapshot.org>
+- changed rsnapshot.conf to rsnapshot.conf.default from the source tree
+
 * Wed Nov 05 2003 Nathan Rosenquist <nathan@rsnapshot.org>
 - Removed fileutils dependency, added verification info
 
