@@ -959,7 +959,7 @@ sub sync_if_different	{
 	
 	# make sure we have a source directory
 	if ( ! -d "$src" )	{
-		print STDERR "sync_if_different() needs a valid directory as an argument\n";
+		print STDERR "sync_if_different() needs a valid source directory as its first argument\n";
 		return (0);
 	}
 	
