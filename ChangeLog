@@ -3,7 +3,7 @@ rsnapshot changelog
 http://www.rsnapshot.org/
 ------------------------------------------------------------------------------
 
-VERSION CVS-unstable-post-1.1.6 (??? ?? ??:?? ????)
+VERSION 1.2.0 (Jan ?? ??:?? 2005)
 ------------------------------------------------------------------------------
 - Turned off buffering ($|=1)
 - Changed default lockfile to /var/run/rsnapshot.pid, for FHS compliance
