@@ -157,7 +157,7 @@ $SIG{'TERM'}	= sub { bail('rsnapshot was sent TERM signal... cleaning up'); };
 ##############################
 
 # figure out the path to the default config file
-$config_file = find_config_file();
+$config_file = get_config_file();
 
 # get command line options
 # (this can override $config_file, if the -c flag is used on the command line)
@@ -326,7 +326,8 @@ HERE
 # this program works both "as-is" in the source tree, and when it has been parsed by autoconf for installation
 # the variables with "@" symbols on both sides get replaced during ./configure
 # this subroutine returns the correct path to the default config file
-sub find_config_file	{
+#
+sub get_config_file	{
 	# autoconf variables (may have too many slashes)
 	my $autoconf_sysconfdir	= '@sysconfdir@';
 	my $autoconf_prefix		= '@prefix@';
