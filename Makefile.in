@@ -322,7 +322,7 @@ mostlyclean distclean maintainer-clean
 
 
 man:
-	pod2man -c '' -n 'RSNAPSHOT' -r '' rsnapshot > rsnapshot.1
+	pod2man -c '' -n 'rsnapshot' -r '' rsnapshot > rsnapshot.1
 
 html:
 	pod2html rsnapshot | grep -v 'link rev' > rsnapshot.html
