@@ -132,5 +132,7 @@ SlapAyoda
     - Provided access to his computer museum for software testing
 
 Carl Boe <boe@demog.berkeley.edu>
-	- Found several subtle bugs and provided fixes for them
+    - Found several subtle bugs and provided fixes for them
 
+Shane Liebling <shane@cryptio.net>
+    - Fixed a compatibility bug in utils/backup_smb_share.sh

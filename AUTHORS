@@ -12,3 +12,6 @@ Ted Zlatanov <tzz@lifelogs.com>
 
 Ralf van Dooren <r.vdooren@snow.nl>
     - Added and maintains the rsnapshot entry in the FreeBSD ports tree
+
+Shane Liebling <shane@cryptio.net>
+    - Fixed a compatibility bug in utils/backup_smb_share.sh
