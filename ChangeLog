@@ -38,7 +38,8 @@ VERSION 1.2.0 (Jan ?? ??:?? 2005)
 - Added check to make sure backup_scripts can't share destination path with
   backup points
 - Added check to make sure different backup_script destinations don't overlap
-- Split error reports from print_err() to two lines
+  and don't clobber backup point destinations
+- Added "cmd_du" parameter to allow specifying the path to "du"
 
 VERSION 1.1.6 (Jul 05 16:35 2004)
 ------------------------------------------------------------------------------
