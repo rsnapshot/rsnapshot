@@ -1,4 +1,4 @@
-rsnapshot 1.0.0
+rsnapshot 1.0.1
 http://rsnapshot.sourceforge.net
 
 rsnapshot is a filesystem snapshot utility. It can take incremental

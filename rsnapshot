@@ -32,7 +32,7 @@ use File::stat;
 ### DECLARE VARIABLES ###
 #########################
 
-my $VERSION = '1.0.0';
+my $VERSION = '1.0.1';
 
 # default configuration file
 my $config_file	= '/etc/rsnapshot.conf'; 
@@ -183,6 +183,12 @@ if ( -f $config_file )	{
 				$file_syntax_ok = 0;
 				next;
 			}
+			# if it exists already, make sure it's a directory
+			my $buf = $value;
+			$buf =~ s/\/$//;
+			if ((-e "$buf") && (! -d "$buf"))	{
+				bail("Error in $config_file on line $file_line_num: $line - snapshot_root must be a directory");
+			}
 			
 			# remove the trailing slash, if present
 			if ($value =~ /\/$/)	{ chop( $value ); }
@@ -227,11 +233,11 @@ if ( -f $config_file )	{
 		# INTERVALS
 		if ($var eq 'interval')	{
 			if (!defined($value))		{ bail("Interval can not be blank"); }
-			if ($value !~ m/^[\w\d]+$/)	{ bail("\"$value\" is not a valid entry"); }
+			if ($value !~ m/^[\w\d]+$/)	{ bail("\"$value\" is not a valid entry, must be alphanumeric characters only"); }
 			
 			if (!defined($value2))		{ bail("\$value\" number can not be blank"); }
 			if ($value2 !~ m/^\d+$/)	{ bail("$value2 is not an integer"); }
-			if ($value2 == 0)			{ bail("\"$value\" can not be 0"); }
+			if (0 == $value2)			{ bail("\"$value\" can not be 0"); }
 			
 			my %hash;
 			$hash{'interval'}	= $value;
@@ -247,15 +253,6 @@ if ( -f $config_file )	{
 			
 			if ( !defined($config_vars{'snapshot_root'}) )	{	bail("snapshot_root needs to be defined before backup points"); }
 			
-			# make sure we have a full path for the source:
-			# not a valid local path
-			if ($src !~ /^\//)	{
-				# not a valid ssh path
-				if ($src !~ /^.*?\@.*?:\/.*$/)	{
-					bail("Backup source $src must be a full path");
-				}
-			}
-			
 			# make sure we have a local path for the destination
 			if ($dest =~ /^\//)	{ bail("Backup destination $dest must be a local path"); }
 			
@@ -263,13 +260,16 @@ if ( -f $config_file )	{
 			if ($src  =~ /[^\.]\.{2}[^\.]/)	{ bail("Directory traversal attempted in $src"); }
 			if ($dest =~ /[^\.]\.{2}[^\.]/)	{ bail("Directory traversal attempted in $dest"); }
 			
-			# we have a valid file path
-			if ( -e "$src" )	{
+			# see if we have a valid local absolute file path
+			if (($src =~ /^\//) && (-e "$src"))	{
 				$line_syntax_ok = 1;
 				
-			# this wasn't on the filesystem
-			# let's see if it matches a remote pattern we know about
+			# ok, let's see if it's a syntactically valid remote ssh pattern
 			} else	{
+				# remote ssh path needs to be absolute
+				if ($src !~ /^.*?\@.*?:\/.*$/)	{
+					bail("Backup source $src must be a full path");
+				}
 				
 				# if it's an ssh path, make sure we have ssh
 				if ( $src =~ /^.*?\@.*?:\/.*$/ )	{
@@ -290,8 +290,9 @@ if ( -f $config_file )	{
 			}
 			if ($dest =~ /^\//)	{ bail("Full paths not allowed for backup destinations"); }
 			
-			# make sure we don't backup the backup!
-			if ($config_vars{'snapshot_root'} =~ $src)	{
+			# remember src/dest
+			# also, first check to see that we're not backing up the snapshot directory
+			if ((-e "$src") && ($config_vars{'snapshot_root'} =~ $src))	{
 				opendir(SRC, $src) or bail("Could not open $src");
 				readdir(SRC);	# .
 				readdir(SRC);	# ..
@@ -315,7 +316,7 @@ if ( -f $config_file )	{
 		
 		# make sure we understood this line
 		# if not, warn the user, and prevent the program from executing
-		if ($line_syntax_ok == 0)	{
+		if (0 == $line_syntax_ok)	{
 			print STDERR "Error in $config_file on line $file_line_num: $line\n";
 			$file_syntax_ok = 0;
 		}
@@ -333,7 +334,7 @@ if ( -f $config_file )	{
 }
 
 # BAIL OUT HERE IF THERE WERE ERRORS IN THE CONFIG FILE
-if ($file_syntax_ok == 0)	{
+if (0 == $file_syntax_ok)	{
 	print STDERR "-----------------------------------\n";
 	print STDERR "Errors were found in $config_file, rsnapshot can not continue.\n";
 	print STDERR "If you think an entry looks right, make sure you don't have\n";
@@ -344,7 +345,7 @@ if ($file_syntax_ok == 0)	{
 # CREATE THE SNAPSHOT ROOT IF IT DOESN'T EXIST, WITH THE FILE PERMISSIONS 0700
 if ( ! -d "$config_vars{'snapshot_root'}" )	{
 	if ($verbose)	{ print "mkdir -m 0700 -p $config_vars{'snapshot_root'}\n"; }
-	if ($test == 0)	{
+	if (0 == $test)	{
 		eval	{
 			mkpath( "$config_vars{'snapshot_root'}", 0, 0700 );
 		};
@@ -356,6 +357,10 @@ if ( ! -d "$config_vars{'snapshot_root'}" )	{
  
 # FIGURE OUT WHICH INTERVAL WE'RE RUNNING, AND HOW IT RELATES TO THE OTHERS 
 # THEN RUN THE ACTION FOR THE CHOSEN INTERVAL
+# remember, in each hashref in this loop:
+#   interval is something like "daily", "weekly", etc.
+#   number is the number of these intervals to keep
+#
 my $i = 0;
 foreach my $i_ref (@intervals)	{
 	if ($$i_ref{'interval'} eq $cmd)	{
@@ -387,8 +392,8 @@ if (!defined($interval_num))	{
 	bail("Interval \"$cmd\" unknown, check $config_file");
 }
 
-# RUN THE BACKUP
-if ($interval_num == 0)	{
+# WITHOUT ANY FURTHER ADO, RUN THE BACKUP
+if (0 == $interval_num)	{
 	# if this is the most frequent interval, actually do the backups here
 	backup_interval($cmd);
 	
@@ -415,9 +420,9 @@ sub backup_interval	{
 	# remove oldest directory
 	if ( -d "$config_vars{'snapshot_root'}/$interval.$interval_max" )	{
 		if ($verbose)	{ print "rm -rf $config_vars{'snapshot_root'}/$interval.$interval_max/\n"; }
-		if ($test == 0)	{
+		if (0 == $test)	{
 			my $result = rmtree( "$config_vars{'snapshot_root'}/$interval.$interval_max/", 0, 0 );
-			if ($result == 0)	{
+			if (0 == $result)	{
 				bail("Error! rmtree(\"$config_vars{'snapshot_root'}/$interval.$interval_max/\",0,0)\n");
 			}
 		}
@@ -429,9 +434,9 @@ sub backup_interval	{
 			if ($verbose)	{
 				print "mv $config_vars{'snapshot_root'}/$interval.$i/ $config_vars{'snapshot_root'}/$interval." . ($i+1) . "/\n";
 			}
-			if ($test == 0)	{
+			if (0 == $test)	{
 				my $result = rename( "$config_vars{'snapshot_root'}/$interval.$i/", ("$config_vars{'snapshot_root'}/$interval." . ($i+1) . '/') );
-				if ($result == 0)	{
+				if (0 == $result)	{
 					bail("Error! rename(\"$config_vars{'snapshot_root'}/$interval.$i/\", \"" . ("$config_vars{'snapshot_root'}/$interval." . ($i+1) . '/') . "\")");
 				}
 			}
@@ -449,7 +454,7 @@ sub backup_interval	{
 				print "# native_cp_al(\"$config_vars{'snapshot_root'}/$interval.0/\", \"$config_vars{'snapshot_root'}/$interval.1/\");\n";
 			}
 		}
-		if ($test == 0)	{
+		if (0 == $test)	{
 			$result = cp_al( "$config_vars{'snapshot_root'}/$interval.0/", "$config_vars{'snapshot_root'}/$interval.1/" );
 			if (! $result)	{
 				bail("Error! cp_al(\"$config_vars{'snapshot_root'}/$interval.0/\", \"$config_vars{'snapshot_root'}/$interval.1/\")");
@@ -476,7 +481,7 @@ sub backup_interval	{
 		my $destpath = "$config_vars{'snapshot_root'}/$interval.0/" . join('/', @dirs);
 		if ( ! -e "$destpath" )	{
 			if ($verbose)	{ print "mkdir -m 0755 -p $destpath/\n"; }
-			if ($test == 0)	{
+			if (0 == $test)	{
 				eval	{
 					mkpath( "$destpath/", 0, 0755 );
 				};
@@ -489,21 +494,21 @@ sub backup_interval	{
 		# if this is a user@host:/path, use ssh
 		if ($src =~ /^.*?\@.*?:\/.*$/)	{
 			if ($verbose)	{ print "$config_vars{'cmd_rsync'} -al --delete --numeric-ids --devices --rsh=$config_vars{'cmd_ssh'} $src $config_vars{'snapshot_root'}/$interval.0/$$sp_ref{'dest'}\n"; }
-			if ($test == 0)	{
+			if (0 == $test)	{
 				system( $config_vars{'cmd_rsync'}, '-al', '--delete', '--numeric-ids', '--devices', "--rsh=$config_vars{'cmd_ssh'}", $src, "$config_vars{'snapshot_root'}/$interval.0/$$sp_ref{'dest'}" );
 			}
 			
 		# anonymous rsync
 		} elsif ($src =~ /^rsync:\/\/.*$/)	{
 			if ($verbose)	{ print "$config_vars{'cmd_rsync'} -alq --delete --numeric-ids --devices $src $config_vars{'snapshot_root'}/$interval.0/$$sp_ref{'dest'}\n"; }
-			if ($test == 0)	{
+			if (0 == $test)	{
 				system( $config_vars{'cmd_rsync'}, '-alq', '--delete', '--numeric-ids', '--devices', $src, "$config_vars{'snapshot_root'}/$interval.0/$$sp_ref{'dest'}" );
 			}
 			
 		# local filesystem
 		} else	{
 			if ($verbose)	{ print "$config_vars{'cmd_rsync'} -al --delete --numeric-ids --devices $src $config_vars{'snapshot_root'}/$interval.0/$$sp_ref{'dest'}\n"; }
-			if ($test == 0)	{
+			if (0 == $test)	{
 				system( $config_vars{'cmd_rsync'}, '-al', '--delete', '--numeric-ids', '--devices', $src, "$config_vars{'snapshot_root'}/$interval.0/$$sp_ref{'dest'}" );
 			}
 		}
@@ -511,9 +516,9 @@ sub backup_interval	{
 	
 	# update mtime of $interval.0 to reflect snapshot time
 	if ($verbose)	{ print "touch $config_vars{'snapshot_root'}/$interval.0/\n"; }
-	if ($test == 0)	{
+	if (0 == $test)	{
 		my $result = utime(time(), time(), "$config_vars{'snapshot_root'}/$interval.0/");
-		if ($result == 0)	{
+		if (0 == $result)	{
 			bail("Could not utime(time(), time(), \"$config_vars{'snapshot_root'}/$interval.0/\");");
 		}
 	}
@@ -533,9 +538,9 @@ sub rotate_interval	{
 	# delete the oldest one
 	if ( -d "$config_vars{'snapshot_root'}/$interval.$interval_max" )	{
 		if ($verbose)	{ print "rm -rf $config_vars{'snapshot_root'}/$interval.$interval_max/\n"; }
-		if ($test == 0)	{
+		if (0 == $test)	{
 			my $result = rmtree( "$config_vars{'snapshot_root'}/$interval.$interval_max/", 0, 0 );
-			if ($result == 0)	{
+			if (0 == $result)	{
 				bail("Could not rmtree(\"$config_vars{'snapshot_root'}/$interval.$interval_max/\",0,0);");
 			}
 		}
@@ -545,9 +550,9 @@ sub rotate_interval	{
 	for (my $i=($interval_max-1); $i>=0; $i--)	{
 		if ( -d "$config_vars{'snapshot_root'}/$interval.$i" )	{
 			if ($verbose)	{ print "mv $config_vars{'snapshot_root'}/$interval.$i/ $config_vars{'snapshot_root'}/$interval." . ($i+1) . "/\n"; }
-			if ($test == 0)	{
+			if (0 == $test)	{
 				my $result = rename( "$config_vars{'snapshot_root'}/$interval.$i/", ("$config_vars{'snapshot_root'}/$interval." . ($i+1) . '/') );
-				if ($result == 0)	{
+				if (0 == $result)	{
 					bail("error during move(\"$config_vars{'snapshot_root'}/$interval.$i/)\", \"" . ("$config_vars{'snapshot_root'}/$interval." . ($i+1) . '/') . "\");");
 				}
 			}
@@ -565,7 +570,7 @@ sub rotate_interval	{
 				print "\"$config_vars{'snapshot_root'}/$interval.0/\");\n";
 			}
 		}
-		if ($test == 0)	{
+		if (0 == $test)	{
 			my $result = cp_al( "$config_vars{'snapshot_root'}/$prev_interval.$prev_interval_max/", "$config_vars{'snapshot_root'}/$interval.0/" );
 			if (! $result)	{
 				bail("Error! cp_al(\"$config_vars{'snapshot_root'}/$prev_interval.$prev_interval_max/\", \"$config_vars{'snapshot_root'}/$interval.0/\") failed");
@@ -613,7 +618,7 @@ sub cp_al	{
 	my $dest = shift(@_);
 	my $result = 0;
 	
-	if ($use_gnu_cp == 1)	{
+	if (1 == $use_gnu_cp)	{
 		$result = gnu_cp_al("$src", "$dest");
 	} else	{
 		$result = native_cp_al("$src", "$dest");
@@ -641,7 +646,7 @@ sub gnu_cp_al	{
 	
 	$result = system( $config_vars{'cmd_cp'}, '-al', "$src", "$dest" );
 	if ($result != 0)	{
-		if ($quiet == 0)	{
+		if (0 == $quiet)	{
 			print STDERR "Warning! $config_vars{'cmd_cp'} failed. Perhaps this is not GNU cp?\n";
 		}
 		return (0);
@@ -739,25 +744,25 @@ sub native_cp_al	{
 				
 			# FIFO
 			} elsif ( -p "$src/$node" )	{
-				if ($quiet == 0)	{
+				if (0 == $quiet)	{
 					print STDERR "Warning! Ignoring FIFO $src/$node\n";
 				}
 				
 			# SOCKET
 			} elsif ( -S "$src/$node" )	{
-				if ($quiet == 0)	{
+				if (0 == $quiet)	{
 					print STDERR "Warning! Ignoring socket: $src/$node\n";
 				}
 				
 			# BLOCK DEVICE
 			} elsif ( -b "$src/$node" )	{
-				if ($quiet == 0)	{
+				if (0 == $quiet)	{
 					print STDERR "Warning! Ignoring special block file: $src/$node\n";
 				}
 				
 			# CHAR DEVICE
 			} elsif ( -c "$src/$node" )	{
-				if ($quiet == 0)	{
+				if (0 == $quiet)	{
 					print STDERR "Warning! Ignoring special character file: $src/$node\n";
 				}
 				

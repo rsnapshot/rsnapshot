@@ -1,4 +1,4 @@
-rsnapshot 1.0.0
+rsnapshot 1.0.1
 http://rsnapshot.sourceforge.net
 
 rsnapshot is a filesystem snapshot utility. It can take incremental
@@ -31,7 +31,14 @@ implementations. This has a few noticable effects:
     
 2) rsnapshot is now compatible with a much wider range of systems.
    In addition to Linux, rsnapshot should now work with practically
-   any UNIX variant out there.
+   any UNIX variant out there. Specifically, it has been tested with
+   the following operating systems:
+   
+     Debian 3.0 (woody), and the unstable branch
+     Redhat 7.2, 8.0
+     Solaris 8
+     Mac OS X
+     IRIX 6.5
 
 3) When running rsnapshot on a system without GNU cp, special files
    will not be rotated in the snapshots properly. More specifically,
