@@ -819,8 +819,9 @@ sub print_cmd	{
 	
 	if (!defined($str))	{ return (undef); }
 	
-	# remove newline, since we'll add one at the end
+	# remove newline and consolidate slashes
 	chomp($str);
+	$str =~ s/\/+/\//g;
 	
 	# break up string into individual pieces
 	@tokens = split(/\s+/, $str);
