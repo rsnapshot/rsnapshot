@@ -82,7 +82,7 @@ verbose		2
 # If you enable the lockfile, make sure the lockfile directory is
 # not world writable. Otherwise anyone can prevent the program from running.
 #
-#lockfile	/var/lock/subsys/rsnapshot
+#lockfile	/var/run/rsnapshot
 
 # If this is enabled, rsync won't span filesystem partitions within a
 # backup point. This essentially passes the -x option to rsync.
