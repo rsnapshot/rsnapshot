@@ -3,7 +3,13 @@ AM_INIT_AUTOMAKE
 AC_PROG_MAKE_SET
 AC_PROG_INSTALL
 AC_CONFIG_FILES(Makefile)
-AC_PATH_PROG(PERL, perl)
+
+dnl Check for perl (required)
+AC_PATH_PROG(PERL, perl5, perl, no)
+if test "$PERL" = "no"; then
+	AC_MSG_ERROR(perl is required)
+fi
+
 dnl Combine the preamble with a normal, working script
 AC_CONFIG_FILES(rsnapshot:rsnapshot-preamble.pl:rsnapshot-program.pl)
 AC_OUTPUT

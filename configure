@@ -1522,8 +1522,9 @@ test -z "$INSTALL_DATA" && INSTALL_DATA='${INSTALL} -m 644'
 
 ac_config_files="$ac_config_files Makefile"
 
-# Extract the first word of "perl", so it can be a program name with args.
-set dummy perl; ac_word=$2
+
+# Extract the first word of "perl5", so it can be a program name with args.
+set dummy perl5; ac_word=$2
 echo "$as_me:$LINENO: checking for $ac_word" >&5
 echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
 if test "${ac_cv_path_PERL+set}" = set; then
@@ -1535,7 +1536,8 @@ else
   ;;
   *)
   as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
+as_dummy="no"
+for as_dir in $as_dummy
 do
   IFS=$as_save_IFS
   test -z "$as_dir" && as_dir=.
@@ -1548,6 +1550,7 @@ do
 done
 done
 
+  test -z "$ac_cv_path_PERL" && ac_cv_path_PERL="perl"
   ;;
 esac
 fi
@@ -1559,6 +1562,12 @@ echo "${ECHO_T}$PERL" >&6
 else
   echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6
+fi
+
+if test "$PERL" = "no"; then
+	{ { echo "$as_me:$LINENO: error: perl is required" >&5
+echo "$as_me: error: perl is required" >&2;}
+   { (exit 1); exit 1; }; }
 fi
 
 ac_config_files="$ac_config_files rsnapshot:rsnapshot-preamble.pl:rsnapshot-program.pl"
