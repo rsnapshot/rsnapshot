@@ -51,7 +51,7 @@ rm -rf $RPM_BUILD_DIR/%{name}-%{version}/
 %verify(user group mode md5 size mtime) %{_mandir}/man1/rsnapshot.1*
 
 %changelog
-* Thu Jan 15 2003 Nathan Rosenquist <nathan@rsnapshot.org>
+* Thu Jan 15 2004 Nathan Rosenquist <nathan@rsnapshot.org>
 - Added "AutoReqProv: no" for SuSE compatibility
 
 * Fri Dec 26 2003 Nathan Rosenquist <nathan@rsnapshot.org>
