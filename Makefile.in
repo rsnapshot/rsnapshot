@@ -343,7 +343,7 @@ debian:
 	/bin/chmod 600 ${DEB_BUILD_DIR}/etc/rsnapshot.conf
 	/bin/chmod 644 ${DEB_BUILD_DIR}/etc/rsnapshot.conf.default
 
-	/bin/chown -R root:root ${DEB_BUILD_DIR}/
+	chown -R root:root ${DEB_BUILD_DIR}/
 	dpkg -b ${DEB_BUILD_DIR}/ rsnapshot-$(VERSION)-1.deb
 	/bin/rm -rf ${DEB_BUILD_DIR}/
 
@@ -377,7 +377,7 @@ tar:
 	/bin/cp utils/rsnaptar rsnapshot-$(VERSION)/utils/
 
 	@# change ownership to root (or current user), and delete build dir
-	/bin/chown -R root:root rsnapshot-$(VERSION)/
+	chown -R root:root rsnapshot-$(VERSION)/
 	/bin/tar czf rsnapshot-$(VERSION).tar.gz rsnapshot-$(VERSION)/
 	/bin/rm -rf rsnapshot-$(VERSION)/
 
