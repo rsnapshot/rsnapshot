@@ -3354,7 +3354,7 @@ B<cmd_ssh>         /usr/bin/ssh
 
 B<#cmd_cp>         /bin/cp
 
-B<cmd_rm>          /bin/rm
+B<#cmd_rm>         /bin/rm
 
 B<cmd_logger>      /usr/bin/logger
 
