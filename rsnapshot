@@ -258,12 +258,12 @@ sub backup_interval	{
 	
 	# ROTATE DIRECTORIES
 	#
-	# delete the oldest directory
+	# move oldest directory to .tmp (to be recycled as .0)
 	if ( -d "$config_vars{'snapshot_root'}/$interval.$interval_max" )	{
 		
-		if ($verbose)	{ print "$config_vars{'cmd_rm'} -rf $config_vars{'snapshot_root'}/$interval.$interval_max\n"; }
+		if ($verbose)	{ print "$config_vars{'cmd_mv'} $config_vars{'snapshot_root'}/$interval.$interval_max $config_vars{'snapshot_root'}/$interval.tmp\n"; }
 		if ($test == 0)	{
-			system( $config_vars{'cmd_rm'}, '-rf', "$config_vars{'snapshot_root'}/$interval.$interval_max" );
+			system( $config_vars{'cmd_mv'}, "$config_vars{'snapshot_root'}/$interval.$interval_max", "$config_vars{'snapshot_root'}/$interval.tmp" );
 		}
 	}
 	
@@ -280,8 +280,22 @@ sub backup_interval	{
 		}
 	}
 	
-	# we have an $interval.0 directory
-	if ( -d "$config_vars{'snapshot_root'}/$interval.0" )	{
+	# if we have a .tmp directory, move .0 to .1, and .tmp to .0
+	if ( -d "$config_vars{'snapshot_root'}/$interval.tmp" )	{
+		# move .0 to .1
+		if ($verbose)	{ print "$config_vars{'cmd_mv'} $config_vars{'snapshot_root'}/$interval.0/ $config_vars{'snapshot_root'}/$interval.1\n"; }
+		if ($test == 0)	{
+			system( $config_vars{'cmd_mv'}, "$config_vars{'snapshot_root'}/$interval.0/", "$config_vars{'snapshot_root'}/$interval.1" );
+		}
+		
+		# move .tmp to .0
+		if ($verbose)	{ print "$config_vars{'cmd_mv'} $config_vars{'snapshot_root'}/$interval.tmp/ $config_vars{'snapshot_root'}/$interval.0\n"; }
+		if ($test == 0)	{
+			system( $config_vars{'cmd_mv'}, "$config_vars{'snapshot_root'}/$interval.tmp/", "$config_vars{'snapshot_root'}/$interval.0" );
+		}
+		
+	# we don't have a .tmp directory, but we have a .0 directory, cp -al .0 to .1
+	} elsif ( -d "$config_vars{'snapshot_root'}/$interval.0" )	{
 		# hard link (except for directories) .0 over to .1
 		if ($verbose)	{ print "$config_vars{'cmd_cp'} -al $config_vars{'snapshot_root'}/$interval.0/ $config_vars{'snapshot_root'}/$interval.1\n"; }
 		if ($test == 0)	{
