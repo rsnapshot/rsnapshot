@@ -207,6 +207,19 @@ if ( -f $config_file )	{
 	exit(-1);
 }
  
+# CREATE THE SNAPSHOT ROOT IF IT DOESN'T EXIST, AND CHANGE THE FILE PERMISSIONS TO 0700
+if ( ! -d "$config_vars{'snapshot_root'}" )	{
+	if ($verbose)	{ print "$config_vars{'cmd_mkdir'} -p $config_vars{'snapshot_root'}\n"; }
+	if ($test == 0)	{
+		system( $config_vars{'cmd_mkdir'}, '-p', "$config_vars{'snapshot_root'}" );
+	}
+	
+	if ($verbose)	{ print "chmod 0700 $config_vars{'snapshot_root'}\n"; }
+	if ($test == 0)	{
+		chmod( 0700, "$config_vars{'snapshot_root'}" );
+	}
+}
+ 
 # FIGURE OUT WHICH INTERVAL WE'RE RUNNING, AND HOW IT RELATES TO THE OTHERS 
 # THEN RUN THE ACTION FOR THE CHOSEN INTERVAL
 my $i = 0;
@@ -438,9 +451,17 @@ B<rsnapshot> [B<-v>] [B<-t>] [B<-c> /alt/config/file] [command]
 
 B<rsnapshot> is a filesystem snapshot utility. It can take incremental
 snapshots of local and remote filesystems for any number of machines.
-Secure remote connections are handled with B<rsync(1)> over B<ssh(1)>,
-while anonymous rsync connections simply use an rsync server. Both
-remote and local transfers depend on rsync.
+
+Local filesystem snapshots are handled with rsync. Secure remote
+connections are handled with B<rsync(1)> over B<ssh(1)>, while
+anonymous rsync connections simply use an rsync server. Both remote
+and local transfers depend on rsync.
+
+rsnapshot saves much more disk space than you might imagine. The amount
+of space required is roughly the size of one full backup, plus a copy
+of each additional file that is changed. rsnaphsot makes extensive
+use of hard links, so if the file doesn't change, the next snapshot is
+simply a hard link to the exact same file.
 
 B<rsnapshot> will typically be invoked as root by a cron job, or series
 of cron jobs. It is possible, however, to run as any arbitrary user
@@ -505,7 +526,7 @@ Example: B<interval hourly 6>
 
 For this example, every time this is run, the following will happen:
 
-<snapshot_root>/hourly.0/ will be recursively deleted, if it exists.
+<snapshot_root>/hourly.5/ will be recursively deleted, if it exists.
 
 <snapshot_root>/hourly.{1,2,3,4} will all be rotated +1, if they exist.
 
@@ -533,9 +554,9 @@ B<interval  weekly 4>
 
 =back
 
-daily.0 will be copied from hourly.5, and weekly.0 will be copied from daily.6
+daily.0/ will be copied from hourly.5/, and weekly.0/ will be copied from daily.6/
 
-hourly.0 will, of course, be copied directly from the filesystem.
+hourly.0/ will, of course, be copied directly from the filesystem.
 
 B<rsnapshot> makes extensive use of hard links, so the actual space
 taken up is basically one full snapshot, plus each changed file.

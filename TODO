@@ -6,3 +6,6 @@ Make sure that if the file downloaded is the same as the one yesterday,
 that it will link today's file to yesterdays. It seems unavoidable to
 waste bandwidth with a non rsync system, but at least we can prevent
 the wasting of disk space.
+
+Do stricter synax checking: if anything in the config file doesn't make sense, throw
+an error.
