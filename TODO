@@ -6,6 +6,8 @@ for version 1.0.x
 + Add a "one_fs" feature to the config file
 + Come up with a generalized way to pass arbitrary args to rsync and ssh
 + Support for SSH tunnelling
++ Add lock file to prevent a second cron task running
+  before the first one stops
 
 for version 2.0.x
 ------------------------------------------------------------------------------
