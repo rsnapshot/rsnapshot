@@ -1732,7 +1732,7 @@ sub add_lockfile {
 	}
 	
 	# create the lockfile
-	print_cmd("touch $lockfile");
+	print_cmd("echo $$ > $lockfile");
 	
 	if (0 == $test) {
 		my $result = open(LOCKFILE, "> $lockfile");
