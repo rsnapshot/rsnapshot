@@ -1,6 +1,6 @@
 VERSION = 1.0.7
 
-DEB_BUILD_DIR = deb_build_dir
+DEB_BUILD_DIR = fakeroot
 
 man:
 	pod2man rsnapshot-program.pl > rsnapshot.1
@@ -24,20 +24,19 @@ cleanup:
 	
 debian:
 	./configure --prefix=/usr --sysconfdir=/etc --mandir=/usr/share/man
+	make DESTDIR=${DEB_BUILD_DIR} install
+	
+	/bin/mkdir ${DEB_BUILD_DIR}/DEBIAN/
+	/bin/cp DEBIAN/{control,conffiles} ${DEB_BUILD_DIR}/DEBIAN/
 	
 	/bin/mkdir -p ${DEB_BUILD_DIR}/{DEBIAN,usr/bin,etc,usr/share/man/man1}
 	/bin/cp DEBIAN/{control,conffiles} ${DEB_BUILD_DIR}/DEBIAN/
 	
-	/bin/cat rsnapshot | sed 's/\/usr\/local\/bin/\/usr\/bin/g' > ${DEB_BUILD_DIR}/usr/bin/rsnapshot
-	/bin/chmod 755 ${DEB_BUILD_DIR}/usr/bin/rsnapshot
+	gzip -9 ${DEB_BUILD_DIR}/usr/share/man/man1/rsnapshot.1
 	
-	pod2man ${DEB_BUILD_DIR}/usr/bin/rsnapshot | gzip -9c > ${DEB_BUILD_DIR}/usr/share/man/man1/rsnapshot.1.gz
-	/bin/chmod 644 ${DEB_BUILD_DIR}/usr/share/man/man1/rsnapshot.1.gz
-	
-	/bin/cat rsnapshot.conf.default | sed 's/#cmd_cp/cmd_cp/' > ${DEB_BUILD_DIR}/etc/rsnapshot.conf
+	/bin/cat ${DEB_BUILD_DIR}/etc/rsnapshot.conf.default | sed 's/#cmd_cp/cmd_cp/' | sed 's/#cmd_ssh/cmd_ssh	/' > ${DEB_BUILD_DIR}/etc/rsnapshot.conf
+	/bin/rm ${DEB_BUILD_DIR}/etc/rsnapshot.conf.default
 	/bin/cp ${DEB_BUILD_DIR}/etc/rsnapshot.conf ${DEB_BUILD_DIR}/etc/rsnapshot.conf.default
-	/bin/chmod 600 ${DEB_BUILD_DIR}/etc/rsnapshot.conf
-	/bin/chmod 644 ${DEB_BUILD_DIR}/etc/rsnapshot.conf.default
 	
 	chown -R root:root ${DEB_BUILD_DIR}/
 	dpkg -b ${DEB_BUILD_DIR}/ rsnapshot-$(VERSION)-1.deb
@@ -72,7 +71,7 @@ tar:
 	/bin/mkdir rsnapshot-$(VERSION)/utils/
 	/bin/cp utils/rsnaptar rsnapshot-$(VERSION)/utils/
 	
-	@# change ownership to root (or current user), and delete build dir
+	@# change ownership to root, and delete build dir
 	chown -R root:root rsnapshot-$(VERSION)/
 	/bin/tar czf rsnapshot-$(VERSION).tar.gz rsnapshot-$(VERSION)/
 	/bin/rm -rf rsnapshot-$(VERSION)/
