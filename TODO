@@ -2,12 +2,6 @@ rsnapshot TODO list:
 
 for version 1.0.x
 ------------------------------------------------------------------------------
-- Remove checks before calling print_* subroutines, just call them and let
-  the routines decide whether to print or log
-
-- Keep track of whether we hit any non-fatal errors during the run, then
-  report at the end whether the run was successful.
-
 - Add include, exclude, include_file, and exclude_file parameters, which
   will simply pass their contents directly to rsync invocations.
 

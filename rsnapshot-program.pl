@@ -1006,7 +1006,7 @@ sub syslog_err	{
 	# this run is no longer perfect since we have an error
 	$run_perfect = 0;
 	
-	return syslog_msg($msg, 'user', 'err');
+	return syslog_msg("ERROR: $msg", 'user', 'err');
 }
 
 # accepts no arguments
@@ -1622,7 +1622,7 @@ sub backup_interval	{
 			}
 			
 			# change back to the previous directory
-			print_cmd("cd $cwd");
+			print_cmd("cd $cwd/");
 			
 			if (0 == $test)	{
 				chdir($cwd);
@@ -1691,15 +1691,13 @@ sub rotate_interval	{
 	# ROTATE DIRECTORIES
 	#
 	# delete the oldest one (if we're keeping more than one)
-	if ($interval_max > 0)	{
-		if ( -d "$config_vars{'snapshot_root'}/$interval.$interval_max" )	{
-			print_cmd("rm -rf $config_vars{'snapshot_root'}/$interval.$interval_max/");
-			
-			if (0 == $test)	{
-				my $result = rmtree( "$config_vars{'snapshot_root'}/$interval.$interval_max/", 0, 0 );
-				if (0 == $result)	{
-					bail("Could not rmtree(\"$config_vars{'snapshot_root'}/$interval.$interval_max/\",0,0);");
-				}
+	if ( -d "$config_vars{'snapshot_root'}/$interval.$interval_max" )	{
+		print_cmd("rm -rf $config_vars{'snapshot_root'}/$interval.$interval_max/");
+		
+		if (0 == $test)	{
+			my $result = rmtree( "$config_vars{'snapshot_root'}/$interval.$interval_max/", 0, 0 );
+			if (0 == $result)	{
+				bail("Could not rmtree(\"$config_vars{'snapshot_root'}/$interval.$interval_max/\",0,0);");
 			}
 		}
 	}
@@ -1729,8 +1727,10 @@ sub rotate_interval	{
 	if ( -d "$config_vars{'snapshot_root'}/$prev_interval.$prev_interval_max" )	{
 		my $result;
 		
-		# if the previous interval has at least 2 snapshots, move the last one up a level
-		if ($prev_interval_max >= 1)	{
+		# if the previous interval has at least 2 snapshots,
+		# or if the previous interval isn't the smallest one,
+		# move the last one up a level
+		if (($prev_interval_max >= 1) or ($interval_num >= 2))	{
 			# mv hourly.5 to daily.0 (or whatever intervals we're using)
 			print_cmd("mv $config_vars{'snapshot_root'}/$prev_interval.$prev_interval_max/ ",
 						"$config_vars{'snapshot_root'}/$interval.0/");
