@@ -175,6 +175,25 @@ If you are upgrading from a previous installation:
          By explicitly setting the "rsync_long_args" parameter, you can
          operate rsnapshot in either of these two ways.
 
+         Please be aware that if you are using an anonymous rsync server,
+         the rules are just a little bit different. Unlike with a local
+         filesystem or rsync over ssh, you can not rsync directly from
+         the top level of the remote host. Instead, an rsync server has
+         "modules" that are exported. These are essentially just top
+         level directories. So instead of just specifying the hostname
+         for the destination path, you should specify the module as well.
+
+         Here is an example, where example.com is the rsync server, and
+         the exported module is called "pub":
+
+         Before
+
+             backup  rsync://example.com/pub/cvs/    example.com/pub/cvs/
+
+         After
+
+             backup  rsync://example.com/pub/cvs/    example.com/pub/
+
          If you want to keep things the way they were, make sure you run
          "make upgrade" or otherwise set the rsync_long_args parameter
          to the old value.
@@ -187,23 +206,25 @@ If you are upgrading from a previous installation:
 
              THE OLD WAY (rsnapshot 1.1.6 and before):
 
-                 backup    /etc/                  localhost/etc/
-                 backup    /home/                 localhost/home/
-                 backup    /usr/local/            localhost/usr/local/
-                 backup    root@example.com:/etc/ example.com/etc/
-                 backup    root@example.com:/var/ example.com/var/
+                 backup    /etc/                         localhost/etc/
+                 backup    /home/                        localhost/home/
+                 backup    /usr/local/                   localhost/usr/local/
+                 backup    root@example.com:/etc/        example.com/etc/
+                 backup    root@example.com:/var/        example.com/var/
+                 backup    rsync://example.com:/pub/cvs/ example.com/pub/cvs/
 
              THE NEW WAY (from rsnapshot 1.2.0 on):
 
-                 backup    /etc/                  localhost/
-                 backup    /home/                 localhost/
-                 backup    /usr/local/            localhost/
-                 backup    root@example.com:/etc/ example.com/
-                 backup    root@example.com:/var/ example.com/
+                 backup    /etc/                         localhost/
+                 backup    /home/                        localhost/
+                 backup    /usr/local/                   localhost/
+                 backup    root@example.com:/etc/        example.com/
+                 backup    root@example.com:/var/        example.com/
+                 backup    rsync://example.com:/pub/cvs/ example.com/pub/
 
          But what happens when you had an entry like this?
 
-             backup    /var/qmail/            localhost/email/
+                 backup    /var/qmail/            localhost/email/
 
          As you can see, there is no direct mapping from the source path
          to the destination. You now have essentially four choices:
@@ -290,7 +311,7 @@ If you are upgrading from a previous installation:
          Finally, be aware that the backup_script parameter does NOT follow
          these new rules. Backup scripts still drop their files right into
          the destination directory specified. This makes sense when you
-         realize that, since the files came from a script, they didn't really
+         realize that since the files came from a script, they didn't really
          have a source path on the filesystem to begin with.
 
          Any backup_script parameters should remain unchanged from before.
