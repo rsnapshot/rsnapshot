@@ -1171,11 +1171,11 @@ sub parse_config_file {
 					if ("$b_dest" =~ m/^$bs_dest/) {
 						# duplicate entries, stop here
 						print_err (
-							"destination conflict between \"$tmp_b/\" and \"$tmp_bs/\" in backup / backup_script entries",
+							"destination conflict between \"$tmp_b\" and \"$tmp_bs\" in backup / backup_script entries",
 							1
 						);
 						syslog_err(
-							"destination conflict between \"$tmp_b/\" and \"$tmp_bs/\" in backup / backup_script entries"
+							"destination conflict between \"$tmp_b\" and \"$tmp_bs\" in backup / backup_script entries"
 						);
 						exit(1);
 					}
