@@ -29,7 +29,7 @@ INSTALLATION
 		chmod 600 /etc/rsnapshot.conf
 		
 QUICK START (for the impatient)
-	see the README file if you want the 30 second version
+	see the README file if you want the 30 second overview
 		
 CONFIGURATION
 	edit /etc/rsnapshot.conf to suit your tastes
