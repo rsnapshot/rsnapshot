@@ -97,6 +97,17 @@ my $verbose			= 0; # show the shell commands being executed
 my $extra_verbose	= 0; # show verbose messages from rsync
 my $debug			= 0; # super verbose debugging messages
 
+###############
+### SIGNALS ###
+###############
+
+# shut down gracefully if necessary
+$SIG{'HUP'}		= 'IGNORE';
+$SIG{'INT'}		= sub { bail('rsnapshot sent INT signal... cleaning up'); };
+$SIG{'QUIT'}	= sub { bail('rsnapshot sent QUIT signal... cleaning up'); };
+$SIG{'ABRT'}	= sub { bail('rsnapshot sent ABRT signal... cleaning up'); };
+$SIG{'TERM'}	= sub { bail('rsnapshot sent TERM signal... cleaning up'); };
+
 ##############################
 ### GET COMMAND LINE INPUT ###
 ##############################
@@ -357,6 +368,7 @@ if ( -f "$config_file" )	{
 		}
 		
 		# GLOBAL OPTIONS from the config file
+		# ALL ARE OPTIONAL
 		#
 		# ONE_FS
 		if ($var eq 'one_fs')	{
@@ -366,8 +378,16 @@ if ( -f "$config_file" )	{
 			if (1 == $value)	{ $one_fs = 1; }
 			$line_syntax_ok = 1;
 		}
-		
-		
+		# LOCKFILE
+		if ($var eq 'lockfile')	{
+			if (!defined($value))	{ bail("lockfile can not be blank"); }
+			if (0 == is_valid_local_abs_path("$value"))	{
+				 bail("lockfile must be a full path");
+			}
+			$config_vars{'lockfile'} = $value;
+			
+			$line_syntax_ok = 1;
+		}
 		
 		# make sure we understood this line
 		# if not, warn the user, and prevent the program from executing
@@ -402,6 +422,11 @@ if (0 == $file_syntax_ok)	{
 	print STDERR "If you think an entry looks right, make sure you don't have\n";
 	print STDERR "spaces where only tabs should be.\n";
 	exit(-1);
+}
+
+# IF WE'RE USING A LOCKFILE, MAKE SURE ONE DOESN'T EXIST
+if (defined($config_vars{'lockfile'}))	{
+	add_lockfile( $config_vars{'lockfile'} );
 }
 
 # FIGURE OUT WHICH INTERVAL WE'RE RUNNING, AND HOW IT RELATES TO THE OTHERS
@@ -467,6 +492,11 @@ if (0 == $interval_num)	{
 } else	{
 	# this is not the most frequent unit, just rotate
 	rotate_interval($cmd, $prev_interval);
+}
+
+# if we have a lockfile, remove it
+if (defined($config_vars{'lockfile'}))	{
+	remove_lockfile($config_vars{'lockfile'});
 }
 
 # if we got this far, assume success
@@ -696,7 +726,7 @@ sub bail	{
 	my $str = shift(@_);
 	
 	if ($str)	{ print STDERR $str . "\n"; }
-	
+	remove_lockfile($config_vars{'lockfile'});
 	exit(-1);
 }
 
@@ -796,6 +826,8 @@ sub is_real_local_abs_path	{
 			return (1);
 		}
 	}
+	
+	return (0);
 }
 
 sub is_directory_traversal	{
@@ -1073,6 +1105,68 @@ sub parse_backup_opts	{
 	}
 	
 	return (undef);
+}
+
+# accepts the path to the lockfile we will try to create
+# this either works, or exits the program at -1
+#
+# we don't use bail() to exit on error, because that would remove the
+# lockfile that may exist from another invocation
+sub add_lockfile	{
+	my $lockfile = shift(@_);
+	
+	if (!defined($lockfile))	{
+		print STDERR "add_lockfile() requires a value\n";
+		exit(-1);
+	}
+	
+	# valid?
+	if (0 == is_valid_local_abs_path($lockfile))	{
+		print STDERR "Lockfile $lockfile is not a valid file name\n";
+		exit(-1);
+	}
+	
+	# does a lockfile already exist?
+	if (1 == is_real_local_abs_path($lockfile))	{
+		print STDERR "Lockfile $lockfile exists, can not continue!\n";
+		exit(-1);
+	}
+	
+	my $result = open(LOCKFILE, "> $lockfile");
+	if (!defined($result))	{
+		print STDERR "Could not write lockfile $lockfile\n";
+		exit(-1);
+	}
+	
+	# use the current PID
+	print LOCKFILE $$;
+	
+	$result = close(LOCKFILE);
+	if (!defined($result))	{
+		print STDERR "Warning! Could not close lockfile $lockfile\n";
+	}
+}
+
+# accepts the path to a lockfile and tries to remove it
+# this subroutine either works, or it exits -1
+#
+# we don't use bail() to exit on error, because that would call
+# this subroutine twice in the event of a failure
+sub remove_lockfile	{
+	my $lockfile	= shift(@_);
+	my $result		= undef;
+	
+	if (!defined($lockfile))	{
+		print STDERR "remove_lockfile() must be passed a value\n";
+		exit(-1);
+	}
+	
+	$result = unlink($lockfile);
+	
+	if (0 == $result)	{
+		print STDERR "Error! Could not remove lockfile $lockfile\n";
+		exit(-1);
+	}
 }
 
 #####################
