@@ -3,7 +3,7 @@ rsnapshot changelog
 http://www.rsnapshot.org/
 ------------------------------------------------------------------------------
 
-VERSION 1.1.2 (Mar ?? ??:?? 2004)
+VERSION 1.1.2 (Mar 17 02:12 2004)
 ------------------------------------------------------------------------------
 - Fixed slash formatting issue with non-ssh rsync protocol calls
 - Fixed a slightly inconvenient permissions issue in rsnaptar
