@@ -4001,7 +4001,7 @@ sub upgrade_config_file {
 		exit(1);
 	}
 	if ('1.2' eq $config_version) {
-		print "Config file is already up to date.\n";
+		print "$config_file file is already up to date.\n";
 		exit(0);
 	}
 	# config_version is set, but not to anything we know about
@@ -4019,7 +4019,7 @@ sub upgrade_config_file {
 		exit(1);
 	}
 	if (! -r "$config_file") {
-		print STDERR "ERROR: Config file not readable.\n";
+		print STDERR "ERROR: $config_file not readable.\n";
 		exit(1);
 	}
 	
