@@ -20,6 +20,7 @@ VERSION 1.1.5 (??? ?? ??:?? 2004)
 - Added 'du' option to show disk usage in snapshot_root
 - Moved setlocale() after begin message
 - Added manual link() call when we're using --link-dest and a single file
+- Don't call syslog in bail() if it's a test run
 
 VERSION 1.1.4 (May 16 23:44 2004)
 ------------------------------------------------------------------------------

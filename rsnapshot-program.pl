@@ -1062,7 +1062,7 @@ sub bail	{
 	}
 	
 	# write to syslog if we're running for real
-	if (0 == $do_configtest)	{
+	if ((0 == $do_configtest) && (0 == $test))	{
 		syslog_err($str);
 	}
 	
