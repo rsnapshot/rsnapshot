@@ -9,6 +9,7 @@ Source: http://www.rsnapshot.org/downloads/rsnapshot-1.0.10.tar.gz
 Patch: rsnapshot.patch
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
 Requires: perl, rsync
+AutoReqProv: no
 
 %description
 This is a remote backup program that uses rsync to take backup snapshots of filesystems. 
