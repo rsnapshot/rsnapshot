@@ -16,6 +16,7 @@ cleanup:
 	/bin/rm -rf ${DEB_BUILD_DIR}/
 	/bin/rm -f rsnapshot-$(VERSION).tar.gz
 	/bin/rm -f rsnapshot-$(VERSION)-1.deb
+	/bin/rm -f rsnapshot-$(VERSION)-1.noarch.rpm
 	/bin/rm -f rsnapshot.conf.default
 	/bin/rm -f rsnapshot.html
 	/bin/rm -f pod2htmd.*
