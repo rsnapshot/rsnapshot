@@ -222,7 +222,5 @@ sub write_upgraded_file {
 	
 	print "$real_file upgraded successfully.\n";
 	print "\n";
-	print "Now try \"rsnapshot configtest\" to verify the upgrade was successful.\n";
-	print "\n";
 }
 
