@@ -2934,8 +2934,6 @@ sub rollback_failed_backups {
 	my $result;
 	my $rsync_short_args	= $default_rsync_short_args;
 	
-	my @cmd_stack = ();
-	
 	if (!defined($interval)) { bail('interval not defined in rollback_failed_backups()'); }
 	
 	# extra verbose?
@@ -2979,48 +2977,6 @@ sub rollback_failed_backups {
 				$errstr .= "Error! cp_al(\"$config_vars{'snapshot_root'}/$interval.1/$rollback_point\", ";
 				$errstr .= "\"$config_vars{'snapshot_root'}/$interval.0/$rollback_point\")";
 				bail($errstr);
-			}
-		}
-		
-		# if we don't have GNU cp, the previous cp -al won't have transferred all the files
-		# to make sure we don't miss them, take the additional step of rsyncing the files.
-		# this should catch the special files like FIFOs and device nodes.
-		# between this and the cp_al() above, this should catch everything, and unless the
-		# user has tons and tons of special files, the space difference shouldn't be much
-		#
-		if (!defined($config_vars{'cmd_cp'})) {
-			# setup rsync command
-			@cmd_stack = ();
-			#
-			# rsync
-			push(@cmd_stack, $config_vars{'cmd_rsync'});
-			#
-			# short args
-			if (defined($rsync_short_args) && ($rsync_short_args ne '')) {
-				push(@cmd_stack, $rsync_short_args);
-			}
-			#
-			# long args (not the defaults)
-			push(@cmd_stack, '--delete');
-			push(@cmd_stack, '--numeric-ids');
-			#
-			# src
-			push(@cmd_stack, "$config_vars{'snapshot_root'}/$interval.1/$rollback_point");
-			#
-			# dest
-			push(@cmd_stack, "$config_vars{'snapshot_root'}/$interval.0/$rollback_point");
-			
-			print_cmd(@cmd_stack);
-			
-			if (0 == $test) {
-				$result = system(@cmd_stack);
-				
-				if ($result != 0) {
-					# bitmask return value
-					my $retval = get_retval($result);
-					
-					bail("Error while rolling back $rollback_point");
-				}
 			}
 		}
 	}
@@ -3173,9 +3129,16 @@ sub cp_al {
 	if (defined($config_vars{'cmd_cp'})) {
 		$result = gnu_cp_al("$src", "$dest");
 		
-	# fall back to the built-in native perl replacement
+	# fall back to the built-in native perl replacement, followed by an rsync clean-up step
 	} else {
+		# native cp -al
 		$result = native_cp_al("$src", "$dest");
+		if (1 != $result) {
+			return ($result);
+		}
+		
+		# rsync clean-up
+		$result = rsync_cleanup_after_native_cp_al("$src", "$dest");
 	}
 	
 	return ($result);
@@ -3405,6 +3368,83 @@ sub native_cp_al {
 	if (! $result) {
 		print_err("Warning! Could not utime(" . $st->atime . ", " . $st->mtime . ", \"$dest\");", 2);
 		return(0);
+	}
+	
+	return (1);
+}
+
+# If we're using native_cp_al(), it can't transfer special files.
+# So, to make sure no one misses out, this subroutine gets called every time directly
+# after native_cp_al(), with the same source and destinations paths.
+#
+# Essentially it is running between two almost identical hard linked directory trees.
+# However, it will transfer over the few (if any) special files that were otherwise
+# missed.
+#
+# This subroutine specifies its own parameters for rsync's arguments. This is to make
+# sure that nothing goes wrong, since there is not much here that should be left to
+# interpretation.
+#
+sub rsync_cleanup_after_native_cp_al {
+	my $src		= shift(@_);
+	my $dest	= shift(@_);
+	
+	my $local_rsync_short_args = '-a';
+	my @cmd_stack = ();
+	
+	# make sure we were passed two arguments
+	if (!defined($src))  { return(0); }
+	if (!defined($dest)) { return(0); }
+	
+	# make sure this is directory to directory
+	if (($src !~ m/\/$/o) or ($dest !~ m/\/$/o)) {
+		print_err("rsync_cleanup_after_native_cp_al() only works on directories", 2);
+		return (0);
+	}
+	
+	# make sure we have a source directory
+	if ( ! -d "$src" ) {
+		print_err("rsync_cleanup_after_native_cp_al() needs a valid source directory as an argument", 2);
+		return (0);
+	}
+	# make sure we have a destination directory
+	if ( ! -d "$dest" ) {
+		print_err("rsync_cleanup_after_native_cp_al() needs a valid destination directory as an argument", 2);
+		return (0);
+	}
+	
+	# check verbose settings and modify rsync's short args accordingly
+	if ($verbose > 3) { $local_rsync_short_args .= 'v'; }
+	
+	# setup rsync command
+	#
+	# rsync
+	push(@cmd_stack, $config_vars{'cmd_rsync'});
+	#
+	# short args
+	push(@cmd_stack, $local_rsync_short_args);
+	#
+	# long args (not the defaults)
+	push(@cmd_stack, '--delete');
+	push(@cmd_stack, '--numeric-ids');
+	#
+	# src
+	push(@cmd_stack, "$src");
+	#
+	# dest
+	push(@cmd_stack, "$dest");
+	
+	print_cmd(@cmd_stack);
+	
+	if (0 == $test) {
+		my $result = system(@cmd_stack);
+		
+		if ($result != 0) {
+			# bitmask return value
+			my $retval = get_retval($result);
+			
+			bail("rsync returned error $retval in rsync_cleanup_after_native_cp_al()");
+		}
 	}
 	
 	return (1);
