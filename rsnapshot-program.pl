@@ -80,9 +80,6 @@ my $prev_interval;
 # i.e. cp -al hourly.$prev_interval_max/ daily.0/
 my $prev_interval_max;
 
-# command line flags from getopt
-my %opts;
-
 # command or interval to execute (first cmd line arg)
 my $cmd;
 
@@ -304,8 +301,11 @@ sub get_config_file	{
 
 # accepts no args
 # returns no args
-# sets some global variables
+# sets some global flag variables
 sub get_cmd_line_opts	{
+	# hold command line flags from getopt
+	my %opts;
+
 	# GET COMMAND LINE OPTIONS
 	getopt('c', \%opts);
 	getopts('vVtqx', \%opts);

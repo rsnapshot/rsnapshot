@@ -15,6 +15,7 @@ VERSION 1.1.6 (??? ?? ??:?? 2004)
 - Moved $rsync_include_args and $rsync_include_file_args into
   parse_config_file()
 - Removed the $have_{cmd} global variables entirely
+- Took %opts out of the global namespace and into get_cmd_line_opts()
 
 VERSION 1.1.5 (Jun 20 20:56 2004)
 ------------------------------------------------------------------------------
