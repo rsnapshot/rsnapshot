@@ -63,7 +63,7 @@ my @rollback_points;
 my @intervals;
 
 # store interval data (mostly info about which one we're on, what was before, etc.)
-# this is a convenient reference to some of the data from @intervals
+# this is a convenient reference to some of the data from and metadata about @intervals
 my $interval_data_ref;
 
 # global flags that change the outcome of the program,
@@ -105,7 +105,7 @@ my $default_rsync_long_args		= '--delete --numeric-ids';
 my $default_ssh_args			= undef;
 
 # exactly how the program was called, with all arguments
-# this is set before getopt() modifies @ARGV
+# this is set before getopts() modifies @ARGV
 my $run_string = "$0 " . join(' ', @ARGV);
 
 ########################################
@@ -140,23 +140,20 @@ if (!defined($cmd) or ((! $cmd) && ('0' ne $cmd)) )	{
 	exit(1);
 }
 
-# if we need to run a command that doesn't require the config file, do it now (and exit)
-if ($cmd eq 'help')	{
-	show_help();
-	exit(0);
-}
-if ($cmd eq 'version')	{
-	print "rsnapshot $VERSION\n";
-	exit(0);
-}
-if ($cmd eq 'version_only')	{
-	print $VERSION;
-	exit(0);
-}
-
 # if we're just doing a configtest, set that flag
 if ($cmd eq 'configtest')	{
 	$do_configtest = 1;
+
+# if we need to run a command that doesn't require the config file, do it now (and exit)
+} elsif ($cmd eq 'help')	{
+	show_help();
+	exit(0);
+} elsif ($cmd eq 'version')	{
+	print "rsnapshot $VERSION\n";
+	exit(0);
+} elsif ($cmd eq 'version_only')	{
+	print $VERSION;
+	exit(0);
 }
 
 # parse config file (if it exists)
@@ -187,6 +184,7 @@ if ($cmd eq 'du')	{
 #
 
 # figure out which interval we're working on
+# $cmd should store the name of the interval we'll run against
 $interval_data_ref = get_interval_data( $cmd );
 
 # log the beginning of this run
@@ -240,7 +238,7 @@ See the GNU General Public License for details.
 
 Options:
     -v verbose       - show equivalent shell commands being executed
-    -t test          - show equivalent shell commands that would be executed
+    -t test          - show verbose output, but don't touch anything
     -c [file]        - specify alternate config file (-c /path/to/file)
     -x one_fs        - don't cross filesystems (same as -x option to rsync)
     -q quiet         - supress non-fatal warnings
