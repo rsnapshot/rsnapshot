@@ -8,6 +8,7 @@ VERSION 1.2.1 (??? ?? ??:?? 2005)
 - David Cantrell <david@cantrell.org.uk> wrote the rsnapshot-diff utility
 - Chris Petersen added cwrsync permanent-share support
 - Robert Jackson <RobertJ@promedicalinc.com> added use_lazy_deletes
+- Nathan Rosenquist <nathan@rsnapshot.org> added rollback for backup_scripts
 
 VERSION 1.2.0 (Jan 31 21:43 2005)
 ------------------------------------------------------------------------------

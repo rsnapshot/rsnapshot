@@ -2922,6 +2922,9 @@ sub exec_backup_script {
 			
 			print_err ("backup_script $$bp_ref{'script'} returned $retval", 2);
 			syslog_err("backup_script $$bp_ref{'script'} returned $retval");
+			
+			# if the backup script failed, roll back to the last good data
+			push(@rollback_points, $$bp_ref{'dest'} );
 		}
 	}
 	
