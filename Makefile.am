@@ -26,7 +26,7 @@ clean:
 	/bin/rm -f rsnapshot.html
 	/bin/rm -f pod2htmd.*
 	/bin/rm -f pod2htmi.*
-	/bin/rm -f Makefile config.log config.status configure.lineno rsnapshot
+	/bin/rm -f Makefile config.log config.status configure.lineno rsnapshot rsnapshot-diff
 	
 rpm: tar
 	/bin/cp rsnapshot-$(VERSION).tar.gz $(RPM_BASE_DIR)/SOURCES/
@@ -64,7 +64,7 @@ tar: man
 	/bin/tar czf rsnapshot-$(VERSION).tar.gz rsnapshot-$(VERSION)/
 	/bin/rm -rf rsnapshot-$(VERSION)/
 
-bin_SCRIPTS = rsnapshot
+bin_SCRIPTS = rsnapshot rsnapshot-diff
 man_MANS = rsnapshot.1
 sysconf_DATA = rsnapshot.conf.default
 
