@@ -114,6 +114,15 @@ my $default_verbose		= 2;
 my $loglevel			= undef;
 my $default_loglevel	= 3;
 
+# global defaults for external programs
+my $global_default_rsync_short_args	= '-a';
+my $global_default_rsync_long_args	= '--delete --numeric-ids';
+my $global_default_ssh_args			= undef;
+
+# pre-buffer the include/exclude parameter flags
+my $rsync_include_args		= undef;
+my $rsync_include_file_args	= undef;
+
 # assume everything will go well. one slip up and the flag will be toggled
 my $run_perfect	= 1;
 
@@ -518,6 +527,66 @@ if ( -f "$config_file" )	{
 			$line_syntax_ok = 1;
 			next;
 		}
+		# INCLUDE
+		if ($var eq 'include')	{
+			if (!defined($rsync_include_args))	{
+				$rsync_include_args = "--include=$value";
+			} else	{
+				$rsync_include_args .= " --include=$value";
+			}
+			$line_syntax_ok = 1;
+			next;
+		}
+		# EXCLUDE
+		if ($var eq 'exclude')	{
+			if (!defined($rsync_include_args))	{
+				$rsync_include_args = "--exclude=$value";
+			} else	{
+				$rsync_include_args .= " --exclude=$value";
+			}
+			$line_syntax_ok = 1;
+			next;
+		}
+		# INCLUDE FILE
+		if ($var eq 'include_file')	{
+			if (0 == is_real_local_abs_path($value))	{
+				bail("include_file $value must be a valid absolute path");
+			} elsif (1 == is_directory_traversal($value))	{
+				bail("Directory traversal attempted in $value");
+			} elsif (( -e "$value" ) && ( ! -f "$value" ))	{
+				bail("include_file $value exists, but is not a file");
+			} elsif ( ! -r "$value" )	{
+				bail("include_file $value exists, but is not readable");
+			} else	{
+				if (!defined($rsync_include_file_args))	{
+					$rsync_include_file_args = "--include-from=$value";
+				} else	{
+					$rsync_include_file_args .= " --include-from=$value";
+				}
+				$line_syntax_ok = 1;
+				next;
+			}
+		}
+		# EXCLUDE FILE
+		if ($var eq 'exclude_file')	{
+			if (0 == is_real_local_abs_path($value))	{
+				bail("exclude_file $value must be a valid absolute path");
+			} elsif (1 == is_directory_traversal($value))	{
+				bail("Directory traversal attempted in $value");
+			} elsif (( -e "$value" ) && ( ! -f "$value" ))	{
+				bail("exclude_file $value exists, but is not a file");
+			} elsif ( ! -r "$value" )	{
+				bail("exclude_file $value exists, but is not readable");
+			} else	{
+				if (!defined($rsync_include_file_args))	{
+					$rsync_include_file_args = "--exclude-from=$value";
+				} else	{
+					$rsync_include_file_args .= " --exclude-from=$value";
+				}
+				$line_syntax_ok = 1;
+				next;
+			}
+		}
 		# RSYNC SHORT ARGS
 		if ($var eq 'rsync_short_args')	{
 			$config_vars{'rsync_short_args'} = $value;
@@ -662,7 +731,7 @@ if (scalar(@intervals) > 1)	{
 	}
 }
 
-# SET VERBOSE LEVEL AND LOGLEVEL IF WE HAVEN'T YET
+# SET VARIOUS DEFAULTS IN CASE THEY GOT OVERLOOKED
 # if we didn't manage to get a verbose level yet, either through the config file
 # or the command line, use the default
 if (!defined($verbose))	{
@@ -671,6 +740,20 @@ if (!defined($verbose))	{
 # same for loglevel
 if (!defined($loglevel))	{
 	$loglevel = $default_loglevel;
+}
+# assemble rsync include/exclude args
+if (defined($rsync_include_args))	{
+	if (!defined($config_vars{'rsync_long_args'}))	{
+		$config_vars{'rsync_long_args'} = $global_default_rsync_long_args;
+	}
+	$config_vars{'rsync_long_args'} .= " $rsync_include_args";
+}
+# assemble rsync include/exclude file args
+if (defined($rsync_include_file_args))	{
+	if (!defined($config_vars{'rsync_long_args'}))	{
+		$config_vars{'rsync_long_args'} = $global_default_rsync_long_args;
+	}
+	$config_vars{'rsync_long_args'} .= " $rsync_include_file_args";
 }
 
 # CONFIG TEST ONLY?
@@ -1387,9 +1470,9 @@ sub backup_interval	{
 	if (!defined($interval))	{ bail('backup_interval() expects an argument'); }
 	
 	# set up default args for rsync and ssh
-	my $default_rsync_short_args	= '-a';
-	my $default_rsync_long_args		= '--delete --numeric-ids';
-	my $default_ssh_args			= undef;
+	my $default_rsync_short_args	= $global_default_rsync_short_args;
+	my $default_rsync_long_args		= $global_default_rsync_long_args;
+	my $default_ssh_args			= $global_default_ssh_args;
 	
 	# if the config file specified rsync or ssh args, use those instead
 	if (defined($config_vars{'rsync_short_args'}))	{

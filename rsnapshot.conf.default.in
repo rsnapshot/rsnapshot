@@ -70,6 +70,20 @@ interval	weekly	4
 #
 verbose		2
 
+# The include and exclude parameters, if enabled, simply get passed directly
+# to rsync. Please look up the --include and --exclude options in the
+# rsync man page for more details.
+# 
+#include	???
+#exclude	???
+
+# The include_file and exclude_file parameters, if enabled, simply get
+# passed directly to rsync. Please look up the --include-from and
+# --exclude-from options in the rsync man page for more details.
+#
+#include_file	/path/to/include/file
+#exclude_file	/path/to/exclude/file
+
 # Default rsync args. All rsync commands have at least these options set.
 #
 #rsync_short_args	-a
@@ -77,18 +91,18 @@ verbose		2
 
 # ssh has no args passed by default, but you can specify some here.
 #
-#ssh_args		-p 22
-
-# If you enable the lockfile, make sure the lockfile directory is
-# not world writable. Otherwise anyone can prevent the program from running.
-#
-#lockfile	/var/run/rsnapshot
+#ssh_args	-p 22
 
 # If this is enabled, rsync won't span filesystem partitions within a
 # backup point. This essentially passes the -x option to rsync.
 # The default is 0 (off).
 #
 #one_fs		0
+
+# If you enable the lockfile, make sure the lockfile directory is
+# not world writable. Otherwise anyone can prevent the program from running.
+#
+#lockfile	/var/run/rsnapshot
 
 ###############################
 ### BACKUP POINTS / SCRIPTS ###
