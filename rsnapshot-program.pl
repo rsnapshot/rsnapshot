@@ -904,7 +904,7 @@ sub rotate_interval	{
 			if (0 == $test)	{
 				my $result = rename( "$config_vars{'snapshot_root'}/$interval.$i/", ("$config_vars{'snapshot_root'}/$interval." . ($i+1) . '/') );
 				if (0 == $result)	{
-					bail("error during move(\"$config_vars{'snapshot_root'}/$interval.$i/)\", \"" . ("$config_vars{'snapshot_root'}/$interval." . ($i+1) . '/') . "\");");
+					bail("error during rename(\"$config_vars{'snapshot_root'}/$interval.$i/)\", \"" . ("$config_vars{'snapshot_root'}/$interval." . ($i+1) . '/') . "\");");
 				}
 			}
 		}
@@ -1602,18 +1602,45 @@ sub file_diff   {
 	my $file1 = shift(@_);
 	my $file2 = shift(@_);
 	
-	my $buf1 = undef;
-	my $buf2 = undef;
-	my $done = 0;
+	my $BUFSIZE = 16384;
+	
+	my $st1		= undef;
+	my $st2		= undef;
+	my $buf1	= undef;
+	my $buf2	= undef;
+	
+	my $done	= 0;
 	my $is_different = 0;
 	
 	if (! -r "$file1")  { return (undef); }
 	if (! -r "$file2")  { return (undef); }
 	
+	# CHECK FILE SIZES AND INODES FIRST
+	$st1 = lstat("$file1");
+	$st2 = lstat("$file2");
+	
+	if (!defined($st1))	{ return (undef); }
+	if (!defined($st2))	{ return (undef); }
+	
+	# if they aren't even the same size, they can't possibly be the same,
+	# so return that they're different and don't bother opening up the files at all
+	if ($st1->size != $st2->size)	{
+		return (1);
+	}
+	
+	# if the files have the same inode, they are hard links to the same file.
+	# therefore, they are the same.
+	if ($st1->ino == $st2->ino) {
+		return (0);
+	}
+	
+	# ok, we're still here. that means we have to...
+	
+	# COMPARE FILES ONE CHUNK AT A TIME
 	open(FILE1, "$file1") or return (undef);
 	open(FILE2, "$file2") or return (undef);
 	
-	while ((0 == $done) && (read(FILE1, $buf1, 16384)) && (read(FILE2, $buf2, 16384)))  {
+	while ((0 == $done) && (read(FILE1, $buf1, $BUFSIZE)) && (read(FILE2, $buf2, $BUFSIZE)))	{
 		if ($buf1 ne $buf2)	 {
 			$is_different = 1;
 			$done = 1;
