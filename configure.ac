@@ -65,6 +65,39 @@ fi
 
 
 dnl
+dnl RM CHECK (optional program)
+dnl
+dnl if the user specified a path, try that first
+AC_ARG_WITH(logger,
+	[  --with-rm=PATH          Specify the path to rm ],
+	[
+		if test "x$withval" != "xno"; then
+			if test -x "$withval"; then
+				RM=$withval
+			else
+				AC_MSG_ERROR(rm not found)
+			fi
+		else
+			RM=no
+		fi
+	]
+)
+dnl if the user didn't specify a path, hunt for it
+if test "$RM" != "no"; then
+	if test "$RM" = ""; then
+		AC_PATH_PROG(RM, rm, no)
+	fi
+fi
+dnl if we couldn't find it, provide an example
+if test "$RM" = "no"; then
+	RM=/bin/rm
+fi
+dnl either way, set the cmd_ssh var
+AC_SUBST(CMD_RM, "cmd_rm    	$RM")
+
+
+
+dnl
 dnl SSH CHECK (optional program)
 dnl
 dnl if the user specified a path, try that first

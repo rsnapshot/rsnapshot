@@ -3040,6 +3040,8 @@ B<cmd_ssh>       Full path to ssh (optional)
 
 B<cmd_cp>        Full path to cp  (optional, but must be GNU version)
 
+B<cmd_rm>        Full path to rm  (optional)
+
 B<cmd_logger>    Full path to logger (optional, for syslog support)
 
 =over 4
@@ -3351,6 +3353,8 @@ B<cmd_rsync>       /usr/bin/rsync
 B<cmd_ssh>         /usr/bin/ssh
 
 B<#cmd_cp>         /bin/cp
+
+B<cmd_rm>          /bin/rm
 
 B<cmd_logger>      /usr/bin/logger
 

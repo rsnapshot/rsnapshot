@@ -30,6 +30,9 @@ snapshot_root	/.snapshots/
 #
 #cmd_cp		/bin/cp
 
+# uncomment this to use the rm program instead of the built-in perl routine
+#@CMD_RM@
+
 # rsync must be enabled for anything to work.
 @CMD_RSYNC@
 
