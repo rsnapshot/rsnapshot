@@ -16,13 +16,15 @@ and remote machines over ssh. The code makes extensive use of hard links
 whenever possible, to greatly reduce the disk space required.
 
 It is written entirely in perl with no module dependencies, and has been
-tested with versions 5.004 through 5.8.1.
+tested with versions 5.004 through 5.8.2.
 
 This program should work on any reasonably modern UNIX compatible OS. It
 has been tested successfully on the following operating systems:
  - Debian: 3.0 (woody), unstable
  - Redhat: 7.x, 8.0
  - Fedora Core 1
+ - FreeBSD 4.9-STABLE
+ - OpenBSD 3.3
  - Solaris 8
  - Mac OS X
  - IRIX 6.5
