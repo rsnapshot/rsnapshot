@@ -39,8 +39,8 @@ require 5.004;
 use strict;
 use DirHandle;
 use Getopt::Std;
-use File::stat;
 use File::Path;
+use File::stat;
 
 #########################
 ### DECLARE VARIABLES ###
@@ -212,17 +212,6 @@ if ( -f $config_file )	{
 			}
 		# END CRUFT
 		
-		# CHECK FOR GNU cp
-		if ($var eq 'cmd_cp')	{
-			if ( -x $value )	{
-				$config_vars{'cmd_cp'} = $value;
-				$line_syntax_ok = 1;
-				$use_gnu_cp = 1;
-			} else	{
-				bail("Could not find $value, please fix cmd_cp in $config_file");
-			}
-		}
-		
 		# CHECK FOR RSYNC (required)
 		if ($var eq 'cmd_rsync')	{
 			if ( -x $value )	{
@@ -240,6 +229,17 @@ if ( -f $config_file )	{
 				$line_syntax_ok = 1;
 			} else	{
 				bail("Could not find $value, please fix cmd_ssh in $config_file");
+			}
+		}
+		
+		# CHECK FOR GNU cp
+		if ($var eq 'cmd_cp')	{
+			if ( -x $value )	{
+				$config_vars{'cmd_cp'} = $value;
+				$line_syntax_ok = 1;
+				$use_gnu_cp = 1;
+			} else	{
+				bail("Could not find $value, please fix cmd_cp in $config_file");
 			}
 		}
 		
@@ -346,6 +346,9 @@ if ( -f $config_file )	{
 		print STDERR "cmd_touch\n";
 		print STDERR "cmd_mv\n";
 		print STDERR "cmd_rm\n";
+		print STDERR "\n";
+		print STDERR "Furthermore, cmd_cp is now optional, but MUST point\n";
+		print STDERR "to the GNU version of cp if specified\n";
 		print STDERR "----------------------------------------------------\n";
 		print STDERR "Please remove these lines from $config_file\n";
 		print STDERR "----------------------------------------------------\n";
