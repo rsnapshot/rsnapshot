@@ -3,7 +3,9 @@ rsnapshot TODO list:
 for version 1.1.x
 ------------------------------------------------------------------------------
 - Figure out how to handle rsync_short_args when seperated out (i.e. -v -x -y)
-  Either validate, prohibit, or fix
+  Some combination of validation, prohibiting, fixing and documenting
+
+- Add auto-quoting to ssh if any args are used (i.e. --rsh="/usr/bin/ssh -v")
 
 - Add interactive mode to generate config files.
 
