@@ -742,6 +742,17 @@ sub backup_interval	{
 				bail("Could not understand source \"$src\" in backup_interval()");
 			}
 			
+			# assemble the final command
+			@cmd_stack = (
+				$config_vars{'cmd_rsync'}, $rsync_short_args, @rsync_long_args_stack,
+					$src, "$config_vars{'snapshot_root'}/$interval.0/$$sp_ref{'dest'}"
+			);
+			
+			# RUN THE RSYNC COMMAND FOR THIS BACKUP POINT
+			# BASED ON THE @cmd_stack VARS
+			if (1 == $verbose)	{ print join(' ', @cmd_stack, "\n"); }
+			if (0 == $test)		{ system(@cmd_stack); }
+			
 		# if we have a backup script, run it
 		} elsif (defined($$sp_ref{'script'}))	{
 			# work in a temp dir, and make this the source for the rsync operation later
@@ -791,35 +802,38 @@ sub backup_interval	{
 				chdir($cwd);
 			}
 			
+			# TODO
+			# add code here to native compare today's backup script files
+			# and yesterday's backup script files, using file_diff().
+			#
+			# rsync sees that the timestamps are different, and insists
+			# on changing things even if the files are bit for bit identical on content.
+			#
+			# essentially, we need to call a yet to be written recursive subroutine here
+			# that will intelligently sync the tmp/ dir and the dest dir the way we wish
+			# rsync would. that way if a database backup doesn't change for 3 days in a row,
+			# we won't have 3 redundant copies with only different timestamps.
+			
+			
+			
+			# remove the tmp directory if we created one
+			if (defined($tmpdir))	{
+				if ( -e "$tmpdir" )	{
+					if (1 == $verbose)	{ print "rm -rf $tmpdir\n"; }
+					if (0 == $test)	{
+						$result = rmtree("$tmpdir", 0, 0);
+						if (0 == $result)	{
+							bail("Could not rmtree(\"$tmpdir\",0,0);");
+						}
+					}
+				}
+			}
+			
 		# this should never happen
 		} else	{
 			bail("Either src or script must be defined in backup_interval()");
 		}
 		
-		# assemble the final command
-		@cmd_stack = (
-			$config_vars{'cmd_rsync'}, $rsync_short_args, @rsync_long_args_stack,
-				$src, "$config_vars{'snapshot_root'}/$interval.0/$$sp_ref{'dest'}"
-		);
-		
-		# RUN THE RSYNC COMMAND FOR THIS BACKUP POINT
-		# BASED ON THE @cmd_stack VARS
-		if (1 == $verbose)	{ print join(' ', @cmd_stack, "\n"); }
-		if (0 == $test)		{ system(@cmd_stack); }
-		
-		
-		# remove the tmp directory if we created one
-		if (defined($tmpdir))	{
-			if ( -e "$tmpdir" )	{
-				if (1 == $verbose)	{ print "rm -rf $tmpdir\n"; }
-				if (0 == $test)	{
-					$result = rmtree("$tmpdir", 0, 0);
-					if (0 == $result)	{
-						bail("Could not rmtree(\"$tmpdir\",0,0);");
-					}
-				}
-			}
-		}
 	}
 	
 	# update mtime of $interval.0 to reflect snapshot time
