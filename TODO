@@ -4,8 +4,9 @@ for version 1.0.x
 ------------------------------------------------------------------------------
 - Get package set up with the autoconf build system
 
-- Update string manipulations of paths to use File::Spec functions where
-  possible
+- Update string manipulations and comparisons of paths to use File::Spec and
+  File::Basename functions where possible. Double check they're fully
+  compatible with Perl 5.004
 
 - Add an file exclusion list feature
 
