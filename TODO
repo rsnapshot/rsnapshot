@@ -2,8 +2,6 @@ rsnapshot TODO list:
 
 for version 1.0.x
 ------------------------------------------------------------------------------
-- Add documentation to the Debian package the same way the RPM package has
-
 - Add SMB backup script example in utils/
 
 - Update string manipulations and comparisons of paths to use File::Spec and

@@ -43,7 +43,7 @@ rm -rf $RPM_BUILD_DIR/%{name}-%{version}/
 
 %files
 %defattr(-,root,root)
-%verify(user group mode md5 size mtime) %doc COPYING README INSTALL TODO
+%verify(user group mode md5 size mtime) %doc AUTHORS COPYING ChangeLog README INSTALL TODO
 %verify(user group mode md5 size mtime) %config %{_sysconfdir}/rsnapshot.conf.default
 %verify(user group mode) %config(noreplace) %{_sysconfdir}/rsnapshot.conf
 %verify(user group mode md5 size mtime) %{_bindir}/rsnapshot
