@@ -12,60 +12,89 @@
 #                                               #
 #################################################
 
-# root directory to keep snapshots in
+###########################
+# SNAPSHOT ROOT DIRECTORY #
+###########################
+
+# All snapshots will be stored under this root directory.
 snapshot_root	/.snapshots/
 
-# EXTERNAL PROGRAM DEPENDENCIES
-#
-# LINUX USERS:   Make sure you uncomment "cmd_cp". This gives you extra features.
+#################################
+# EXTERNAL PROGRAM DEPENDENCIES #
+#################################
+
+# LINUX USERS:   Be sure to uncomment "cmd_cp". This gives you extra features.
 # EVERYONE ELSE: Leave "cmd_cp" commented out for compatibility.
 #
 # See the README file or the man page for more details.
 #
-@CMD_RSYNC@
-#@CMD_SSH@
 #cmd_cp		/bin/cp
 
-# BACKUP INTERVALS
-# (must be unique and in ascending order, i.e. hourly, daily, weekly, etc.)
+# rsync must be enabled for anything to work.
+@CMD_RSYNC@
+
+# Uncomment this to enable remote ssh backups over rsync.
+#@CMD_SSH@
+
+# Uncomment this to enable syslog logging.
+#@CMD_LOGGER@
+
+#########################################
+#           BACKUP INTERVALS            #
+# Must be unique and in ascending order #
+# i.e. hourly, daily, weekly, etc.      #
+#########################################
+
 interval	hourly	6
 interval	daily	7
 interval	weekly	4
-# interval	monthly	3
+#interval	monthly	3
 
-# GLOBAL OPTIONS
+############################################
+#              GLOBAL OPTIONS              #
+# All are optional, with sensible defaults #
+############################################
+
+# Default rsync args. All rsync commands have at least these options set.
 #
-# default rsync args
 #rsync_short_args	-a
 #rsync_long_args	--delete --numeric-ids
-#
-# ssh has no args by default, but you can specify them here
-#ssh_args			-p 22
 
-# make sure the lockfile directory is not world writable!
+# SSH has no args passed by default, but you can specify some here.
+#
+#ssh_args		-p 22
+
+# If you enable the lockfile, make sure the lockfile directory is
+# not world writable. Otherwise anyone can prevent the program from running.
+#
 #lockfile	/var/lock/subsys/rsnapshot
 
-# don't span filesystems within a backup point
+# If this is enabled, rsync won't span filesystem partitions within a
+# backup point. This essentially passes the -x option to rsync.
+# The default is 0 (off).
+#
 #one_fs		0
 
-#####################
-### BACKUP POINTS ###
-#####################
+###############################
+### BACKUP POINTS / SCRIPTS ###
+###############################
 
 # LOCALHOST
-backup	/home/			localhost/home/
-backup	/etc/			localhost/etc/
-backup	/usr/local/		localhost/usr/local/
-#backup	/etc/passwd		localhost/etc/passwd
-#backup	/home/foo/My Documents/	localhost/home/foo/My Documents/
-#backup	/foo/bar/		localhost/foo/bar/	one_fs=1, rsync_short_args=-urltvpog, rsync_long_args=--timeout=60 --cvs-exclude
+backup	/home/		localhost/home/
+backup	/etc/		localhost/etc/
+backup	/usr/local/	localhost/usr/local/
+#backup	/etc/passwd	localhost/etc/passwd
+#backup	/home/foo/My Documents/		localhost/home/foo/My Documents/
+#backup	/foo/bar/	localhost/foo/bar/	one_fs=1, rsync_short_args=-urltvpog
+#backup_script		/usr/local/bin/backup_pgsql.sh	localhost/postgres/
 
 # EXAMPLE.COM
 #backup	root@example.com:/home/	example.com/home/
 #backup	root@example.com:/etc/	example.com/home/
 
+# CVS.SOURCEFORGE.NET
+#backup_script	/usr/local/bin/backup_rsnapshot_cvsroot.sh	cvs.sourceforge.net/
+
 # RSYNC.SAMBA.ORG
 #backup	rsync://rsync.samba.org/rsyncftp/	rsync.samba.org/rsyncftp/
 
-# CVS.SOURCEFORGE.NET
-#backup_script			/usr/local/bin/backup_rsnapshot_cvsroot.sh	cvs.sourceforge.net/
