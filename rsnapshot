@@ -7,7 +7,7 @@
 # by Nathan Rosenquist                                                 #
 # based on code originally by Mike Rubel                               #
 #                                                                      #
-# http://rsnapshot.sourceforge.net/                                    #
+# http://rsnapshot.scubaninja.com/                                     #
 #                                                                      #
 # rsnapshot comes with ABSOLUTELY NO WARRANTY.  This is free software, #
 # and you are welcome to redistribute it under certain conditions.     #
@@ -1106,7 +1106,7 @@ To set the number of backups stored, set the interval numbers in B</etc/rsnapsho
 
 Based on code originally by Mike Rubel B<http://www.mikerubel.org/computers/rsync_snapshots/>
 
-Rewritten and expanded in Perl by Nathan Rosenquist B<http://rsnapshot.sourceforge.net/>
+Rewritten and expanded in Perl by Nathan Rosenquist B<http://rsnapshot.scubaninja.com/>
 
 Carl Wilhelm Soderstrom B<(chrome@real-time.com)> created the RPM .spec file which allowed the RPM package to be built
 
