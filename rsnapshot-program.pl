@@ -569,7 +569,6 @@ sub parse_config_file	{
 			my $dest		= $value2;	# dest directory
 			my $opt_str		= $value3;	# option string from this backup point
 			my $opts_ref	= undef;	# array_ref to hold parsed opts
-			my %hash;					# data to stick in @backup_points
 			
 			if ( !defined($config_vars{'snapshot_root'}) )	{
 				config_err($file_line_num, "$line - snapshot_root needs to be defined before backup points");
@@ -636,19 +635,27 @@ sub parse_config_file	{
 				}
 			}
 			
-			# make sure we're not backing up the snapshot directory
-			# if so, set a flag for rsync_backup_point() to add --exclude rules later
-			if ((is_real_local_abs_path("$src")) && ($config_vars{'snapshot_root'} =~ m/^$src/))	{
-				$hash{'exclude_snapshot_root'} = 1;
-			}
-			
 			# remember src/dest
-			$hash{'src'}	= $src;
-			$hash{'dest'}	= $dest;
-			if (defined($opts_ref))	{
-				$hash{'opts'} = $opts_ref;
+			# also, first check to see that we're not backing up the snapshot directory
+			if ((is_real_local_abs_path("$src")) && ($config_vars{'snapshot_root'} =~ m/^$src/))	{
+						my %hash;
+				$hash{'src'}	= $src;
+				$hash{'dest'}	= $dest;
+						if (defined($opts_ref))	{
+							$hash{'opts'} = $opts_ref;
+						}
+				(my $snapshot_path = $config_vars{'snapshot_root'}) =~ s/^$src//;
+				$hash{'opts'}{'extra_rsync_long_args'} .= sprintf(' --exclude=%s', $snapshot_path);
+						push(@backup_points, \%hash);
+			} else	{
+				my %hash;
+				$hash{'src'}	= $src;
+				$hash{'dest'}	= $dest;
+				if (defined($opts_ref))	{
+					$hash{'opts'} = $opts_ref;
+				}
+				push(@backup_points, \%hash);
 			}
-			push(@backup_points, \%hash);
 			
 			next;
 		}
@@ -1027,6 +1034,14 @@ sub parse_backup_opts	{
 	
 	# then loop through and split on equals
 	foreach my $pair (@pairs)	{
+		my $additive;
+		if ($pair =~ /^\+/) {
+			$additive = 1;
+			$pair =~ s/^.//;
+		} else {
+			$additive = 0;
+		}
+
 		my ($name, $value) = split(/=/, $pair, 2);
 		if ( !defined($name) or !defined($value) )	{
 			return (undef);
@@ -1040,7 +1055,11 @@ sub parse_backup_opts	{
 		$value =~ s/\s{0,}$//o;
 		
 		# ok, it's a name/value pair and it's ready for more validation
+		if ($additive) {
+			$parsed_opts{'extra_' . $name} = $value;
+		} else {
 		$parsed_opts{$name} = $value;
+		}
 		
 		# VALIDATE ARGS
 		# one_fs
@@ -1954,8 +1973,6 @@ sub is_real_local_abs_path	{
 	
 	if (!defined($path))	{ return (undef); }
 	if (1 == is_valid_local_abs_path($path))	{
-		# check to see if it's a symlink or a local path that exists
-		# this prevents dangling symlinks from being rejected
 		if ((-l "$path") or (-e "$path"))	{
 			return (1);
 		}
@@ -2268,13 +2285,23 @@ sub rsync_backup_point	{
 	if ( defined($$bp_ref{'opts'}) && defined($$bp_ref{'opts'}->{'rsync_short_args'}) )	{
 		$rsync_short_args = $$bp_ref{'opts'}->{'rsync_short_args'};
 	}
+	if ( defined($$bp_ref{'opts'}) && defined($$bp_ref{'opts'}->{'extra_rsync_short_args'}) )	{
+		$rsync_short_args .= ' ' if ($rsync_short_args);
+		$rsync_short_args .= $$bp_ref{'opts'}->{'extra_rsync_short_args'};
+	}
 	# RSYNC LONG ARGS
 	if ( defined($$bp_ref{'opts'}) && defined($$bp_ref{'opts'}->{'rsync_long_args'}) )	{
 		@rsync_long_args_stack = split(/\s+/, $$bp_ref{'opts'}->{'rsync_long_args'});
 	}
+	if ( defined($$bp_ref{'opts'}) && defined($$bp_ref{'opts'}->{'extra_rsync_long_args'}) )	{
+		push(@rsync_long_args_stack, split(/\s+/, $$bp_ref{'opts'}->{'extra_rsync_long_args'}));
+	}
 	# SSH ARGS
 	if ( defined($$bp_ref{'opts'}) && defined($$bp_ref{'opts'}->{'ssh_args'}) )	{
 		$ssh_args = $$bp_ref{'opts'}->{'ssh_args'};
+	}
+	if ( defined($$bp_ref{'opts'}) && defined($$bp_ref{'opts'}->{'extra_ssh_args'}) )	{
+		$ssh_args .= ' ' . $$bp_ref{'opts'}->{'extra_ssh_args'};
 	}
 	# ONE_FS
 	if ( defined($$bp_ref{'opts'}) && defined($$bp_ref{'opts'}->{'one_fs'}) )	{
@@ -2289,11 +2316,7 @@ sub rsync_backup_point	{
 	#
 	# local filesystem
 	if ( is_real_local_abs_path($$bp_ref{'src'}) )	{
-		# make sure we're not backing up the snapshot_root!
-		if ( defined($$bp_ref{'exclude_snapshot_root'}) )	{
-			# TODO: figure out exclude rules here
-			push( @rsync_long_args_stack, "--exclude=$config_vars{'snapshot_root'}/**" );
-		}
+		# no change
 		
 	# if this is a user@host:/path, use ssh
 	} elsif ( is_ssh_path($$bp_ref{'src'}) )	{
