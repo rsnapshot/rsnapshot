@@ -779,7 +779,6 @@ sub backup_interval	{
 		} elsif (defined($$sp_ref{'script'}))	{
 			# work in a temp dir, and make this the source for the rsync operation later
 			$tmpdir = "$config_vars{'snapshot_root'}/tmp/";
-			$src = $tmpdir;
 			
 			# remove the tmp directory if it's still there
 			if ( -e "$tmpdir" )	{
@@ -824,19 +823,19 @@ sub backup_interval	{
 				chdir($cwd);
 			}
 			
-			# TODO:
-			# add code here to native compare today's backup script files
-			# and yesterday's backup script files, using file_diff().
+			# sync the output of the backup script into this snapshot
+			# this is using a native function since rsync doesn't quite do what we want
 			#
 			# rsync sees that the timestamps are different, and insists
 			# on changing things even if the files are bit for bit identical on content.
 			#
-			# essentially, we need to call a yet to be written recursive subroutine here
-			# that will intelligently sync the tmp/ dir and the dest dir the way we wish
-			# rsync would. that way if a database backup doesn't change for 3 days in a row,
-			# we won't have 3 redundant copies with only different timestamps.
-			
-			# sync_if_different();
+			if (1 == $verbose)	{ print "sync_if_different(\"$tmpdir\", \"$$sp_ref{'dest'}\")\n"; }
+			if (0 == $test)	{
+				$result = sync_if_different("$tmpdir", "$$sp_ref{'dest'}");
+				if (!defined($result))	{
+					bail("sync_if_different(\"$tmpdir\", \"$$sp_ref{'dest'}\") returned undef");
+				}
+			}
 			
 			# remove the tmp directory if we created one
 			if (defined($tmpdir))	{
@@ -1029,7 +1028,8 @@ sub sync_if_different	{
 				
 				# if they are different, unlink in dest and copy from src
 				if (1 == file_diff("$src/$node", "$dest/$node"))	{
-					
+					# rmtree( "$dest/$node", 0, 0 );
+					# copy("$src/$node", "$dest/$node");
 				}
 				# if they're the same, do nothing
 			}
@@ -1602,14 +1602,14 @@ sub file_diff   {
 	my $file1 = shift(@_);
 	my $file2 = shift(@_);
 	
-	my $BUFSIZE = 16384;
-	
 	my $st1		= undef;
 	my $st2		= undef;
 	my $buf1	= undef;
 	my $buf2	= undef;
 	
-	my $done	= 0;
+	my $BUFSIZE = 16384;
+	
+	my $done = 0;
 	my $is_different = 0;
 	
 	if (! -r "$file1")  { return (undef); }
