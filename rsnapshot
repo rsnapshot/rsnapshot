@@ -1107,6 +1107,12 @@ Based on code originally by Mike Rubel B<http://www.mikerubel.org/computers/rsyn
 
 Rewritten and expanded in Perl by Nathan Rosenquist B<http://rsnapshot.sourceforge.net/>
 
+Carl Wilhelm Soderstrom B<(chrome@real-time.com)> created the RPM .spec file which allowed the RPM package to be built
+
+Ted Zlatanov wrote the one_fs patch (-x, keeps rsync from spanning partitions)
+
+=head1 COPYRIGHT
+
 Copyright (C) 2003 Nathan Rosenquist, Mike Rubel
 
 This program is free software; you can redistribute it and/or modify

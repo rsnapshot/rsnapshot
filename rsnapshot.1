@@ -129,12 +129,12 @@
 .\" ========================================================================
 .\"
 .IX Title "RSNAPSHOT 1"
-.TH RSNAPSHOT 1 "2003-10-24" "perl v5.8.0" "User Contributed Perl Documentation"
+.TH RSNAPSHOT 1 "2003-10-31" "perl v5.8.0" "User Contributed Perl Documentation"
 .SH "NAME"
 rsnapshot \- remote filesystem snapshot utility
 .SH "SYNOPSIS"
 .IX Header "SYNOPSIS"
-\&\fBrsnapshot\fR [\fB\-vVtq\fR] [\fB\-c\fR /alt/config/file] [command]
+\&\fBrsnapshot\fR [\fB\-vVtqx\fR] [\fB\-c\fR /alt/config/file] [command]
 .SH "DESCRIPTION"
 .IX Header "DESCRIPTION"
 \&\fBrsnapshot\fR is a filesystem snapshot utility. It can take incremental
@@ -170,6 +170,8 @@ The command line options are as follows:
 \&\fB\-t\fR test, show shell commands that would be executed
 .Sp
 \&\fB\-q\fR quiet, supress non-fatal warnings
+.Sp
+\&\fB\-x\fR one filesystem, don't cross partitions within each backup point
 .Sp
 \&\fB\-c\fR path to alternate config file
 .RE
@@ -383,6 +385,11 @@ Based on code originally by Mike Rubel \fBhttp://www.mikerubel.org/computers/rsy
 .PP
 Rewritten and expanded in Perl by Nathan Rosenquist \fBhttp://rsnapshot.sourceforge.net/\fR
 .PP
+Carl Wilhelm Soderstrom \fB(chrome@real\-time.com)\fR created the \s-1RPM\s0 .spec file which allowed the \s-1RPM\s0 package to be built
+.PP
+Ted Zlatanov wrote the one_fs patch (\-x, keeps rsync from spanning partitions)
+.SH "COPYRIGHT"
+.IX Header "COPYRIGHT"
 Copyright (C) 2003 Nathan Rosenquist, Mike Rubel
 .PP
 This program is free software; you can redistribute it and/or modify

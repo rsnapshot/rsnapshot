@@ -10,9 +10,9 @@ See the GNU General Public Licence for details.
 
 For installation instructions, read INSTALL
 
----------------------------------------------------------------------
+------------------------------------------------------------------------------
 UPGRADE NOTICE:
----------------------------------------------------------------------
+------------------------------------------------------------------------------
 rsnapshot has changed internally since 0.9.4. In the previous
 version, almost all tasks were handled by external shell
 commands (mkdir, mv, etc). In this version, almost all of these
@@ -56,7 +56,7 @@ implementations. This has a few noticable effects:
    and enable it in /etc/rsnapshot.conf. If you do not wish to keep
    snapshots of FIFOs, device nodes, etc., simply keep the line
    commented out.
----------------------------------------------------------------------
+------------------------------------------------------------------------------
 
 Once you have installed rsnapshot, you will need to configure it.
 The default configuration file is /etc/rsnapshot.conf. If this
@@ -86,3 +86,19 @@ new snapshot, rotate the old ones, and retain the most recent six
 
 For the full documentation, type "man rsnapshot" once it is installed,
 or visit http://rsnapshot.sourceforge.net/
+
+------------------------------------------------------------------------------
+CONTRIBUTORS
+------------------------------------------------------------------------------
+Mike Rubel
+	- Created the original shell scripts on which this project is based
+
+Nathan Rosenquist <rsnapshot@scubaninja.com>
+	- Primary author and maintainer
+
+Carl Wilhelm Soderstrom <chrome@real-time.com>
+	- Created the RPM .spec file which allowed the RPM package to be built
+
+Ted Zlatanov
+	- wrote the one_fs patch (-x, keeps rsync from spanning partitions)
+
