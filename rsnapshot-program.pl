@@ -65,7 +65,7 @@ my @intervals;
 
 # store interval data (mostly info about which one we're on, what was before, etc.)
 # this is a convenient reference to some of the data from @intervals
-my $id_ref;
+my $interval_data_ref;
 
 # command or interval to execute (first cmd line arg)
 my $cmd;
@@ -191,7 +191,7 @@ if ($cmd eq 'du')	{
 
 # figure out which interval we're working on
 # make sure the user is requesting to run on an interval we understand
-$id_ref = get_interval_data($cmd);
+$interval_data_ref = get_interval_data( $cmd );
 
 # log the beginning of this run
 log_startup();
@@ -206,7 +206,7 @@ add_lockfile();
 create_snapshot_root();
 
 # actually run the backup job
-handle_interval($id_ref);
+handle_interval( $interval_data_ref );
 
 # if we have a lockfile, remove it
 remove_lockfile();
@@ -1693,14 +1693,14 @@ sub create_snapshot_root	{
 	}
 }
 
-# accepts interval
+# accepts current interval
 # returns a hash_ref containing information about the intervals
 # exits the program if we don't have good data to work with
 sub get_interval_data	{
-	my $interval = shift(@_);
+	my $cur_interval = shift(@_);
 	
 	# make sure we were passed an interval
-	if (!defined($interval))	{ bail("Interval not specified in get_interval_data()\n"); }
+	if (!defined($cur_interval))	{ bail("cur_interval not specified in get_interval_data()\n"); }
 	
 	# the hash to return
 	my %hash;
@@ -1763,10 +1763,10 @@ sub get_interval_data	{
 	}
 	
 	# make sure we got something that makes sense
-	if (!defined($interval_num))	{ bail("Interval \"$interval\" unknown, check $config_file"); }
+	if (!defined($interval_num))	{ bail("Interval \"$cur_interval\" unknown, check $config_file"); }
 	
 	# populate our hash
-	$hash{'interval'}			= $interval;
+	$hash{'interval'}			= $cur_interval;
 	$hash{'interval_num'}		= $interval_num;
 	$hash{'interval_max'}		= $interval_max;
 	$hash{'prev_interval'}		= $prev_interval;
