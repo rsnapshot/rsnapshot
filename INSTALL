@@ -1,4 +1,4 @@
-rsnapshot 1.1.5
+rsnapshot 1.1.6
 http://www.rsnapshot.org/
 
 rsnapshot is a filesystem snapshot utility. It can take incremental
@@ -59,6 +59,18 @@ INSTALLATION
                 this, the build process will detect the first version of rsync
                 it finds in your path. You can always change this later by
                 editing the config file (rsnapshot.conf).
+
+            --with-cp=/bin/cp
+                Specify the path to GNU cp. The traditional UNIX cp command
+                is not sufficient. If you don't specify this, the build process
+                will detect the first version of cp it finds in your path.
+                If you don't have the GNU version of cp, leave this commented
+                out in the config file (rsnapshot.conf).
+
+            --with-rm=/bin/rm
+                Specify the path to the rm command. If you don't specify this,
+                the build process will detect the first version of rm it finds
+                in your path.
 
             --with-ssh=/usr/bin/ssh
                 Specify your preferred path to ssh. If you don't specify this,

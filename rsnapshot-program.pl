@@ -38,7 +38,7 @@ use POSIX qw(locale_h);	# setlocale()
 #########################
 
 # version of rsnapshot
-my $VERSION = '1.1.5';
+my $VERSION = '1.1.6';
 
 # exactly how the program was called, with all arguments
 my $run_string = "$0 " . join(' ', @ARGV);

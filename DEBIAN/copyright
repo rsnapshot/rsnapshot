@@ -5,7 +5,7 @@ snapshot utility based on rsync.
 
 This package was put together by Nathan Rosenquist
 <nathan@rsnapshot.org>, from sources obtained from:
-  http://www.rsnapshot.org/downloads/rsnapshot-1.1.5.tar.gz
+  http://www.rsnapshot.org/downloads/rsnapshot-1.1.6.tar.gz
 
 The changes were very minimal - merely adding support for the Debian
 package maintenance scheme, by adding various debian/* files, and
