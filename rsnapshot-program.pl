@@ -71,10 +71,6 @@ my $prev_interval;
 # i.e. cp -al hourly.$prev_interval_max/ daily.0/
 my $prev_interval_max;
 
-# protocol handlers
-# example: $handlers{'http'} = '/usr/bin/wget';
-my %handlers;
-
 # command line flags from getopt
 my %opts;
 
@@ -296,20 +292,6 @@ if ( -f "$config_file" )	{
 			}
 		}
 		
-		# CHECK FOR PROTOCOL HANDLERS
-		if ($var =~ /(\w*?)_handler$/)	{
-			my $protocol	= $1;
-			my $program		= $value;
-			
-			# if the handler program is executable, assign it to this protocol
-			if ( -x "$value" )	{
-				$handlers{$protocol} = $program;
-				$line_syntax_ok = 1;
-			} else	{
-				print STDERR "$value is not executable, so it can't handle the $protocol protocol\n";
-			}
-		}
-		
 		# INTERVALS
 		if ($var eq 'interval')	{
 			if (!defined($value))		{ bail("Interval can not be blank"); }
@@ -359,10 +341,6 @@ if ( -f "$config_file" )	{
 				
 			# if it's anonymous rsync, we're ok
 			} elsif ( is_anon_rsync_path($src) )	{
-				$line_syntax_ok = 1;
-				
-			# check for known protocol handlers
-			} elsif ( is_handler_path($src) )	{
 				$line_syntax_ok = 1;
 				
 			# fear the unknown
@@ -780,18 +758,6 @@ sub backup_interval	{
 			# anonymous rsync
 			} elsif ( is_anon_rsync_path($src) )	{
 				if (0 == $extra_verbose)	{ $rsync_short_args .= 'q'; }
-				
-			# custom protocol handler
-			} elsif ( is_handler_path($src) )	{
-				# TODO:
-				# cd to tmp dir
-				# use the handler program to dump files into the cwd (tmp)
-				# set src = tmp
-				# run sync_if_different(tmp, dest)
-				#
-				# also, more than this little block should be changed
-				# the tmp dir handling code is already in the backup_script section below, we should leverage that
-				# furthermore, we'll use sync_if_different for handler content, not rsync
 				
 			# this should have already been validated once, but better safe than sorry
 			} else	{
@@ -1317,15 +1283,6 @@ sub is_anon_rsync_path	{
 	return (0);
 }
 
-sub is_handler_path	{
-	my $path	= shift(@_);
-	
-	if (!defined($path))			{ return (undef); }
-	if ($path =~ m/^\w*?:\/\/.*$/)	{ return (1); }
-	
-	return (0);
-}
-
 # accepts path
 # returns 1 if it's a syntactically valid absolute path
 # returns 0 otherwise
@@ -1370,18 +1327,6 @@ sub remove_trailing_slash	{
 	$str =~ s/\/+$//;
 	
 	return ($str);
-}
-
-sub get_handler_type	{
-	my $path	= shift(@_);
-	
-	if (!defined($path))	{ return (undef); }
-	
-	if ($path =~ m/^(\w*?):\/\/.*$/)	{
-		return ($1);
-	}
-	
-	return (undef);
 }
 
 sub show_help	{
