@@ -9,7 +9,7 @@ man:
 	pod2man rsnapshot > rsnapshot.1
 	
 html:
-	pod2html rsnapshot > rsnapshot.html
+	pod2html rsnapshot | grep -v 'link rev' > rsnapshot.html
 	rm -f pod2htmd.x~~
 	rm -f pod2htmi.x~~
 	
