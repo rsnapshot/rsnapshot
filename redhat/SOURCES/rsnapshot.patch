@@ -1,20 +1,11 @@
---- rsnapshot.conf.default	2005-01-29 03:16:08.000000000 -0800
-+++ rsnapshot.conf.default.RPM	2005-01-29 03:17:00.000000000 -0800
-@@ -40,7 +40,7 @@
- #
- # See the README file or the man page for more details.
- #
--#cmd_cp		/bin/cp
-+cmd_cp		/bin/cp
- 
- # uncomment this to use the rm program instead of the built-in perl routine.
- cmd_rm		/bin/rm
+--- rsnapshot.conf.default.in	2005-01-29 22:56:58.000000000 -0800
++++ rsnapshot.conf.default.in.redhat	2005-01-29 22:57:44.000000000 -0800
 @@ -55,7 +55,7 @@
- cmd_logger	/usr/bin/logger
+ @CMD_LOGGER@
  
  # Uncomment this to specify a path to "du" for disk usage checks.
--#cmd_du		/usr/bin/du
-+cmd_du		/usr/bin/du
+-#@CMD_DU@
++@CMD_DU@
  
  #########################################
  #           BACKUP INTERVALS            #
@@ -27,3 +18,12 @@
  
  # The include and exclude parameters, if enabled, simply get passed directly
  # to rsync. If you have multiple include/exclude patterns, put each one on a
+@@ -138,7 +138,7 @@
+ # If you enable this, make sure the lockfile directory is not world
+ # writable. Otherwise anyone can prevent the program from running.
+ #
+-#lockfile	/var/run/rsnapshot.pid
++lockfile	/var/run/rsnapshot.pid
+ 
+ ###############################
+ ### BACKUP POINTS / SCRIPTS ###
