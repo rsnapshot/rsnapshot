@@ -2,6 +2,8 @@ rsnapshot TODO list:
 
 for version 1.1.x
 ------------------------------------------------------------------------------
+- Add GPG backup feature to rsnaptar
+
 - Figure out a good solution to this: when an rsync transfer fails, and
   link_dest is being used, the smallest interval files are still moved up
   one. This requires a full transfer next time. What's the cleanest way to
