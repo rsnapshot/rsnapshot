@@ -32,7 +32,6 @@ VERSION 1.2.0 (Jan ?? ??:?? 2005)
   with link_dest option enabled
 - Broke backwards compatibility for the benefit of fixing several outstanding
   issues. The default value for rsync_long_args is now different.
-- Added utils/upgrade_rsnapshot.pl / "make upgrade" target for easy upgrade.
 - Changed add_lockfile() verbose message to "echo $$ > /path/to/lockfile.pid"
   which is actually what the code is doing
 - Added check to make sure backup_scripts can't share destination path with
@@ -46,6 +45,10 @@ VERSION 1.2.0 (Jan ?? ??:?? 2005)
 - Fixed "missing rsync/configtest ok" bug
 - Added config_version parameter, which is now required
 - All autoconf files were updated with the ones from Debian sarge
+- Added upgrade-config-file feature for "make upgrade" target and manual use
+- Added check-config-version feature for use with shell scripts, etc.
+- Changed version_only argument to version-only, for consistency with new
+  options
 
 VERSION 1.1.6 (Jul 05 16:35 2004)
 ------------------------------------------------------------------------------

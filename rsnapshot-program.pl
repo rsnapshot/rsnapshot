@@ -138,15 +138,19 @@ find_config_file();
 # (this can override $config_file, if the -c flag is used on the command line)
 parse_cmd_line_opts();
 
-# if we need to run a command that doesn't require the config file, do it now (and exit)
+# if we need to run a command that doesn't require fully parsing the config file, do it now (and exit)
 if (!defined($cmd) or ((! $cmd) && ('0' ne $cmd))) {
 	show_usage();
 } elsif ($cmd eq 'help') {
 	show_help();
 } elsif ($cmd eq 'version') {
 	show_version();
-} elsif ($cmd eq 'version_only') {
+} elsif ($cmd eq 'version-only') {
 	show_version_only();
+} elsif ($cmd eq 'check-config-version') {
+	check_config_version();
+} elsif ($cmd eq 'upgrade-config-file') {
+	upgrade_config_file();
 }
 
 # if we're just doing a configtest, set that flag
@@ -286,7 +290,7 @@ sub find_config_file {
 	# remove trailing slashes
 	$autoconf_sysconfdir	=~ s/\/$//g;
 	$autoconf_prefix		=~ s/\/$//g;
-
+	
 	# if --sysconfdir was not set explicitly during ./configure, but we did use autoconf
 	if ($autoconf_sysconfdir eq '${prefix}/etc') {
 		$default_config_file = "$autoconf_prefix/etc/rsnapshot.conf";
@@ -3912,6 +3916,268 @@ sub safe_rename {
 	
 	# return whatever we got
 	return (1);
+}
+
+# accepts no args
+# checks the config file for version number
+# prints the config version to stdout
+# exits the program, 0 on success, 1 on failure
+# this feature is "undocumented", for use with scripts, etc
+sub check_config_version {
+	my $version = get_config_version();
+	
+	if (!defined($version)) {
+		print "error\n";
+		exit(1);
+	}
+	
+	print $version, "\n";
+	exit(0);
+}
+
+# accepts no args
+# scans the config file for the config_version parameter
+# returns the config version, or undef
+sub get_config_version {
+	my $result;
+	my $version;
+	
+	# make sure the config file exists and we can read it
+	if (!defined($config_file)) {
+		return (undef);
+	}
+	if (! -r "$config_file") {
+		return (undef);
+	}
+	
+	# open the config file
+	$result = open(CONFIG, "$config_file");
+	if (!defined($result)) {
+		return (undef);
+	}
+	
+	# scan the config file looking for the config_version parameter
+	# if we find it, exit the loop
+	while (my $line = <CONFIG>) {
+		chomp($line);
+		
+		if ($line =~ m/^config_version\s+([\d\.\-\w]+)$/o) {
+			$version = $1;
+			last;
+		}
+	}
+	
+	$result = close(CONFIG);
+	if (!defined($result)) {
+		return (undef);
+	}
+	
+	if (!defined($version)) {
+		$version = 'unknown';
+	}
+	
+	return ($version);
+}
+
+# accepts no args
+# exits the program, 0 on success, 1 on failure
+# attempts to upgrade the rsnapshot.conf file for compatibility with this version
+sub upgrade_config_file {
+	my $result;
+	my @lines;
+	my $config_version;
+	
+	# check if rsync_long_args is already enabled
+	my $rsync_long_args_enabled	= 0;
+	
+	# first, see if the file isn't already up to date
+	$config_version = get_config_version();
+	if (!defined($config_version)) {
+		print STDERR "ERROR: Could not read config file during version check.\n";
+		exit(1);
+	}
+	if ('1.2' eq $config_version) {
+		print "Config file is already up to date.\n";
+		exit(0);
+	}
+	# config_version is set, but not to anything we know about
+	if ('unknown' eq $config_version) {
+		# this is good, it means the config_version was not already set to anything
+		# and is a good candidate for the upgrade
+	} else {
+		print STDERR "ERROR: config_version is set to unknown version: $config_version.\n";
+		exit(1);
+	}
+	
+	# make sure config file is present and readable
+	if (!defined($config_file)) {
+		print STDERR "ERROR: Config file not defined.\n";
+		exit(1);
+	}
+	if (! -r "$config_file") {
+		print STDERR "ERROR: Config file not readable.\n";
+		exit(1);
+	}
+	
+	# read in original config file
+	$result = open(CONFIG, "$config_file");
+	if (!defined($result)) {
+		print STDERR "ERROR: Could not open $config_file for reading.\n";
+		exit(1);
+	}
+	@lines = <CONFIG>;
+	$result = close(CONFIG);
+	if (!defined($result)) {
+		print STDERR "ERROR: Could not close $config_file after reading.\n";
+		exit(1);
+	}
+	
+	# see if we can find rsync_long_args, either commented out or uncommented
+	foreach my $line (@lines) {
+		if ($line =~ m/^rsync_long_args/o) {
+			$rsync_long_args_enabled = 1;
+		}
+	}
+	
+	# back up old config file
+	backup_config_file(\@lines);
+	
+	# found rsync_long_args enabled
+	if ($rsync_long_args_enabled) {
+		print "Found \"rsync_long_args\" uncommented. Attempting upgrade...\n";
+		write_upgraded_config_file(\@lines, 0);
+		
+	# did not find rsync_long_args enabled
+	} else {
+		print "Could not find old \"rsync_long_args\" parameter. Attempting upgrade...\n";
+		write_upgraded_config_file(\@lines, 1);
+	}
+	
+	print "\"$config_file\" was successfully upgraded.\n";
+	
+	exit(0);
+}
+
+# accepts array_ref of config file lines
+# exits 1 on errors
+# attempts to backup rsnapshot.conf to rsnapshot.conf.backup
+sub backup_config_file {
+	my $lines_ref = shift(@_);
+	
+	my $result;
+	my $backup_config_file;
+	
+	if (!defined($lines_ref)) {
+		print STDERR "ERROR: backup_config_file() was not passed an argument.\n";
+		exit(1);
+	}
+	
+	if (!defined($config_file)) {
+		print STDERR "ERROR: Could not find config file.\n";
+		exit(1);
+	}
+	
+	$backup_config_file = "$config_file.backup";
+	
+	print "Backing up \"$config_file\" to \"$backup_config_file\".\n";
+	
+	if ( -e "$backup_config_file" ) {
+	    print STDERR "ERROR: Refusing to overwrite $backup_config_file.\n";
+	    print STDERR "Please move $backup_config_file out of the way and try again.\n";
+	    print STDERR "$config_file has NOT been upgraded!\n";
+	    exit(1);
+	}
+	
+	$result = open(OUTFILE, "> $backup_config_file");
+	if (!defined($result) or ($result != 1)) {
+	    print STDERR "Error opening $backup_config_file for writing.\n";
+	    print STDERR "$config_file has NOT been upgraded!\n";
+	    exit(1);
+	}
+	foreach my $line (@$lines_ref) {
+	    print OUTFILE $line;
+	}
+	$result = close(OUTFILE);
+	if (!defined($result) or (1 != $result)) {
+	    print STDERR "could not cleanly close $backup_config_file.\n";
+	    print STDERR "$config_file has NOT been upgraded!\n";
+	    exit(1);
+	}
+}
+
+# accepts no args
+# exits 1 on errors
+# attempts to write an upgraded config file to rsnapshot.conf
+sub write_upgraded_config_file {
+	my $lines_ref			= shift(@_);
+	my $add_rsync_long_args	= shift(@_);
+	
+	my $result;
+	
+	my $upgrade_notice = '';
+	
+	$upgrade_notice .= "#-----------------------------------------------------------------------------\n";
+	$upgrade_notice .= "# UPGRADE NOTICE:\n";
+	$upgrade_notice .= "#\n";
+	$upgrade_notice .= "# This file was upgraded automatically by rsnapshot.\n";
+	$upgrade_notice .= "#\n";
+	$upgrade_notice .= "# The \"config_version\" parameter was added, since it is now required.\n";
+	$upgrade_notice .= "#\n";
+	$upgrade_notice .= "# The default value for \"rsync_long_args\" has changed in this release.\n";
+	$upgrade_notice .= "# By explicitly setting it to the old default values, rsnapshot will still\n";
+	$upgrade_notice .= "# behave like it did in previous versions.\n";
+	$upgrade_notice .= "#\n";
+	
+	if (defined($add_rsync_long_args) && (1 == $add_rsync_long_args)) {
+		$upgrade_notice .= "# In this file, \"rsync_long_args\" was already enabled before the upgrade,\n";
+		$upgrade_notice .= "# so it was not changed.\n";
+	} else {
+		$upgrade_notice .= "# In this file, \"rsync_long_args\" was not enabled before the upgrade,\n";
+		$upgrade_notice .= "# so it has been set to the old default value.\n";
+	}
+	
+	$upgrade_notice .= "#\n";
+	$upgrade_notice .= "# New features and improvements have been added to rsnapshot that can\n";
+	$upgrade_notice .= "# only be fully utilized by making some additional changes to\n";
+	$upgrade_notice .= "# \"rsync_long_args\" and your \"backup\" points. If you would like to get the\n";
+	$upgrade_notice .= "# most out of rsnapshot, please read the INSTALL file that came with this\n";
+	$upgrade_notice .= "# program for more information.\n";
+	$upgrade_notice .= "#-----------------------------------------------------------------------------\n";
+	
+	if (!defined($config_file)) {
+		print STDERR "ERROR: Config file not found.\n";
+		exit(1);
+	}
+	if (! -w "$config_file") {
+		print STDERR "ERROR: \"$config_file\" is not writable.\n";
+		exit(1);
+	}
+	
+	$result = open(CONFIG, "> $config_file");
+	if (!defined($result)) {
+		print "ERROR: Could not open \"$config_file\" for writing.\n";
+		exit(1);
+	}
+	
+	print CONFIG $upgrade_notice;
+	print CONFIG "\n";
+	print CONFIG "config_version\t1.2\n";
+	print CONFIG "\n";
+	
+	if (defined($add_rsync_long_args) && (1 == $add_rsync_long_args)) {
+		print CONFIG "rsync_long_args\t--delete --numeric-ids\n";
+		print CONFIG "\n";
+	}
+	
+	foreach my $line (@$lines_ref) {
+		print CONFIG "$line";
+	}
+	
+	$result = close(CONFIG);
+	if (!defined($result)) {
+		print STDERR "ERROR: Could not close \"$config_file\" after writing\n.";
+		exit(1);
+	}
 }
 
 ########################################
