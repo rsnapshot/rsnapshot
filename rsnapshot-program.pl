@@ -2032,45 +2032,17 @@ sub backup_lowest_interval	{
 	# this should never happen
 	if (!defined($interval))	{ bail('backup_lowest_interval() expects an argument'); }
 	
-	# set up default args for rsync and ssh
-	my $default_rsync_short_args	= $global_default_rsync_short_args;
-	my $default_rsync_long_args		= $global_default_rsync_long_args;
-	my $default_ssh_args			= $global_default_ssh_args;
-	
-	# if the config file specified rsync or ssh args, use those instead
-	if (defined($config_vars{'rsync_short_args'}))	{
-		$default_rsync_short_args = $config_vars{'rsync_short_args'};
-	}
-	if (defined($config_vars{'rsync_long_args'}))	{
-		$default_rsync_long_args = $config_vars{'rsync_long_args'};
-	}
-	if (defined($config_vars{'ssh_args'}))	{
-		$default_ssh_args = $config_vars{'ssh_args'};
-	}
-	
-	# extra verbose?
-	if ($verbose > 3)	{ $default_rsync_short_args .= 'v'; }
-	
 	#
 	# ROTATE THE HIGHER DIRECTORIES IN THIS INTERVAL
 	#
 	rotate_lowest_snapshots($interval);
-
+	
 	# SYNC LIVE FILESYSTEM DATA TO $interval.0
 	# loop through each backup point and backup script
 	foreach my $bp_ref (@backup_points)	{
 		
 		# actually rsync the given backup point into the snapshot root
-		handle_backup_point(
-			$interval,
-			$bp_ref,
-			{
-				ssh_args			=> $default_ssh_args,
-				rsync_short_args	=> $default_rsync_short_args,
-				rsync_long_args		=> $default_rsync_long_args
-			}
-		);
-		
+		handle_backup_point( $interval, $bp_ref );
 	}
 	
 	#
@@ -2186,26 +2158,52 @@ sub rotate_lowest_snapshots	{
 #
 # they will each be called from inside handle_backup_point(), as appropriate
 
+# TODO: audit this subroutine for possible redundancy
+
 # accepts interval, backup_point_ref, ssh_rsync_args_ref
 # returns no args
 # runs rsync on the given backup point
 sub handle_backup_point	{
-	my $interval				= shift(@_);
-	my $bp_ref					= shift(@_);
-	my $default_args_ref		= shift(@_);
+	my $interval	= shift(@_);
+	my $bp_ref		= shift(@_);
+	
+	# validate subroutine args
+	if (!defined($interval))	{ bail('interval not defined in handle_backup_point()'); }
+	if (!defined($bp_ref))		{ bail('bp_ref not defined in handle_backup_point()'); }
+	
+	# other misc variables
 	my @cmd_stack				= ();
+	my $ssh_args				= undef;
+	my $rsync_short_args		= undef;
+	my @rsync_long_args_stack	= undef;
 	my $src						= undef;
 	my $script					= undef;
 	my $tmpdir					= undef;
 	my $result					= undef;
-	my $ssh_args				= $$default_args_ref{'ssh_args'};
-	my $rsync_short_args		= $$default_args_ref{'rsync_short_args'};
-	my @rsync_long_args_stack	= ( split(/\s/, $$default_args_ref{'rsync_long_args'}) );
 	
-	# validate subroutine args
-	if (!defined($interval))			{ bail('interval not defined in handle_backup_point()'); }
-	if (!defined($bp_ref))				{ bail('bp_ref not defined in handle_backup_point()'); }
-	if (!defined($default_args_ref))	{ bail('default_args_ref not defined in handle_backup_point()'); }
+	# set up default args for rsync and ssh
+	my $default_rsync_short_args	= $global_default_rsync_short_args;
+	my $default_rsync_long_args		= $global_default_rsync_long_args;
+	my $default_ssh_args			= $global_default_ssh_args;
+	
+	# if the config file specified rsync or ssh args, use those instead
+	if (defined($config_vars{'rsync_short_args'}))	{
+		$default_rsync_short_args = $config_vars{'rsync_short_args'};
+	}
+	if (defined($config_vars{'rsync_long_args'}))	{
+		$default_rsync_long_args = $config_vars{'rsync_long_args'};
+	}
+	if (defined($config_vars{'ssh_args'}))	{
+		$default_ssh_args = $config_vars{'ssh_args'};
+	}
+	
+	# extra verbose?
+	if ($verbose > 3)	{ $default_rsync_short_args .= 'v'; }
+	
+	# TODO: fix this mess
+	$ssh_args				= $default_ssh_args;
+	$rsync_short_args		= $default_rsync_short_args;
+	@rsync_long_args_stack	= ( split(/\s/, $default_rsync_long_args) );
 	
 	# append a trailing slash if src is a directory
 	if (defined($$bp_ref{'src'}))	{
