@@ -6,7 +6,7 @@ BuildArch: noarch
 Copyright: GPL
 Group: Applications/System
 Source: http://rsnapshot.scubaninja.com/downloads/rsnapshot-1.0.3.tar.gz
-Patch: config.patch
+Patch: rsnapshot.patch
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
 Requires: perl, fileutils, rsync
 

@@ -38,7 +38,7 @@ tar:
 	mkdir rsnapshot-${VERSION}/redhat/SOURCES/
 	mkdir rsnapshot-${VERSION}/redhat/SPECS/
 	cp redhat/README rsnapshot-${VERSION}/redhat/
-	cp redhat/SOURCES/config.patch rsnapshot-${VERSION}/redhat/SOURCES/
+	cp redhat/SOURCES/rsnapshot.patch rsnapshot-${VERSION}/redhat/SOURCES/
 	cp redhat/SPECS/rsnapshot.spec rsnapshot-${VERSION}/redhat/SPECS/
 	
 	chown -R 0:0 rsnapshot-${VERSION}/
