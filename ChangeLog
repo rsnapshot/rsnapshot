@@ -16,7 +16,8 @@ VERSION 1.2.0 (Jan ?? ??:?? 2005)
 - Peter Palfrader <weasel@debian.org> enhanced error reporting to include
   command line options
 - Bharat Mediratta <bharat@menalto.com> improved the exclusion rules to avoid
-  backing up the snapshot root.
+  backing up the snapshot root. The old way was also kept for users who can't
+  or don't want to upgrade their destination paths in their backup points.
 - Bharat Mediratta <bharat@menalto.com> added a "+" feature to the per-backup
   point args to allow additive include/exclude rules.
 - Added safe_rename() subroutine to work around a semi-obscure bug in certain
@@ -25,6 +26,8 @@ VERSION 1.2.0 (Jan ?? ??:?? 2005)
 - Added check for leading/trailing spaces in remote (ssh) paths
 - Added du(1) and crontab(1) to man page references
 - Added config.guess and config.sub for automake/autoconf build process
+- Changed default destination paths for backup points in example config file
+  for compatibility with --relative rsync flag
 
 VERSION 1.1.6 (Jul 05 16:35 2004)
 ------------------------------------------------------------------------------
