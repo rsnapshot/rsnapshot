@@ -8,18 +8,19 @@ for version 1.0.x
   File::Basename functions where possible. Double check they're fully
   compatible with Perl 5.004
 
-- Add an file exclusion list feature
-
-- Implement a generalized way to pass arbitrary args to rsync and ssh
+- Put rsync and all arguments to it in an array, then join it to create
+  the command. Then:
+  - Add an file exclusion list feature
+  - Implement a generalized way to pass arbitrary args to rsync and ssh
+  - Add support for rsh using this syntax: rsh://[user@]domain:/foo/bar/
+  - Also support ssh:// syntax in the same fashion
+  - Add support for connecting to an rsync daemon requiring authentication,
+    either using the --password-file flag or RSYNC_PASSWORD env var
+  - Add support for arbitrary programs to handle certain types of connections;
+    i.e. http_handler gets set to wget, to handle http downloads, which are
+    then rsynced into main snapshot_root tree
 
 - Support for SSH tunnelling (this may be handled by arbitrary args)
-
-- Add support for connecting to an rsync daemon requiring authentication,
-  either using the --password-file flag or RSYNC_PASSWORD env var
-
-- Add support for arbitrary programs to handle certain types of connections;
-  i.e. http_handler gets set to wget, to handle http downloads, which are
-  then rsynced into main snapshot_root tree
 
 for version 2.0.x
 ------------------------------------------------------------------------------
