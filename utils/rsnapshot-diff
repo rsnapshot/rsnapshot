@@ -13,10 +13,12 @@
 # http://www.rsnapshot.org/
 ##############################################################################
 
+# $Id: rsnapshot-diff,v 1.4 2005/03/05 12:06:38 drhyde Exp $
+
 use warnings;
 use strict;
 
-use constant DEBUG => 1;
+use constant DEBUG => 0;
 use Data::Dumper;
 my $verbose = 0;
 
@@ -95,6 +97,7 @@ sub add {
     foreach(grep { !-d } @added) {
         $addedfiles++;
         $addedspace += (mystat($_))[7];
+        print "+ $_\n" if($verbose);
     }
     foreach my $dir (grep { -d } @added) {
         opendir(DIR, $dir) || die("Can't open dir $dir\n");
@@ -107,6 +110,7 @@ sub remove {
     foreach(grep { !-d } @removed) {
         $deletedfiles++;
         $deletedspace += (mystat($_))[7];
+        print "- $_\n" if($verbose);
     }
     foreach my $dir (grep { -d } @removed) {
         opendir(DIR, $dir) || die("Can't open dir $dir\n");
@@ -114,8 +118,17 @@ sub remove {
     }
 }
 
-sub mystat {
-    local $_ = shift;
-    (-l) ? lstat() : stat();
-}
+{
+    my $device;
 
+    sub mystat {
+        local $_ = shift;
+        my @stat = (-l) ? lstat() : stat();
+
+        # on first stat, memorise device
+        $device = $stat[0] unless(defined($device));
+        die("Can't compare across devices.\n") unless($device == $stat[0]);
+
+        return @stat;
+    }
+}
