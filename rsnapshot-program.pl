@@ -2051,6 +2051,58 @@ sub backup_lowest_interval	{
 	# extra verbose?
 	if ($verbose > 3)	{ $default_rsync_short_args .= 'v'; }
 	
+	#
+	# ROTATE THE HIGHER DIRECTORIES IN THIS INTERVAL
+	#
+	rotate_lowest_snapshots($interval);
+
+	# SYNC LIVE FILESYSTEM DATA TO $interval.0
+	# loop through each backup point and backup script
+	foreach my $bp_ref (@backup_points)	{
+		
+		# actually rsync the given backup point into the snapshot root
+		rsync_backup_point(
+			$interval,
+			$bp_ref,
+			{
+				ssh_args			=> $default_ssh_args,
+				rsync_short_args	=> $default_rsync_short_args,
+				rsync_long_args		=> $default_rsync_long_args
+			}
+		);
+		
+	}
+	
+	#
+	# ROLLBACK FAILED BACKUPS
+	#
+	rollback_failed_backups($interval);
+	
+	# update mtime of $interval.0 to reflect the time this snapshot was taken
+	print_cmd("touch $config_vars{'snapshot_root'}/$interval.0/");
+	
+	if (0 == $test)	{
+		my $result = utime(time(), time(), "$config_vars{'snapshot_root'}/$interval.0/");
+		if (0 == $result)	{
+			bail("Could not utime(time(), time(), \"$config_vars{'snapshot_root'}/$interval.0/\");");
+		}
+	}
+}
+
+# accepts no arguments
+# returns no arguments
+# operates on directories in the lowest interval
+# deletes the highest one, and rotates the ones below it
+# if link_dest is enabled, .0 gets moved to .1
+# otherwise, we do cp -al .0 .1
+#
+# if we encounter an error, this script will terminate the program with an error condition
+#
+sub rotate_lowest_snapshots	{
+	my $interval = shift(@_);
+	
+	if (!defined($interval))	{ bail('interval not defined in rotate_lowest_snapshots()'); }
+	
 	# ROTATE DIRECTORIES
 	#
 	# remove oldest directory
@@ -2126,368 +2178,386 @@ sub backup_lowest_interval	{
 			}
 		}
 	}
+}
+
+# accepts interval, backup_point_ref, ssh_rsync_args_ref
+# returns no args
+# runs rsync on the given backup point
+sub rsync_backup_point	{
+	my $interval				= shift(@_);
+	my $bp_ref					= shift(@_);
+	my $default_args_ref		= shift(@_);
 	
-	# SYNC LIVE FILESYSTEM DATA TO $interval.0
-	# loop through each backup point and backup script
-	foreach my $bp_ref (@backup_points)	{
-		my @cmd_stack				= ();
-		my $src						= undef;
-		my $script					= undef;
-		my $tmpdir					= undef;
-		my $result					= undef;
-		my $ssh_args				= $default_ssh_args;
-		my $rsync_short_args		= $default_rsync_short_args;
-		my @rsync_long_args_stack	= ( split(/\s/, $default_rsync_long_args) );
+	if (!defined($interval))			{ bail('interval not defined in rsync_backup_point()'); }
+	if (!defined($bp_ref))				{ bail('bp_ref not defined in rsync_backup_point()'); }
+	if (!defined($default_args_ref))	{ bail('default_args_ref not defined in rsync_backup_point()'); }
+	
+	my @cmd_stack				= ();
+	my $src						= undef;
+	my $script					= undef;
+	my $tmpdir					= undef;
+	my $result					= undef;
+	my $ssh_args				= $$default_args_ref{'ssh_args'};
+	my $rsync_short_args		= $$default_args_ref{'rsync_short_args'};
+	my @rsync_long_args_stack	= ( split(/\s/, $$default_args_ref{'rsync_long_args'}) );
+	
+	# append a trailing slash if src is a directory
+	if (defined($$bp_ref{'src'}))	{
+		if ((-d "$$bp_ref{'src'}") && ($$bp_ref{'src'} !~ /\/$/))	{
+			$src = $$bp_ref{'src'} . '/';
+		} else	{
+			$src = $$bp_ref{'src'};
+		}
+	}
+	
+	# create missing parent directories inside the $interval.x directory
+	my @dirs = split(/\//, $$bp_ref{'dest'});
+	pop(@dirs);
+	
+	# don't mkdir for dest unless we have to
+	my $destpath = "$config_vars{'snapshot_root'}/$interval.0/" . join('/', @dirs);
+	
+	# make sure we have a trailing slash
+	if ($destpath !~ m/\/$/)	{
+		$destpath .= '/';
+	}
+	
+	if ( ! -e "$destpath" )	{
+		print_cmd("mkdir -m 0755 -p $destpath");
 		
-		# append a trailing slash if src is a directory
-		if (defined($$bp_ref{'src'}))	{
-			if ((-d "$$bp_ref{'src'}") && ($$bp_ref{'src'} !~ /\/$/))	{
-				$src = $$bp_ref{'src'} . '/';
-			} else	{
-				$src = $$bp_ref{'src'};
+		if (0 == $test)	{
+			eval	{
+				mkpath( "$destpath", 0, 0755 );
+			};
+			if ($@)	{
+				bail("Could not mkpath(\"$destpath\", 0, 0755);");
 			}
 		}
-		
-		# create missing parent directories inside the $interval.x directory
-		my @dirs = split(/\//, $$bp_ref{'dest'});
-		pop(@dirs);
-		
-		# don't mkdir for dest unless we have to
-		my $destpath = "$config_vars{'snapshot_root'}/$interval.0/" . join('/', @dirs);
-		
-		# make sure we have a trailing slash
-		if ($destpath !~ m/\/$/)	{
-			$destpath .= '/';
+	}
+	
+	# IF WE HAVE A SRC DIRECTORY, SYNC IT TO DEST
+	if (defined($$bp_ref{'src'}))	{
+		# check opts, first unique to this backup point, and then global
+		#
+		# with all these checks, we try the local option first, and if
+		# that isn't specified, we attempt to use the global setting as
+		# a fallback plan
+		#
+		# we do the rsync args first since they overwrite the rsync_* variables,
+		# whereas the subsequent options append to them
+		#
+		# RSYNC SHORT ARGS
+		if ( defined($$bp_ref{'opts'}) && defined($$bp_ref{'opts'}->{'rsync_short_args'}) )	{
+			$rsync_short_args = $$bp_ref{'opts'}->{'rsync_short_args'};
 		}
-		
-		if ( ! -e "$destpath" )	{
-			print_cmd("mkdir -m 0755 -p $destpath");
-			
-			if (0 == $test)	{
-				eval	{
-					mkpath( "$destpath", 0, 0755 );
-				};
-				if ($@)	{
-					bail("Could not mkpath(\"$destpath\", 0, 0755);");
-				}
-			}
+		# RSYNC LONG ARGS
+		if ( defined($$bp_ref{'opts'}) && defined($$bp_ref{'opts'}->{'rsync_long_args'}) )	{
+			@rsync_long_args_stack = split(/\s/, $$bp_ref{'opts'}->{'rsync_long_args'});
 		}
-		
-		# IF WE HAVE A SRC DIRECTORY, SYNC IT TO DEST
-		if (defined($$bp_ref{'src'}))	{
-			# check opts, first unique to this backup point, and then global
-			#
-			# with all these checks, we try the local option first, and if
-			# that isn't specified, we attempt to use the global setting as
-			# a fallback plan
-			#
-			# we do the rsync args first since they overwrite the rsync_* variables,
-			# whereas the subsequent options append to them
-			#
-			# RSYNC SHORT ARGS
-			if ( defined($$bp_ref{'opts'}) && defined($$bp_ref{'opts'}->{'rsync_short_args'}) )	{
-				$rsync_short_args = $$bp_ref{'opts'}->{'rsync_short_args'};
-			}
-			# RSYNC LONG ARGS
-			if ( defined($$bp_ref{'opts'}) && defined($$bp_ref{'opts'}->{'rsync_long_args'}) )	{
-				@rsync_long_args_stack = split(/\s/, $$bp_ref{'opts'}->{'rsync_long_args'});
-			}
-			# SSH ARGS
-			if ( defined($$bp_ref{'opts'}) && defined($$bp_ref{'opts'}->{'ssh_args'}) )	{
-				$ssh_args = $$bp_ref{'opts'}->{'ssh_args'};
-			}
-			# ONE_FS
-			if ( defined($$bp_ref{'opts'}) && defined($$bp_ref{'opts'}->{'one_fs'}) )	{
-				if (1 == $$bp_ref{'opts'}->{'one_fs'})	{
-					$rsync_short_args .= 'x';
-				}
-			} elsif ($one_fs)	{
+		# SSH ARGS
+		if ( defined($$bp_ref{'opts'}) && defined($$bp_ref{'opts'}->{'ssh_args'}) )	{
+			$ssh_args = $$bp_ref{'opts'}->{'ssh_args'};
+		}
+		# ONE_FS
+		if ( defined($$bp_ref{'opts'}) && defined($$bp_ref{'opts'}->{'one_fs'}) )	{
+			if (1 == $$bp_ref{'opts'}->{'one_fs'})	{
 				$rsync_short_args .= 'x';
 			}
+		} elsif ($one_fs)	{
+			$rsync_short_args .= 'x';
+		}
+		
+		# SEE WHAT KIND OF SOURCE WE'RE DEALING WITH
+		#
+		# local filesystem
+		if ( is_real_local_abs_path($src) )	{
+			# no change
 			
-			# SEE WHAT KIND OF SOURCE WE'RE DEALING WITH
-			#
-			# local filesystem
-			if ( is_real_local_abs_path($src) )	{
-				# no change
+		# if this is a user@host:/path, use ssh
+		} elsif ( is_ssh_path($src) )	{
+			
+			# if we have any args for SSH, add them
+			if ( defined($ssh_args) )	{
+				push( @rsync_long_args_stack, "--rsh=$config_vars{'cmd_ssh'} $ssh_args" );
 				
-			# if this is a user@host:/path, use ssh
-			} elsif ( is_ssh_path($src) )	{
+			# no arguments is the default
+			} else	{
+				push( @rsync_long_args_stack, "--rsh=$config_vars{'cmd_ssh'}" );
+			}
+			
+		# anonymous rsync
+		} elsif ( is_anon_rsync_path($src) )	{
+			# make rsync quiet if we're not running EXTRA verbose
+			if ($verbose < 4)	{ $rsync_short_args .= 'q'; }
+			
+		# this should have already been validated once, but better safe than sorry
+		} else	{
+			bail("Could not understand source \"$src\" in backup_lowest_interval()");
+		}
+		
+		# if we're using --link-dest, we'll need to specify .1 as the link-dest directory
+		if (1 == $link_dest)	{
+			if ( -d "$config_vars{'snapshot_root'}/$interval.1/$$bp_ref{'dest'}" )	{
+				push(@rsync_long_args_stack, "--link-dest=$config_vars{'snapshot_root'}/$interval.1/$$bp_ref{'dest'}");
+			}
+		}
+		
+		# SPECIAL EXCEPTION:
+		#   If we're using --link-dest AND the source is a file AND we have a copy from the last time,
+		#   manually link interval.1/foo to interval.0/foo
+		#
+		#   This is necessary because --link-dest only works on directories
+		#
+		if ((1 == $link_dest) && (is_file($src)) && (-f "$config_vars{'snapshot_root'}/$interval.1/$$bp_ref{'dest'}"))	{
+			# these are both "destination" paths, but we're moving from .1 to .0
+			my $srcpath		= "$config_vars{'snapshot_root'}/$interval.1/$$bp_ref{'dest'}";
+			my $destpath	= "$config_vars{'snapshot_root'}/$interval.0/$$bp_ref{'dest'}";
+			
+			print_cmd("ln $srcpath $destpath");
+			
+			if (0 == $test)	{
+				$result = link( "$srcpath", "$destpath" );
 				
-				# if we have any args for SSH, add them
-				if ( defined($ssh_args) )	{
-					push( @rsync_long_args_stack, "--rsh=$config_vars{'cmd_ssh'} $ssh_args" );
+				if (!defined($result) or (0 == $result))	{
+					print_err ("link(\"$srcpath\", \"$destpath\") failed", 2);
+					syslog_err("link(\"$srcpath\", \"$destpath\") failed");
+				}
+			}
+		}
+		
+		# BEGIN RSYNC COMMAND ASSEMBLY
+		#   take care not to introduce blank elements into the array,
+		#   since it can confuse rsync, which in turn causes strange errors
+		#
+		@cmd_stack = ();
+		#
+		# rsync command
+		push(@cmd_stack, $config_vars{'cmd_rsync'});
+		#
+		# rsync short args
+		if (defined($rsync_short_args) && ($rsync_short_args ne ''))	{
+			push(@cmd_stack, $rsync_short_args);
+		}
+		#
+		# rsync long args
+		if (@rsync_long_args_stack && (scalar(@rsync_long_args_stack) > 0))	{
+			foreach my $tmp_long_arg (@rsync_long_args_stack)	{
+				if (defined($tmp_long_arg) && ($tmp_long_arg ne ''))	{
+					push(@cmd_stack, $tmp_long_arg);
+				}
+			}
+		}
+		#
+		# src
+		push(@cmd_stack, $src);
+		#
+		# dest
+		push(@cmd_stack, "$config_vars{'snapshot_root'}/$interval.0/$$bp_ref{'dest'}");
+		#
+		# END RSYNC COMMAND ASSEMBLY
+		
+		
+		# RUN THE RSYNC COMMAND FOR THIS BACKUP POINT BASED ON THE @cmd_stack VARS
+		print_cmd(@cmd_stack);
+		
+		if (0 == $test)	{
+			$result = system(@cmd_stack);
+			
+			# now we see if rsync ran successfully, and what to do about it
+			if ($result != 0)	{
+				# bitmask return value
+				my $retval = get_retval($result);
+				
+				# a partial list of rsync exit values (from the rsync 2.6.0 man page)
+				#
+				# 0		Success
+				# 1		Syntax or usage error
+				# 23	Partial transfer due to error
+				# 24	Partial transfer due to vanished source files
+				#
+				# if we got error 1 and we were attempting --link-dest, there's
+				# a very good chance that this version of rsync is too old.
+				#
+				if ((1 == $link_dest) && (1 == $retval))	{
+					print_err ("$config_vars{'cmd_rsync'} returned $retval. Does this version of rsync support --link-dest?", 2);
+					syslog_err("$config_vars{'cmd_rsync'} returned $retval. Does this version of rsync support --link-dest?");
 					
-				# no arguments is the default
+				# 23 and 24 are treated as warnings because users might be using the filesystem during the backup
+				# if you want perfect backups, don't allow the source to be modified while the backups are running :)
+				} elsif (23 == $retval)	{
+					print_warn ("Some files and/or directories in $src only transferred partially during rsync operation", 4);
+					syslog_warn("Some files and/or directories in $src only transferred partially during rsync operation");
+					
+				} elsif (24 == $retval)	{
+					print_warn ("Some files and/or directories in $src vanished during rsync operation", 4);
+					syslog_warn("Some files and/or directories in $src vanished during rsync operation");
+					
+				# other error
 				} else	{
-					push( @rsync_long_args_stack, "--rsh=$config_vars{'cmd_ssh'}" );
-				}
-				
-			# anonymous rsync
-			} elsif ( is_anon_rsync_path($src) )	{
-				# make rsync quiet if we're not running EXTRA verbose
-				if ($verbose < 4)	{ $rsync_short_args .= 'q'; }
-				
-			# this should have already been validated once, but better safe than sorry
-			} else	{
-				bail("Could not understand source \"$src\" in backup_lowest_interval()");
-			}
-			
-			# if we're using --link-dest, we'll need to specify .1 as the link-dest directory
-			if (1 == $link_dest)	{
-				if ( -d "$config_vars{'snapshot_root'}/$interval.1/$$bp_ref{'dest'}" )	{
-					push(@rsync_long_args_stack, "--link-dest=$config_vars{'snapshot_root'}/$interval.1/$$bp_ref{'dest'}");
-				}
-			}
-			
-			# SPECIAL EXCEPTION:
-			#   If we're using --link-dest AND the source is a file AND we have a copy from the last time,
-			#   manually link interval.1/foo to interval.0/foo
-			#
-			#   This is necessary because --link-dest only works on directories
-			#
-			if ((1 == $link_dest) && (is_file($src)) && (-f "$config_vars{'snapshot_root'}/$interval.1/$$bp_ref{'dest'}"))	{
-				# these are both "destination" paths, but we're moving from .1 to .0
-				my $srcpath		= "$config_vars{'snapshot_root'}/$interval.1/$$bp_ref{'dest'}";
-				my $destpath	= "$config_vars{'snapshot_root'}/$interval.0/$$bp_ref{'dest'}";
-				
-				print_cmd("ln $srcpath $destpath");
-				
-				if (0 == $test)	{
-					$result = link( "$srcpath", "$destpath" );
+					print_err ("$config_vars{'cmd_rsync'} returned $retval", 2);
+					syslog_err("$config_vars{'cmd_rsync'} returned $retval");
 					
-					if (!defined($result) or (0 == $result))	{
-						print_err ("link(\"$srcpath\", \"$destpath\") failed", 2);
-						syslog_err("link(\"$srcpath\", \"$destpath\") failed");
+					# set this directory to rollback if we're using link_dest
+					# (since $interval.0/ will have been moved to $interval.1/ by now)
+					if (1 == $link_dest)	{
+						push(@rollback_points, $$bp_ref{'dest'});
 					}
 				}
 			}
-			
-			# BEGIN RSYNC COMMAND ASSEMBLY
-			#   take care not to introduce blank elements into the array,
-			#   since it can confuse rsync, which in turn causes strange errors
-			#
-			@cmd_stack = ();
-			#
-			# rsync command
-			push(@cmd_stack, $config_vars{'cmd_rsync'});
-			#
-			# rsync short args
-			if (defined($rsync_short_args) && ($rsync_short_args ne ''))	{
-				push(@cmd_stack, $rsync_short_args);
-			}
-			#
-			# rsync long args
-			if (@rsync_long_args_stack && (scalar(@rsync_long_args_stack) > 0))	{
-				foreach my $tmp_long_arg (@rsync_long_args_stack)	{
-					if (defined($tmp_long_arg) && ($tmp_long_arg ne ''))	{
-						push(@cmd_stack, $tmp_long_arg);
-					}
-				}
-			}
-			#
-			# src
-			push(@cmd_stack, $src);
-			#
-			# dest
-			push(@cmd_stack, "$config_vars{'snapshot_root'}/$interval.0/$$bp_ref{'dest'}");
-			#
-			# END RSYNC COMMAND ASSEMBLY
-			
-			
-			# RUN THE RSYNC COMMAND FOR THIS BACKUP POINT BASED ON THE @cmd_stack VARS
-			print_cmd(@cmd_stack);
+		}
+		
+	# OR, IF WE HAVE A BACKUP SCRIPT, RUN IT, THEN SYNC IT TO DEST
+	} elsif (defined($$bp_ref{'script'}))	{
+		# work in a temp dir, and make this the source for the rsync operation later
+		# not having a trailing slash is a subtle distinction. it allows us to use
+		# the same path if it's NOT a directory when we try to delete it.
+		$tmpdir = "$config_vars{'snapshot_root'}/tmp";
+		
+		# remove the tmp directory if it's still there for some reason
+		# (this shouldn't happen unless the program was killed prematurely, etc)
+		if ( -e "$tmpdir" )	{
+			print_cmd("$display_rm -rf $tmpdir");
 			
 			if (0 == $test)	{
-				$result = system(@cmd_stack);
-				
-				# now we see if rsync ran successfully, and what to do about it
-				if ($result != 0)	{
-					# bitmask return value
-					my $retval = get_retval($result);
-					
-					# a partial list of rsync exit values (from the rsync 2.6.0 man page)
-					#
-					# 0		Success
-					# 1		Syntax or usage error
-					# 23	Partial transfer due to error
-					# 24	Partial transfer due to vanished source files
-					#
-					# if we got error 1 and we were attempting --link-dest, there's
-					# a very good chance that this version of rsync is too old.
-					#
-					if ((1 == $link_dest) && (1 == $retval))	{
-						print_err ("$config_vars{'cmd_rsync'} returned $retval. Does this version of rsync support --link-dest?", 2);
-						syslog_err("$config_vars{'cmd_rsync'} returned $retval. Does this version of rsync support --link-dest?");
-						
-					# 23 and 24 are treated as warnings because users might be using the filesystem during the backup
-					# if you want perfect backups, don't allow the source to be modified while the backups are running :)
-					} elsif (23 == $retval)	{
-						print_warn ("Some files and/or directories in $src only transferred partially during rsync operation", 4);
-						syslog_warn("Some files and/or directories in $src only transferred partially during rsync operation");
-						
-					} elsif (24 == $retval)	{
-						print_warn ("Some files and/or directories in $src vanished during rsync operation", 4);
-						syslog_warn("Some files and/or directories in $src vanished during rsync operation");
-						
-					# other error
-					} else	{
-						print_err ("$config_vars{'cmd_rsync'} returned $retval", 2);
-						syslog_err("$config_vars{'cmd_rsync'} returned $retval");
-						
-						# set this directory to rollback if we're using link_dest
-						# (since $interval.0/ will have been moved to $interval.1/ by now)
-						if (1 == $link_dest)	{
-							push(@rollback_points, $$bp_ref{'dest'});
-						}
-					}
-				}
-			}
-			
-		# OR, IF WE HAVE A BACKUP SCRIPT, RUN IT, THEN SYNC IT TO DEST
-		} elsif (defined($$bp_ref{'script'}))	{
-			# work in a temp dir, and make this the source for the rsync operation later
-			# not having a trailing slash is a subtle distinction. it allows us to use
-			# the same path if it's NOT a directory when we try to delete it.
-			$tmpdir = "$config_vars{'snapshot_root'}/tmp";
-			
-			# remove the tmp directory if it's still there for some reason
-			# (this shouldn't happen unless the program was killed prematurely, etc)
-			if ( -e "$tmpdir" )	{
-				print_cmd("$display_rm -rf $tmpdir");
-				
-				if (0 == $test)	{
-					# if it's a dir, delete it
-					if ( -d "$tmpdir" )	{
-						$result = rm_rf("$tmpdir");
-						if (0 == $result)	{
-							bail("Could not rm_rf(\"$tmpdir\");");
-						}
-					# if for some stupid reason it's a file, unlink it
-					} else	{
-						$result = unlink("$tmpdir");
-						if (0 == $result)	{
-							bail("unlink(\"$tmpdir\")");
-						}
-					}
-				}
-			}
-			
-			# we're creating now, not destroying. the tmp dir needs a trailing slash
-			$tmpdir .= '/';
-			
-			# create the tmp directory
-			print_cmd("mkdir -m 0755 -p $tmpdir");
-			
-			if (0 == $test)	{
-				eval	{
-					mkpath( "$tmpdir", 0, 0755 );
-				};
-				if ($@)	{
-					bail("Unable to create \"$tmpdir\",\nPlease make sure you have the right permissions.");
-				}
-			}
-			
-			# change to the tmp directory
-			print_cmd("cd $tmpdir");
-			
-			if (0 == $test)	{
-				$result = chdir("$tmpdir");
-				if (0 == $result)	{
-					bail("Could not change directory to \"$tmpdir\"");
-				}
-			}
-			
-			# run the backup script
-			#
-			# the assumption here is that the backup script is written in such a way
-			# that it creates files in it's current working directory.
-			#
-			# the backup script should return 0 on success, anything else is
-			# considered a failure.
-			#
-			print_cmd($$bp_ref{'script'});
-			
-			if (0 == $test)	{
-				$result = system( $$bp_ref{'script'} );
-				if ($result != 0)	{
-					# bitmask return value
-					my $retval = get_retval($result);
-					
-					print_err ("backup_script $$bp_ref{'script'} returned $retval", 2);
-					syslog_err("backup_script $$bp_ref{'script'} returned $retval");
-				}
-			}
-			
-			# change back to the previous directory
-			# (/ is a special case)
-			if ('/' eq $cwd)	{
-				print_cmd("cd $cwd");
-			} else	{
-				print_cmd("cd $cwd/");
-			}
-			
-			if (0 == $test)	{
-				chdir($cwd);
-			}
-			
-			# if we're using link_dest, pull back the previous files (as links) that were moved up if any.
-			# this is because in this situation, .0 will always be empty, so we'll pull select things
-			# from .1 back to .0 if possible. these will be used as a baseline for diff comparisons by
-			# sync_if_different() down below.
-			if (1 == $link_dest)	{
-				my $lastdir	= "$config_vars{'snapshot_root'}/$interval.1/$$bp_ref{'dest'}/";
-				my $curdir	= "$config_vars{'snapshot_root'}/$interval.0/$$bp_ref{'dest'}/";
-				
-				# if we even have files from last time
-				if ( -e "$lastdir" )	{
-					
-					# and we're not somehow clobbering an existing directory (shouldn't happen)
-					if ( ! -e "$curdir" )	{
-						
-						# call generic cp_al() subroutine
-						if (0 == $test)	{
-							$result = cp_al( "$lastdir", "$curdir" );
-							if (! $result)	{
-								print_err("Warning! cp_al(\"$lastdir\", \"$curdir/\")", 2);
-							}
-						}
-					}
-				}
-			}
-			
-			# sync the output of the backup script into this snapshot interval
-			# this is using a native function since rsync doesn't quite do what we want
-			#
-			# rsync sees that the timestamps are different, and insists
-			# on changing things even if the files are bit for bit identical on content.
-			#
-			print_cmd("sync_if_different(\"$tmpdir\", \"$config_vars{'snapshot_root'}/$interval.0/$$bp_ref{'dest'}\")");
-			
-			if (0 == $test)	{
-				$result = sync_if_different("$tmpdir", "$config_vars{'snapshot_root'}/$interval.0/$$bp_ref{'dest'}");
-				if (!defined($result))	{
-					print_err("Warning! sync_if_different(\"$tmpdir\", \"$$bp_ref{'dest'}\") returned undef", 2);
-				}
-			}
-			
-			# remove the tmp directory
-			if ( -e "$tmpdir" )	{
-				print_cmd("$display_rm -rf $tmpdir");
-				
-				if (0 == $test)	{
+				# if it's a dir, delete it
+				if ( -d "$tmpdir" )	{
 					$result = rm_rf("$tmpdir");
 					if (0 == $result)	{
 						bail("Could not rm_rf(\"$tmpdir\");");
 					}
+				# if for some stupid reason it's a file, unlink it
+				} else	{
+					$result = unlink("$tmpdir");
+					if (0 == $result)	{
+						bail("unlink(\"$tmpdir\")");
+					}
 				}
 			}
-			
-		# this should never happen
-		} else	{
-			bail("Either src or script must be defined in backup_lowest_interval()");
 		}
+		
+		# we're creating now, not destroying. the tmp dir needs a trailing slash
+		$tmpdir .= '/';
+		
+		# create the tmp directory
+		print_cmd("mkdir -m 0755 -p $tmpdir");
+		
+		if (0 == $test)	{
+			eval	{
+				mkpath( "$tmpdir", 0, 0755 );
+			};
+			if ($@)	{
+				bail("Unable to create \"$tmpdir\",\nPlease make sure you have the right permissions.");
+			}
+		}
+		
+		# change to the tmp directory
+		print_cmd("cd $tmpdir");
+		
+		if (0 == $test)	{
+			$result = chdir("$tmpdir");
+			if (0 == $result)	{
+				bail("Could not change directory to \"$tmpdir\"");
+			}
+		}
+		
+		# run the backup script
+		#
+		# the assumption here is that the backup script is written in such a way
+		# that it creates files in it's current working directory.
+		#
+		# the backup script should return 0 on success, anything else is
+		# considered a failure.
+		#
+		print_cmd($$bp_ref{'script'});
+		
+		if (0 == $test)	{
+			$result = system( $$bp_ref{'script'} );
+			if ($result != 0)	{
+				# bitmask return value
+				my $retval = get_retval($result);
+				
+				print_err ("backup_script $$bp_ref{'script'} returned $retval", 2);
+				syslog_err("backup_script $$bp_ref{'script'} returned $retval");
+			}
+		}
+		
+		# change back to the previous directory
+		# (/ is a special case)
+		if ('/' eq $cwd)	{
+			print_cmd("cd $cwd");
+		} else	{
+			print_cmd("cd $cwd/");
+		}
+		
+		if (0 == $test)	{
+			chdir($cwd);
+		}
+		
+		# if we're using link_dest, pull back the previous files (as links) that were moved up if any.
+		# this is because in this situation, .0 will always be empty, so we'll pull select things
+		# from .1 back to .0 if possible. these will be used as a baseline for diff comparisons by
+		# sync_if_different() down below.
+		if (1 == $link_dest)	{
+			my $lastdir	= "$config_vars{'snapshot_root'}/$interval.1/$$bp_ref{'dest'}/";
+			my $curdir	= "$config_vars{'snapshot_root'}/$interval.0/$$bp_ref{'dest'}/";
+			
+			# if we even have files from last time
+			if ( -e "$lastdir" )	{
+				
+				# and we're not somehow clobbering an existing directory (shouldn't happen)
+				if ( ! -e "$curdir" )	{
+					
+					# call generic cp_al() subroutine
+					if (0 == $test)	{
+						$result = cp_al( "$lastdir", "$curdir" );
+						if (! $result)	{
+							print_err("Warning! cp_al(\"$lastdir\", \"$curdir/\")", 2);
+						}
+					}
+				}
+			}
+		}
+		
+		# sync the output of the backup script into this snapshot interval
+		# this is using a native function since rsync doesn't quite do what we want
+		#
+		# rsync sees that the timestamps are different, and insists
+		# on changing things even if the files are bit for bit identical on content.
+		#
+		print_cmd("sync_if_different(\"$tmpdir\", \"$config_vars{'snapshot_root'}/$interval.0/$$bp_ref{'dest'}\")");
+		
+		if (0 == $test)	{
+			$result = sync_if_different("$tmpdir", "$config_vars{'snapshot_root'}/$interval.0/$$bp_ref{'dest'}");
+			if (!defined($result))	{
+				print_err("Warning! sync_if_different(\"$tmpdir\", \"$$bp_ref{'dest'}\") returned undef", 2);
+			}
+		}
+		
+		# remove the tmp directory
+		if ( -e "$tmpdir" )	{
+			print_cmd("$display_rm -rf $tmpdir");
+			
+			if (0 == $test)	{
+				$result = rm_rf("$tmpdir");
+				if (0 == $result)	{
+					bail("Could not rm_rf(\"$tmpdir\");");
+				}
+			}
+		}
+		
+	# this should never happen
+	} else	{
+		bail("Either src or script must be defined in backup_lowest_interval()");
 	}
+}
+
+# accepts interval we're operating on
+# returns no arguments
+# rolls back failed backups, as defined in the @rollback_points array
+sub rollback_failed_backups	{
+	my $interval = shift(@_);
+	
+	if (!defined($interval))	{ bail('interval not defined in rollback_failed_backups()'); }
 	
 	# rollback failed backups (if we're using link_dest)
 	foreach my $rollback_point (@rollback_points)	{
@@ -2501,16 +2571,6 @@ sub backup_lowest_interval	{
 		#	"$config_vars{'snapshot_root'}/$interval.1/$rollback_point",
 		#	"$config_vars{'snapshot_root'}/$interval.0/$rollback_point"
 		# );
-	}
-	
-	# update mtime of $interval.0 to reflect the time this snapshot was taken
-	print_cmd("touch $config_vars{'snapshot_root'}/$interval.0/");
-	
-	if (0 == $test)	{
-		my $result = utime(time(), time(), "$config_vars{'snapshot_root'}/$interval.0/");
-		if (0 == $result)	{
-			bail("Could not utime(time(), time(), \"$config_vars{'snapshot_root'}/$interval.0/\");");
-		}
 	}
 }
 
