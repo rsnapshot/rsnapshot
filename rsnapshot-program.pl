@@ -114,7 +114,7 @@ my $run_string = "$0 " . join(' ', @ARGV);
 
 # shut down gracefully if necessary
 $SIG{'HUP'}		= 'IGNORE';
-$SIG{'INT'}		= sub { bail('rsnapshot was sent INT signal... cleaning up'); };
+$SIG{'INT'}		= sub { bail('rsnapshot was sent INT signal... cleaning up');  };
 $SIG{'QUIT'}	= sub { bail('rsnapshot was sent QUIT signal... cleaning up'); };
 $SIG{'ABRT'}	= sub { bail('rsnapshot was sent ABRT signal... cleaning up'); };
 $SIG{'TERM'}	= sub { bail('rsnapshot was sent TERM signal... cleaning up'); };
