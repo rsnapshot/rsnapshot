@@ -649,8 +649,9 @@ and you are welcome to redistribute it under certain conditions.
 See the GNU General Public Licence for details.
 
 Options:
-    -v verbose - show shell commands being executed
-    -t test    - show shell commands that would have been executed
+    -v verbose - show equivalent shell commands being executed
+    -t test    - show equivalent shell commands that would have been executed
+    -t quiet   - supress non-fatal warnings
     -c [file]  - specify alternate config file (-c /path/to/file)
 HERE
 	
@@ -659,7 +660,7 @@ HERE
 
 sub show_usage	{
 	print "rsnapshot $VERSION\n";
-	print "Usage: rsnapshot [-v] [-t] [-c /alt/config/file] <interval>|configtest|help|version\n";
+	print "Usage: rsnapshot [-v] [-t] [-q] [-c /alt/config/file] <interval>|configtest|help|version\n";
 	print "Type \"man rsnapshot\" for full details.\n";
 } 
  
@@ -874,7 +875,7 @@ rsnapshot - remote filesystem snapshot utility
 
 =head1 SYNOPSIS
 
-B<rsnapshot> [B<-v>] [B<-t>] [B<-c> /alt/config/file] [command]
+B<rsnapshot> [B<-v>] [B<-t>] [B<-q>] [B<-c> /alt/config/file] [command]
 
 =head1 DESCRIPTION
 
@@ -909,6 +910,8 @@ B<-v> verbose, show shell commands being executed
 
 B<-t> test, show shell commands that would be executed
 
+B<-q> quiet, supress non-fatal warnings
+
 B<-c> specify an alternate config file
 
 =back
@@ -929,17 +932,33 @@ B<snapshot_root> local filesystem path to save all snapshots
 
 B<cmd_rsync>     full path to rsync
 
-B<cmd_ssh>       full path to ssh
+B<cmd_ssh>       full path to ssh (optional, only required for remote backups)
 
-B<cmd_mkdir>     full path to mkdir
+B<cmd_cp>        full path to cp  (optional)
 
-B<cmd_touch>     full path to touch
+=over 4
 
-B<cmd_cp>        full path to cp
+cmd_cp is a special case. It should be uncommented if the GNU version of cp
+is available. If you are on a platform with a different version of cp (BSD,
+Solaris, IRIX, Mac OS X, etc.), it should be commented out. If you do not
+have GNU cp, rsnapshot will use a native implementation instead. However,
+because of cross-platform issues, the native Perl version is not able to
+take snapshots of the following special filetypes:
 
-B<cmd_mv>        full path to mv
+=over 4
 
-B<cmd_rm>        full path to rm
+FIFO
+
+Socket
+
+Block / Character devices
+
+=back
+
+Furthermore, hard links to symlinks are not portable, so new symlinks
+will be created when they need to be copied.
+
+=back
 
 B<interval>      [name] [number]
 
@@ -1048,15 +1067,7 @@ B<cmd_rsync>       /usr/bin/rsync
 
 B<cmd_ssh>         /usr/bin/ssh
 
-B<cmd_mkdir>       /bin/mkdir
-
-B<cmd_touch>       /bin/touch
-
-B<cmd_cp>          /bin/cp
-
-B<cmd_mv>          /bin/mv
-
-B<cmd_rm>          /bin/rm
+B<#cmd_cp>          /bin/cp
 
 B<interval>        hourly  6
 
@@ -1147,8 +1158,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 =head1 SEE ALSO
 
-rsync(1), ssh(1), sshd(1), ssh-keygen(1), perl(1), touch(1), mkdir(1),
-cp(1), mv(1), rm(1)
+rsync(1), ssh(1), sshd(1), ssh-keygen(1), perl(1), cp(1)
 
 =head1 DIAGNOSTICS
 
