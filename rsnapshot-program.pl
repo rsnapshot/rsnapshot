@@ -134,26 +134,20 @@ find_config_file();
 # (this can override $config_file, if the -c flag is used on the command line)
 parse_cmd_line_opts();
 
-# if we were called with no arguments, show the usage information
+# if we need to run a command that doesn't require the config file, do it now (and exit)
 if (!defined($cmd) or ((! $cmd) && ('0' ne $cmd)) )	{
 	show_usage();
-	exit(1);
+} elsif ($cmd eq 'help')	{
+	show_help();
+} elsif ($cmd eq 'version')	{
+	show_version();
+} elsif ($cmd eq 'version_only')	{
+	show_version_only();
 }
 
 # if we're just doing a configtest, set that flag
 if ($cmd eq 'configtest')	{
 	$do_configtest = 1;
-
-# if we need to run a command that doesn't require the config file, do it now (and exit)
-} elsif ($cmd eq 'help')	{
-	show_help();
-	exit(0);
-} elsif ($cmd eq 'version')	{
-	print "rsnapshot $VERSION\n";
-	exit(0);
-} elsif ($cmd eq 'version_only')	{
-	print $VERSION;
-	exit(0);
 }
 
 # parse config file (if it exists)
@@ -172,10 +166,9 @@ if (1 == $do_configtest)	{
 	exit_configtest();
 }
 
-# if we're just using "du" to check the disk space, do it now
+# if we're just using "du" to check the disk space, do it now (and exit)
 # this is down here because it needs to know the contents of the config file
 if ($cmd eq 'du')	{
-	# this will exit the program with an appropriate exit code either way
 	show_disk_usage();
 }
 
@@ -216,18 +209,23 @@ exit_with_status();
 
 # concise usage information
 # runs when rsnapshot is called with no arguments
+# exits with an error condition
 sub show_usage	{
 	print "rsnapshot $VERSION\n";
 	print "Usage: rsnapshot [-vtxqVD] [-c cfgfile] <interval>|configtest|du|help|version\n";
 	print "Type \"rsnapshot help\" or \"man rsnapshot\" for more information.\n";
+	
+	exit(1);
 }
 
 # extended usage information
 # runs when rsnapshot is called with "help" as an argument
+# exits 0
 sub show_help	{
-	show_usage();
-	
 	print<<HERE;
+rsnapshot $VERSION
+Usage: rsnapshot [-vtxqVD] [-c cfgfile] <interval>|configtest|du|help|version
+Type "man rsnapshot" for more information.
 
 rsnapshot is a filesystem snapshot utility. It can take incremental
 snapshots of local and remote filesystems for any number of machines.
@@ -245,6 +243,23 @@ Options:
     -V extra verbose - same as -v, but with more detail
     -D debug         - a firehose of diagnostic information
 HERE
+	
+	exit(0);
+}
+
+# prints out the name and version
+# exits 0
+sub show_version	{
+	print "rsnapshot $VERSION\n";
+	exit(0);
+}
+
+# prints only the version number
+# this is "undocumented", just for use with some of the makefile targets
+# exits 0
+sub show_version_only	{
+	print "$VERSION\n";
+	exit(0);
 }
 
 # accepts no arguments
