@@ -324,7 +324,11 @@ if ( -f "$config_file" )	{
 			
 			# remember src/dest
 			# also, first check to see that we're not backing up the snapshot directory
-			if ((-e "$src") && ($config_vars{'snapshot_root'} =~ $src))	{
+			if ((is_real_local_abs_path("$src")) && ($config_vars{'snapshot_root'} =~ $src))	{
+				
+				# remove trailing slash from source, since we will be using our own
+				$src =~ s/\/$//;
+				
 				opendir(SRC, "$src") or bail("Could not open $src");
 				
 				while (my $node = readdir(SRC))	{
