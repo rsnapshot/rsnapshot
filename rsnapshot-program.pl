@@ -29,6 +29,7 @@ use strict;
 use Cwd;
 use DirHandle;
 use Getopt::Std;
+use File::Copy;
 use File::Path;
 use File::stat;
 
