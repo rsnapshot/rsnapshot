@@ -126,6 +126,9 @@ my $rsync_include_file_args	= undef;
 my $run_perfect		= 1;
 my $config_perfect	= 1;
 
+# display variable for "rm". this gets set to the full path if we have the command
+my $display_rm = 'rm';
+
 # remember what directory we started in
 my $cwd = cwd();
 
@@ -346,6 +349,7 @@ if ( -f "$config_file" )	{
 		if ($var eq 'cmd_rm')	{
 			if ((-f "$value") && (-x "$value") && (1 == is_real_local_abs_path($value)))	{
 				$config_vars{'cmd_rm'} = $value;
+				$display_rm = $value;
 				$have_rm = 1;
 				$line_syntax_ok = 1;
 				next;
@@ -1709,7 +1713,7 @@ sub backup_interval	{
 	#
 	# remove oldest directory
 	if ( (-d "$config_vars{'snapshot_root'}/$interval.$interval_max") && ($interval_max > 0) )	{
-		print_cmd("rm -rf $config_vars{'snapshot_root'}/$interval.$interval_max/");
+		print_cmd("$display_rm -rf $config_vars{'snapshot_root'}/$interval.$interval_max/");
 		if (0 == $test)	{
 			my $result = rm_rf( "$config_vars{'snapshot_root'}/$interval.$interval_max/" );
 			if (0 == $result)	{
@@ -1961,7 +1965,7 @@ sub backup_interval	{
 			# remove the tmp directory if it's still there for some reason
 			# (this shouldn't happen unless the program was killed prematurely, etc)
 			if ( -e "$tmpdir" )	{
-				print_cmd("rm -rf $tmpdir");
+				print_cmd("$display_rm -rf $tmpdir");
 				
 				if (0 == $test)	{
 					# if it's a dir, delete it
@@ -2080,7 +2084,7 @@ sub backup_interval	{
 			
 			# remove the tmp directory
 			if ( -e "$tmpdir" )	{
-				print_cmd("rm -rf $tmpdir");
+				print_cmd("$display_rm -rf $tmpdir");
 				
 				if (0 == $test)	{
 					$result = rm_rf("$tmpdir");
@@ -2127,7 +2131,7 @@ sub rotate_interval	{
 	#
 	# delete the oldest one (if we're keeping more than one)
 	if ( -d "$config_vars{'snapshot_root'}/$interval.$interval_max" )	{
-		print_cmd("rm -rf $config_vars{'snapshot_root'}/$interval.$interval_max/");
+		print_cmd("$display_rm -rf $config_vars{'snapshot_root'}/$interval.$interval_max/");
 		
 		if (0 == $test)	{
 			my $result = rm_rf( "$config_vars{'snapshot_root'}/$interval.$interval_max/" );
