@@ -3,7 +3,11 @@ rsnapshot changelog
 http://www.rsnapshot.org/
 ------------------------------------------------------------------------------
 
-VERSION 1.0.9
+VERSION 1.0.10
+------------------------------------------------------------------------------
+
+
+VERSION 1.0.9 (Jan 6 19:17 2004)
 ------------------------------------------------------------------------------
 - Added backup_mysql.sh example script in utils/ to backup a MySQL database
 - Added backup_smb_share.sh example script in utils/ to backup an SMB share
