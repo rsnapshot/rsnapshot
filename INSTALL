@@ -34,12 +34,13 @@ INSTALLATION
                 This will install everything under /usr/local
 
             --sysconfdir=/usr/local/etc
-                This will install the example config file under /usr/local/etc.
-                It is recommended that you copy this and use it as a basis for
-                the actual config file.
+                This will install the example config file
+                (rsnapshot.conf.default) under /usr/local/etc. It is
+                recommended that you copy this and use it as a basis for
+                the actual config file (rsnapshot.conf).
 
             --bindir=/usr/local/bin
-                This will install the rsnapshot script under /usr/local/bin
+                This will install the rsnapshot program under /usr/local/bin
 
             --mandir=/usr/local/man
                 This will install the man page under /usr/local/man
