@@ -20,7 +20,7 @@ for version 1.0.x
   i.e. http_handler could be set to wget, to handle http downloads, which are
   then rsynced into main snapshot_root tree
 
-- Support for SSH tunnelling
+- Support for SSH tunnelling (this may work with the ssh_args param(?))
 
 - Add syslog support. Make sure it's compatible with Perl 5.004 cross platform.
 
