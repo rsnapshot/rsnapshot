@@ -6,6 +6,7 @@ http://www.rsnapshot.org/
 VERSION 1.1.1 (? ? ??:?? 2004)
 ------------------------------------------------------------------------------
 - Changed some fatal errors to warnings in some recursive subroutines
+- Added optional GPG support to the rsnaptar utility shell script
 
 VERSION 1.1.0 (Jan 24 16:41 2004)
 ------------------------------------------------------------------------------

@@ -1,4 +1,4 @@
-rsnapshot 1.1.0
+rsnapshot 1.1.1
 http://www.rsnapshot.org/
 
 ------------------------------------------------------------------------------
@@ -12,7 +12,7 @@ For installation instructions, read INSTALL
 ------------------------------------------------------------------------------
 UPGRADE NOTICE (Important)
 ------------------------------------------------------------------------------
-  If you are upgrading from a previous version of rsnapshot, please be aware
+  If you are upgrading from a 1.0.x version of rsnapshot, please be aware
   of the following differences:
 
     - The first backup interval must have a value of at least 2 if more than

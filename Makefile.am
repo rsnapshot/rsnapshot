@@ -1,4 +1,4 @@
-VERSION = 1.1.0
+VERSION = 1.1.1
 
 DEB_BUILD_DIR = fakeroot
 RPM_BASE_DIR  = /usr/src/redhat

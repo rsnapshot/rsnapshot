@@ -1,6 +1,6 @@
 Name: rsnapshot
 Summary: Local and remote filesystem snapshot utility
-Version: 1.1.0
+Version: 1.1.1
 Release: 1
 BuildArch: noarch
 Copyright: GPL
