@@ -383,7 +383,7 @@ if ( -f $config_file )	{
 		$file_syntax_ok = 0;
 	}
 	
-	# CONFIG TEST?
+	# CONFIG TEST ONLY?
 	if ($do_configtest && $file_syntax_ok)	{
 		print "Syntax OK\n";
 		exit(0);
@@ -475,12 +475,14 @@ sub backup_interval	{
 	# this should never happen
 	if (!defined($interval))	{ bail('backup_interval() expects an argument'); }
 	
-	my $rsync_args = '-al';
+	# set up defaults args for rsync
+	my $default_rsync_args	= '-al';
+	if ($extra_verbose)	{ $default_rsync_args .= 'v'; }
 	
-	# if -V was passed as a flag, show verbose messages for rsync
-	if ($extra_verbose)	{ $rsync_args .= 'v'; }
-	
-	if ($one_fs)		{ $rsync_args .= 'x'; }
+	# TODO enable this code when rsync_args is enabled in the config file
+	# if (defined($config_vars{'rsync_args'}))	{
+	# 	$default_rsync_args = $config_vars{'rsync_args'};
+	# }
 	
 	# ROTATE DIRECTORIES
 	#
@@ -533,6 +535,8 @@ sub backup_interval	{
 	foreach my $sp_ref (@snapshot_points)	{
 		my $src;
 		
+		my $rsync_args = $default_rsync_args;
+		
 		# append a trailing slash if it's a directory
 		if ((-d "$$sp_ref{'src'}") && ($$sp_ref{'src'} !~ /\/$/))	{
 			$src = $$sp_ref{'src'} . '/';
@@ -557,6 +561,23 @@ sub backup_interval	{
 				}
 			}
 		}
+		
+		# check opts, first unique to this backup point, and then global
+		#
+		# with all these checks, we try the local option first, and if
+		# that isn't specified, we attempt to use the global setting as
+		# a fallback plan
+		#
+		# ONE_FS
+		if ( defined($$sp_ref{'opts'}) && defined($$sp_ref{'opts'}->{'one_fs'}) )	{
+			if (1 == $$sp_ref{'opts'}->{'one_fs'})	{
+				$rsync_args .= 'x';
+			}
+		} elsif ($one_fs)	{
+			$rsync_args .= 'x';
+		}
+		
+		
 		
 		# if this is a user@host:/path, use ssh
 		if ($src =~ /^.*?\@.*?:\/.*$/)	{
@@ -922,11 +943,28 @@ sub native_cp_al	{
 # this is for individual backup points only
 sub parse_backup_opts	{
 	my $opts_str = shift(@_);
-	my @parsed_opts;
+	my @pairs;
+	my %parsed_opts;
 	
+	# make sure we got something
+	if (!defined($opts_str))	{ return (undef); }
+	if (!$opts_str)				{ return (undef); }
 	
+	# split on commas first
+	@pairs = split(',', $opts_str);
 	
-	return (\@parsed_opts);
+	# then loop through and split on equals
+	foreach my $pair (@pairs)	{
+		my ($name, $value) = split('=', $pair, 2);
+		$parsed_opts{$name} = $value;
+	}
+	
+	# if we got anything, return it as an array_ref
+	if (%parsed_opts)	{
+		return (\%parsed_opts);
+	}
+	
+	return (undef);
 }
 
 #####################
