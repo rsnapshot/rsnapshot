@@ -105,6 +105,9 @@ my $verbose = 0;
 # turn verbose on, but don't execute the commands
 my $test = 0;
  
+# don't display warnings about FIFOs and special files if enabled
+my $quiet = 0;
+ 
 # BEGIN CRUFT #
 	# check for deprecated flags
 	my $cruft = 0;
@@ -116,7 +119,7 @@ my $test = 0;
 
 # GET COMMAND LINE OPTIONS 
 getopt('c', \%opts);
-getopts('vt', \%opts);
+getopts('vtq', \%opts);
 $cmd = $ARGV[0];
 
 # ALTERNATE CONFIG FILE
@@ -133,6 +136,11 @@ if (defined($opts{'v'}))	{
 if (defined($opts{'t'}))	{
 	$test = 1;
 	$verbose = 1;
+}
+
+# QUIET?
+if (defined($opts{'q'}))	{
+	$quiet = 1;
 }
 
 # COMMAND LINE ARGS 
@@ -494,7 +502,7 @@ sub backup_interval	{
 			if ($use_gnu_cp)	{
 				print "$config_vars{'cmd_cp'} -al $config_vars{'snapshot_root'}/$interval.0/ $config_vars{'snapshot_root'}/$interval.1/\n";
 			} else	{
-				print "# perl: native_cp_al(\"$config_vars{'snapshot_root'}/$interval.0/\", \"$config_vars{'snapshot_root'}/$interval.1/\");\n";
+				print "# native_cp_al(\"$config_vars{'snapshot_root'}/$interval.0/\", \"$config_vars{'snapshot_root'}/$interval.1/\");\n";
 			}
 		}
 		if ($test == 0)	{
@@ -609,7 +617,7 @@ sub rotate_interval	{
 				print "$config_vars{'cmd_cp'} -al $config_vars{'snapshot_root'}/$prev_interval.$prev_interval_max/ ";
 				print "$config_vars{'snapshot_root'}/$interval.0/\n";
 			} else	{
-				print "# perl: native_cp_al(\"$config_vars{'snapshot_root'}/$prev_interval.$prev_interval_max/\", ";
+				print "# native_cp_al(\"$config_vars{'snapshot_root'}/$prev_interval.$prev_interval_max/\", ";
 				print "\"$config_vars{'snapshot_root'}/$interval.0/\");\n";
 			}
 		}
@@ -688,7 +696,9 @@ sub gnu_cp_al	{
 	
 	$result = system( $config_vars{'cmd_cp'}, '-al', "$src", "$dest" );
 	if ($result != 0)	{
-		print STDERR "Warning! $config_vars{'cmd_cp'} failed. Perhaps this is not GNU cp?\n";
+		if ($quiet == 0)	{
+			print STDERR "Warning! $config_vars{'cmd_cp'} failed. Perhaps this is not GNU cp?\n";
+		}
 		return (0);
 	}
 	
@@ -796,19 +806,27 @@ sub native_cp_al	{
 				
 			# FIFO
 			} elsif ( -p "$src/$node" )	{
-				print STDERR "Warning! Ignoring FIFO $src/$node\n";
+				if ($quiet == 0)	{
+					print STDERR "Warning! Ignoring FIFO $src/$node\n";
+				}
 				
 			# SOCKET
 			} elsif ( -S "$src/$node" )	{
-				print STDERR "Warning! Ignoring socket: $src/$node\n";
+				if ($quiet == 0)	{
+					print STDERR "Warning! Ignoring socket: $src/$node\n";
+				}
 				
 			# BLOCK DEVICE
 			} elsif ( -b "$src/$node" )	{
-				print STDERR "Warning! Ignoring special block file: $src/$node\n";
+				if ($quiet == 0)	{
+					print STDERR "Warning! Ignoring special block file: $src/$node\n";
+				}
 				
 			# CHAR DEVICE
 			} elsif ( -c "$src/$node" )	{
-				print STDERR "Warning! Ignoring special character file: $src/$node\n";
+				if ($quiet == 0)	{
+					print STDERR "Warning! Ignoring special character file: $src/$node\n";
+				}
 				
 			# FILE
 			} elsif ( -f "$src/$node" )	{
