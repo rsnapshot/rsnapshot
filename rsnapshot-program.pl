@@ -826,7 +826,8 @@ sub print_cmd	{
 	
 	# loop through all the tokens and print them out, wrapping when necessary
 	for (my $i=0; $i<scalar(@tokens); $i++)	{
-		$chars += length($tokens[$i]);
+		# keep track of where we are (plus a space)
+		$chars += (length($tokens[$i]) + 1);
 		
 		# wrap if we're at the edge
 		if ($chars > $colmax)	{
