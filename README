@@ -35,10 +35,12 @@ This program should work on any reasonably modern UNIX compatible OS. It
 has been tested successfully on the following operating systems:
  - Debian: 3.0 (woody), unstable
  - Redhat: 7.x, 8.0
+ - WhiteBox Enterprise Linux 3.0
+ - Slackware 9.0
  - SuSE: 9.0
  - Fedora Core 1
  - FreeBSD 4.9-STABLE
- - OpenBSD 3.3
+ - OpenBSD 3.x
  - Solaris 8
  - Mac OS X
  - IRIX 6.5
@@ -47,23 +49,29 @@ has been tested successfully on the following operating systems:
 ------------------------------------------------------------------------------
 COMPATIBILITY NOTICE (Please read)
 ------------------------------------------------------------------------------
-  If you have rsync version 2.5.7 or later, be sure and enable the link_dest
-  parameter in the rsnapshot.conf file. This will allow you to handle any type
-  of file on any operating system. To get the most out of rsnapshot, you need
-  to use link_dest.
+  If you have rsync version 2.5.7 or later, you may want to enable the
+  link_dest parameter in the rsnapshot.conf file. This will allow you to handle
+  any type of file on any operating system.
   
   If you do not have rsync 2.5.7 or newer, but you are running Linux, be sure
   and enable the cmd_cp parameter in rsnapshot.conf.
   
   These options are both off by default for maximum compatibility. However, if
-  you enable one of them (preferably link_dest), you will be able to back up
-  your entire system, not just most of it.
+  you enable one of them you will be able to back up your entire system, not
+  just most of it.
   
   When running rsnapshot on a system without either of these two options
   enabled, special files will not be rotated in the snapshots properly. More
   specifically, FIFOs, sockets, block and character devices will not be
   supported. This is because there is no clean cross-platform way to
   accomplish this in Perl (and if you know how, please let me know).
+  
+  Be advised that currently link_dest doesn't do well with unavailable hosts.
+  Specifically, if a remote host is unavailable using link_dest, there will
+  be no latest backup of that machine, and a full re-sync will be required
+  when it becomes available. Using the other methods, the last good snapshot
+  will be preserved, preventing the need for a re-sync. We hope to streamline
+  this in the future.
 ------------------------------------------------------------------------------
 
 Once you have installed rsnapshot, you will need to configure it.

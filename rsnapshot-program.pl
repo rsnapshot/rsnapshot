@@ -3126,9 +3126,11 @@ B<link_dest           1>
 
 =over 4
 
-If your version of rsync supports --link-dest (2.5.7 or newer), enable this to
-let rsync handle some things that GNU cp or the built-in subroutines would
-otherwise do. You should enable this if possible.
+If your version of rsync supports --link-dest (2.5.7 or newer), you can enable
+this to let rsync handle some things that GNU cp or the built-in subroutines would
+otherwise do. The only drawback is that if a host becomes unavailable during
+a backup operation, the last good files will get rotated up, and a full re-sync
+will be required on the next pass.
 
 =back
 
