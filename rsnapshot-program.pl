@@ -1778,7 +1778,13 @@ sub backup_interval	{
 		my $result					= undef;
 		my $ssh_args				= $default_ssh_args;
 		my $rsync_short_args		= $default_rsync_short_args;
-		my @rsync_long_args_stack	= ( split(/\s/, $default_rsync_long_args) );
+		my @rsync_long_args_stack	= ();
+		
+		# add all rsync_long_args in the first array element
+		# this is so that any quoting that was done doesn't get undone
+		if (defined($default_rsync_long_args) && $default_rsync_long_args)	{
+			push( @rsync_long_args_stack, $default_rsync_long_args );
+		}
 		
 		# append a trailing slash if src is a directory
 		if (defined($$sp_ref{'src'}))	{
@@ -1831,7 +1837,8 @@ sub backup_interval	{
 			}
 			# RSYNC LONG ARGS
 			if ( defined($$sp_ref{'opts'}) && defined($$sp_ref{'opts'}->{'rsync_long_args'}) )	{
-				@rsync_long_args_stack = split(/\s/, $$sp_ref{'opts'}->{'rsync_long_args'});
+				# push all rsync_long_args into one array element, to preserve quoting attributes
+				push( @rsync_long_args_stack, $$sp_ref{'opts'}->{'rsync_long_args'} );
 			}
 			# SSH ARGS
 			if ( defined($$sp_ref{'opts'}) && defined($$sp_ref{'opts'}->{'ssh_args'}) )	{
@@ -1877,7 +1884,7 @@ sub backup_interval	{
 			# if we're using --link-dest, we'll need to specify .1 as the link-dest directory
 			if (1 == $link_dest)	{
 				if ( -d "$config_vars{'snapshot_root'}/$interval.1/$$sp_ref{'dest'}" )	{
-					push(@rsync_long_args_stack, "--link-dest=$config_vars{'snapshot_root'}/$interval.1/$$sp_ref{'dest'}");
+					push( @rsync_long_args_stack, "--link-dest=$config_vars{'snapshot_root'}/$interval.1/$$sp_ref{'dest'}" );
 				}
 			}
 			
