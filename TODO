@@ -35,12 +35,6 @@ for version 1.1.x
   speeds. I.E. some things would get backed up hourly, whereas other backup
   points would get backed up daily.
 
-- Add a feature to allow users to add .rsnapshot.exclude files in directories.
-  Would this exclude the directory the file was included in, or contain a
-  list of things for rsync to parse? If it's the latter, we would need to
-  prevent the user from compromising other parts of the backup with rogue
-  instructions.
-
 - Update string manipulations and comparisons of paths to use File::Spec and
   File::Basename functions where possible. Double check they're fully
   compatible with Perl 5.004.
