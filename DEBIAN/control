@@ -6,8 +6,12 @@ Maintainer: Nathan Rosenquist <rsnapshot@scubaninja.com>
 Depends: perl, fileutils, rsync
 Recommends: ssh
 Architecture: all
-Description: rsnapshot is a filesystem snapshot utility.
+Description: Local and remote filesystem snapshot utility
+             .
+             rsnapshot is a filesystem snapshot utility
              It can take incremental snapshots of local
              and remote filesystems for any number of
-             machines.
+             machines. rsnapshot makes extensive use of
+             hard links, so disk space is only used when
+             absolutely necessary.
 installed-size: 24
