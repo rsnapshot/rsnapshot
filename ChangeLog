@@ -45,6 +45,7 @@ VERSION 1.2.0 (Jan ?? ??:?? 2005)
   and man page
 - Fixed "missing rsync/configtest ok" bug
 - Added config_version parameter, which is now required
+- All autoconf files were updated with the ones from Debian sarge
 
 VERSION 1.1.6 (Jul 05 16:35 2004)
 ------------------------------------------------------------------------------
