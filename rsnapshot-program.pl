@@ -306,7 +306,7 @@ sub parse_cmd_line_opts	{
 	my $result;
 	
 	# get command line options
-	$result = getopts('vVtqxDc:', \%opts);
+	$result = getopts('vtxqVDc:', \%opts);
 	
 	#
 	# validate command line args
