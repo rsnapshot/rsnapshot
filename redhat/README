@@ -4,7 +4,7 @@ Copy the source code tarball to your SOURCES directory.
 Copy SOURCES/rsnapshot.patch to your SOURCES directory.
 Copy SPECS/rsnapshot.spec to your SPECS directory.
 
-rpm -bb /path/to/your/SPECS/rsnapshot.spec
+rpmbuild -bb /path/to/your/SPECS/rsnapshot.spec
 rpm -ivh /path/to/your/RPMS/noarch/rsnapshot-1.x.x-0.noarch.rpm
 
 If you don't want to make an RPM, you can download the latest version at
