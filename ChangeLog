@@ -51,6 +51,7 @@ VERSION 1.2.0 (Jan ?? ??:?? 2005)
   options
 - Conditionalized configure script to only advise the user to copy the
   rsnapshot.conf.default file to rsnapshot.conf if it's a new installation
+- Added rollback feature to restore interval.0 snapshots when using link_dest
 
 VERSION 1.1.6 (Jul 05 16:35 2004)
 ------------------------------------------------------------------------------

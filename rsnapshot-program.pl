@@ -1804,7 +1804,7 @@ sub get_current_date {
 }
 
 # accepts no arguments
-# returns no arguments
+# returns nothing
 # simply prints out a startup message to the logs and STDOUT
 sub log_startup {
 	log_msg("$run_string: started", 2);
@@ -1893,7 +1893,7 @@ sub remove_lockfile {
 }
 
 # accepts no arguments
-# returns no arguments
+# returns nothing
 # sets the locale to POSIX (C) to mitigate some problems with the rmtree() command
 #
 sub set_posix_locale {
@@ -1905,7 +1905,7 @@ sub set_posix_locale {
 }
 
 # accepts no arguments
-# returns no arguments
+# returns nothing
 # creates the snapshot_root directory (chmod 0700), if it doesn't exist and no_create_root == 0
 sub create_snapshot_root {
 	# attempt to create the directory if it doesn't exist
@@ -2046,7 +2046,7 @@ sub exit_with_status {
 }
 
 # accepts no arguments
-# returns no arguments
+# returns nothing
 #
 # exits the program with the status of the config file (i.e. Syntax OK).
 # the exit code is 0 for success, 1 for failure (although failure should never happen)
@@ -2278,7 +2278,7 @@ sub remove_trailing_slash {
 }
 
 # accepts an interval_data_ref
-# returns no arguments
+# returns nothing
 # calls the appropriate subroutine, depending on whether this is the lowest interval or a higher one
 #
 sub handle_interval {
@@ -2346,7 +2346,7 @@ sub backup_lowest_interval {
 }
 
 # accepts $interval
-# returns no arguments
+# returns nothing
 #
 # operates on directories in the given interval (it should be the lowest one)
 # deletes the highest numbered directory in the interval, and rotates the ones below it
@@ -2873,7 +2873,7 @@ sub exec_backup_script {
 }
 
 # accepts interval, backup_point_ref
-# returns no arguments
+# returns nothing
 # exits the program if it encounters a fatal error
 sub create_backup_point_dir {
 	my $interval	= shift(@_);
@@ -2911,49 +2911,105 @@ sub create_backup_point_dir {
 }
 
 # accepts interval we're operating on
-# returns no arguments
+# returns nothing important
 # rolls back failed backups, as defined in the @rollback_points array
 # this is only necessary if we're using link_dest, since it moves the .0 to .1 directory,
 # instead of recursively copying links to the files
 #
-# TODO: flesh this out and do proper error checking
-# right now this is experimental
-#
 sub rollback_failed_backups {
 	my $interval = shift(@_);
 	
+	my $result;
+	my $rsync_short_args	= $default_rsync_short_args;
+	
+	my @cmd_stack = ();
+	
 	if (!defined($interval)) { bail('interval not defined in rollback_failed_backups()'); }
+	
+	# extra verbose?
+	if ($verbose > 3) { $rsync_short_args .= 'v'; }
 	
 	# rollback failed backups (if we're using link_dest)
 	foreach my $rollback_point (@rollback_points) {
-		#
-		print STDERR "rolling back $rollback_point\n";
+		# make sure there's something to rollback from
+		if ( ! -e "$config_vars{'snapshot_root'}/$interval.1/$rollback_point" ) {
+			next;
+		}
+	
+		print_warn ("Rolling back \"$rollback_point\"", 2);
+		syslog_warn("Rolling back \"$rollback_point\"");
 		
-		# using link-dest, this probably won't happen
+		# using link_dest, this probably won't happen
+		# just in case, we may have to delete the old backup point from interval.0/
 		if ( -e "$config_vars{'snapshot_root'}/$interval.0/$rollback_point" ) {
-			rm_rf("$config_vars{'snapshot_root'}/$interval.0/$rollback_point");
+			display_rm_rf("$config_vars{'snapshot_root'}/$interval.0/$rollback_point");
+			if (0 == $test) {
+				$result = rm_rf( "$config_vars{'snapshot_root'}/$interval.0/$rollback_point" );
+				if (0 == $result) {
+					bail("Error! rm_rf(\"$config_vars{'snapshot_root'}/$interval.0/$rollback_point\")\n");
+				}
+			}
+		}
+		
+		# copy hard links back from .1 to .0
+		display_cp_al(
+			"$config_vars{'snapshot_root'}/$interval.1/$rollback_point",
+			"$config_vars{'snapshot_root'}/$interval.0/$rollback_point"
+		);
+		if (0 == $test) {
+			$result = cp_al(
+				"$config_vars{'snapshot_root'}/$interval.1/$rollback_point",
+				"$config_vars{'snapshot_root'}/$interval.0/$rollback_point"
+			);
+			if (! $result) {
+				my $errstr = '';
+				$errstr .= "Error! cp_al(\"$config_vars{'snapshot_root'}/$interval.1/$rollback_point\", ";
+				$errstr .= "\"$config_vars{'snapshot_root'}/$interval.0/$rollback_point\")";
+				bail($errstr);
+			}
+		}
+		
+		# and if we don't have GNU cp, rsync for good measure
+		# this should catch the special files like FIFOs and device nodes
+		#
+		# setup rsync command
+		@cmd_stack = ();
+		#
+		# rsync
+		push(@cmd_stack, $config_vars{'cmd_rsync'});
+		#
+		# short args
+		if (defined($rsync_short_args) && ($rsync_short_args ne '')) {
+			push(@cmd_stack, $rsync_short_args);
 		}
 		#
-		cp_al(
-			"$config_vars{'snapshot_root'}/$interval.1/$rollback_point",
-			"$config_vars{'snapshot_root'}/$interval.0/$rollback_point"
-		);
+		# long args (not the defaults)
+		push(@cmd_stack, '--delete');
+		push(@cmd_stack, '--numeric-ids');
+		#
+		# src
+		push(@cmd_stack, "$config_vars{'snapshot_root'}/$interval.1/$rollback_point");
+		#
+		# dest
+		push(@cmd_stack, "$config_vars{'snapshot_root'}/$interval.0/$rollback_point");
 		
-		# and then an rsync for good measure (special files)
-		print "rsync -al --delete --numeric-ids --relative --delete-excluded \ \n";
-		print "  $config_vars{'snapshot_root'}/$interval.1/$rollback_point \ \n";
-		print "  $config_vars{'snapshot_root'}/$interval.0/$rollback_point \ \n";
+		print_cmd(@cmd_stack);
 		
-		system(
-			'rsync', '-al', '--delete', '--numeric-ids', '--relative', '--delete-excluded',
-			"$config_vars{'snapshot_root'}/$interval.1/$rollback_point",
-			"$config_vars{'snapshot_root'}/$interval.0/$rollback_point"
-		);
+		if (0 == $test) {
+			$result = system(@cmd_stack);
+			
+			if ($result != 0) {
+				# bitmask return value
+				my $retval = get_retval($result);
+				
+				bail("Error while rolling back $rollback_point");
+			}
+		}
 	}
 }
 
 # accepts interval
-# returns no arguments
+# returns nothing
 # updates mtime on $interval.0
 sub touch_interval_0 {
 	my $interval = shift(@_);

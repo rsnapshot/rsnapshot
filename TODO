@@ -24,8 +24,6 @@ future versions (in no particular order)
 
 - Add e-mail reporting patch from David Tejedor.
 
-- Add rollback feature for link_dest
-
 - Look into using IPC to make backup calls asynchronous (with a configurable
   limit on the upper number of simultaneous backups, and auto-limiting to
   one backup job per remote or local host at once).
@@ -38,17 +36,6 @@ future versions (in no particular order)
 - Add rsync STDOUT/STDERR output to logfile at higher log settings. This will
   be accomplished by opening the rsync command as a pipe to a filehandle and
   printing / logging the output.
-
-- Is it possible to have 'mv hourly.N  hourly.tmp' as the first step and
-  then, once the rsync is completed successfully, a call can go out to delete
-  hourly.tmp, even backgrounding the process? At present, if the job fails
-  at the rsync stage, the oldest hourly is already gone, and rollback is not
-  possible.
-
-- Figure out a good solution to this: when an rsync transfer fails, and
-  link_dest is being used, the smallest interval files are still moved up
-  one. This requires a full transfer next time. What's the cleanest way to
-  handle this?
 
 - Figure out a way to do transfers the other way: from clients to the server
   instead of just from the server to the clients. Of course it will have to
