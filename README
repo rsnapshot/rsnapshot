@@ -31,32 +31,25 @@ has been tested successfully on the following operating systems:
  - IRIX 6.5
 
 ------------------------------------------------------------------------------
-GNU COMPATIBILITY NOTICE (Please read)
+COMPATIBILITY NOTICE (Please read)
 ------------------------------------------------------------------------------
-  If you have GNU cp on your system, be sure and enable it in
-  /etc/rsnapshot.conf.
+  If you have rsync version 2.5.7 or later, be sure and enable the link_dest
+  parameter in the rsnapshot.conf file. This will allow you to handle any type
+  of file on any operating system. To get the most out of rsnapshot, you need
+  to use link_dest.
   
-  If you are running a Linux system, or any other OS with the GNU version of
-  the "cp" program installed, be sure you enable "cmd_cp" in the config file.
-  "cmd_cp" is commented out by default so that rsnapshot will run out of the
-  box on as many systems as possible. However, you will get extra benefits
-  by using the GNU version of cp over the built-in substitute.
+  If you do not have rsync 2.5.7 or newer, but you are running Linux, be sure
+  and enable the cmd_cp parameter in rsnapshot.conf.
   
-  When running rsnapshot on a system without GNU cp, special files will not
-  be rotated in the snapshots properly. More specifically, FIFOs, sockets,
-  block and character devices will not be supported. This is because there is
-  no clean cross-platform way to accomplish this in Perl (and if you know
-  how, please let me know). Since most snapshots are going to be of simple
-  files, directories, and symlinks, this shouldn't pose a problem for the
-  majority of users. If you desperately need this feature on a non-GNU
-  system, simply get the GNU version of "cp" working, and specify the path to
-  it in /etc/rsnapshot.conf. This has not been tested, but if it can properly
-  run "cp -al" on your platform, you should be OK.
+  These options are both off by default for maximum compatibility. However, if
+  you enable one of them (preferably link_dest), you will be able to back up
+  your entire system, not just most of it.
   
-  If you do not have GNU cp installed, but would like to get the most out
-  of rsnapshot, download the "coreutils" package from http://www.gnu.org/
-  and then specify the path to your newly compiled version of cp in the
-  rsnapshot config file. Your FIFO's and device nodes will thank you.
+  When running rsnapshot on a system without either of these two options
+  enabled, special files will not be rotated in the snapshots properly. More
+  specifically, FIFOs, sockets, block and character devices will not be
+  supported. This is because there is no clean cross-platform way to
+  accomplish this in Perl (and if you know how, please let me know).
 ------------------------------------------------------------------------------
 
 Once you have installed rsnapshot, you will need to configure it.

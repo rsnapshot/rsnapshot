@@ -2553,7 +2553,7 @@ rsnapshot entry in the FreeBSD ports tree.
 
 =head1 COPYRIGHT
 
-Copyright (C) 2003 Nathan Rosenquist
+Copyright (C) 2003-2004 Nathan Rosenquist
 
 Portions Copyright (C) 2002-2003 Mike Rubel, Carl Wilhelm Soderstrom,
 Ted Zlatanov
