@@ -7,11 +7,11 @@ this incompatibility, since the -al flags do not exist on BSD, and I
 believe Solaris as well. Probably any non-GNU system will have this issue.
 I believe the best replacement will be native Perl functions:
 	
-	mkdir   -> File::Path -> mkpath('foo/bar', 0, 0755);
-	touch   -> utime()
-	cp -al  -> custom subroutine: link(), stat(), etc. (recursive)
-	mv      -> File::Copy -> move('old', 'new');
-	rm -rf  -> File::Path -> rmtree('foo', 0, 1);
+	mkdir -p  -> File::Path -> mkpath('foo/bar', 0, 0755);
+	touch     -> utime()
+	cp -al    -> custom subroutine: link(), stat(), etc. (recursive)
+	mv        -> File::Copy -> move('old', 'new');
+	rm -rf    -> File::Path -> rmtree('foo', 0, 1);
 	
 	rsync and ssh should continue to be handled by external commands, since
 	we want to avoid non-standard Perl modules at all costs.
