@@ -912,20 +912,22 @@ sub log_msg	{
 	
 	# open logfile, write to it, close it back up
 	# if we fail, don't use the usual print_* functions, since they just call this again
-	if (defined($config_vars{'logfile'}))	{
-		$result = open (LOG, ">> $config_vars{'logfile'}");
-		if (0 == $result)	{
-			print STDERR "Could not open logfile $config_vars{'logfile'} for writing";
-			syslog_err  ("Could not open logfile $config_vars{'logfile'} for writing");
-			exit(-1);
-		}
-		
-		print LOG '[', get_cur_date(), '] ', $str, "\n";
-		
-		$result = close(LOG);
-		if (0 == $result)	{
-			print STDERR "Could not close logfile $config_vars{'logfile'}";
-			syslog_err  ("Could not close logfile $config_vars{'logfile'}");
+	if ((0 == $test) && (0 == $do_configtest))	{
+		if (defined($config_vars{'logfile'}))	{
+			$result = open (LOG, ">> $config_vars{'logfile'}");
+			if (0 == $result)	{
+				print STDERR "Could not open logfile $config_vars{'logfile'} for writing";
+				syslog_err  ("Could not open logfile $config_vars{'logfile'} for writing");
+				exit(-1);
+			}
+			
+			print LOG '[', get_cur_date(), '] ', $str, "\n";
+			
+			$result = close(LOG);
+			if (0 == $result)	{
+				print STDERR "Could not close logfile $config_vars{'logfile'}";
+				syslog_err  ("Could not close logfile $config_vars{'logfile'}");
+			}
 		}
 	}
 }
@@ -1715,12 +1717,12 @@ sub rotate_interval	{
 							"$config_vars{'snapshot_root'}/$prev_interval.$prev_interval_max/",
 							"$config_vars{'snapshot_root'}/$interval.0/"
 			);
-		}
-		if (0 == $result)	{
-			my $errstr = '';
-			$errstr .= "Error! rename(\"$config_vars{'snapshot_root'}/$prev_interval.$prev_interval_max/\", ";
-			$errstr .= "\"$config_vars{'snapshot_root'}/$interval.0/\")";
-			bail($errstr);
+			if (0 == $result)	{
+				my $errstr = '';
+				$errstr .= "Error! rename(\"$config_vars{'snapshot_root'}/$prev_interval.$prev_interval_max/\", ";
+				$errstr .= "\"$config_vars{'snapshot_root'}/$interval.0/\")";
+				bail($errstr);
+			}
 		}
 	}
 }
