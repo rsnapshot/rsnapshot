@@ -3696,7 +3696,7 @@ sub safe_rename {
 	
 	# rename the file
 	$retval = rename( "$src", "$dest" );
-	if (0 != $retval) {
+	if (1 != $retval) {
 		print_err("Could not rename(\"$src\", \"$dest\")", 2);
 		return (0);
 	}
