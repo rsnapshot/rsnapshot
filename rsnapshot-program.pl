@@ -55,7 +55,7 @@ my @backup_points;
 
 # array of backup points to rollback, in the event of failure
 # (when using link_dest)
-my @rollback_points = ();
+my @rollback_points;
 
 # "intervals" are user defined time periods (i.e. hourly, daily)
 # this array holds hash_refs containing the name of the interval,
@@ -195,16 +195,17 @@ if (defined($config_file) && (-f "$config_file") && (-r "$config_file"))	{
 	#
 	parse_config_file();
 	
+# no config file found. warn user and exit the program
 } else	{
 	# warn that the config file could not be found
 	print STDERR "Config file \"$config_file\" does not exist or is not readable.\n";
-	if (-e "$config_file.default")	{
-		print STDERR "Did you copy $config_file.default to $config_file yet?\n";
-	}
-	
-	# if this wasn't a test, report the error to syslog
 	if (0 == $do_configtest)	{
 		syslog_err("Config file \"$config_file\" does not exist or is not readable.");
+	}
+	
+	# if we have the default config from the install, remind the user to create the real config
+	if (-e "$config_file.default")	{
+		print STDERR "Did you copy $config_file.default to $config_file yet?\n";
 	}
 	
 	# exit showing an error
