@@ -850,6 +850,14 @@ if ((1 == $do_configtest) && (1 == $config_perfect))	{
 	exit(0);
 }
 
+# SHOW DISK SPACE?
+# if we're just checking the disk space, don't run the whole program
+# this is orphaned down here because it needs to know the contents of the config file
+if ($cmd eq 'du')	{
+	show_disk_usage();
+	exit(0);
+}
+
 # SET VARIOUS DEFAULTS IN CASE THEY GOT OVERLOOKED
 # if we didn't manage to get a verbose level yet, either through the config file
 # or the command line, use the default
@@ -1008,7 +1016,7 @@ if (0 == get_exit_code())	{
 # runs when rsnapshot is called with no arguments
 sub show_usage	{
 	print "rsnapshot $VERSION\n";
-	print "Usage: rsnapshot [-vtxqVD] [-c cfgfile] <interval>|configtest|help|version\n";
+	print "Usage: rsnapshot [-vtxqVD] [-c cfgfile] <interval>|configtest|du|help|version\n";
 	print "Type \"rsnapshot help\" or \"man rsnapshot\" for more information.\n";
 }
 
@@ -3110,6 +3118,33 @@ sub file_diff   {
 	return ($is_different);
 }
 
+# accepts no arguments
+# calls the 'du' command to show rsnapshot's disk usage
+# returns 1/undef
+sub show_disk_usage	{
+	my @interval_names = ();
+	my $intervals_str = '';
+	
+	foreach my $interval_ref (@intervals)	{
+		if (-e "$config_vars{'snapshot_root'}/$$interval_ref{'interval'}.0/")	{
+			$intervals_str .= "$config_vars{'snapshot_root'}/$$interval_ref{'interval'}.* ";
+		}
+	}
+	chomp($intervals_str);
+	
+	if ('' ne $intervals_str)	{
+		print "du -csh $intervals_str\n\n";
+		my $retval = system("du -csh $intervals_str");
+		if (0 == $retval)	{
+			return (1);
+		}
+	} else	{
+		print_err('No intervals defined!');
+	}
+	
+	return (undef);
+}
+
 #####################
 ### PERLDOC / POD ###
 #####################
@@ -3573,6 +3608,19 @@ This example will do the following:
 
 Remember that these are just the times that the program runs.
 To set the number of backups stored, set the interval numbers in B</etc/rsnapshot.conf>
+
+To check the disk space used by rsnapshot, you can call it with the "du" argument.
+
+For example:
+
+=over 4
+
+B</usr/local/bin/rsnapshot du>
+
+=back
+
+This will show you exactly how much disk space is taken up in the snapshot root. This
+feature requires the UNIX B<du> command to be installed on your system, and in your path.
 
 =head1 EXIT VALUES
 

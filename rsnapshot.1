@@ -572,6 +572,17 @@ This example will do the following:
 .PP
 Remember that these are just the times that the program runs.
 To set the number of backups stored, set the interval numbers in \fB/etc/rsnapshot.conf\fR
+.PP
+To check the disk space used by rsnapshot, you can call it with the \*(L"du\*(R" argument.
+.PP
+For example:
+.Sp
+.RS 4
+\&\fB/usr/local/bin/rsnapshot du\fR
+.RE
+.PP
+This will show you exactly how much disk space is taken up in the snapshot root. This
+feature requires the \s-1UNIX\s0 \fBdu\fR command to be installed on your system, and in your path.
 .SH "EXIT VALUES"
 .IX Header "EXIT VALUES"
 .RS 4
