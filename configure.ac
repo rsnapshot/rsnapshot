@@ -5,7 +5,7 @@ AC_PROG_INSTALL
 AC_CONFIG_FILES(Makefile)
 
 dnl Check for perl (required)
-AC_PATH_PROG(PERL, perl5, perl, no)
+AC_PATH_PROG(PERL, perl, no)
 if test "$PERL" = "no"; then
 	AC_MSG_ERROR(perl is required)
 fi
