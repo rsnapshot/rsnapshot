@@ -2,6 +2,8 @@ rsnapshot TODO list:
 
 Future versions (in no particular order)
 ------------------------------------------------------------------------------
+- Revamp config file to allow better representation of hierarchial data
+
 - Add "delete" feature, to allow deleting specific directories or files
   from the snapshot_root without having to get your hands dirty. This code
   will be extremely well tested and fault tolerant.
@@ -22,14 +24,6 @@ Future versions (in no particular order)
 - Add rsync STDOUT/STDERR output to logfile at higher log settings. This will
   be accomplished by opening the rsync command as a pipe to a filehandle and
   printing / logging the output.
-
-- Figure out a way to do transfers the other way: from clients to the server
-  instead of just from the server to the clients. Of course it will have to
-  be very secure. Ideally we could support chroot environments for the
-  connecting clients. This will probably result in a "backup_sync" parameter,
-  as well as a designated root directory to allow clients to rsync into, that
-  will then be synced into the main snapshots. This sync directory will need
-  to be on the same filesystem as the actual snapshots, to allow hard links.
 
 - Think of a way to be able to backup different backup points at different
   speeds. I.E. some things would get backed up hourly, whereas other backup
