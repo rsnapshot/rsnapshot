@@ -41,7 +41,7 @@ use POSIX qw(locale_h);	# setlocale()
 $| = 1;
 
 # version of rsnapshot
-my $VERSION = '1.2.1';
+my $VERSION = '1.2.2';
 
 # command or interval to execute (first cmd line arg)
 my $cmd;
@@ -126,6 +126,9 @@ my $default_rsync_short_args	= '-a';
 my $default_rsync_long_args		= '--delete --numeric-ids --relative --delete-excluded';
 my $default_ssh_args			= undef;
 my $default_du_args				= '-csh';
+
+# set default for use_lazy_deletes
+my $use_lazy_deletes		= 0; # do not delete the oldest archive until after backup
 
 # exactly how the program was called, with all arguments
 # this is set before getopts() modifies @ARGV
@@ -1062,7 +1065,24 @@ sub parse_config_file {
 				next;
 			}
 		}
-		
+		# LAZY_DELETES
+		if ($var eq 'use_lazy_deletes') {
+			if (!defined($value)) {
+				config_err($file_line_num, "$line - use_lazy_deletes can not be blank");
+				next;
+			}
+			if (!is_boolean($value)) {
+				config_err(
+					$file_line_num, "$line - \"$value\" is not a legal value for use_lazy_deletes, must be 0 or 1 only"
+				);
+				next;
+			}
+			
+			if (1 == $value) { $use_lazy_deletes = 1; }
+			$line_syntax_ok = 1;
+			next;
+		}
+				
 		# make sure we understood this line
 		# if not, warn the user, and prevent the program from executing
 		# however, don't bother if the user has already been notified
@@ -2367,6 +2387,14 @@ sub handle_interval {
 		# this is not the most frequent unit, just rotate
 		rotate_higher_interval( $id_ref );
 	}
+
+	if ( -d "$config_vars{'snapshot_root'}/$$id_ref{'interval'}.delete" ) {
+		display_rm_rf("$config_vars{'snapshot_root'}/$$id_ref{'interval'}.delete/");
+		my $result = rm_rf_bg( "$config_vars{'snapshot_root'}/$$id_ref{'interval'}.delete/" );
+		if (0 == $result) {
+			bail("Error! rm_rf(\"$config_vars{'snapshot_root'}/$$id_ref{'interval'}.delete/\")\n");
+		}		
+	}
 }
 
 # accepts an interval_data_ref
@@ -2441,15 +2469,35 @@ sub rotate_lowest_snapshots {
 	
 	# remove oldest directory
 	if ( (-d "$config_vars{'snapshot_root'}/$interval.$interval_max") && ($interval_max > 0) ) {
-		display_rm_rf("$config_vars{'snapshot_root'}/$interval.$interval_max/");
 		if (0 == $test) {
-			my $result = rm_rf( "$config_vars{'snapshot_root'}/$interval.$interval_max/" );
-			if (0 == $result) {
-				bail("Error! rm_rf(\"$config_vars{'snapshot_root'}/$interval.$interval_max/\")\n");
+			
+			# if use_lazy_deletes is set move the oldest directory to interval.delete
+			# otherwise preform the default behavior
+			if (1 == $use_lazy_deletes) {
+				print_cmd("mv ",
+					"$config_vars{'snapshot_root'}/$interval.$interval_max/ ",
+					"$config_vars{'snapshot_root'}/$interval.delete/");
+				
+				my $result = safe_rename(
+					"$config_vars{'snapshot_root'}/$interval.$interval_max",
+					("$config_vars{'snapshot_root'}/$interval.delete")
+				);
+				if (0 == $result) {
+					my $errstr = '';
+					$errstr .= "Error! safe_rename(\"$config_vars{'snapshot_root'}/$interval.$interval_max/\", \"";
+					$errstr .= "$config_vars{'snapshot_root'}/$interval.delete/\")";
+					bail($errstr);
+				}				
+			} else {
+				display_rm_rf("$config_vars{'snapshot_root'}/$interval.$interval_max/");
+				my $result = rm_rf( "$config_vars{'snapshot_root'}/$interval.$interval_max/" );
+				if (0 == $result) {
+					bail("Error! rm_rf(\"$config_vars{'snapshot_root'}/$interval.$interval_max/\")\n");
+				}
 			}
 		}
 	}
-	
+
 	# rotate the middle ones
 	if ($interval_max > 0) {
 		for (my $i=($interval_max-1); $i>0; $i--) {
@@ -3098,14 +3146,34 @@ sub rotate_higher_interval {
 	#
 	# delete the oldest one (if we're keeping more than one)
 	if ( -d "$config_vars{'snapshot_root'}/$interval.$interval_max" ) {
-		display_rm_rf("$config_vars{'snapshot_root'}/$interval.$interval_max/");
-		
 		if (0 == $test) {
-			my $result = rm_rf( "$config_vars{'snapshot_root'}/$interval.$interval_max/" );
-			if (0 == $result) {
-				bail("Could not rm_rf(\"$config_vars{'snapshot_root'}/$interval.$interval_max/\");");
+			
+			# if use_lazy_deletes is set move the oldest directory to interval.delete
+			# otherwise preform the default behavior
+			if (1 == $use_lazy_deletes) {
+				print_cmd("mv ",
+					"$config_vars{'snapshot_root'}/$interval.$interval_max/ ",
+					"$config_vars{'snapshot_root'}/$interval.delete/");
+				
+				my $result = safe_rename(
+					"$config_vars{'snapshot_root'}/$interval.$interval_max",
+					("$config_vars{'snapshot_root'}/$interval.delete")
+				);
+				if (0 == $result) {
+					my $errstr = '';
+					$errstr .= "Error! safe_rename(\"$config_vars{'snapshot_root'}/$interval.$interval_max/\", \"";
+					$errstr .= "$config_vars{'snapshot_root'}/$interval.delete/\")";
+					bail($errstr);
+				}				
+			} else {
+				display_rm_rf("$config_vars{'snapshot_root'}/$interval.$interval_max/");
+				my $result = rm_rf( "$config_vars{'snapshot_root'}/$interval.$interval_max/" );
+				if (0 == $result) {
+					bail("Could not rm_rf(\"$config_vars{'snapshot_root'}/$interval.$interval_max/\");");
+				}
 			}
 		}
+
 	} else {
 		print_msg("$config_vars{'snapshot_root'}/$interval.$interval_max not present (yet), nothing to delete", 4);
 	}
@@ -3532,6 +3600,36 @@ sub display_rm_rf {
 	}
 }
 
+# stub subroutine 
+# calls either cmd_rm_rf_bg() or the native perl rmtree()
+# always returns 1
+sub rm_rf_bg {
+	my $path = shift(@_);
+	my $result = 0;
+	
+	# make sure we were passed an argument
+	if (!defined($path)) { return(0); }
+	
+	# extra bonus safety feature!
+	# confirm that whatever we're deleting must be inside the snapshot_root
+	if ("$path" !~ m/^$config_vars{'snapshot_root'}/o) {
+		bail("rm_rf_bg() tried to delete something outside of $config_vars{'snapshot_root'}! Quitting now!");
+	}
+	
+	# use the rm command if we have it
+	if (defined($config_vars{'cmd_rm'})) {
+		$result = cmd_rm_rf("$path");
+
+	# fall back on rmtree()
+	} else {
+		# remove trailing slash just in case
+		$path =~ s/\/$//;
+		$result = rmtree("$path", 0, 0);
+	}
+	
+	return ($result);
+}
+
 # stub subroutine
 # calls either cmd_rm_rf() or the native perl rmtree()
 # returns 1 on success, 0 on failure
@@ -3560,6 +3658,29 @@ sub rm_rf {
 	}
 	
 	return ($result);
+}
+
+# this is a wrapper to the "rm" program, called with the "-rf" flags.
+sub cmd_rm_rf_bg {
+	my $path = shift(@_);
+	my $result = 0;
+	
+	# make sure we were passed an argument
+	if (!defined($path)) { return(0); }
+	
+	if ( ! -e "$path" ) {
+		print_err("cmd_rm_rf_bg() needs a valid file path as an argument", 2);
+		return (0);
+	}
+	
+	# make the system call to /bin/rm
+	$result = system( $config_vars{'cmd_rm'}, '-rf', "$path", "&" );
+	if ($result != 0) {
+		print_err("Warning! $config_vars{'cmd_rm'} failed.", 2);
+		return (0);
+	}
+	
+	return (1);
 }
 
 # this is a wrapper to the "rm" program, called with the "-rf" flags.
@@ -4775,6 +4896,20 @@ B<one_fs    1>
 Prevents rsync from crossing filesystem partitions. Setting this to a value
 of 1 enables this feature. 0 turns it off. This parameter is optional.
 The default is off.
+
+=back
+
+B<use_lazy_deletes    1>
+
+=over 4
+
+Changes default behavior of rsnapshot and does not initially remove the 
+oldest snapshot.  Instead it move that directory to "name".delete, and 
+continues as normal.  Once the backup has been completed a background job
+will be created to remove the "name".delete directory, and rsnapshot will
+return immediately.  This has been reported to significantly speed up the 
+backup process since it does not wait for the directory to be deleted prior
+to starting.
 
 =back
 

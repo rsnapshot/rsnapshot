@@ -140,6 +140,11 @@ loglevel	3
 #
 #lockfile	/var/run/rsnapshot.pid
 
+# If enabled, rsnapshot will move the oldest directory for each interval
+# to [interval_name].delete, then it will delete that directory as a 
+# background process just before it exits.
+use_lazy_deletes	0
+
 ###############################
 ### BACKUP POINTS / SCRIPTS ###
 ###############################
