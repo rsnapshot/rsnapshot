@@ -213,15 +213,7 @@ if (defined($config_file) && (-f "$config_file") && (-r "$config_file"))	{
 
 # if we're just doing a configtest, exit here with the results
 if (1 == $do_configtest)	{
-	if (1 == $config_perfect)	{
-		print "Syntax OK\n";
-		exit(0);
-		
-	# this should never happen, because any errors should have killed the program before now
-	} else	{
-		print "Syntax Error\n";
-		exit(1);
-	}
+	exit_configtest();
 }
 
 # if we're just using "du" to check the disk space, do it now
@@ -1771,6 +1763,26 @@ sub exit_with_status	{
 		syslog_err("$run_string: completed, but with no definite status");
 		log_err   ("$run_string: completed, but with no definite status", 2);
 		exit (1);
+	}
+}
+
+# accepts no arguments
+# returns no arguments
+#
+# exits the program with the status of the config file (i.e. Syntax OK).
+# the exit code is 0 for success, 1 for failure (although failure should never happen)
+sub exit_configtest	{
+	# if we're just doing a configtest, exit here with the results
+	if (1 == $do_configtest)	{
+		if (1 == $config_perfect)	{
+			print "Syntax OK\n";
+			exit(0);
+			
+		# this should never happen, because any errors should have killed the program before now
+		} else	{
+			print "Syntax Error\n";
+			exit(1);
+		}
 	}
 }
 
