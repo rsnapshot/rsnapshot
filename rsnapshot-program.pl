@@ -129,8 +129,11 @@ $SIG{'TERM'}	= sub { bail('rsnapshot was sent TERM signal... cleaning up'); };
 ### CORE PROGRAM STRUCTURE ###
 ##############################
 
+# what follows is a linear sequence of events.
+# all of these subroutines will either succeed or terminate the program safely.
+
 # figure out the path to the default config file
-$config_file = get_config_file();
+find_config_file();
 
 # get command line options
 # (this can override $config_file, if the -c flag is used on the command line)
@@ -184,13 +187,11 @@ if ($cmd eq 'du')	{
 	show_disk_usage();
 }
 
+#
 # IF WE GOT THIS FAR, PREPARE TO RUN A BACKUP
 #
-# what follows is a linear sequence of events.
-# all of these subroutines will either succeed or terminate the program safely.
 
 # figure out which interval we're working on
-# make sure the user is requesting to run on an interval we understand
 $interval_data_ref = get_interval_data( $cmd );
 
 # log the beginning of this run
@@ -254,13 +255,13 @@ HERE
 }
 
 # accepts no arguments
-# returns the path to the default config file
+# sets the $config_file global variable
 #
 # this program works both "as-is" in the source tree, and when it has been parsed by autoconf for installation
 # the variables with "@" symbols on both sides get replaced during ./configure
 # this subroutine returns the correct path to the default config file
 #
-sub get_config_file	{
+sub find_config_file	{
 	# autoconf variables (may have too many slashes)
 	my $autoconf_sysconfdir	= '@sysconfdir@';
 	my $autoconf_prefix		= '@prefix@';
@@ -283,7 +284,8 @@ sub get_config_file	{
 		$default_config_file = "$autoconf_sysconfdir/rsnapshot.conf";
 	}
 	
-	return ($default_config_file);
+	# set global variable
+	$config_file = $default_config_file;
 }
 
 # accepts no args
@@ -336,8 +338,6 @@ sub get_cmd_line_opts	{
 # accepts no arguments
 # returns no value
 # this subroutine parses the config file (rsnapshot.conf)
-#
-# it used to be in the main program and not a subroutine, perhaps we'll make it accept/return some args later
 #
 sub parse_config_file	{
 	# count the lines in the config file, so the user can pinpoint errors more precisely
@@ -1082,7 +1082,7 @@ sub parse_backup_opts	{
 			
 			delete($parsed_opts{'exclude'});
 			
-		# include file
+		# include_file
 		} elsif ( $name eq 'include_file' )	{
 			# verify that this file exists and is readable
 			if (0 == is_real_local_abs_path($value))	{
@@ -1109,7 +1109,7 @@ sub parse_backup_opts	{
 			
 			delete($parsed_opts{'include_file'});
 			
-		# exclude file
+		# exclude_file
 		} elsif ( $name eq 'exclude_file' )	{
 			# verify that this file exists and is readable
 			if (0 == is_real_local_abs_path($value))	{
@@ -1211,7 +1211,7 @@ sub bail	{
 	}
 	
 	# get rid of the lockfile, if it exists
-	remove_lockfile($config_vars{'lockfile'});
+	remove_lockfile();
 	
 	# exit showing an error
 	exit(1);
