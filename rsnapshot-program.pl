@@ -1718,7 +1718,9 @@ sub syslog_msg {
 	
 	if (defined($config_vars{'cmd_logger'})) {
 		# print out our call to syslog
-		print_cmd("$config_vars{'cmd_logger'} -i -p $facility.$level -t rsnapshot $msg");
+		if (defined($verbose) && ($verbose >= 4)) {
+			print_cmd("$config_vars{'cmd_logger'} -i -p $facility.$level -t rsnapshot $msg");
+		}
 		
 		# log to syslog
 		if (0 == $test) {
@@ -3325,22 +3327,24 @@ sub native_cp_al {
 					print_err("Warning! Recursion error in native_cp_al(\"$src/$node\", \"$dest/$node\")", 2);
 					next;
 				}
-				
+			
+			# rsync_cleanup_after_native_cp_al() will take care of the files we can't handle here
+			
 			# FIFO
 			} elsif ( -p "$src/$node" ) {
-				print_err("Warning! Ignoring FIFO $src/$node", 2);
+				# print_err("Warning! Ignoring FIFO $src/$node", 2);
 				
 			# SOCKET
 			} elsif ( -S "$src/$node" ) {
-				print_err("Warning! Ignoring socket: $src/$node", 2);
+				# print_err("Warning! Ignoring socket: $src/$node", 2);
 				
 			# BLOCK DEVICE
 			} elsif ( -b "$src/$node" ) {
-				print_err("Warning! Ignoring special block file: $src/$node", 2);
+				# print_err("Warning! Ignoring special block file: $src/$node", 2);
 				
 			# CHAR DEVICE
 			} elsif ( -c "$src/$node" ) {
-				print_err("Warning! Ignoring special character file: $src/$node", 2);
+				# print_err("Warning! Ignoring special character file: $src/$node", 2);
 			}
 		}
 		

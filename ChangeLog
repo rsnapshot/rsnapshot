@@ -55,6 +55,9 @@ VERSION 1.2.0 (Jan ?? ??:?? 2005)
 - Added second option for du, to compare subdirectories or files
 - Added "du_args" to pass arguments to du
 - Relaxed cmd line option validation, but only when du is the command
+- Now only show command invocation for logger on verbose level 4
+- Added rsync cleanup after native_cp_al() to preserve special files
+- Removed warning messages from native_cp_al() about special files
 
 VERSION 1.1.6 (Jul 05 16:35 2004)
 ------------------------------------------------------------------------------
