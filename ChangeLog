@@ -12,6 +12,8 @@ VERSION 1.1.6 (??? ?? ??:?? 2004)
 - Config error messages now wrap before 80 columns.
 - Moved $file_line_num global var into parse_config_file()
 - Split on \s+ instead of \s where appropriate
+- Moved $rsync_include_args and $rsync_include_file_args into
+  parse_config_file()
 
 VERSION 1.1.5 (Jun 20 20:56 2004)
 ------------------------------------------------------------------------------

@@ -122,10 +122,6 @@ my $global_default_rsync_short_args	= '-a';
 my $global_default_rsync_long_args	= '--delete --numeric-ids';
 my $global_default_ssh_args			= undef;
 
-# pre-buffer the include/exclude parameter flags
-my $rsync_include_args		= undef;
-my $rsync_include_file_args	= undef;
-
 # exit code for rsnapshot
 my $exit_code = 0;
 
@@ -372,9 +368,15 @@ sub parse_config_file	{
 	# count the lines in the config file, so the user can pinpoint errors more precisely
 	my $file_line_num = 0;
 	
+	# pre-buffer the include/exclude parameter flags
+	my $rsync_include_args		= undef;
+	my $rsync_include_file_args	= undef;
+	
+	# open the config file
 	open(CONFIG, $config_file)
 		or bail("Could not open config file \"$config_file\"\nAre you sure you have permission?");
 	
+	# read it line by line
 	while (my $line = <CONFIG>)	{
 		chomp($line);
 		
