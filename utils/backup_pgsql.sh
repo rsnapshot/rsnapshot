@@ -11,13 +11,16 @@
 # The assumption is that this will be invoked from rsnapshot. Also, since it
 # will run unattended, the user that runs rsnapshot (probably root) should have
 # a .pgpass file in their home directory that contains the password for the
-# postgres user.
+# postgres user. For example:
+#
+# /root/.pgpass (chmod 0600)
+#   *:*:*:postgres:thepassword
 #
 # This script simply needs to dump a file into the current working directory.
 # rsnapshot handles everything else.
 ##############################################################################
 
-# $Id: backup_pgsql.sh,v 1.4 2005/04/02 07:37:07 scubaninja Exp $
+# $Id: backup_pgsql.sh,v 1.5 2005/04/03 13:52:03 scubaninja Exp $
 
 # backup the database
 /usr/local/pgsql/bin/pg_dumpall -Upostgres > pg_dumpall.sql
