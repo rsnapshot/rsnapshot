@@ -5,9 +5,10 @@ http://www.rsnapshot.org/
 
 VERSION 1.0.7
 - Added ssh_args parameter to pass arbitrary args to ssh
-- Made changes to the autoconf build scripts so the default config file would
-  be based on the --prefix and --sysconfdir values at configure time
+- Fully integrated autoconf build support for the program and config file
 - Provided more helpful error messages when the config file is not found
+- Fixed false "Can not remove lockfile" error when cmd_ssh is not defined
+  but is referenced later in backup points
 
 VERSION 1.0.6
 - added \n to utime() debug message
