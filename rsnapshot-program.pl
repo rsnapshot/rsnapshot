@@ -968,6 +968,7 @@ sub sync_if_different	{
 	
 	# copy everything from src to dest
 	if (1 == $debug)	{ print "sync_cp_src_dest(\"$src\", \"$dest\")\n"; }
+	
 	$result = sync_cp_src_dest("$src", "$dest");
 	if ( ! $result )	{
 		bail("sync_cp_src_dest(\"$src\", \"$dest\")");
@@ -975,6 +976,7 @@ sub sync_if_different	{
 	
 	# delete everything from dest that isn't in src
 	if (1 == $debug)	{ print "sync_rm_dest(\"$src\", \"$dest\")\n"; }
+	
 	$result = sync_rm_dest("$src", "$dest");
 	if ( ! $result )	{
 		bail("sync_rm_dest(\"$src\", \"$dest\")");
@@ -1459,17 +1461,19 @@ sub native_cp_al	{
 	
 	# MKDIR DEST (AND SET MODE)
 	if ( ! -d "$dest" )	{
+		if (1 == $debug)	{ print "mkdir(\"$dest\", " . get_perms($st->mode) . ");\n"; }
+		
 		$result = mkdir("$dest", $st->mode);
 		if ( ! $result )	{
 			print STDERR "Warning! Could not mkdir(\"$dest\", $st->mode);\n";
 			return(0);
 		}
-		if (1 == $debug)	{ print "mkdir(\"$dest\", " . get_perms($st->mode) . ");\n"; }
 	}
 	
 	# CHOWN DEST (if root)
 	if (0 == $<)	{
 		if (1 == $debug)	{ print "chown(" . $st->uid . ", " . $st->gid . ", \"$dest\");\n"; }
+		
 		$result = chown($st->uid, $st->gid, "$dest");
 		if (! $result)	{
 			print STDERR "Warning! Could not chown(" . $st->uid . ", " . $st->gid . ", \"$dest\");\n";
@@ -1498,6 +1502,8 @@ sub native_cp_al	{
 			
 			# SYMLINK (must be tested for first, because it will also pass the file and dir tests)
 			if ( -l "$src/$node" )	{
+				if (1 == $debug)	{ print "copy_symlink(\"$src/$node\", \"$dest/$node\")\n"; }
+				
 				$result = copy_symlink("$src/$node", "$dest/$node");
 				if (0 == $result)	{
 					bail("Error! copy_symlink(\"$src/$node\", \"$dest/$node\")");
@@ -1507,12 +1513,13 @@ sub native_cp_al	{
 			} elsif ( -f "$src/$node" )	{
 				
 				# make a hard link
+				if (1 == $debug)	{ print "link(\"$src/$node\", \"$dest/$node\");\n"; }
+				
 				$result = link("$src/$node", "$dest/$node");
 				if (! $result)	{
 					print STDERR "Warning! Could not link(\"$src/$node\", \"$dest/$node\")\n";
 					return (0);
 				}
-				if (1 == $debug)	{ print "link(\"$src/$node\", \"$dest/$node\");\n"; }
 				
 			# DIRECTORY
 			} elsif ( -d "$src/$node" )	{
@@ -1554,12 +1561,13 @@ sub native_cp_al	{
 	undef( $dh );
 	
 	# UTIME DEST
+	if (1 == $debug)	{ print "utime(" . $st->atime . ", " . $st->mtime . ", \"$dest\");\n"; }
+	
 	$result = utime($st->atime, $st->mtime, "$dest");
 	if (! $result)	{
 		print STDERR "Warning! Could not utime(" . $st->atime . ", " . $st->mtime . ", \"$dest\");\n";
 		return(0);
 	}
-	if (1 == $debug)	{ print "utime(" . $st->atime . ", " . $st->mtime . ", \"$dest\");\n"; }
 	
 	return (1);
 }
@@ -1591,24 +1599,26 @@ sub copy_symlink	{
 		return (0);
 	}
 	
-	# SYMLINK
+	# CREATE THE SYMLINK
+	if (1 == $debug)	{ print "symlink(\"" . readlink("$src") . "\", \"$dest\");\n"; }
+	
 	$result = symlink(readlink("$src"), "$dest");
 	if (! $result)	{
 		print STDERR "Warning! Could not symlink(readlink(\"$src\"), \"$dest\")\n";
 		return (0);
 	}
-	if (1 == $debug)	{ print "symlink(\"" . readlink("$src") . "\", \"$dest\");\n"; }
 	
 	# CHOWN DEST (if root)
 	if (0 == $<)	{
 		if ( -e "$dest" )	{
+			if (1 == $debug)	{ print "chown(" . $st->uid . ", " . $st->gid . ", \"$dest\");\n"; }
+			
 			$result = chown($st->uid, $st->gid, "$dest");
 			if (! $result)	{
 				print STDERR "Warning! Could not chown(" . $st->uid . ", " . $st->gid . ", \"$dest\")\n";
 				return (0);
 			}
 		}
-		if (1 == $debug)	{ print "chown(" . $st->uid . ", " . $st->gid . ", \"$dest\");\n"; }
 	}
 	
 	return (1);
