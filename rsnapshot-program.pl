@@ -3962,7 +3962,7 @@ sub get_config_version {
 		chomp($line);
 		
 		if ($line =~ m/^config_version/o) {
-			if ($line =~ m/^config_version\s+([\d\.\-\w]+)$/o) {
+			if ($line =~ m/^config_version\t+([\d\.\-\w]+)$/o) {
 				$version = $1;
 				last;
 			} else {
