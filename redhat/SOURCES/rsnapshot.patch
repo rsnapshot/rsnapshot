@@ -1,7 +1,7 @@
---- rsnapshot.conf	2003-11-08 17:29:17.000000000 -0800
-+++ rsnapshot.conf.redhat	2003-11-08 18:08:33.000000000 -0800
-@@ -21,7 +21,7 @@
- # see the man page for more details.
+--- rsnapshot.conf	Wed Nov 26 20:25:51 2003
++++ rsnapshot.conf-RPM	Wed Nov 26 20:31:01 2003
+@@ -24,7 +24,7 @@
+ #
  cmd_rsync	/usr/bin/rsync
  cmd_ssh		/usr/bin/ssh
 -#cmd_cp		/bin/cp
@@ -9,9 +9,9 @@
  
  # BACKUP INTERVALS
  # (must be unique and in ascending order, i.e. hourly, daily, weekly, etc.)
-@@ -33,7 +33,7 @@
- # GLOBAL OPTIONS
- #
+@@ -40,7 +40,7 @@
+ #rsync_long_args      --delete --numeric-ids --devices
+ 
  # make sure the lockfile directory is not world writable!
 -#lockfile	/var/lock/subsys/rsnapshot
 +lockfile	/var/lock/subsys/rsnapshot
