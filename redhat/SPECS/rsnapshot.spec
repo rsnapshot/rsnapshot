@@ -5,7 +5,7 @@ Release: 1
 BuildArch: noarch
 Copyright: GPL
 Group: Applications/System
-Source: http://www.rsnapshot.org/downloads/rsnapshot-1.1.0.tar.gz
+Source: http://www.rsnapshot.org/downloads/rsnapshot-1.1.1.tar.gz
 Patch: rsnapshot.patch
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
 Requires: perl, rsync
