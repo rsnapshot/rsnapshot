@@ -422,6 +422,9 @@ Arguments to be passed to ssh. If not specified, the default is none.
 .Sp
 .RS 4
 Arguments to be passed to du. If not specified, the default is \-csh.
+\&\s-1GNU\s0 du supports \-csh, \s-1BSD\s0 du supports \-csk, Solaris du doesn't support
+\&\-c at all. The \s-1GNU\s0 version is recommended, since it offers the most
+features.
 .RE
 .RE
 .RS 4
@@ -664,12 +667,23 @@ To check the disk space used by rsnapshot, you can call it with the \*(L"du\*(R"
 For example:
 .Sp
 .RS 4
-\&\fB/usr/local/bin/rsnapshot du\fR
+\&\fBrsnapshot du\fR
 .RE
 .PP
 This will show you exactly how much disk space is taken up in the snapshot root. This
 feature requires the \s-1UNIX\s0 \fBdu\fR command to be installed on your system, for it to
 support the \*(L"\-csh\*(R" command line arguments, and to be in your path.
+.PP
+You can also pass a relative file path as a second argument, to get a report on a
+particular file or subdirectory.
+.Sp
+.RS 4
+\&\fBrsnapshot du localhost/home/\fR
+.RE
+.PP
+The \s-1GNU\s0 version of \*(L"du\*(R" is preferred. The \s-1BSD\s0 version works well also, but does
+not support the \-h flag (use \-k instead, to see the totals in kilobytes). Other
+versions of \*(L"du\*(R", such as Solaris, may not work at all.
 .SH "EXIT VALUES"
 .IX Header "EXIT VALUES"
 .RS 4
@@ -702,6 +716,10 @@ permissions and ssh authentication issues.
 .SH "BUGS"
 .IX Header "BUGS"
 Swat them, or report them to \fBnathan@rsnapshot.org\fR
+.PP
+Please report bugs (and other comments) to the rsnapshot-discuss mailing list:
+.PP
+\&\fBhttp://lists.sourceforge.net/lists/listinfo/rsnapshot\-discuss\fR
 .SH "NOTES"
 .IX Header "NOTES"
 Make sure your /etc/rsnapshot.conf file has all elements separated by tabs.

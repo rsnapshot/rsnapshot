@@ -4726,6 +4726,9 @@ B<du_args     -csh>
 =over 4
 
 Arguments to be passed to du. If not specified, the default is -csh.
+GNU du supports -csh, BSD du supports -csk, Solaris du doesn't support
+-c at all. The GNU version is recommended, since it offers the most
+features.
 
 =back
 
@@ -4964,13 +4967,26 @@ For example:
 
 =over 4
 
-B</usr/local/bin/rsnapshot du>
+B<rsnapshot du>
 
 =back
 
 This will show you exactly how much disk space is taken up in the snapshot root. This
 feature requires the UNIX B<du> command to be installed on your system, for it to
 support the "-csh" command line arguments, and to be in your path.
+
+You can also pass a relative file path as a second argument, to get a report on a
+particular file or subdirectory.
+
+=over 4
+
+B<rsnapshot du localhost/home/>
+
+=back
+
+The GNU version of "du" is preferred. The BSD version works well also, but does
+not support the -h flag (use -k instead, to see the totals in kilobytes). Other
+versions of "du", such as Solaris, may not work at all.
 
 =head1 EXIT VALUES
 
@@ -5009,7 +5025,9 @@ permissions and ssh authentication issues.
 
 =head1 BUGS
 
-Swat them, or report them to B<nathan@rsnapshot.org>
+Please report bugs (and other comments) to the rsnapshot-discuss mailing list:
+
+B<http://lists.sourceforge.net/lists/listinfo/rsnapshot-discuss>
 
 =head1 NOTES
 
