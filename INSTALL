@@ -8,89 +8,272 @@ rsnapshot comes with ABSOLUTELY NO WARRANTY.  This is free software,
 and you are welcome to redistribute it under certain conditions.
 See the GNU General Public Licence for details.
 
-INSTALLATION
++------------------------+
+|        CONTENTS        |
++------------------------+
+- Installation
+    - Quick Start
+    - Upgrading
+    - Additional Options
 
-    IF YOU ARE UPGRADING FROM A PREVIOUS INSTALLATION:
+------------------------------------------------------------------------------
+                                INSTALLATION
+------------------------------------------------------------------------------
+
+---------------
+  QUICK START
+---------------
+If you are installing for the first time (and just want the defaults):
+
+    Run these commands for a quick installation:
 
         ./configure --sysconfdir=/etc
         su
         make install
+        cp /etc/rsnapshot.conf.default /etc/rsnapshot.conf
 
-        Also, make sure and see the README file or the ChangeLog for
-        some minor but important differences between the 1.0 and 1.1
-        releases.
+    Open up /etc/rsnapshot.conf with a text editor, and modify it for your
+    system.
 
-    IF YOU ARE INSTALLING FOR THE FIRST TIME (and just want the defaults):
+    Make sure the config file syntax is valid (remember, tabs, not spaces):
 
-        ./configure
-        su
-        make install
-        cp /usr/local/etc/rsnapshot.conf.default /usr/local/etc/rsnapshot.conf
-        # Modify /usr/local/etc/rsnapshot.conf to suit your system.
+        /usr/local/bin/rsnapshot configtest
 
-    IF YOU REQUIRE MORE PRECISE CONTROL:
+    The rsnapshot HOWTO is recommended reading for first time setups. It will
+    walk you through this process in great detail.
 
-        You can pass the following options to ./configure for more control
-        over where various parts of rsnapshot are installed. The example
-        values shown also happen to be the defaults.
+    The rsnapshot HOWTO can be found online at http://www.rsnapshot.org/
 
-            --prefix=/usr/local
-                This will install everything under /usr/local
+-------------
+  UPGRADING
+-------------
+If you are upgrading from a previous installation:
 
-            --sysconfdir=/usr/local/etc
-                This will install the example config file
-                (rsnapshot.conf.default) under /usr/local/etc. It is
-                recommended that you copy this and use it as a basis for
-                the actual config file (rsnapshot.conf).
+     Starting with rsnapshot 1.2.0, the default value for
+     "rsync_long_args" has changed. This is a global change, that affects
+     which directories your backups are stored in under the
+     snapshot root.
 
-            --bindir=/usr/local/bin
-                This will install the rsnapshot program under /usr/local/bin
+     IT IS ABSOLUTELY VITAL THAT YOU UNDERSTAND THIS SECTION, AND MAKE
+     SURE THAT YOU UPGRADE YOUR CONFIG FILE.
 
-            --mandir=/usr/local/man
-                This will install the man page under /usr/local/man
+     Here is a quick summary of what is needed to upgrade:
 
-            --with-perl=/usr/bin/perl
-                Specify your preferred path to perl. If you don't specify
-                this, the build process will detect the first version of perl
-                it finds in your path.
+         Run the configure script with the same arguments you used for
+         the previous installation For example:
 
-            --with-rsync=/usr/bin/rsync
-                Specify your preferred path to rsync. If you don't specify
-                this, the build process will detect the first version of rsync
-                it finds in your path. You can always change this later by
-                editing the config file (rsnapshot.conf).
+             ./configure --sysconfdir=/etc
 
-            --with-cp=/bin/cp
-                Specify the path to GNU cp. The traditional UNIX cp command
-                is not sufficient. If you don't specify this, the build process
-                will detect the first version of cp it finds in your path.
-                If you don't have the GNU version of cp, leave this commented
-                out in the config file (rsnapshot.conf).
+         configure will look at your old rsnapshot.conf file, and prompt
+         you to upgrade. Read the message it displays, and then type:
 
-            --with-rm=/bin/rm
-                Specify the path to the rm command. If you don't specify this,
-                the build process will detect the first version of rm it finds
-                in your path.
+             make upgrade
 
-            --with-ssh=/usr/bin/ssh
-                Specify your preferred path to ssh. If you don't specify this,
-                the build process will detect the first version of ssh it
-                finds in your path. SSH is an optional feature, so it is OK if
-                it isn't on your system. Either way, if you want to use ssh,
-                you need to specifically enable this feature by uncommenting
-                the "cmd_ssh" parameter in the config file (rsnapshot.conf).
+         An upgrade script will read your existing config file and make
+         changes if necessary. If it does, the original will be saved
+         as "rsnapshot.conf.backup" in the same directory. After the
+         upgrade is complete, it is recommended you look at rsnapshot.conf
+         and make sure everything is OK. Specifically, the
+         "rsync_long_args" parameter should now be uncommented, along with
+         a note explaining the change.
 
-            --with-logger=/usr/bin/logger
-                Specify your preferred path to logger. If you don't specify
-                this, the build process will detect the first version of
-                logger it finds in your path. If you want syslog support,
-                make sure this is enabled in the config file. Syslog support
-                is optional, so if you don't have it or comment it out it's OK.
+         Finally, to install rsnapshot, type:
 
-CONFIGURATION
-    Edit /etc/rsnapshot.conf to suit your tastes. The exact location of this
-    file depends on how you installed rsnapshot.
+             make install
 
-    Type "man rsnapshot" for the full documentation, or view it online at
-    http://www.rsnapshot.org/
+         For the last step, to make sure the upgrade went OK, run:
+
+             rsnapshot configtest
+
+         Now rsnapshot will continue to work just as before. However, you
+         may want to read the section below, as it gives information on
+         how to fully update your config file to take advantage of the
+         new features.
+
+     What follows is a detailed description of the change:
+
+         In previous versions of rsnapshot (before 1.2.0), the default
+         value for "rsync_long_args" was:
+
+             --delete --numeric-ids
+
+         Starting with rsnapshot 1.2.0, the new default value for
+         "rsync_long_args" is:
+
+             --delete --numeric-ids --relative --delete-excluded
+
+         In both the old and new versions, explicitly setting this
+         parameter overrides the defaults. This is what the "make upgrade"
+         script does, it manually sets this to the old default value for
+         backwards compatibility.
+
+         This change was made for a number of good reasons:
+
+             rsnapshot has a feature to prevent you from accidentally
+             backing up your snapshot root inside itself (recursively).
+             Without this feature, it would be very easy to do something
+             like specifying "/" as the backup point and forgetting to
+             exclude the snapshot root.
+
+             In the past, rsnapshot would avoid this by detecting the
+             presence of the snapshot root in a backup point. If there was
+             a conflict, the backup point would be rewritten internally,
+             so that rsync would get called several times, once for each
+             top level directory in the backup point, except for the one
+             containing the snapshot root.
+
+             This was not terrible, but it prevented taking full advantage
+             of some other features that were added over time, such as
+             "one_fs", and the include/exclude rules.
+
+             For instance, if you wanted to backup your root filesystem
+             (but only that disk partition), you couldn't really do so
+             without figuring out which top level directories were housed
+             on that partition, and then specifying them all as different
+             backup points. Attempting to use the one_fs option would not
+             have worked, since one_fs would be passed to rsync, but once
+             for every single top level directory. Thus, if (for example)
+             /var was housed on a different partition, it wouldn't matter
+             since rsync was using /var as it's starting point, not "/".
+
+             Additionally, in the past it was impossible to exclude a full
+             path with rsync's include/exclude rules, regardless of what
+             you were backing up. The best that could be done was to
+             exclude a pattern (like "CVS"), or once again resort to
+             listing all the top-level directories as seperate backup
+             points surrounding anything you wanted to exclude.
+
+             Now, because of the "--relative" option, it is possible to
+             do all these things. "--delete-excluded" is nice too, since
+             it will automatically remove things from your backups when
+             you decide not to back them up anymore.
+
+         Of course, there is a downside as well:
+
+             With "--relative" enabled in "rsync_long_args", rsync treats
+             the destination paths differently. Before, rsync would take
+             the files from the source path and stick them directly into
+             the destination path. Now, it takes the full source path and
+             recreates all the parent directories in the destination path.
+
+             This limits flexibility somewhat in the destination paths,
+             since they are now tied to the namespace of the source paths.
+
+             For example, something like this can no longer be done under
+             the new system:
+
+                 backup    /var/qmail/            localhost/email/
+
+             Before, the finished snapshot would look like this:
+
+                 /.snapshots/hourly.0/localhost/email/
+
+             Now, the finished snapshot will look like this:
+
+                 /.snapshots/hourly.0/localhost/email/var/qmail/
+
+         By explicitly setting the "rsync_long_args" parameter, you can
+         operate rsnapshot in either of these two ways.
+
+         If you want to keep things the way they were, make sure you run
+         "make upgrade" or otherwise set the rsync_long_args parameter
+         to the old value.
+
+         If you want to transition your destination paths over to the new
+         way, read on.
+
+         Here are some "before and after" examples from rsnapshot.conf.
+         Each one yields identical results on the filesystem.
+
+             THE OLD WAY (rsnapshot 1.1.6 and before):
+
+                 backup    /etc/                  localhost/etc/
+                 backup    /home/                 localhost/home/
+                 backup    /usr/local/            localhost/usr/local/
+                 backup    root@example.com:/etc/ example.com/etc/
+                 backup    root@example.com:/var/ example.com/var/
+
+             THE NEW WAY (from rsnapshot 1.2.0 on):
+
+                 backup    /etc/                  localhost/
+                 backup    /home/                 localhost/
+                 backup    /usr/local/            localhost/
+                 backup    root@example.com:/etc/ example.com/
+                 backup    root@example.com:/var/ example.com/
+
+         Be aware that the backup_script parameter does NOT follow these
+         rules. Any backup_script parameters should remain unchanged from
+         before. Additionally, new checks have been added to rsnapshot to
+         prevent you from accidentally wiping out your backup points later
+         with an incorrect backup_script destination.
+
+----------------------
+  ADDITIONAL OPTIONS
+----------------------
+If you require more precise control over the locations of files:
+
+    You can pass the following options to ./configure for more control
+    over where various parts of rsnapshot are installed. The example
+    values shown also happen to be the defaults.
+
+        --prefix=/usr/local
+            This will install everything under /usr/local
+
+        --sysconfdir=/usr/local/etc
+            This will install the example config file
+            (rsnapshot.conf.default) under /usr/local/etc. It is
+            recommended that you copy this and use it as a basis for
+            the actual config file (rsnapshot.conf).
+
+        --bindir=/usr/local/bin
+            This will install the rsnapshot program under /usr/local/bin
+
+        --mandir=/usr/local/man
+            This will install the man page under /usr/local/man
+
+        --with-perl=/usr/bin/perl
+            Specify your preferred path to perl. If you don't specify
+            this, the build process will detect the first version of perl
+            it finds in your path.
+
+        --with-rsync=/usr/bin/rsync
+            Specify your preferred path to rsync. If you don't specify
+            this, the build process will detect the first version of rsync
+            it finds in your path. You can always change this later by
+            editing the config file (rsnapshot.conf).
+
+        --with-cp=/bin/cp
+            Specify the path to GNU cp. The traditional UNIX cp command
+            is not sufficient. If you don't specify this, the build process
+            will detect the first version of cp it finds in your path.
+            If you don't have the GNU version of cp, leave this commented
+            out in the config file (rsnapshot.conf).
+
+        --with-rm=/bin/rm
+            Specify the path to the rm command. If you don't specify this,
+            the build process will detect the first version of rm it finds
+            in your path.
+
+        --with-ssh=/usr/bin/ssh
+            Specify your preferred path to ssh. If you don't specify this,
+            the build process will detect the first version of ssh it
+            finds in your path. SSH is an optional feature, so it is OK if
+            it isn't on your system. Either way, if you want to use ssh,
+            you need to specifically enable this feature by uncommenting
+            the "cmd_ssh" parameter in the config file (rsnapshot.conf).
+
+        --with-logger=/usr/bin/logger
+            Specify your preferred path to logger. If you don't specify
+            this, the build process will detect the first version of
+            logger it finds in your path. If you want syslog support,
+            make sure this is enabled in the config file. Syslog support
+            is optional, so if you don't have it or comment it out it's OK.
+
+        --with-du=/usr/bin/du
+            Specify your preferred path to du. If you don't specify
+            this, the build process will detect the first version of
+            du it finds in your path. The "du" command only gets used
+            when rsnapshot is called with the "du" argument to calculate
+            the amount of disk space used. This is optional, so if you
+            don't have it or comment it out it's OK.
 

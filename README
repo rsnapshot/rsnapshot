@@ -6,7 +6,7 @@ rsnapshot comes with ABSOLUTELY NO WARRANTY.  This is free software,
 and you are welcome to redistribute it under certain conditions.
 See the GNU General Public Licence for details.
 
-For installation instructions, read INSTALL
+For installation or upgrade instructions, read INSTALL
 ------------------------------------------------------------------------------
 
 rsnapshot is a filesystem snapshot utility based on rsync.
@@ -20,8 +20,9 @@ tested with versions 5.004 through 5.8.2.
 
 This program should work on any reasonably modern UNIX compatible OS. It
 has been tested successfully on the following operating systems:
- - Debian: 3.0 (woody), unstable
- - Redhat: 7.x, 8.0
+ - Debian: 3.0 (woody), 3.1 (sarge), unstable (sid)
+ - Redhat: 7.x, 8.0, Enterprise Linux 3.0 ES
+ - CentOS 3.0
  - WhiteBox Enterprise Linux 3.0
  - Slackware 9.0
  - SuSE: 9.0
@@ -33,9 +34,14 @@ has been tested successfully on the following operating systems:
  - IRIX 6.5
 
 If this is your first experience with rsnapshot, you may want to read the
-HOWTO document at http://www.rsnapshot.org/. This will give you a detailed
-walk-through on how to get rsnapshot up and running in explicit detail. For a
-reference of all available commands, see the rsnapshot man page.
+rsnapshot HOWTO at http://www.rsnapshot.org/
+
+The HOWTO will give you a detailed walk-through on how to get rsnapshot up and
+running in explicit detail. For a reference of all available commands, see the
+rsnapshot man page.
+
+If you are upgrading from version 1.1.6 or earlier, make sure you read the
+section on upgrading in the INSTALL file.
 
 ------------------------------------------------------------------------------
 COMPATIBILITY NOTICE (Please read)
@@ -111,28 +117,8 @@ take a look at the utils/ directory in the source distribution for several
 example scripts.
 
 ------------------------------------------------------------------------------
-CONTRIBUTORS
+AUTHORS
 ------------------------------------------------------------------------------
-Mike Rubel - http://www.mikerubel.org/computers/rsync_snapshots/
-    - Created the original shell scripts on which this project is based
 
-Nathan Rosenquist <nathan@rsnapshot.org>
-    - Primary author and maintainer
+Please see the AUTHORS file for the complete list of contributors.
 
-Carl Wilhelm Soderstrom <chrome@real-time.com>
-    - Created the RPM .spec file which allowed the RPM package to be built
-
-Ted Zlatanov <tzz@lifelogs.com>
-    - Added the one_fs feature, autoconf support, many others
-
-Ralf van Dooren <r.vdooren@snow.nl>
-    - Added and maintains the rsnapshot entry in the FreeBSD ports tree
-
-SlapAyoda
-    - Provided access to his computer museum for software testing
-
-Carl Boe <boe@demog.berkeley.edu>
-    - Found several subtle bugs and provided fixes for them
-
-Shane Liebling <shane@cryptio.net>
-    - Fixed a compatibility bug in utils/backup_smb_share.sh
