@@ -26,18 +26,19 @@
 
 require 5.004;
 use strict;
-use Cwd;
 use DirHandle;
-use Getopt::Std;
-use File::Path;
-use File::stat;
+use Cwd;					# cwd()
+use Getopt::Std;			# getopt(), getopts()
+use File::Path;				# mkpath(), rmtree()
+use File::stat;				# lstat()
+use POSIX qw(locale_h);		# setlocale()
 
 #########################
 ### DECLARE VARIABLES ###
 #########################
 
 # version of rsnapshot
-my $VERSION = '1.1.3';
+my $VERSION = '1.1.4';
 
 # exactly how the program was called, with all arguments
 my $run_string = "$0 " . join(' ', @ARGV);
@@ -172,6 +173,15 @@ $SIG{'INT'}		= sub { bail('rsnapshot was sent INT signal... cleaning up'); };
 $SIG{'QUIT'}	= sub { bail('rsnapshot was sent QUIT signal... cleaning up'); };
 $SIG{'ABRT'}	= sub { bail('rsnapshot was sent ABRT signal... cleaning up'); };
 $SIG{'TERM'}	= sub { bail('rsnapshot was sent TERM signal... cleaning up'); };
+
+########################
+### SET POSIX LOCALE ###
+########################
+
+# this fixes some reported problems with rmtree()
+# or at least, we hope it will after testing
+
+setlocale(LC_ALL, 'C');
 
 ##############################
 ### GET COMMAND LINE INPUT ###
