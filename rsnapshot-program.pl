@@ -914,8 +914,8 @@ sub backup_interval	{
 	if (!defined($interval))	{ bail('backup_interval() expects an argument'); }
 	
 	# set up default args for rsync and ssh
-	my $default_rsync_short_args	= '-al';
-	my $default_rsync_long_args		= '--delete --numeric-ids --devices';
+	my $default_rsync_short_args	= '-a';
+	my $default_rsync_long_args		= '--delete --numeric-ids';
 	my $default_ssh_args			= undef;
 	
 	# if the config file specified rsync or ssh args, use those instead
@@ -1992,21 +1992,21 @@ hourly.0/ will be rsynced directly from the filesystem.
 
 =back
 
-B<rsync_short_args    -al>
+B<rsync_short_args    -a>
 
 =over 4
 
 List of short arguments to pass to rsync. If not specified,
-"-al" is the default.
+"-a" is the default.
 
 =back
 
-B<rsync_long_args     --delete --numeric-ids --devices>
+B<rsync_long_args     --delete --numeric-ids>
 
 =over 4
 
 List of long arguments to pass to rsync. If not specified,
-"--delete --numeric-ids --devices" is the default.
+"--delete --numeric-ids" is the default.
 
 =back
 

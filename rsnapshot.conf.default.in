@@ -36,8 +36,8 @@ interval	weekly	4
 # GLOBAL OPTIONS
 #
 # default rsync args
-#rsync_short_args	-al
-#rsync_long_args	--delete --numeric-ids --devices
+#rsync_short_args	-a
+#rsync_long_args	--delete --numeric-ids
 #
 # ssh has no args by default, but you can specify them here
 #ssh_args			-p 22
