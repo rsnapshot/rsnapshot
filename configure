@@ -1539,8 +1539,8 @@ if test "${with_perl+set}" = set; then
 			if test -x "$withval"; then
 				PERL=$withval
 			else
-				{ { echo "$as_me:$LINENO: error: perl is required" >&5
-echo "$as_me: error: perl is required" >&2;}
+				{ { echo "$as_me:$LINENO: error: perl not found" >&5
+echo "$as_me: error: perl not found" >&2;}
    { (exit 1); exit 1; }; }
 			fi
 		else
@@ -1612,8 +1612,8 @@ if test "${with_rsync+set}" = set; then
 				CMD_RSYNC="cmd_rsync	$RSYNC"
 
 			else
-				{ { echo "$as_me:$LINENO: error: rsync is required" >&5
-echo "$as_me: error: rsync is required" >&2;}
+				{ { echo "$as_me:$LINENO: error: rsync not found" >&5
+echo "$as_me: error: rsync not found" >&2;}
    { (exit 1); exit 1; }; }
 			fi
 		else
@@ -1685,8 +1685,8 @@ if test "${with_ssh+set}" = set; then
 			if test -x "$withval"; then
 				SSH=$withval
 			else
-				{ { echo "$as_me:$LINENO: error: ssh is required" >&5
-echo "$as_me: error: ssh is required" >&2;}
+				{ { echo "$as_me:$LINENO: error: ssh not found" >&5
+echo "$as_me: error: ssh not found" >&2;}
    { (exit 1); exit 1; }; }
 			fi
 		else

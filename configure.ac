@@ -15,7 +15,7 @@ AC_ARG_WITH(perl,
 			if test -x "$withval"; then
 				PERL=$withval
 			else
-				AC_MSG_ERROR(perl is required)
+				AC_MSG_ERROR(perl not found)
 			fi
 		else
 			AC_MSG_ERROR(perl is required)
@@ -45,7 +45,7 @@ AC_ARG_WITH(rsync,
 				RSYNC=$withval
 				AC_SUBST(CMD_RSYNC, "cmd_rsync	$RSYNC")
 			else
-				AC_MSG_ERROR(rsync is required)
+				AC_MSG_ERROR(rsync not found)
 			fi
 		else
 			AC_MSG_ERROR(rsync is required)
@@ -75,7 +75,7 @@ AC_ARG_WITH(ssh,
 			if test -x "$withval"; then
 				SSH=$withval
 			else
-				AC_MSG_ERROR(ssh is required)
+				AC_MSG_ERROR(ssh not found)
 			fi
 		else
 			SSH=no
