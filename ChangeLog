@@ -21,6 +21,7 @@ VERSION 1.0.11 (? ? ??:?? 2004)
 - Fixed minor screen formatting issue with print_cmd() subroutine where it
   could line wrap the first element of a command
 - Changed exit error code from -1 (255) to 1, to be more standard
+- Added include, exclude, include_file, and exclude_file params
 
 VERSION 1.0.10 (Jan 20 00:43 2004)
 ------------------------------------------------------------------------------

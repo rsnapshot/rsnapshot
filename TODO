@@ -5,6 +5,15 @@ for version 1.0.x
 - Add include/exclude and include_file/exclude_file feature to local args,
   currently it's just on the global level
 
+- Document all this new stuff in the man page (and HOWTO):
+    logfile
+    loglevel
+    include
+    exclude
+    include_file
+    exclude_file
+    The new exit status (1 instead of -1/255 now)
+
 - Figure out a way to do transfers the other way: from clients to the server
   instead of just from the server to the clients. Of course it will have to
   be very secure. Ideally we could support chroot environments for the
