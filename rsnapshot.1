@@ -129,7 +129,7 @@
 .\" ========================================================================
 .\"
 .IX Title "rsnapshot 1"
-.TH rsnapshot 1 "2005-03-28" "" ""
+.TH rsnapshot 1 "2005-04-02" "" ""
 .SH "NAME"
 rsnapshot \- remote filesystem snapshot utility
 .SH "SYNOPSIS"
@@ -190,17 +190,17 @@ your needs.
 Here is a list of allowed parameters:
 .Sp
 .RS 4
-\&\fBconfig_version\fR    Config file version (required). Default is 1.2
+\&\fBconfig_version\fR     Config file version (required). Default is 1.2
 .Sp
-\&\fBsnapshot_root\fR     Local filesystem path to save all snapshots
+\&\fBsnapshot_root\fR      Local filesystem path to save all snapshots
 .Sp
-\&\fBno_create_root\fR    If set to 1, rsnapshot won't create snapshot_root directory
+\&\fBno_create_root\fR     If set to 1, rsnapshot won't create snapshot_root directory
 .Sp
-\&\fBcmd_rsync\fR         Full path to rsync (required)
+\&\fBcmd_rsync\fR          Full path to rsync (required)
 .Sp
-\&\fBcmd_ssh\fR           Full path to ssh (optional)
+\&\fBcmd_ssh\fR            Full path to ssh (optional)
 .Sp
-\&\fBcmd_cp\fR            Full path to cp  (optional, but must be \s-1GNU\s0 version)
+\&\fBcmd_cp\fR             Full path to cp  (optional, but must be \s-1GNU\s0 version)
 .Sp
 .RS 4
 If you are using Linux, you should uncomment cmd_cp. If you are using a
@@ -217,13 +217,19 @@ files over (assuming there are any).
 .RE
 .RS 4
 .Sp
-\&\fBcmd_rm\fR            Full path to rm  (optional)
+\&\fBcmd_rm\fR             Full path to rm (optional)
 .Sp
-\&\fBcmd_logger\fR        Full path to logger (optional, for syslog support)
+\&\fBcmd_logger\fR         Full path to logger (optional, for syslog support)
 .Sp
-\&\fBcmd_du\fR            Full path to du (optional, for disk usage reports)
+\&\fBcmd_du\fR             Full path to du (optional, for disk usage reports)
 .Sp
-\&\fBinterval\fR      [name] [number]
+\&\fBcmd_rsnapshot_diff\fR Full path to rsnapshot-diff (optional)
+.Sp
+\&\fBcmd_preexec\fR        Full path (plus any arguments) to preexec script (optional)
+.Sp
+\&\fBcmd_postexec\fR       Full path (plus any arguments) to postexec script (optional)
+.Sp
+\&\fBinterval\fR           [name]   [number]
 .Sp
 .RS 4
 \&\*(L"name\*(R" refers to the name of this interval (i.e. hourly, daily). \*(L"number\*(R"
@@ -686,6 +692,22 @@ on a particular file or subdirectory.
 The \s-1GNU\s0 version of \*(L"du\*(R" is preferred. The \s-1BSD\s0 version works well also, but does
 not support the \-h flag (use \-k instead, to see the totals in kilobytes). Other
 versions of \*(L"du\*(R", such as Solaris, may not work at all.
+.PP
+To check the differences between two directories, call rsnapshot with the \*(L"diff\*(R"
+argument, followed by two intervals or directory paths.
+.PP
+For example:
+.Sp
+.RS 4
+\&\fBrsnapshot diff daily.0 daily.1\fR
+.Sp
+\&\fBrsnapshot diff daily.0/localhost/etc daily.1/localhost/etc\fR
+.Sp
+\&\fBrsnapshot diff /.snapshots/daily.0 /.snapshots/daily.1\fR
+.RE
+.PP
+This will call the rsnapshot-diff program, which will scan both directories
+looking for differences (based on hard links).
 .SH "EXIT VALUES"
 .IX Header "EXIT VALUES"
 .RS 4

@@ -17,7 +17,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.265 2005/04/03 00:02:49 scubaninja Exp $
+# $Id: rsnapshot-program.pl,v 1.266 2005/04/03 06:43:20 scubaninja Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -604,7 +604,7 @@ sub parse_config_file {
 			$script = $script_argv[0];
 			
 			# make sure script exists and is executable
-			if (((! -f "$script") or (! -x "$script")) && is_real_local_abs_path($script)) {
+			if (((! -f "$script") or (! -x "$script")) or !is_real_local_abs_path($script)) {
 				config_err($file_line_num, "$line - cmd_preexec \"$script\" is not executable or does not exist");
 				next;
 			}
@@ -626,7 +626,7 @@ sub parse_config_file {
 			$script = $script_argv[0];
 			
 			# make sure script exists and is executable
-			if (((! -f "$script") or (! -x "$script")) && is_real_local_abs_path($script)) {
+			if (((! -f "$script") or (! -x "$script")) or !is_real_local_abs_path($script)) {
 				config_err($file_line_num, "$line - cmd_postexec \"$script\" is not executable or does not exist");
 				next;
 			}
@@ -897,6 +897,11 @@ sub parse_config_file {
 				next;
 			}
 			
+			if (!defined($dest)) {
+				config_err($file_line_num, "$line - no destination path specified");
+				next;
+			}
+			
 			# get the base name of the script, not counting any arguments to it
 			@script_argv = split(/\s+/, $full_script);
 			$script = $script_argv[0];
@@ -914,7 +919,7 @@ sub parse_config_file {
 			}
 			
 			# make sure script exists and is executable
-			if (((! -f "$script") or (! -x "$script")) && is_real_local_abs_path($script)) {
+			if (((! -f "$script") or (! -x "$script")) or !is_real_local_abs_path($script)) {
 				config_err($file_line_num, "$line - Backup script \"$script\" is not executable or does not exist");
 				next;
 			}
@@ -2428,21 +2433,87 @@ sub remove_trailing_slash {
 # accepts an interval_data_ref
 # returns nothing
 # calls the appropriate subroutine, depending on whether this is the lowest interval or a higher one
+# also calls preexec/postexec scripts if we're working on the lowest interval
 #
 sub handle_interval {
 	my $id_ref = shift(@_);
 	
+	my $result = 0;
+	
 	if (!defined($id_ref)) { bail('id_ref not defined in handle_interval()'); }
 	
+	# make sure we don't have any leftover interval.delete directories
+	# if so, loop through and delete them
+	foreach my $interval_ref (@intervals) {
+		my $interval = $$interval_ref{'interval'};
+		
+		my $is_file = 0;
+		my $exists = 0;
+		
+		# double check that the node and snapshot_root are not the same directory
+		# it would be very bad to accidentally delete the snapshot root!
+		# first test for symlinks (should never be here)
+		if ( -l "$config_vars{'snapshot_root'}/$interval.delete" ) {
+			$exists = 1;
+			$is_file = 1;
+			
+		# file (should never be here)
+		} elsif ( -f "$config_vars{'snapshot_root'}/$interval.delete" ) {
+			$exists = 1;
+			$is_file = 1;
+			
+		# directory (this is what we're expecting)
+		} elsif ( -d "$config_vars{'snapshot_root'}/$interval.delete" ) {
+			$exists = 1;
+			$is_file = 0;
+			
+		# exists, but is something else
+		} elsif ( -e "$config_vars{'snapshot_root'}/$interval.delete" ) {
+			bail("Invalid file type for \"$config_vars{'snapshot_root'}/$interval.delete\" in handle_interval()\n");
+		}
+		
+		# we don't use if (-e $dir), because that fails for invalid symlinks
+		if (1 == $exists) {
+			# if we found any leftover directories, delete them now before they pile up and cause problems
+			# this is a directory
+			if (0 == $is_file) {
+				display_rm_rf("$config_vars{'snapshot_root'}/$interval.delete/");
+				if (0 == $test) {
+					$result = cmd_rm_rf( "$config_vars{'snapshot_root'}/$$id_ref{'interval'}.delete/" );
+					if (0 == $result) {
+						bail("Error! cmd_rm_rf(\"$config_vars{'snapshot_root'}/$interval.delete/\")\n");
+					}		
+				}		
+				
+			# this is a file or symlink
+			} else {
+				print_cmd("rm -f $config_vars{'snapshot_root'}/$interval.delete");
+				if (0 == $test) {
+					$result = unlink("$config_vars{'snapshot_root'}/$interval.delete");
+					if (0 == $result) {
+						bail("Could not remove \"$config_vars{'snapshot_root'}/$interval.delete\" in handle_interval()");
+					}
+				}
+			}
+		}
+	}
+	
 	if (0 == $$id_ref{'interval_num'}) {
+		# if we have a preexec script, run it now
+		exec_cmd_preexec();
+		
 		# if this is the most frequent interval, actually do the backups here
 		backup_lowest_interval( $id_ref );
 		
+		# if we have a postexec script, run it now
+		exec_cmd_postexec();
+
 	} else {
 		# this is not the most frequent unit, just rotate
 		rotate_higher_interval( $id_ref );
 	}
 	
+	# if use_lazy_delete is on, delete the interval.delete directory
 	if ( -d "$config_vars{'snapshot_root'}/$$id_ref{'interval'}.delete" ) {
 		display_rm_rf("$config_vars{'snapshot_root'}/$$id_ref{'interval'}.delete/");
 		#my $result = rm_rf_bg( "$config_vars{'snapshot_root'}/$$id_ref{'interval'}.delete/" );
@@ -3058,6 +3129,69 @@ sub exec_backup_script {
 	}
 }
 
+# accepts and runs an arbitrary command string
+# returns the exit value of the command
+sub exec_cmd {
+	my $cmd = shift(@_);
+	
+	my $return = 0;
+	my $retval = 0;
+	
+	if (!defined($cmd) or ('' eq $cmd)) {
+		print_err("Warning! Command \"$cmd\" not found", 2);
+		return (undef);
+	}
+	
+	print_cmd($cmd);
+	if (0 == $test) {
+		$return = system($cmd);
+		if (!defined($return)) {
+			print_err("Warning! exec_cmd(\"$cmd\") returned undef", 2);
+		}
+		
+		# bitmask to get the real return value
+		$retval = get_retval($return);
+	}
+	
+	return ($retval);
+}
+
+sub exec_cmd_preexec {
+	my $retval = 0;
+	
+	if (defined($config_vars{'cmd_preexec'})) {
+		$retval = exec_cmd( $config_vars{'cmd_preexec'} );
+	}
+	
+	if (!defined($retval)) {
+		print_err("$config_vars{'cmd_preexec'} not found", 2);
+	}
+	
+	if (0 != $retval) {
+		print_warn("cmd_preexec \"$config_vars{'cmd_preexec'}\" returned $retval", 2);
+	}
+	
+	return ($retval);
+}
+
+sub exec_cmd_postexec {
+	my $retval = 0;
+	
+	if (defined($config_vars{'cmd_postexec'})) {
+		$retval = exec_cmd( $config_vars{'cmd_postexec'} );
+	}
+	
+	if (!defined($retval)) {
+		print_err("$config_vars{'cmd_postexec'} not found", 2);
+	}
+	
+	if (0 != $retval) {
+		print_warn("cmd_postexec \"$config_vars{'cmd_postexec'}\" returned $retval", 2);
+	}
+	
+	return ($retval);
+}
+
 # accepts interval, backup_point_ref
 # returns nothing
 # exits the program if it encounters a fatal error
@@ -3660,36 +3794,6 @@ sub display_rm_rf {
 	}
 }
 
-# stub subroutine 
-# calls either cmd_rm_rf_bg() or the native perl rmtree()
-# always returns 1
-sub rm_rf_bg {
-	my $path = shift(@_);
-	my $result = 0;
-	
-	# make sure we were passed an argument
-	if (!defined($path)) { return(0); }
-	
-	# extra bonus safety feature!
-	# confirm that whatever we're deleting must be inside the snapshot_root
-	if ("$path" !~ m/^$config_vars{'snapshot_root'}/o) {
-		bail("rm_rf_bg() tried to delete something outside of $config_vars{'snapshot_root'}! Quitting now!");
-	}
-	
-	# use the rm command if we have it
-	if (defined($config_vars{'cmd_rm'})) {
-		$result = cmd_rm_rf("$path");
-
-	# fall back on rmtree()
-	} else {
-		# remove trailing slash just in case
-		$path =~ s/\/$//;
-		$result = rmtree("$path", 0, 0);
-	}
-	
-	return ($result);
-}
-
 # stub subroutine
 # calls either cmd_rm_rf() or the native perl rmtree()
 # returns 1 on success, 0 on failure
@@ -3721,30 +3825,6 @@ sub rm_rf {
 }
 
 # this is a wrapper to the "rm" program, called with the "-rf" flags.
-sub cmd_rm_rf_bg {
-	my $path = shift(@_);
-	my $result = 0;
-	
-	# make sure we were passed an argument
-	if (!defined($path)) { return(0); }
-	
-	if ( ! -e "$path" ) {
-		print_err("cmd_rm_rf_bg() needs a valid file path as an argument", 2);
-		return (0);
-	}
-	
-	# make the system call to /bin/rm
-	# TODO: make this work in the background. the & doesn't do the trick
-	$result = system( $config_vars{'cmd_rm'}, '-rf', "$path", "&" );
-	if ($result != 0) {
-		print_err("Warning! $config_vars{'cmd_rm'} failed.", 2);
-		return (0);
-	}
-	
-	return (1);
-}
-
-# this is a wrapper to the "rm" program, called with the "-rf" flags.
 sub cmd_rm_rf {
 	my $path = shift(@_);
 	my $result = 0;
@@ -3766,6 +3846,61 @@ sub cmd_rm_rf {
 	
 	return (1);
 }
+
+# TODO: get this working in the background
+## stub subroutine 
+## calls either cmd_rm_rf_bg() or the native perl rmtree()
+## always returns 1
+#sub rm_rf_bg {
+#	my $path = shift(@_);
+#	my $result = 0;
+#	
+#	# make sure we were passed an argument
+#	if (!defined($path)) { return(0); }
+#	
+#	# extra bonus safety feature!
+#	# confirm that whatever we're deleting must be inside the snapshot_root
+#	if ("$path" !~ m/^$config_vars{'snapshot_root'}/o) {
+#		bail("rm_rf_bg() tried to delete something outside of $config_vars{'snapshot_root'}! Quitting now!\n");
+#	}
+#	
+#	# use the rm command if we have it
+#	if (defined($config_vars{'cmd_rm'})) {
+#		$result = cmd_rm_rf("$path");
+#
+#	# fall back on rmtree()
+#	} else {
+#		# remove trailing slash just in case
+#		$path =~ s/\/$//;
+#		$result = rmtree("$path", 0, 0);
+#	}
+#	
+#	return ($result);
+#}
+#
+## this is a wrapper to the "rm" program, called with the "-rf" flags.
+##sub cmd_rm_rf_bg {
+#	my $path = shift(@_);
+#	my $result = 0;
+#	
+#	# make sure we were passed an argument
+#	if (!defined($path)) { return(0); }
+#	
+#	if ( ! -e "$path" ) {
+#		print_err("cmd_rm_rf_bg() needs a valid file path as an argument", 2);
+#		return (0);
+#	}
+#	
+#	# make the system call to /bin/rm
+#	# TODO: make this work in the background. the & doesn't do the trick
+#	$result = system( $config_vars{'cmd_rm'}, '-rf', "$path", "&" );
+#	if ($result != 0) {
+#		print_err("Warning! $config_vars{'cmd_rm'} failed.", 2);
+#		return (0);
+#	}
+#	
+#	return (1);
+#}
 
 # accepts no arguments
 # calls the 'du' command to show rsnapshot's disk usage
@@ -4814,8 +4949,6 @@ B<cmd_ssh>            Full path to ssh (optional)
 
 B<cmd_cp>             Full path to cp  (optional, but must be GNU version)
 
-B<cmd_rsnapshot_diff> Full path to rsnapshot-diff (optional)
-
 =over 4
 
 If you are using Linux, you should uncomment cmd_cp. If you are using a
@@ -4831,13 +4964,19 @@ files over (assuming there are any).
 
 =back
 
-B<cmd_rm>            Full path to rm  (optional)
+B<cmd_rm>             Full path to rm (optional)
 
-B<cmd_logger>        Full path to logger (optional, for syslog support)
+B<cmd_logger>         Full path to logger (optional, for syslog support)
 
-B<cmd_du>            Full path to du (optional, for disk usage reports)
+B<cmd_du>             Full path to du (optional, for disk usage reports)
 
-B<interval>      [name] [number]
+B<cmd_rsnapshot_diff> Full path to rsnapshot-diff (optional)
+
+B<cmd_preexec>        Full path (plus any arguments) to preexec script (optional)
+
+B<cmd_postexec>       Full path (plus any arguments) to postexec script (optional)
+
+B<interval>           [name]   [number]
 
 =over 4
 
@@ -5294,6 +5433,24 @@ B<rsnapshot du localhost/home/>
 The GNU version of "du" is preferred. The BSD version works well also, but does
 not support the -h flag (use -k instead, to see the totals in kilobytes). Other
 versions of "du", such as Solaris, may not work at all.
+
+To check the differences between two directories, call rsnapshot with the "diff"
+argument, followed by two intervals or directory paths.
+
+For example:
+
+=over 4
+
+B<rsnapshot diff daily.0 daily.1>
+
+B<rsnapshot diff daily.0/localhost/etc daily.1/localhost/etc>
+
+B<rsnapshot diff /.snapshots/daily.0 /.snapshots/daily.1>
+
+=back
+
+This will call the rsnapshot-diff program, which will scan both directories
+looking for differences (based on hard links).
 
 =head1 EXIT VALUES
 
