@@ -1,5 +1,9 @@
 #!/usr/bin/perl -w
 
+# TODO: make backup_lowest_interval() and rotate_higher_interval()
+# check to see that they're operating on the correct interval
+# since they both get an $id_ref they can do this now
+
 ########################################################################
 #                                                                      #
 # rsnapshot                                                            #
@@ -20,9 +24,9 @@
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
 
-########################
-### STANDARD MODULES ###
-########################
+########################################
+###         STANDARD MODULES         ###
+########################################
 
 require 5.004;
 use strict;
@@ -33,9 +37,9 @@ use File::Path;			# mkpath(), rmtree()
 use File::stat;			# stat(), lstat()
 use POSIX qw(locale_h);	# setlocale()
 
-################################
-### DECLARE GLOBAL VARIABLES ###
-################################
+########################################
+###     DECLARE GLOBAL VARIABLES     ###
+########################################
 
 # version of rsnapshot
 my $VERSION = '1.1.6';
@@ -105,12 +109,12 @@ my $default_rsync_long_args		= '--delete --numeric-ids';
 my $default_ssh_args			= undef;
 
 # exactly how the program was called, with all arguments
-# this is set before getopt() can destroy it
+# this is set before getopt() modifies @ARGV
 my $run_string = "$0 " . join(' ', @ARGV);
 
-###############
-### SIGNALS ###
-###############
+########################################
+###         SIGNAL HANDLERS          ###
+########################################
 
 # shut down gracefully if necessary
 $SIG{'HUP'}		= 'IGNORE';
@@ -119,9 +123,9 @@ $SIG{'QUIT'}	= sub { bail('rsnapshot was sent QUIT signal... cleaning up'); };
 $SIG{'ABRT'}	= sub { bail('rsnapshot was sent ABRT signal... cleaning up'); };
 $SIG{'TERM'}	= sub { bail('rsnapshot was sent TERM signal... cleaning up'); };
 
-##############################
-### CORE PROGRAM STRUCTURE ###
-##############################
+########################################
+###      CORE PROGRAM STRUCTURE      ###
+########################################
 
 # what follows is a linear sequence of events.
 # all of these subroutines will either succeed or terminate the program safely.
@@ -212,9 +216,9 @@ remove_lockfile();
 #
 exit_with_status();
 
-###################
-### SUBROUTINES ###
-###################
+########################################
+###           SUBROUTINES            ###
+########################################
 
 # concise usage information
 # runs when rsnapshot is called with no arguments
@@ -2082,14 +2086,15 @@ sub backup_lowest_interval	{
 	# rollback failed backups
 	rollback_failed_backups( $$id_ref{'interval'} );
 	
-	# update mtime on $interval.0/
+	# update mtime on $interval.0/ to show when the snapshot completed
 	touch_interval_0( $$id_ref{'interval'} );
 }
 
-# accepts no arguments
+# accepts $interval
 # returns no arguments
-# operates on directories in the lowest interval
-# deletes the highest one, and rotates the ones below it
+#
+# operates on directories in the given interval (it should be the lowest one)
+# deletes the highest numbered directory in the interval, and rotates the ones below it
 # if link_dest is enabled, .0 gets moved to .1
 # otherwise, we do cp -al .0 .1
 #
@@ -2106,8 +2111,6 @@ sub rotate_lowest_snapshots	{
 	my $prev_interval = $$id_ref{'prev_interval'};
 	my $prev_interval_max = $$id_ref{'prev_interval_max'};
 	
-	# ROTATE DIRECTORIES
-	#
 	# remove oldest directory
 	if ( (-d "$config_vars{'snapshot_root'}/$interval.$interval_max") && ($interval_max > 0) )	{
 		display_rm_rf("$config_vars{'snapshot_root'}/$interval.$interval_max/");
@@ -2535,8 +2538,8 @@ sub exec_backup_script	{
 	# sync the output of the backup script into this snapshot interval
 	# this is using a native function since rsync doesn't quite do what we want
 	#
-	# rsync sees that the timestamps are different, and insists
-	# on changing things even if the files are bit for bit identical on content.
+	# rsync doesn't work here because it sees that the timestamps are different, and
+	# insists on changing things even if the files are bit for bit identical on content.
 	#
 	print_cmd("sync_if_different(\"$tmpdir\", \"$config_vars{'snapshot_root'}/$interval.0/$$bp_ref{'dest'}\")");
 	
@@ -2601,6 +2604,9 @@ sub create_backup_point_dir	{
 # accepts interval we're operating on
 # returns no arguments
 # rolls back failed backups, as defined in the @rollback_points array
+# this is only necessary if we're using link_dest, since it moves the .0 to .1 directory,
+# instead of recursively copying links to the files
+#
 sub rollback_failed_backups	{
 	my $interval = shift(@_);
 	
@@ -3560,9 +3566,9 @@ sub file_diff   {
 	return ($is_different);
 }
 
-#####################
-### PERLDOC / POD ###
-#####################
+########################################
+###          PERLDOC / POD           ###
+########################################
 
 =pod
 
