@@ -1684,8 +1684,6 @@ if test "${with_ssh+set}" = set; then
 		if test "x$withval" != "xno"; then
 			if test -x "$withval"; then
 				SSH=$withval
-				CMD_SSH="cmd_ssh		$SSH"
-
 			else
 				{ { echo "$as_me:$LINENO: error: ssh is required" >&5
 echo "$as_me: error: ssh is required" >&2;}
@@ -1739,15 +1737,13 @@ else
 echo "${ECHO_T}no" >&6
 fi
 
-		CMD_SSH="cmd_ssh		$SSH"
-
 	fi
 fi
 if test "$SSH" = "no"; then
 	SSH=/path/to/ssh
-	CMD_SSH="cmd_ssh		$SSH"
-
 fi
+CMD_SSH="cmd_ssh	$SSH"
+
 
 ac_config_files="$ac_config_files rsnapshot:rsnapshot-preamble.pl:rsnapshot-program.pl"
 
@@ -2349,8 +2345,8 @@ s,@SET_MAKE@,$SET_MAKE,;t t
 s,@PERL@,$PERL,;t t
 s,@CMD_RSYNC@,$CMD_RSYNC,;t t
 s,@RSYNC@,$RSYNC,;t t
-s,@CMD_SSH@,$CMD_SSH,;t t
 s,@SSH@,$SSH,;t t
+s,@CMD_SSH@,$CMD_SSH,;t t
 CEOF
 
 _ACEOF

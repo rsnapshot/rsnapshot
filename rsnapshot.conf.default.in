@@ -23,7 +23,7 @@ snapshot_root	/.snapshots/
 # See the README file or the man page for more details.
 #
 @CMD_RSYNC@
-@CMD_SSH@
+#@CMD_SSH@
 #cmd_cp		/bin/cp
 
 # BACKUP INTERVALS

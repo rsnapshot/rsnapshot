@@ -74,7 +74,6 @@ AC_ARG_WITH(ssh,
 		if test "x$withval" != "xno"; then
 			if test -x "$withval"; then
 				SSH=$withval
-				AC_SUBST(CMD_SSH, "cmd_ssh		$SSH")
 			else
 				AC_MSG_ERROR(ssh is required)
 			fi
@@ -87,14 +86,14 @@ dnl if the user didn't specify a path, hunt for it
 if test "$SSH" != "no"; then
 	if test "$SSH" = ""; then
 		AC_PATH_PROG(SSH, ssh, no)
-		AC_SUBST(CMD_SSH, "cmd_ssh		$SSH")
 	fi
 fi
 dnl if we couldn't find it, provide an example
 if test "$SSH" = "no"; then
 	SSH=/path/to/ssh
-	AC_SUBST(CMD_SSH, "cmd_ssh		$SSH")
 fi
+dnl either way, set the cmd_ssh var
+AC_SUBST(CMD_SSH, "cmd_ssh	$SSH")
 
 dnl Combine the preamble with a normal, working script
 AC_CONFIG_FILES(rsnapshot:rsnapshot-preamble.pl:rsnapshot-program.pl)
