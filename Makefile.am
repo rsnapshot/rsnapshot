@@ -14,7 +14,7 @@ html:
 	/bin/rm -f pod2htmd.*
 	/bin/rm -f pod2htmi.*
 
-cleanup:
+clean:
 	/bin/rm -rf rsnapshot-$(VERSION)/
 	/bin/rm -rf ${DEB_BUILD_DIR}/
 	/bin/rm -f rsnapshot-$(VERSION).tar.gz
@@ -22,7 +22,9 @@ cleanup:
 	/bin/rm -f rsnapshot.html
 	/bin/rm -f pod2htmd.*
 	/bin/rm -f pod2htmi.*
-
+	/bin/rm -rf autom4te.cache
+	/bin/rm -f Makefile config.log config.status rsnapshot
+	
 debian:
 	/bin/mkdir -p ${DEB_BUILD_DIR}/{DEBIAN,usr/bin,etc,usr/share/man/man1}
 	/bin/cp DEBIAN/{control,conffiles} ${DEB_BUILD_DIR}/DEBIAN/
