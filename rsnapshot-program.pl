@@ -54,6 +54,7 @@ my %config_vars;
 my @backup_points;
 
 # array of backup points to rollback, in the event of failure
+# (when using link_dest)
 my @rollback_points = ();
 
 # "intervals" are user defined time periods (i.e. hourly, daily)
