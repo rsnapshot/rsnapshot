@@ -5398,6 +5398,14 @@ Added cwrsync permanent-share support
 
 =back
 
+Robert Jackson
+
+=over 4
+
+Added use_lazy_deletes feature
+
+=back
+
 =head1 COPYRIGHT
 
 Copyright (C) 2003-2005 Nathan Rosenquist
