@@ -653,7 +653,7 @@ sub backup_interval	{
 		}
 	}
 	
-	# hard link (except for directories) .0 over to .1
+	# hard link (except for directories, symlinks, and special files) .0 over to .1
 	if ( -d "$config_vars{'snapshot_root'}/$interval.0" )	{
 		my $result;
 		
@@ -674,7 +674,7 @@ sub backup_interval	{
 		}
 	}
 	
-	# SYNC LIVE DATA TO $interval.0
+	# SYNC LIVE FILESYSTEM DATA TO $interval.0
 	foreach my $sp_ref (@snapshot_points)	{
 		my @cmd_stack				= undef;
 		my $src						= undef;
@@ -711,7 +711,7 @@ sub backup_interval	{
 			}
 		}
 		
-		# if we have a source directory, figure it out
+		# IF WE HAVE A SOURCE DIRECTORY, FIGURE IT OUT
 		if (defined($$sp_ref{'src'}))	{
 			# check opts, first unique to this backup point, and then global
 			#
@@ -775,7 +775,7 @@ sub backup_interval	{
 			if (1 == $verbose)	{ print join(' ', @cmd_stack, "\n"); }
 			if (0 == $test)		{ system(@cmd_stack); }
 			
-		# if we have a backup script, run it
+		# OR, IF WE HAVE A BACKUP SCRIPT, RUN IT
 		} elsif (defined($$sp_ref{'script'}))	{
 			# work in a temp dir, and make this the source for the rsync operation later
 			$tmpdir = "$config_vars{'snapshot_root'}/tmp/";
@@ -824,7 +824,7 @@ sub backup_interval	{
 				chdir($cwd);
 			}
 			
-			# TODO
+			# TODO:
 			# add code here to native compare today's backup script files
 			# and yesterday's backup script files, using file_diff().
 			#
@@ -858,7 +858,7 @@ sub backup_interval	{
 		
 	}
 	
-	# update mtime of $interval.0 to reflect snapshot time
+	# update mtime of $interval.0 to reflect the time this snapshot was taken
 	if (1 == $verbose)	{ print "touch $config_vars{'snapshot_root'}/$interval.0/\n"; }
 	if (0 == $test)	{
 		my $result = utime(time(), time(), "$config_vars{'snapshot_root'}/$interval.0/");
@@ -910,7 +910,7 @@ sub rotate_interval	{
 		}
 	}
 	
-	# hard link (except for directories) previous interval over to .0
+	# hard link (except for directories) previous interval's oldest dir over to .0
 	if ( -d "$config_vars{'snapshot_root'}/$prev_interval.$prev_interval_max" )	{
 		if (1 == $verbose)	{
 			if (1 == $have_gnu_cp)	{
@@ -930,22 +930,23 @@ sub rotate_interval	{
 	}
 }
 
-# this subroutine works the way i hoped rsync would under certain conditions.
-# this is no fault of rsync, i just had something slightly different in mind :)
+# This subroutine works the way I hoped rsync would under certain conditions.
+# This is no fault of rsync, I just had something slightly different in mind :)
 #
-# this subroutine accepts two arguments, a source path and a destination path
-# it traverses both recursively.
-#   if a file is in the source, but not the destination, it is copied using File::Copy
-#   if a file is in the destination, but not the source, it is deleted with rmtree()
-#   if a file is in both locations and is different, dest is unlinked and src is copied
-#   if a file is in both locations and is the same, nothing happens
+# This subroutine accepts two arguments, a source path and a destination path.
+# It traverses both recursively.
+#   If a file is in the source, but not the destination, it is copied using File::Copy
+#   If a file is in the destination, but not the source, it is deleted with rmtree()
+#   If a file is in both locations and is different, dest is unlinked and src is copied
+#   If a file is in both locations and is the same, nothing happens
 #
-# what makes this different than rsync is that it looks only at the file contents to
+# What makes this different than rsync is that it looks only at the file contents to
 # see if the files are different, not at the metadata such as timestamps.
-# i was unable to make rsync work recursively on identical files without unlinking
+# I was unable to make rsync work recursively on identical files without unlinking
 # at the destination and using another inode for a new file with the exact same content.
 #
-# if anyone knows of a better way (that doesn't add dependencies) i'd love to hear it!
+# If anyone knows of a better way (that doesn't add dependencies) i'd love to hear it!
+
 sub sync_if_different	{
 	my $src		= shift(@_);
 	my $dest	= shift(@_);
@@ -997,6 +998,7 @@ sub sync_if_different	{
 	#   then, we loop through dest, deleting anything that's not in src
 	
 	# SOURCE FIRST
+	# copy anything different from src into dest
 	$dh = new DirHandle( "$src" );
 	if (defined($dh))	{
 		my @nodes = $dh->read();
@@ -1014,7 +1016,7 @@ sub sync_if_different	{
 				return(0);
 			}
 			
-			# TODO
+			# TODO:
 			# fill in these blocks
 			
 			# if this isn't present in dest, copy it
@@ -1023,6 +1025,8 @@ sub sync_if_different	{
 				
 			# if this is present in dest, see if they're different
 			} elsif ( -e "$dest/$node" )	{
+				# TODO: check if it's a directory before doing a diff!
+				
 				# if they are different, unlink in dest and copy from src
 				if (1 == file_diff("$src/$node", "$dest/$node"))	{
 					
@@ -1037,6 +1041,8 @@ sub sync_if_different	{
 	undef( $dh );
 	
 	# DESTINATION SECOND
+	# delete anything from dest that isn't found in src
+	# anything in both places should be identical after the previous block
 	$dh = new DirHandle( "$dest" );
 	if (defined($dh))	{
 		my @nodes = $dh->read();
@@ -1054,7 +1060,7 @@ sub sync_if_different	{
 				return(0);
 			}
 			
-			# TODO
+			# TODO:
 			# if this isn't present in src, delete it
 			if ( ! -e "$src/$node" )	{
 				
@@ -1493,7 +1499,12 @@ sub parse_backup_opts	{
 	# RSYNC LONG ARGS
 	} elsif ( defined($parsed_opts{'rsync_long_args'}) )	{
 		# pass unchecked
-	
+		
+	# SSH ARGS
+	# TODO: test that this actually works!
+	} elsif ( defined($parsed_opts{'ssh_args'}) )	{
+		# pass unchecked
+		
 	# if we don't know about it, it doesn't exist
 	} else	{
 		return (undef);
@@ -1586,7 +1597,7 @@ sub get_perms	{
 
 # accepts two file paths
 # returns 0 if they're the same, 1 if they're different
-# returns undef if one or both of the files can't be found or opened
+# returns undef if one or both of the files can't be found, opened, or closed
 sub file_diff   {
 	my $file1 = shift(@_);
 	my $file2 = shift(@_);
