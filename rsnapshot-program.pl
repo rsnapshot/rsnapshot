@@ -4309,7 +4309,7 @@ sub upgrade_config_file {
 
 # accepts array_ref of config file lines
 # exits 1 on errors
-# attempts to backup rsnapshot.conf to rsnapshot.conf.backup
+# attempts to backup rsnapshot.conf to rsnapshot.conf.backup(.#)
 sub backup_config_file {
 	my $lines_ref = shift(@_);
 	
@@ -4329,7 +4329,7 @@ sub backup_config_file {
 	
 	$backup_config_file = "$config_file.backup";
 	
-	print "Backing up \"$config_file\" to \"$backup_config_file\".\n";
+	print "Backing up \"$config_file\".\n";
 	
 	# pick a unique name for the backup file
 	if ( -e "$backup_config_file" ) {
@@ -4366,6 +4366,8 @@ sub backup_config_file {
 	    print STDERR "$config_file has NOT been upgraded!\n";
 	    exit(1);
 	}
+	
+	print "Config file was backed up to \"$backup_config_file\".\n";
 }
 
 # accepts no args
