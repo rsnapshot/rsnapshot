@@ -14,6 +14,7 @@ VERSION 1.1.5 (??? ?? ??:?? 2004)
 - Changed return value when called with no cmd line args to 1
 - Added a new exit code, for warnings (2)
 - rsync exit codes 23 and 24 make rsnapshot return a warning exit code
+  instead of an error
 - Changed link_dest comment in config file to mention "cross-platform"
 - Added utils/debug_moving_files.sh abuse script for testing
 - Added 'du' option to show disk usage in snapshot_root
