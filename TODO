@@ -2,14 +2,15 @@ rsnapshot TODO list:
 
 for version 1.0.x
 ------------------------------------------------------------------------------
+- Do COMPREHENSIVE test before next release
+
 - Keep track of whether we hit any non-fatal errors during the run, then
   report at the end whether the run was successful.
 
-- Add logfile and loglevel parameters to config file.
-
 - Figure out a way to do transfers the other way: from clients to the server
   instead of just from the server to the clients. Of course it will have to
-  be very secure.
+  be very secure. Ideally we could support chroot environments for the
+  connecting clients.
 
 - Update string manipulations and comparisons of paths to use File::Spec and
   File::Basename functions where possible. Double check they're fully
