@@ -18,7 +18,7 @@ if [ $PWD = "$HOME/projects/rsnapshot" ]; then
 	exit 1
 fi
 
-VERSION=`./rsnapshot-program.pl version_only | sed s/\\\./\\\\\\\./g`
+VERSION=`./rsnapshot-program.pl version-only | sed s/\\\./\\\\\\\./g`
 DATE=`date +"%Y%m%d"`
 
 perl -pi -e s/$VERSION/CVS-$DATE/g `find . -type f`
