@@ -8,7 +8,7 @@ Group: Applications/System
 Source: http://rsnapshot.scubaninja.com/downloads/rsnapshot-1.0.4.tar.gz
 Patch: rsnapshot.patch
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
-Requires: perl, fileutils, rsync
+Requires: perl, rsync
 
 %description
 This is a remote backup program that uses rsync to take backup snapshots of filesystems. 
