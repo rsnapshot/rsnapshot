@@ -1073,7 +1073,7 @@ sub parse_backup_opts {
 		} else {
 			$additive = 0;
 		}
-
+		
 		my ($name, $value) = split(/=/, $pair, 2);
 		if ( !defined($name) or !defined($value) ) {
 			return (undef);
@@ -1090,7 +1090,7 @@ sub parse_backup_opts {
 		if ($additive) {
 			$parsed_opts{'extra_' . $name} = $value;
 		} else {
-		$parsed_opts{$name} = $value;
+			$parsed_opts{$name} = $value;
 		}
 		
 		# VALIDATE ARGS
