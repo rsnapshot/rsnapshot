@@ -28,6 +28,7 @@ VERSION 1.1.6 (??? ?? ??:?? 2004)
 - Changed link_dest rsync error message to description instead of number
 - Changed description of test mode in the help cmd
 - Changed description of -V mode
+- Removed perl defaults from man page
 
 VERSION 1.1.5 (Jun 20 20:56 2004)
 ------------------------------------------------------------------------------

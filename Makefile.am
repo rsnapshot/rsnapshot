@@ -4,8 +4,8 @@ DEB_BUILD_DIR = fakeroot
 RPM_BASE_DIR  = /usr/src/redhat
 
 man:
-	pod2man rsnapshot > rsnapshot.1
-
+	pod2man -c '' -n 'RSNAPSHOT' -r '' rsnapshot > rsnapshot.1
+	
 html:
 	pod2html rsnapshot | grep -v 'link rev' > rsnapshot.html
 	/bin/rm -f pod2htmd.*
