@@ -11,6 +11,7 @@ VERSION 1.0.8
 - Fixed ssh_args local override for individual backup points
 - Added additional comments to various sections of the code
 - Removed redundant rsync arguments from the default
+- Moved add_lockfile() call so it runs later in the program
 
 VERSION 1.0.7
 - Added ssh_args parameter to pass arbitrary args to ssh
