@@ -34,5 +34,5 @@ new snapshot, rotate the old ones, and retain the most recent six
 (hourly.0 - hourly.5).
 
 For the full documentation, type "man rsnapshot" once it is installed.
-If you want to read the documentation before you install it, you can
-type "man ./rsnapshot.1"
+If you want to read the documentation before you install it, you may
+be able to type "man ./rsnapshot.1"
