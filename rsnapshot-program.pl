@@ -4315,6 +4315,7 @@ sub backup_config_file {
 	
 	my $result;
 	my $backup_config_file;
+	my $backup_exists = 0;
 	
 	if (!defined($lines_ref)) {
 		print STDERR "ERROR: backup_config_file() was not passed an argument.\n";
@@ -4330,11 +4331,24 @@ sub backup_config_file {
 	
 	print "Backing up \"$config_file\" to \"$backup_config_file\".\n";
 	
+	# pick a unique name for the backup file
 	if ( -e "$backup_config_file" ) {
-	    print STDERR "ERROR: Refusing to overwrite $backup_config_file.\n";
-	    print STDERR "Please move $backup_config_file out of the way and try again.\n";
-	    print STDERR "$config_file has NOT been upgraded!\n";
-	    exit(1);
+		$backup_exists = 1;
+		for (my $i=0; $i<100; $i++) {
+			if ( ! -e "$backup_config_file.$i" ) {
+				$backup_config_file = "$backup_config_file.$i";
+				$backup_exists = 0;
+				last;
+			}
+		}
+		
+		# if we couldn't write a backup file, exit with an error
+		if (1 == $backup_exists) {
+			print STDERR "ERROR: Refusing to overwrite $backup_config_file.\n";
+			print STDERR "Please move $backup_config_file out of the way and try again.\n";
+			print STDERR "$config_file has NOT been upgraded!\n";
+			exit(1);
+		}
 	}
 	
 	$result = open(OUTFILE, "> $backup_config_file");
