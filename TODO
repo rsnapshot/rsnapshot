@@ -1,5 +1,9 @@
 rsnapshot TODO list:
 
+for version 1.0.x
+------------------------------------------------------------------------------
++ Add an file exclusion list feature
+
 for version 2.0.x
 ------------------------------------------------------------------------------
 + Possibly rewrite it in C, if there's time or inclination. This would allow
