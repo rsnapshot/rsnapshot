@@ -23,6 +23,7 @@ VERSION CVS-unstable-post-1.1.6 (??? ?? ??:?? ????)
   Linux kernels
 - Clarified error message about local/relative paths in config file parsing
 - Added check for leading/trailing spaces in remote (ssh) paths
+- Added du(1) and crontab(1) to man page references
 
 VERSION 1.1.6 (Jul 05 16:35 2004)
 ------------------------------------------------------------------------------
