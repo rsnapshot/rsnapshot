@@ -110,6 +110,9 @@ my $link_dest		= 0; # use the --link-dest option to rsync
 my $verbose			= undef;
 my $default_verbose	= 2;
 
+# assume everything will go well. one slip up and the flag will be toggled
+my $run_perfect	= 1;
+
 # remember what directory we started in
 my $cwd = cwd();
 
@@ -555,11 +558,11 @@ if ( -f "$config_file" )	{
 			next;
 		}
 	}
-	close(CONFIG) or print STDERR "Warning! Could not close $config_file\n";
+	close(CONFIG) or print_err("Warning! Could not close $config_file", 2);
 	
 	# make sure we got rsync in there somewhere
 	if (0 == $have_rsync)	{
-		print STDERR "cmd_rsync was not defined.\n";
+		print_err("cmd_rsync was not defined.", 1);
 		$file_syntax_ok = 0;
 	}
 	
@@ -578,7 +581,7 @@ if ( -f "$config_file" )	{
 	
 	# if this wasn't a test, report the error to syslog
 	if (0 == $do_configtest)	{
-		log_err("Config file \"$config_file\" does not exist or is not readable");
+		syslog_err("Config file \"$config_file\" does not exist or is not readable.");
 	}
 	
 	# exit showing an error
@@ -587,14 +590,14 @@ if ( -f "$config_file" )	{
 
 # BAIL OUT HERE IF THERE WERE ERRORS IN THE CONFIG FILE
 if (0 == $file_syntax_ok)	{
-	print STDERR "---------------------------------------------------------------------\n";
-	print STDERR "Errors were found in $config_file, rsnapshot can not continue.\n";
-	print STDERR "If you think an entry looks right, make sure you don't have\n";
-	print STDERR "spaces where only tabs should be.\n";
+	print_err("---------------------------------------------------------------------", 1);
+	print_err("Errors were found in $config_file, rsnapshot can not continue.", 1);
+	print_err("If you think an entry looks right, make sure you don't have", 1);
+	print_err("spaces where only tabs should be.", 1);
 	
 	# if this wasn't a test, report the error to syslog
 	if (0 == $do_configtest)	{
-		log_err("Errors were found in $config_file, rsnapshot can not continue.");
+		syslog_err("Errors were found in $config_file, rsnapshot can not continue.");
 	}
 	
 	# exit showing an error
@@ -700,7 +703,7 @@ if (defined($config_vars{'lockfile'}))	{
 }
 
 # IF WE GOT THIS FAR, ASSUME SUCCESS. THE PROGRAM IS DONE RUNNING
-log_msg("$run_string: completed successfully");
+syslog_msg("$run_string: completed successfully");
 
 exit(0);
 
@@ -747,9 +750,9 @@ HERE
 sub bail	{
 	my $str = shift(@_);
 	
-	if ($str)	{ print STDERR $str . "\n"; }
+	if ($str)	{ print_err($str, 1); }
 	if (0 == $do_configtest)	{
-		log_err($str);
+		syslog_err($str);
 	}
 	remove_lockfile($config_vars{'lockfile'});
 	exit(-1);
@@ -764,51 +767,12 @@ sub config_error	{
 	if (!defined($line_num))	{ $line_num = -1; }
 	if (!defined($errstr))		{ $errstr = 'config_error() called without an error string!'; }
 	
-	print STDERR "Error in $config_file on line $line_num: $errstr\n";
-}
-
-# log messages to syslog
-# accepts message, facility, level
-# only message is required
-# return 1 on success, undef on failure
-sub log_msg	{
-	my $msg			= shift(@_);
-	my $facility	= shift(@_);
-	my $level		= shift(@_);
-	my $result		= undef;
-	
-	if (!defined($msg))			{ return (undef); }
-	if (!defined($facility))	{ $facility	= 'user'; }
-	if (!defined($level))		{ $level	= 'notice'; }
-	
-	if (defined($config_vars{'cmd_logger'}))	{
-		# extra verbose to display messages, verbose to display errors
-		if ( ($verbose > 3) or (($verbose > 2) && ($level ne 'err')) )	{
-			print_cmd("$config_vars{'cmd_logger'} -i -p $facility.$level -t rsnapshot $msg");
-		}
-		# log to syslog
-		if (0 == $test)	{
-			$result = system($config_vars{'cmd_logger'}, '-i', '-p', "$facility.$level", '-t', 'rsnapshot', $msg);
-			if (0 != $result)	{
-				print STDERR "Warning! Could not log to syslog:\n";
-				print STDERR "$config_vars{'cmd_logger'} -i -p $facility.$level -t rsnapshot $msg\n";
-			}
-		}
-	}
-	
-	return (1);
-}
-
-# log errors to syslog
-# accepts error message
-# returns 1 on success, undef on failure
-sub log_err	{
-	my $msg = shift(@_);
-	return log_msg($msg, 'user', 'err');
+	print_err("$config_file on line $line_num: $errstr", 1);
 }
 
 # accepts a string (or an array)
 # prints the string, but seperates it across multiple lines with backslashes if necessary
+# also logs the command, but on a single line
 sub print_cmd	{
 	# take all arguments and make them into one string
 	my $str = join(' ', @_);
@@ -850,8 +814,169 @@ sub print_cmd	{
 			print ' ';
 		}
 	}
-	
 	print "\n";
+	
+	# write to log (level 3 is where we start showing commands)
+	log_msg($str, 3);
+}
+
+# accepts string, and level
+# prints string if level is as high as verbose
+# logs string if level is as high as loglevel
+sub print_msg	{
+	my $str		= shift(@_);
+	my $level	= shift(@_);
+	
+	if (!defined($str))		{ return (undef); }
+	if (!defined($level))	{ return (undef); }
+	
+	chomp($str);
+	
+	# print to STDOUT
+	if ((!defined($verbose)) or ($level >= $verbose))	{
+		print $str, "\n";
+	}
+	
+	# write to log
+	log_msg($str, $level);
+}
+
+# accepts string, and level
+# prints string if level is as high as verbose
+# logs string if level is as high as loglevel
+sub print_err	{
+	my $str		= shift(@_);
+	my $level	= shift(@_);
+	
+	if (!defined($str))		{ return (undef); }
+	if (!defined($level))	{ return (undef); }
+	
+	# this is an error. there goes our pristine record.
+	$run_perfect = 0;
+	
+	chomp($str);
+	
+	# print to STDERR
+	if ((!defined($verbose)) or ($level >= $verbose))	{
+		print STDERR 'ERROR: ', $str, "\n";
+	}
+	
+	# write to log
+	log_err($str, $level);
+}
+
+# accepts string, and level
+# logs string if level is as high as loglevel
+sub log_msg	{
+	my $str		= shift(@_);
+	my $level	= shift(@_);
+	
+	if (!defined($str))		{ return (undef); }
+	if (!defined($level))	{ return (undef); }
+	
+	chomp($str);
+	
+	# TODO: log this
+	# print '[', get_cur_date(), '] ', $str, "\n";
+}
+
+# accepts string, and level
+# logs string if level is as high as loglevel
+sub log_err	{
+	my $str		= shift(@_);
+	my $level	= shift(@_);
+	
+	if (!defined($str))		{ return (undef); }
+	if (!defined($level))	{ return (undef); }
+	
+	chomp($str);
+	
+	# TODO: log this
+	# print '[', get_cur_date(), '] ERROR: ', $str, "\n";
+}
+
+# log messages to syslog
+# accepts message, facility, level
+# only message is required
+# return 1 on success, undef on failure
+sub syslog_msg	{
+	my $msg			= shift(@_);
+	my $facility	= shift(@_);
+	my $level		= shift(@_);
+	my $result		= undef;
+	
+	if (!defined($msg))			{ return (undef); }
+	if (!defined($facility))	{ $facility	= 'user'; }
+	if (!defined($level))		{ $level	= 'notice'; }
+	
+	if (defined($config_vars{'cmd_logger'}))	{
+		# extra verbose to display messages, verbose to display errors
+		if ( ($verbose > 3) or (($verbose > 2) && ($level ne 'err')) )	{
+			print_cmd("$config_vars{'cmd_logger'} -i -p $facility.$level -t rsnapshot $msg");
+		}
+		# log to syslog
+		if (0 == $test)	{
+			$result = system($config_vars{'cmd_logger'}, '-i', '-p', "$facility.$level", '-t', 'rsnapshot', $msg);
+			if (0 != $result)	{
+				print_err("Warning! Could not log to syslog:", 2);
+				print_err("$config_vars{'cmd_logger'} -i -p $facility.$level -t rsnapshot $msg", 2);
+			}
+		}
+	}
+	
+	return (1);
+}
+
+# log errors to syslog
+# accepts error message
+# returns 1 on success, undef on failure
+sub syslog_err	{
+	my $msg = shift(@_);
+	return syslog_msg($msg, 'user', 'err');
+}
+
+# accepts no arguments
+# returns the current date (for the logfile)
+#
+# Yes, I'm sure there's a wonderful module that can do this all for me,
+# but unless it comes standard with Perl 5.004 and later, I'd rather do it this way :)
+#
+sub get_cur_date	{
+	# localtime() gives us an array with these elements:
+	# 0 = seconds
+	# 1 = minutes
+	# 2 = hours
+	# 3 = day of month
+	# 4 = month + 1
+	# 5 = year + 1900
+	
+	# example date format (just like Apache logs)
+	# 28/Feb/2004:23:45:59
+	
+	my @months = ('Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec');
+	
+	my @fields = localtime(time());
+	
+	my $datestr =
+					# day of month
+					sprintf("%02i", $fields[3]) .
+					'/' .
+					# name of month
+					$months[$fields[4]] .
+					'/' .
+					# year
+					($fields[5]+1900) .
+					':' .
+					# hours (24 hour clock)
+					sprintf("%02i", $fields[2]) .
+					':' .
+					# minutes
+					sprintf("%02i", $fields[1]) .
+					':' .
+					# seconds
+					sprintf("%02i", $fields[0]);
+	
+	return ($datestr);
 }
 
 # accepts a string of options
@@ -930,22 +1055,22 @@ sub add_lockfile	{
 	my $lockfile = shift(@_);
 	
 	if (!defined($lockfile))	{
-		print STDERR "add_lockfile() requires a value\n";
-		log_err('add_lockfile() requires a value');
+		print_err ('add_lockfile() requires a value', 1);
+		syslog_err('add_lockfile() requires a value');
 		exit(-1);
 	}
 	
 	# valid?
 	if (0 == is_valid_local_abs_path($lockfile))	{
-		print STDERR "Lockfile $lockfile is not a valid file name\n";
-		log_err("Lockfile $lockfile is not a valid file name");
+		print_err ("Lockfile $lockfile is not a valid file name", 1);
+		syslog_err("Lockfile $lockfile is not a valid file name");
 		exit(-1);
 	}
 	
 	# does a lockfile already exist?
 	if (1 == is_real_local_abs_path($lockfile))	{
-		print STDERR "Lockfile $lockfile exists, can not continue!\n";
-		log_err("Lockfile $lockfile exists, can not continue");
+		print_err ("Lockfile $lockfile exists, can not continue!", 1);
+		syslog_err("Lockfile $lockfile exists, can not continue");
 		exit(-1);
 	}
 	
@@ -954,13 +1079,13 @@ sub add_lockfile	{
 	if (0 == $test)	{
 		my $result = open(LOCKFILE, "> $lockfile");
 		if (!defined($result))	{
-			print STDERR "Could not write lockfile $lockfile\n";
-			log_err("Could not write lockfile $lockfile");
+			print_err ("Could not write lockfile $lockfile", 1);
+			syslog_err("Could not write lockfile $lockfile");
 			exit(-1);
 		}
 		$result = close(LOCKFILE);
 		if (!defined($result))	{
-			print STDERR "Warning! Could not close lockfile $lockfile\n";
+			print_err("Warning! Could not close lockfile $lockfile", 2);
 		}
 	}
 }
@@ -980,8 +1105,8 @@ sub remove_lockfile	{
 			if (0 == $test)	{
 				$result = unlink($lockfile);
 				if (0 == $result)	{
-					print STDERR "Error! Could not remove lockfile $lockfile\n";
-					log_err("Error! Could not remove lockfile $lockfile");
+					print_err ("Could not remove lockfile $lockfile", 1);
+					syslog_err("Error! Could not remove lockfile $lockfile");
 					exit(-1);
 				}
 			}
@@ -1334,11 +1459,11 @@ sub backup_interval	{
 				$result = system(@cmd_stack);
 				if ($result != 0)	{
 					if (1 == $link_dest)	{
-						print STDERR "Error! rsync returned $result. Does this version of rsync support --link-dest?\n";
-						log_err("Error! rsync returned $result. Does this version of rsync support --link-dest?");
+						print_err ("rsync returned $result. Does this version of rsync support --link-dest?", 2);
+						syslog_err("rsync returned $result. Does this version of rsync support --link-dest?");
 					} else	{
-						print STDERR "Error! rsync returned $result\n";
-						log_err("Error! rsync returned $result");
+						print_err ("rsync returned $result", 2);
+						syslog_err("rsync returned $result");
 					}
 				}
 			}
@@ -1392,8 +1517,8 @@ sub backup_interval	{
 			if (0 == $test)	{
 				$result = system( $$sp_ref{'script'} );
 				if ($result != 0)	{
-					print STDERR "Error! backup_script $$sp_ref{'script'} returedn $result\n";
-					log_err("Error! backup_script $$sp_ref{'script'} returedn $result");
+					print_err ("backup_script $$sp_ref{'script'} returned $result", 2);
+					syslog_err("backup_script $$sp_ref{'script'} returned $result");
 				}
 			}
 			
@@ -1551,14 +1676,14 @@ sub gnu_cp_al	{
 	if (!defined($dest)) { return(0); }
 	
 	if ( ! -d "$src" )	{
-		print STDERR "gnu_cp_al() needs a valid directory as an argument\n";
+		print_err("gnu_cp_al() needs a valid directory as an argument", 2);
 		return (0);
 	}
 	
 	# make the system call to GNU cp
 	$result = system( $config_vars{'cmd_cp'}, '-al', "$src", "$dest" );
 	if ($result != 0)	{
-		print STDERR "Warning! $config_vars{'cmd_cp'} failed. Perhaps this is not GNU cp?\n";
+		print_err("Warning! $config_vars{'cmd_cp'} failed. Perhaps this is not GNU cp?", 2);
 		return (0);
 	}
 	
@@ -1587,7 +1712,7 @@ sub native_cp_al	{
 	
 	# make sure we have a source directory
 	if ( ! -d "$src" )	{
-		print STDERR "native_cp_al() needs a valid source directory as an argument\n";
+		print_err("native_cp_al() needs a valid source directory as an argument", 2);
 		return (0);
 	}
 	
@@ -1599,7 +1724,7 @@ sub native_cp_al	{
 	# LSTAT SRC
 	my $st = lstat("$src");
 	if (!defined($st))	{
-		print STDERR "Could not lstat(\"$src\")\n";
+		print_err("Could not lstat(\"$src\")", 2);
 		return(0);
 	}
 	
@@ -1609,7 +1734,7 @@ sub native_cp_al	{
 		
 		$result = mkdir("$dest", $st->mode);
 		if ( ! $result )	{
-			print STDERR "Warning! Could not mkdir(\"$dest\", $st->mode);\n";
+			print_err("Warning! Could not mkdir(\"$dest\", $st->mode);", 2);
 			return(0);
 		}
 	}
@@ -1620,7 +1745,7 @@ sub native_cp_al	{
 		
 		$result = chown($st->uid, $st->gid, "$dest");
 		if (! $result)	{
-			print STDERR "Warning! Could not chown(" . $st->uid . ", " . $st->gid . ", \"$dest\");\n";
+			print_err("Warning! Could not chown(" . $st->uid . ", " . $st->gid . ", \"$dest\");", 2);
 			return(0);
 		}
 	}
@@ -1640,7 +1765,7 @@ sub native_cp_al	{
 			# make sure the node we just got is valid (this is highly unlikely to fail)
 			my $st = lstat("$src/$node");
 			if (!defined($st))	{
-				print STDERR "Could not lstat(\"$src/$node\")\n";
+				print_err("Could not lstat(\"$src/$node\")", 2);
 				return(0);
 			}
 			
@@ -1661,7 +1786,7 @@ sub native_cp_al	{
 				
 				$result = link("$src/$node", "$dest/$node");
 				if (! $result)	{
-					print STDERR "Warning! Could not link(\"$src/$node\", \"$dest/$node\")\n";
+					print_err("Warning! Could not link(\"$src/$node\", \"$dest/$node\")", 2);
 					return (0);
 				}
 				
@@ -1673,30 +1798,30 @@ sub native_cp_al	{
 				# call this subroutine recursively, to create the directory
 				$result = native_cp_al("$src/$node", "$dest/$node");
 				if (! $result)	{
-					print STDERR "Warning! Recursion error in native_cp_al(\"$src/$node\", \"$dest/$node\")\n";
+					print_err("Warning! Recursion error in native_cp_al(\"$src/$node\", \"$dest/$node\")", 2);
 					return (0);
 				}
 				
 			# FIFO
 			} elsif ( -p "$src/$node" )	{
-				if ($verbose > 0)	{ print STDERR "Warning! Ignoring FIFO $src/$node\n"; }
+				if ($verbose > 0)	{ print_err("Warning! Ignoring FIFO $src/$node", 2); }
 				
 			# SOCKET
 			} elsif ( -S "$src/$node" )	{
-				if ($verbose > 0)	{ print STDERR "Warning! Ignoring socket: $src/$node\n"; }
+				if ($verbose > 0)	{ print_err("Warning! Ignoring socket: $src/$node", 2); }
 				
 			# BLOCK DEVICE
 			} elsif ( -b "$src/$node" )	{
-				if ($verbose > 0)	{ print STDERR "Warning! Ignoring special block file: $src/$node\n"; }
+				if ($verbose > 0)	{ print_err("Warning! Ignoring special block file: $src/$node", 2); }
 				
 			# CHAR DEVICE
 			} elsif ( -c "$src/$node" )	{
-				if ($verbose > 0)	{ print STDERR "Warning! Ignoring special character file: $src/$node\n"; }
+				if ($verbose > 0)	{ print_err("Warning! Ignoring special character file: $src/$node", 2); }
 			}
 		}
 		
 	} else	{
-		print STDERR "Could not open \"$src\". Do you have adequate permissions?\n";
+		print_err("Could not open \"$src\". Do you have adequate permissions?", 2);
 		return(0);
 	}
 	
@@ -1709,7 +1834,7 @@ sub native_cp_al	{
 	
 	$result = utime($st->atime, $st->mtime, "$dest");
 	if (! $result)	{
-		print STDERR "Warning! Could not utime(" . $st->atime . ", " . $st->mtime . ", \"$dest\");\n";
+		print_err("Warning! Could not utime(" . $st->atime . ", " . $st->mtime . ", \"$dest\");", 2);
 		return(0);
 	}
 	
@@ -1744,7 +1869,7 @@ sub sync_if_different	{
 	
 	# make sure we have a source directory
 	if ( ! -d "$src" )	{
-		print STDERR "sync_if_different() needs a valid source directory as its first argument\n";
+		print_err("sync_if_different() needs a valid source directory as its first argument", 2);
 		return (0);
 	}
 	
@@ -1785,7 +1910,7 @@ sub sync_cp_src_dest	{
 	
 	# make sure we have a source directory
 	if ( ! -d "$src" )	{
-		print STDERR "sync_if_different() needs a valid source directory as its first argument\n";
+		print_err("sync_if_different() needs a valid source directory as its first argument", 2);
 		return (0);
 	}
 	
@@ -1797,7 +1922,7 @@ sub sync_cp_src_dest	{
 	# LSTAT SRC
 	my $st = lstat("$src");
 	if (!defined($st))	{
-		print STDERR "Could not lstat(\"$src\")\n";
+		print_err("Could not lstat(\"$src\")", 2);
 		return(0);
 	}
 	
@@ -1805,7 +1930,7 @@ sub sync_cp_src_dest	{
 	if ( ! -d "$dest" )	{
 		$result = mkdir("$dest", $st->mode);
 		if ( ! $result )	{
-			print STDERR "Warning! Could not mkdir(\"$dest\", $st->mode);\n";
+			print_err("Warning! Could not mkdir(\"$dest\", $st->mode);", 2);
 			return(0);
 		}
 	}
@@ -1814,7 +1939,7 @@ sub sync_cp_src_dest	{
 	if (0 == $<)	{
 		$result = chown($st->uid, $st->gid, "$dest");
 		if (! $result)	{
-			print STDERR "Warning! Could not chown(" . $st->uid . ", " . $st->gid . ", \"$dest\");\n";
+			print_err("Warning! Could not chown(" . $st->uid . ", " . $st->gid . ", \"$dest\");", 2);
 			return(0);
 		}
 	}
@@ -1833,7 +1958,7 @@ sub sync_cp_src_dest	{
 			# make sure the node we just got is valid (this is highly unlikely to fail)
 			my $st = lstat("$src/$node");
 			if (!defined($st))	{
-				print STDERR "Could not lstat(\"$src/$node\")\n";
+				print_err("Could not lstat(\"$src/$node\")", 2);
 				return(0);
 			}
 			
@@ -1843,14 +1968,14 @@ sub sync_cp_src_dest	{
 			if ( -l "$src/$node" )	{
 				$result = copy_symlink("$src/$node", "$dest/$node");
 				if (0 == $result)	{
-					print STDERR "Warning! copy_symlink(\"$src/$node\", \"$dest/$node\")\n";
+					print_err("Warning! copy_symlink(\"$src/$node\", \"$dest/$node\")", 2);
 				}
 				
 			# if it's a directory, recurse!
 			} elsif ( -d "$src/$node" )	{
 				$result = sync_cp_src_dest("$src/$node", "$dest/$node");
 				if (! $result)	{
-					print STDERR "Error! recursion error in sync_cp_src_dest(\"$src/$node\", \"$dest/$node\")\n";
+					print_err("Recursion error in sync_cp_src_dest(\"$src/$node\", \"$dest/$node\")", 2);
 					return (0);
 				}
 				
@@ -1864,12 +1989,12 @@ sub sync_cp_src_dest	{
 					if (1 == file_diff("$src/$node", "$dest/$node"))	{
 						$result = unlink("$dest/$node");
 						if (0 == $result)	{
-							print "Error! unlink(\"$dest/$node\")\n";
+							print_err("unlink(\"$dest/$node\")", 2);
 							return (0);
 						}
 						$result = link("$src/$node", "$dest/$node");
 						if (0 == $result)	{
-							print "Error! link(\"$src/$node\", \"$dest/$node\")\n";
+							print_err("link(\"$src/$node\", \"$dest/$node\")", 2);
 							return (0);
 						}
 						
@@ -1882,26 +2007,26 @@ sub sync_cp_src_dest	{
 				} else	{
 					$result = link("$src/$node", "$dest/$node");
 					if (0 == $result)	{
-						print STDERR "Error! link(\"$src/$node\", \"$dest/$node\")\n";
+						print_err("link(\"$src/$node\", \"$dest/$node\")", 2);
 						return (0);
 					}
 				}
 				
 			# FIFO
 			} elsif ( -p "$src/$node" )	{
-				if ($verbose > 0)	{ print STDERR "Warning! Ignoring FIFO $src/$node\n"; }
+				if ($verbose > 0)	{ print_err("Warning! Ignoring FIFO $src/$node", 2); }
 				
 			# SOCKET
 			} elsif ( -S "$src/$node" )	{
-				if ($verbose > 0)	{ print STDERR "Warning! Ignoring socket: $src/$node\n"; }
+				if ($verbose > 0)	{ print_err("Warning! Ignoring socket: $src/$node", 2); }
 				
 			# BLOCK DEVICE
 			} elsif ( -b "$src/$node" )	{
-				if ($verbose > 0)	{ print STDERR "Warning! Ignoring special block file: $src/$node\n"; }
+				if ($verbose > 0)	{ print_err("Warning! Ignoring special block file: $src/$node", 2); }
 				
 			# CHAR DEVICE
 			} elsif ( -c "$src/$node" )	{
-				if ($verbose > 0)	{ print STDERR "Warning! Ignoring special character file: $src/$node\n"; }
+				if ($verbose > 0)	{ print_err("Warning! Ignoring special character file: $src/$node", 2); }
 			}
 		}
 	}
@@ -1927,13 +2052,13 @@ sub sync_rm_dest	{
 	
 	# make sure we have a source directory
 	if ( ! -d "$src" )	{
-		print STDERR "sync_rm_dest() needs a valid source directory as its first argument\n";
+		print_err("sync_rm_dest() needs a valid source directory as its first argument", 2);
 		return (0);
 	}
 	
 	# make sure we have a destination directory
 	if ( ! -d "$dest" )	{
-		print STDERR "sync_rm_dest() needs a valid destination directory as its first argument\n";
+		print_err("sync_rm_dest() needs a valid destination directory as its first argument", 2);
 		return (0);
 	}
 	
@@ -1956,7 +2081,7 @@ sub sync_rm_dest	{
 			# make sure the node we just got is valid (this is highly unlikely to fail)
 			my $st = lstat("$dest/$node");
 			if (!defined($st))	{
-				print STDERR "Error! Could not lstat(\"$dest/$node\")\n";
+				print_err("Could not lstat(\"$dest/$node\")", 2);
 				return(0);
 			}
 			
@@ -1964,7 +2089,7 @@ sub sync_rm_dest	{
 			if ( ! -e "$src/$node" )	{
 				$result = rmtree("$dest/$node", 0, 0);
 				if (0 == $result)	{
-					print STDERR "Error! Could not delete \"$dest/$node\"";
+					print_err("Could not delete \"$dest/$node\"", 2);
 					return (0);
 				}
 				
@@ -1973,7 +2098,7 @@ sub sync_rm_dest	{
 			} elsif ( -d "$src/$node" )	{
 				$result = sync_rm_dest("$src/$node", "$dest/$node");
 				if ( ! $result )	{
-					print STDERR "Error! recursion error in sync_rm_dest(\"$src/$node\", \"$dest/$node\")\n";
+					print_err("Recursion error in sync_rm_dest(\"$src/$node\", \"$dest/$node\")", 2);
 					return (0);
 				}
 			}
@@ -1998,19 +2123,19 @@ sub copy_symlink	{
 	
 	# make sure it's actually a symlink
 	if ( ! -l "$src" )	{
-		print STDERR "Warning! \"$src\" not a symlink in copy_symlink()\n";
+		print_err("Warning! \"$src\" not a symlink in copy_symlink()", 2);
 		return (0);
 	}
 	
 	# make sure we aren't clobbering the destination
 	if ( -e "$dest" )	{
-		print STDERR "Warning! \"$dest\" exists!\n";
+		print_err("Warning! \"$dest\" exists!", 2);
 	}
 	
 	# LSTAT
 	$st = lstat("$src");
 	if (!defined($st))	{
-		print STDERR "Warning! lstat(\"$src\")\n";
+		print_err("Warning! lstat(\"$src\")", 2);
 		return (0);
 	}
 	
@@ -2019,7 +2144,7 @@ sub copy_symlink	{
 	
 	$result = symlink(readlink("$src"), "$dest");
 	if (! $result)	{
-		print STDERR "Warning! Could not symlink(readlink(\"$src\"), \"$dest\")\n";
+		print_err("Warning! Could not symlink(readlink(\"$src\"), \"$dest\")", 2);
 		return (0);
 	}
 	
@@ -2030,7 +2155,7 @@ sub copy_symlink	{
 			
 			$result = chown($st->uid, $st->gid, "$dest");
 			if (! $result)	{
-				print STDERR "Warning! Could not chown(" . $st->uid . ", " . $st->gid . ", \"$dest\")\n";
+				print_err("Warning! Could not chown(" . $st->uid . ", " . $st->gid . ", \"$dest\")", 2);
 				return (0);
 			}
 		}
