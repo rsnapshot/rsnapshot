@@ -1209,7 +1209,13 @@ sub config_err	{
 	if (!defined($line_num))	{ $line_num = -1; }
 	if (!defined($errstr))		{ $errstr = 'config_err() called without an error string!'; }
 	
-	print_err("$config_file on line $line_num: $errstr", 1);
+	# show the user the file and line number
+	print_err("$config_file on line $line_num:", 1);
+	
+	# print out the offending line
+	# don't print past 69 columns (because they all start with 'ERROR: ')
+	# similarly, indent subsequent lines 9 spaces to get past the 'ERROR: ' message
+	print_err( wrap_cmd($errstr, 69, 9), 1 );
 	
 	# invalidate entire config file
 	$config_perfect = 0;
@@ -1245,61 +1251,83 @@ sub print_cmd	{
 	# take all arguments and make them into one string
 	my $str = join(' ', @_);
 	
-	my @tokens;
-	my $chars = 0;		# character tally
-	my $colmax = 76;	# max chars before wrap
-	
 	if (!defined($str))	{ return (undef); }
 	
 	# remove newline and consolidate spaces
 	chomp($str);
 	$str =~ s/\s+/ /g;
 	
-	# break up string into individual pieces
-	@tokens = split(/\s+/, $str);
-	
-	# stop here if we don't have anything
-	if (0 == scalar(@tokens))	{ return (undef); }
-	
 	# write to log (level 3 is where we start showing commands)
 	log_msg($str, 3);
 	
 	if (!defined($verbose) or ($verbose >= 3))	{
-		
-		# print the first token as a special exception, since we should never start out by line wrapping
-		if (defined($tokens[0]))	{
-			$chars = (length($tokens[0]) + 1);
-			print $tokens[0];
-			
-			# don't forget to put the space back in
-			if (scalar(@tokens) > 1)	{
-				print ' ';
-			}
-		}
-		
-		# loop through the rest of the tokens and print them out, wrapping when necessary
-		for (my $i=1; $i<scalar(@tokens); $i++)	{
-			# keep track of where we are (plus a space)
-			$chars += (length($tokens[$i]) + 1);
-			
-			# wrap if we're at the edge
-			if ($chars > $colmax)	{
-				print "\\\n    ";
-				
-				# 4 spaces + string length
-				$chars = 4 + length($tokens[$i]);
-			}
-			
-			# print out this token
-			print $tokens[$i];
-			
-			# print out a space unless this is the last one
-			if ($i < scalar(@tokens))	{
-				print ' ';
-			}
-		}
-		print "\n";
+		print wrap_cmd($str, 76, 4), "\n";
 	}
+}
+
+# accepts a string
+# formats it to STDOUT wrapping to fit in 80 columns
+# with backslashes at the end of each wrapping line and returns it
+sub wrap_cmd	{
+	my $str		= shift(@_);
+	my $colmax	= shift(@_);
+	my $indent	= shift(@_);
+	
+	my @tokens;
+	my $chars = 0;		# character tally
+	my $outstr = '';	# string to return
+	
+	# max chars before wrap (default to 80 column terminal)
+	if (!defined($colmax))	{
+		$colmax = 76;
+	}
+	
+	# number of spaces to indent subsequent lines
+	if (!defined($indent))	{
+		$indent = 2;
+	}
+	
+	# break up string into individual pieces
+	@tokens = split(/\s+/, $str);
+	
+	# stop here if we don't have anything
+	if (0 == scalar(@tokens))	{ return (''); }
+	
+	# print the first token as a special exception, since we should never start out by line wrapping
+	if (defined($tokens[0]))	{
+		$chars = (length($tokens[0]) + 1);
+		$outstr .= $tokens[0];
+		
+		# don't forget to put the space back in
+		if (scalar(@tokens) > 1)	{
+			$outstr .= ' ';
+		}
+	}
+	
+	# loop through the rest of the tokens and print them out, wrapping when necessary
+	for (my $i=1; $i<scalar(@tokens); $i++)	{
+		# keep track of where we are (plus a space)
+		$chars += (length($tokens[$i]) + 1);
+		
+		# wrap if we're at the edge
+		if ($chars > $colmax)	{
+			$outstr .= "\\\n";
+			$outstr .= (' ' x $indent);
+			
+			# 4 spaces + string length
+			$chars = $indent + length($tokens[$i]);
+		}
+		
+		# print out this token
+		$outstr .= $tokens[$i];
+		
+		# print out a space unless this is the last one
+		if ($i < scalar(@tokens))	{
+			$outstr .= ' ';
+		}
+	}
+	
+	return ($outstr);
 }
 
 # accepts string, and level
