@@ -98,6 +98,48 @@ AC_SUBST(CMD_SSH, "cmd_ssh	$SSH")
 
 
 dnl
+dnl GNU CP CHECK (optional program)
+dnl
+dnl if the user specified a path, try that first
+AC_ARG_WITH(cp,
+	[  --with-cp=PATH          Specify the path to GNU cp ],
+	[
+		if test "x$withval" != "xno"; then
+			if test -x "$withval"; then
+				GNU_CP=$withval
+			else
+				AC_MSG_ERROR(GNU cp not found)
+			fi
+		else
+			GNU_CP=no
+		fi
+	]
+)
+dnl if the user didn't specify a path, hunt for it
+if test "$GNU_CP" != "no"; then
+	dnl first test for gcp
+	if test "$GNU_CP" = ""; then
+		AC_PATH_PROG(GNU_CP, gcp, no)
+	fi
+	dnl then test for cp
+	if test "$GNU_CP" = "no"; then
+		AC_PATH_PROG(PLAIN_CP, cp, no)
+	fi
+fi
+dnl if we couldn't find it, provide an example
+if test "$GNU_CP" = "no"; then
+	if test "$PLAIN_CP" = "no"; then
+		GNU_CP=/path/to/gnu/cp
+	else
+		GNU_CP=$PLAIN_CP
+	fi
+fi
+dnl either way, set the cmd_cp var
+AC_SUBST(CMD_CP, "cmd_cp		$GNU_CP")
+
+
+
+dnl
 dnl LOGGER CHECK (optional program)
 dnl
 dnl if the user specified a path, try that first
@@ -147,3 +189,4 @@ echo ""
 echo "After rsnapshot is installed, don't forget to copy"
 echo "$RSNAPSHOT_SYSCONFDIR/rsnapshot.conf.default to $RSNAPSHOT_SYSCONFDIR/rsnapshot.conf"
 echo ""
+

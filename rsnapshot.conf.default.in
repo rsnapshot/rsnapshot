@@ -28,7 +28,7 @@ snapshot_root	/.snapshots/
 #
 # See the README file or the man page for more details.
 #
-#cmd_cp		/bin/cp
+#@CMD_CP@
 
 # rsync must be enabled for anything to work.
 @CMD_RSYNC@
@@ -55,6 +55,11 @@ interval	weekly	4
 # All are optional, with sensible defaults #
 ############################################
 
+# If your version of rsync supports --link-dest, you should enable this.
+# The default is 0 (off).
+#
+#link_dest	0
+
 # Verbose level, 1 through 5.
 # 1	Quiet		Print fatal errors only
 # 2	Default		Print errors and warnings only
@@ -77,11 +82,6 @@ verbose		2
 # not world writable. Otherwise anyone can prevent the program from running.
 #
 #lockfile	/var/lock/subsys/rsnapshot
-
-# If your version of rsync supports --link-dest, you should enable this.
-# The default is 0 (off).
-#
-#link_dest	0
 
 # If this is enabled, rsync won't span filesystem partitions within a
 # backup point. This essentially passes the -x option to rsync.

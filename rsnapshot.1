@@ -129,7 +129,7 @@
 .\" ========================================================================
 .\"
 .IX Title "RSNAPSHOT-PROGRAM 1"
-.TH RSNAPSHOT-PROGRAM 1 "2004-01-15" "perl v5.8.0" "User Contributed Perl Documentation"
+.TH RSNAPSHOT-PROGRAM 1 "2004-01-18" "perl v5.8.0" "User Contributed Perl Documentation"
 .SH "NAME"
 rsnapshot \- remote filesystem snapshot utility
 .SH "SYNOPSIS"
@@ -272,6 +272,16 @@ Example:
 daily.0/ will be copied from hourly.5/, and weekly.0/ will be copied from daily.6/
 .Sp
 hourly.0/ will be rsynced directly from the filesystem.
+.RE
+.RE
+.RS 4
+.Sp
+\&\fBlink_dest           1\fR
+.Sp
+.RS 4
+If your version of rsync supports \-\-link\-dest (2.5.7 or newer), enable this to
+let rsync handle some things that \s-1GNU\s0 cp or the built-in subroutines would
+otherwise do. You should enable this if possible.
 .RE
 .RE
 .RS 4

@@ -3,9 +3,17 @@ rsnapshot changelog
 http://www.rsnapshot.org/
 ------------------------------------------------------------------------------
 
-VERSION 1.0.10
+VERSION 1.0.10 (Jan ? ??:?? 2004)
 ------------------------------------------------------------------------------
-
+- Added link_dest option, to use the --link-dest flag with rsync
+- Now checking the return values from rsync
+- Added additional calls to syslog, to report rsync failures
+- Now checking the return value of scripts called from backup_script
+- Conditionalized the backup_interval() and rotate_interval() subroutines to
+  only delete the oldest interval if we're keeping more than one of that
+  interval
+- Reformatted source code so it doesn't wrap (at 126 columns, or 1024x768)
+- Added search for GNU cp to ./configure script
 
 VERSION 1.0.9 (Jan 6 19:17 2004)
 ------------------------------------------------------------------------------

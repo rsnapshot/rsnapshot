@@ -229,7 +229,9 @@ if ($cmd eq 'configtest')	{
 #########################
 
 if ( -f "$config_file" )	{
-	open(CONFIG, $config_file) or bail("Could not open config file \"$config_file\"\nAre you sure you have permission?");
+	open(CONFIG, $config_file)
+		or bail("Could not open config file \"$config_file\"\nAre you sure you have permission?");
+	
 	while (my $line = <CONFIG>)	{
 		chomp($line);
 		
@@ -338,7 +340,7 @@ if ( -f "$config_file" )	{
 			
 			if (!defined($value2))		{ bail("\"$value\" number can not be blank"); }
 			if ($value2 !~ m/^\d+$/)	{ bail("\"$value2\" is not an integer"); }
-			if (0 == $value2)			{ bail("\"$value\" can not be 0"); }
+			if ($value2 <= 0)			{ bail("\"$value\" must be at least 1 or higher"); }
 			
 			my %hash;
 			$hash{'interval'}	= $value;
@@ -355,10 +357,12 @@ if ( -f "$config_file" )	{
 			my $opt_str		= $value3;	# option string from this backup point
 			my $opts_ref	= undef;	# array_ref to hold parsed opts
 			
-			if ( !defined($config_vars{'snapshot_root'}) )	{	bail("snapshot_root needs to be defined before backup points"); }
+			if ( !defined($config_vars{'snapshot_root'}) )	{
+				bail("snapshot_root needs to be defined before backup points");
+			}
 			
 			# make sure we have a local path for the destination
-			# (we do NOT want a local path)
+			# (we do NOT want an absolute path)
 			if ( is_valid_local_abs_path($dest) )	{
 				bail("Backup destination $dest must be a local path");
 			}
@@ -442,7 +446,9 @@ if ( -f "$config_file" )	{
 			my $dest		= $value2;	# dest directory
 			my %hash;
 			
-			if ( !defined($config_vars{'snapshot_root'}) )	{ bail("snapshot_root needs to be defined before backup points"); }
+			if ( !defined($config_vars{'snapshot_root'}) )	{
+				bail("snapshot_root needs to be defined before backup points");
+			}
 			
 			# make sure the script is a full path
 			if (1 == is_valid_local_abs_path($dest))	{
@@ -663,13 +669,13 @@ if (defined($config_vars{'lockfile'}))	{
 
 # CREATE SNAPSHOT_ROOT IF IT DOESN'T EXIST, WITH THE FILE PERMISSIONS 0700
 if ( ! -d "$config_vars{'snapshot_root'}" )	{
-	if ($verbose > 2)	{ print "mkdir -m 0700 -p $config_vars{'snapshot_root'}\n"; }
+	if ($verbose > 2)	{ print "mkdir -m 0700 -p $config_vars{'snapshot_root'}/\n"; }
 	if (0 == $test)	{
 		eval	{
-			mkpath( "$config_vars{'snapshot_root'}", 0, 0700 );
+			mkpath( "$config_vars{'snapshot_root'}/", 0, 0700 );
 		};
 		if ($@)	{
-			bail("Unable to create $config_vars{'snapshot_root'},\nPlease make sure you have the right permissions.");
+			bail("Unable to create $config_vars{'snapshot_root'}/,\nPlease make sure you have the right permissions.");
 		}
 	}
 }
@@ -702,7 +708,7 @@ exit(0);
 # runs when rsnapshot is called with no arguments
 sub show_usage	{
 	print "rsnapshot $VERSION\n";
-	print "Usage: rsnapshot [-vtxqVD] [-c /alt/config/file] <interval>|configtest|help|version\n";
+	print "Usage: rsnapshot [-vtxqVD] [-c cfgfile] <interval>|configtest|help|version\n";
 	print "Type \"rsnapshot help\" or \"man rsnapshot\" for more information.\n";
 }
 
@@ -1073,7 +1079,7 @@ sub backup_interval	{
 	# ROTATE DIRECTORIES
 	#
 	# remove oldest directory
-	if ( -d "$config_vars{'snapshot_root'}/$interval.$interval_max" )	{
+	if ( (-d "$config_vars{'snapshot_root'}/$interval.$interval_max") && ($interval_max > 0) )	{
 		if ($verbose > 2)	{ print "rm -rf $config_vars{'snapshot_root'}/$interval.$interval_max/\n"; }
 		if (0 == $test)	{
 			my $result = rmtree( "$config_vars{'snapshot_root'}/$interval.$interval_max/", 0, 0 );
@@ -1084,22 +1090,32 @@ sub backup_interval	{
 	}
 	
 	# rotate the middle ones
-	for (my $i=($interval_max-1); $i>0; $i--)	{
-		if ( -d "$config_vars{'snapshot_root'}/$interval.$i" )	{
-			if ($verbose > 2)	{
-				print "mv $config_vars{'snapshot_root'}/$interval.$i/ $config_vars{'snapshot_root'}/$interval." . ($i+1) . "/\n";
-			}
-			if (0 == $test)	{
-				my $result = rename( "$config_vars{'snapshot_root'}/$interval.$i/", ("$config_vars{'snapshot_root'}/$interval." . ($i+1) . '/') );
-				if (0 == $result)	{
-					bail("Error! rename(\"$config_vars{'snapshot_root'}/$interval.$i/\", \"" . ("$config_vars{'snapshot_root'}/$interval." . ($i+1) . '/') . "\")");
+	if ($interval_max > 0)	{
+		for (my $i=($interval_max-1); $i>0; $i--)	{
+			if ( -d "$config_vars{'snapshot_root'}/$interval.$i" )	{
+				if ($verbose > 2)	{
+					print "mv ";
+					print	"$config_vars{'snapshot_root'}/$interval.$i/ ";
+					print	"$config_vars{'snapshot_root'}/$interval." . ($i+1) . "/\n";
+				}
+				if (0 == $test)	{
+					my $result = rename(
+									"$config_vars{'snapshot_root'}/$interval.$i/",
+									("$config_vars{'snapshot_root'}/$interval." . ($i+1) . '/')
+					);
+					if (0 == $result)	{
+						my $errstr = '';
+						$errstr .= "Error! rename(\"$config_vars{'snapshot_root'}/$interval.$i/\", \"";
+						$errstr .= "$config_vars{'snapshot_root'}/$interval." . ($i+1) . '/' . "\")";
+						bail($errstr);
+					}
 				}
 			}
 		}
 	}
 	
 	# .0 and .1 require more attention:
-	if ( -d "$config_vars{'snapshot_root'}/$interval.0" )	{
+	if ( (-d "$config_vars{'snapshot_root'}/$interval.0") && ($interval_max > 0) )	{
 		my $result;
 		
 		# if we're using rsync --link-dest, we need to mv .0 to .1 now
@@ -1110,9 +1126,15 @@ sub backup_interval	{
 			}
 			# move .0 to .1
 			if (0 == $test)	{
-				my $result = rename( "$config_vars{'snapshot_root'}/$interval.0/", "$config_vars{'snapshot_root'}/$interval.1/" );
+				my $result = rename(
+								"$config_vars{'snapshot_root'}/$interval.0/",
+								"$config_vars{'snapshot_root'}/$interval.1/"
+				);
 				if (0 == $result)	{
-					bail("Error! rename(\"$config_vars{'snapshot_root'}/$interval.0/\", \"$config_vars{'snapshot_root'}/$interval.1/\")");
+					my $errstr = '';
+					$errstr .= "Error! rename(\"$config_vars{'snapshot_root'}/$interval.0/\", ";
+					$errstr .= "\"$config_vars{'snapshot_root'}/$interval.1/\")";
+					bail($errstr);
 				}
 			}
 		# otherwise, we hard link (except for directories, symlinks, and special files) .0 over to .1
@@ -1120,16 +1142,24 @@ sub backup_interval	{
 			# decide which verbose message to show, if at all
 			if ($verbose > 2)	{
 				if (1 == $have_gnu_cp)	{
-					print "$config_vars{'cmd_cp'} -al $config_vars{'snapshot_root'}/$interval.0/ $config_vars{'snapshot_root'}/$interval.1/\n";
+					print "$config_vars{'cmd_cp'} -al $config_vars{'snapshot_root'}/$interval.0/ ";
+					print "$config_vars{'snapshot_root'}/$interval.1/\n";
 				} else	{
-					print "native_cp_al(\"$config_vars{'snapshot_root'}/$interval.0/\", \"$config_vars{'snapshot_root'}/$interval.1/\")\n";
+					print "native_cp_al(\"$config_vars{'snapshot_root'}/$interval.0/\", ";
+					print "\"$config_vars{'snapshot_root'}/$interval.1/\")\n";
 				}
 			}
 			# call generic cp_al() subroutine
 			if (0 == $test)	{
-				$result = cp_al( "$config_vars{'snapshot_root'}/$interval.0/", "$config_vars{'snapshot_root'}/$interval.1/" );
+				$result = cp_al(
+							"$config_vars{'snapshot_root'}/$interval.0/",
+							"$config_vars{'snapshot_root'}/$interval.1/"
+				);
 				if (! $result)	{
-					bail("Error! cp_al(\"$config_vars{'snapshot_root'}/$interval.0/\", \"$config_vars{'snapshot_root'}/$interval.1/\")");
+					my $errstr = '';
+					$errstr .= "Error! cp_al(\"$config_vars{'snapshot_root'}/$interval.0/\", ";
+					$errstr .= "\"$config_vars{'snapshot_root'}/$interval.1/\")";
+					bail($errstr);
 				}
 			}
 		}
@@ -1161,7 +1191,7 @@ sub backup_interval	{
 		pop(@dirs);
 		
 		# don't mkdir for dest unless we have to
-		my $destpath = "$config_vars{'snapshot_root'}/$interval.0/" . join('/', @dirs);
+		my $destpath = "$config_vars{'snapshot_root'}/$interval.0/" . join('/', @dirs) . '/';
 		if ( ! -e "$destpath" )	{
 			if ($verbose > 2)	{ print "mkdir -m 0755 -p $destpath\n"; }
 			if (0 == $test)	{
@@ -1247,16 +1277,17 @@ sub backup_interval	{
 					$src, "$config_vars{'snapshot_root'}/$interval.0/$$sp_ref{'dest'}"
 			);
 			
-			# RUN THE RSYNC COMMAND FOR THIS BACKUP POINT
-			# BASED ON THE @cmd_stack VARS
+			# RUN THE RSYNC COMMAND FOR THIS BACKUP POINT BASED ON THE @cmd_stack VARS
 			if ($verbose > 2)	{ print join(' ', @cmd_stack, "\n"); }
 			if (0 == $test)	{
 				$result = system(@cmd_stack);
 				if ($result != 0)	{
 					if (1 == $link_dest)	{
+						print STDERR "Error! rsync returned $result. Does this version of rsync support --link-dest?\n";
 						log_err("Error! rsync returned $result. Does this version of rsync support --link-dest?");
 					} else	{
-						log_err("Error! rsync returned $result.");
+						print STDERR "Error! rsync returned $result\n";
+						log_err("Error! rsync returned $result");
 					}
 				}
 			}
@@ -1303,9 +1334,16 @@ sub backup_interval	{
 			# the assumption here is that the backup script is written in such a way
 			# that it creates files in it's current working directory.
 			#
+			# the backup script should return 0 on success, anything else is
+			# considered a failure.
+			#
 			if ($verbose > 2)	{ print "$$sp_ref{'script'}\n"; }
 			if (0 == $test)	{
-				system( $$sp_ref{'script'} );
+				$result = system( $$sp_ref{'script'} );
+				if ($result != 0)	{
+					print STDERR "Error! backup_script $$sp_ref{'script'} returedn $result\n";
+					log_err("Error! backup_script $$sp_ref{'script'} returedn $result");
+				}
 			}
 			
 			# change back to the previous directory
@@ -1320,7 +1358,9 @@ sub backup_interval	{
 			# rsync sees that the timestamps are different, and insists
 			# on changing things even if the files are bit for bit identical on content.
 			#
-			if ($verbose > 2)	{ print "sync_if_different(\"$tmpdir\", \"$config_vars{'snapshot_root'}/$interval.0/$$sp_ref{'dest'}\")\n"; }
+			if ($verbose > 2)	{
+				print "sync_if_different(\"$tmpdir\", \"$config_vars{'snapshot_root'}/$interval.0/$$sp_ref{'dest'}\")\n";
+			}
 			if (0 == $test)	{
 				$result = sync_if_different("$tmpdir", "$config_vars{'snapshot_root'}/$interval.0/$$sp_ref{'dest'}");
 				if (!defined($result))	{
@@ -1387,11 +1427,20 @@ sub rotate_interval	{
 	# rotate the middle ones
 	for (my $i=($interval_max-1); $i>=0; $i--)	{
 		if ( -d "$config_vars{'snapshot_root'}/$interval.$i" )	{
-			if ($verbose > 2)	{ print "mv $config_vars{'snapshot_root'}/$interval.$i/ $config_vars{'snapshot_root'}/$interval." . ($i+1) . "/\n"; }
+			if ($verbose > 2)	{
+				print "mv $config_vars{'snapshot_root'}/$interval.$i/ ";
+				print	"$config_vars{'snapshot_root'}/$interval." . ($i+1) . "/\n";
+			}
 			if (0 == $test)	{
-				my $result = rename( "$config_vars{'snapshot_root'}/$interval.$i/", ("$config_vars{'snapshot_root'}/$interval." . ($i+1) . '/') );
+				my $result = rename(
+								"$config_vars{'snapshot_root'}/$interval.$i/",
+								("$config_vars{'snapshot_root'}/$interval." . ($i+1) . '/')
+				);
 				if (0 == $result)	{
-					bail("error during rename(\"$config_vars{'snapshot_root'}/$interval.$i/)\", \"" . ("$config_vars{'snapshot_root'}/$interval." . ($i+1) . '/') . "\");");
+					my $errstr = '';
+					$errstr .= "Error! rename(\"$config_vars{'snapshot_root'}/$interval.$i/)\", \"";
+					$errstr .= "$config_vars{'snapshot_root'}/$interval." . ($i+1) . '/' . "\");";
+					bail($errstr);
 				}
 			}
 		}
@@ -1408,6 +1457,8 @@ sub rotate_interval	{
 		# if we're using rsync --link-dest, we need to mv .0 to .1 now
 		# then we'll use rsync with --link-dest
 		if (0)	{
+			
+			
 		# otherwise, we hard link (except for directories, symlinks, and special files) .0 over to .1
 		# using GNU cp (or equivalent)
 		} else	{
@@ -1423,9 +1474,15 @@ sub rotate_interval	{
 			}
 			# call generic cp_al() subroutine
 			if (0 == $test)	{
-				$result = cp_al( "$config_vars{'snapshot_root'}/$prev_interval.$prev_interval_max/", "$config_vars{'snapshot_root'}/$interval.0/" );
+				$result = cp_al(
+							"$config_vars{'snapshot_root'}/$prev_interval.$prev_interval_max/",
+							"$config_vars{'snapshot_root'}/$interval.0/"
+				);
 				if (! $result)	{
-					bail("Error! cp_al(\"$config_vars{'snapshot_root'}/$prev_interval.$prev_interval_max/\", \"$config_vars{'snapshot_root'}/$interval.0/\")");
+					my $errstr = '';
+					$errstr .= "Error! cp_al(\"$config_vars{'snapshot_root'}/$prev_interval.$prev_interval_max/\", ";
+					$errstr .= \"$config_vars{'snapshot_root'}/$interval.0/\")";
+					bail($errstr);
 				}
 			}
 		}
@@ -2053,7 +2110,7 @@ rsnapshot - remote filesystem snapshot utility
 
 =head1 SYNOPSIS
 
-B<rsnapshot> [B<-vtxqVD>] [B<-c> /alt/config/file] [command]
+B<rsnapshot> [B<-vtxqVD>] [B<-c> cfgfile] [command]
 
 =head1 DESCRIPTION
 
@@ -2200,6 +2257,16 @@ hourly.0/ will be rsynced directly from the filesystem.
 
 =back
 
+B<link_dest           1>
+
+=over 4
+
+If your version of rsync supports --link-dest (2.5.7 or newer), enable this to
+let rsync handle some things that GNU cp or the built-in subroutines would
+otherwise do. You should enable this if possible.
+
+=back
+
 B<verbose             2>
 
 =over 4
@@ -2218,8 +2285,6 @@ are 1 through 5. The default is 2.
 5        Debug            All kinds of information
 
 =back
-
-
 
 B<rsync_short_args    -a>
 

@@ -4,8 +4,8 @@
  #
  # See the README file or the man page for more details.
  #
--#cmd_cp		/bin/cp
-+cmd_cp		/bin/cp
+-#@CMD_CP@
++@CMD_CP@
  
  # rsync must be enabled for anything to work.
  @CMD_RSYNC@
