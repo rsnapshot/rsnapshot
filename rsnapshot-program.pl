@@ -233,7 +233,7 @@ create_snapshot_root();
 # actually run the backup job
 if (0 == $interval_num)	{
 	# if this is the most frequent interval, actually do the backups here
-	backup_interval($cmd);
+	backup_lowest_interval($cmd);
 	
 } else	{
 	# this is not the most frequent unit, just rotate
@@ -2026,11 +2026,11 @@ sub remove_trailing_slash	{
 # and rsync data over to .0
 #
 # does not return a value, it bails instantly if there's a problem
-sub backup_interval	{
+sub backup_lowest_interval	{
 	my $interval = shift(@_);
 	
 	# this should never happen
-	if (!defined($interval))	{ bail('backup_interval() expects an argument'); }
+	if (!defined($interval))	{ bail('backup_lowest_interval() expects an argument'); }
 	
 	# set up default args for rsync and ssh
 	my $default_rsync_short_args	= $global_default_rsync_short_args;
@@ -2230,7 +2230,7 @@ sub backup_interval	{
 				
 			# this should have already been validated once, but better safe than sorry
 			} else	{
-				bail("Could not understand source \"$src\" in backup_interval()");
+				bail("Could not understand source \"$src\" in backup_lowest_interval()");
 			}
 			
 			# if we're using --link-dest, we'll need to specify .1 as the link-dest directory
@@ -2485,7 +2485,7 @@ sub backup_interval	{
 			
 		# this should never happen
 		} else	{
-			bail("Either src or script must be defined in backup_interval()");
+			bail("Either src or script must be defined in backup_lowest_interval()");
 		}
 	}
 	
