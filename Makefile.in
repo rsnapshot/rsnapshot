@@ -374,14 +374,13 @@ rpm: tar
 	/usr/bin/rpmbuild -bb ${RPM_BASE_DIR}/SPECS/rsnapshot.spec
 	/bin/cp ${RPM_BASE_DIR}/RPMS/noarch/rsnapshot-$(VERSION)-1.noarch.rpm .
 
-tar:
+tar: man
 	/bin/rm -f rsnapshot-$(VERSION).tar.gz
 
 	@# core files
 	/bin/mkdir rsnapshot-$(VERSION)
 	/bin/cp rsnapshot-preamble.pl rsnapshot-program.pl rsnapshot.conf.default.in \
 		AUTHORS COPYING INSTALL README TODO NEWS ChangeLog rsnapshot-$(VERSION)/
-	pod2man rsnapshot > rsnapshot-$(VERSION)/rsnapshot.1
 
 	@# autoconf files
 	/bin/cp Makefile.am Makefile.in aclocal.m4 configure configure.ac install-sh \

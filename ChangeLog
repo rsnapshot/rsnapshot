@@ -33,6 +33,7 @@ VERSION 1.1.6 (??? ?? ??:?? 2004)
 - Removed trailing slashes on calls to mkpath() to fix bug with NetBSD
 - Removed trailing slashes on calls to rename() to fix bug with NetBSD
 - Removed trailing slashes on calls to rmtree() just in case
+- Fixed man page generation in "make tar" target
 
 VERSION 1.1.5 (Jun 20 20:56 2004)
 ------------------------------------------------------------------------------
