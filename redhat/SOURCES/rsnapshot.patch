@@ -1,5 +1,5 @@
---- rsnapshot.conf	Fri Oct 24 23:09:36 2003
-+++ rsnapshot.conf-redhat	Wed Oct 29 22:42:58 2003
+--- rsnapshot.conf	2003-11-08 17:29:17.000000000 -0800
++++ rsnapshot.conf.redhat	2003-11-08 18:08:33.000000000 -0800
 @@ -21,7 +21,7 @@
  # see the man page for more details.
  cmd_rsync	/usr/bin/rsync
@@ -9,3 +9,12 @@
  
  # BACKUP INTERVALS
  # (must be unique and in ascending order, i.e. hourly, daily, weekly, etc.)
+@@ -33,7 +33,7 @@
+ # GLOBAL OPTIONS
+ #
+ # make sure the lockfile directory is not world writable!
+-#lockfile	/var/lock/subsys/rsnapshot
++lockfile	/var/lock/subsys/rsnapshot
+ 
+ # don't span filesystems within a backup point
+ #one_fs		0
