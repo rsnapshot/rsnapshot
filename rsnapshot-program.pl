@@ -26,6 +26,7 @@
 
 require 5.004;
 use strict;
+use Cwd;
 use DirHandle;
 use Getopt::Std;
 use File::Path;
@@ -43,7 +44,8 @@ my $config_file	= '/etc/rsnapshot.conf';
 # hash to hold variables from the configuration file
 my %config_vars;
 
-# array of hash_refs containing the source -> destination backup points
+# array of hash_refs containing the destination backup point
+# and either a source dir or a script to run
 my @snapshot_points;
 
 # "intervals" are user defined time periods (i.e. hourly, daily)
@@ -96,6 +98,9 @@ my $quiet			= 0; # don't display warnings about FIFOs and special files if enabl
 my $verbose			= 0; # show the shell commands being executed
 my $extra_verbose	= 0; # show extra verbose messages
 my $debug			= 0; # super verbose debugging messages
+
+# remember what directory we started in
+my $cwd = cwd();
 
 ######################
 ### AUTOCONF STUFF ###
@@ -380,6 +385,39 @@ if ( -f "$config_file" )	{
 			}
 		}
 		
+		# BACKUP SCRIPTS
+		if ($var eq 'backup_script')	{
+			my $script		= $value;	# backup script to run
+			my $dest		= $value2;	# dest directory
+			my %hash;
+			
+			if ( !defined($config_vars{'snapshot_root'}) )	{	bail("snapshot_root needs to be defined before backup points"); }
+			
+			# make sure we have a local path for the destination
+			# (we do NOT want a local path)
+			if (1 == is_valid_local_abs_path($dest))	{
+				bail("Backup destination $dest must be a local path");
+			}
+			
+			# make sure we aren't traversing directories (exactly 2 dots can't be next to each other)
+			if (1 == is_directory_traversal($dest))	{ bail("Directory traversal attempted in $dest"); }
+			
+			# validate destination path
+			if ( is_valid_local_abs_path($dest) )	{ bail("Full paths not allowed for backup destinations"); }
+			
+			# make sure script exists and is executable
+			if ( ! -x "$script" )	{
+				bail("Backup script \"$script\" is not executable or does not exist");
+			}
+			
+			$hash{'script'}	= $script;
+			$hash{'dest'}	= $dest;
+			
+			$line_syntax_ok = 1;
+			
+			push(@snapshot_points, \%hash);
+		}
+		
 		# GLOBAL OPTIONS from the config file
 		# ALL ARE OPTIONAL
 		#
@@ -618,14 +656,19 @@ sub backup_interval	{
 	foreach my $sp_ref (@snapshot_points)	{
 		my @cmd_stack				= undef;
 		my $src						= undef;
+		my $script					= undef;
+		my $tmpdir					= undef;
+		my $result					= undef;
 		my $rsync_short_args		= $default_rsync_short_args;
 		my @rsync_long_args_stack	= ( split(/\s/, $default_rsync_long_args) );
 		
-		# append a trailing slash if it's a directory
-		if ((-d "$$sp_ref{'src'}") && ($$sp_ref{'src'} !~ /\/$/))	{
-			$src = $$sp_ref{'src'} . '/';
-		} else	{
-			$src = $$sp_ref{'src'};
+		# append a trailing slash if src is a directory
+		if (defined($$sp_ref{'src'}))	{
+			if ((-d "$$sp_ref{'src'}") && ($$sp_ref{'src'} !~ /\/$/))	{
+				$src = $$sp_ref{'src'} . '/';
+			} else	{
+				$src = $$sp_ref{'src'};
+			}
 		}
 		
 		# create missing parent directories inside the $interval.x directory
@@ -646,66 +689,137 @@ sub backup_interval	{
 			}
 		}
 		
-		# check opts, first unique to this backup point, and then global
-		#
-		# with all these checks, we try the local option first, and if
-		# that isn't specified, we attempt to use the global setting as
-		# a fallback plan
-		#
-		# we do the rsync args first since they overwrite the rsync_* variables,
-		# whereas the subsequent options append to them
-		#
-		# RSYNC SHORT ARGS
-		if ( defined($$sp_ref{'opts'}) && defined($$sp_ref{'opts'}->{'rsync_short_args'}) )	{
-			$rsync_short_args = $$sp_ref{'opts'}->{'rsync_short_args'};
-		}
-		# RSYNC LONG ARGS
-		if ( defined($$sp_ref{'opts'}) && defined($$sp_ref{'opts'}->{'rsync_long_args'}) )	{
-			@rsync_long_args_stack = split(/\s/, $$sp_ref{'opts'}->{'rsync_long_args'});
-		}
-		# ONE_FS
-		if ( defined($$sp_ref{'opts'}) && defined($$sp_ref{'opts'}->{'one_fs'}) )	{
-			if (1 == $$sp_ref{'opts'}->{'one_fs'})	{
+		# if we have a source directory, figure it out
+		if (defined($$sp_ref{'src'}))	{
+			# check opts, first unique to this backup point, and then global
+			#
+			# with all these checks, we try the local option first, and if
+			# that isn't specified, we attempt to use the global setting as
+			# a fallback plan
+			#
+			# we do the rsync args first since they overwrite the rsync_* variables,
+			# whereas the subsequent options append to them
+			#
+			# RSYNC SHORT ARGS
+			if ( defined($$sp_ref{'opts'}) && defined($$sp_ref{'opts'}->{'rsync_short_args'}) )	{
+				$rsync_short_args = $$sp_ref{'opts'}->{'rsync_short_args'};
+			}
+			# RSYNC LONG ARGS
+			if ( defined($$sp_ref{'opts'}) && defined($$sp_ref{'opts'}->{'rsync_long_args'}) )	{
+				@rsync_long_args_stack = split(/\s/, $$sp_ref{'opts'}->{'rsync_long_args'});
+			}
+			# ONE_FS
+			if ( defined($$sp_ref{'opts'}) && defined($$sp_ref{'opts'}->{'one_fs'}) )	{
+				if (1 == $$sp_ref{'opts'}->{'one_fs'})	{
+					$rsync_short_args .= 'x';
+				}
+			} elsif ($one_fs)	{
 				$rsync_short_args .= 'x';
 			}
-		} elsif ($one_fs)	{
-			$rsync_short_args .= 'x';
-		}
-		
-		# if this is a user@host:/path, use ssh
-		if ( is_ssh_path($src) )	{
 			
-			# if we have custom args to SSH, add them
-			if ( defined($config_vars{'ssh_args'}) && $config_vars{'ssh_args'} )	{
-				push( @rsync_long_args_stack, "--rsh=$config_vars{'cmd_ssh'} $config_vars{'ssh_args'}" );
+			# if this is a user@host:/path, use ssh
+			if ( is_ssh_path($src) )	{
 				
-			# no arguments is the default
+				# if we have custom args to SSH, add them
+				if ( defined($config_vars{'ssh_args'}) && $config_vars{'ssh_args'} )	{
+					push( @rsync_long_args_stack, "--rsh=$config_vars{'cmd_ssh'} $config_vars{'ssh_args'}" );
+					
+				# no arguments is the default
+				} else	{
+					push( @rsync_long_args_stack, "--rsh=$config_vars{'cmd_ssh'}" );
+				}
+				
+			# anonymous rsync
+			} elsif ( is_anon_rsync_path($src) )	{
+				if (0 == $extra_verbose)	{ $rsync_short_args .= 'q'; }
+				
+			# local filesystem
+			} elsif ( is_real_local_abs_path($src) )	{
+				# no change
+				
+			# this should have already been validated once, but better safe than sorry
 			} else	{
-				push( @rsync_long_args_stack, "--rsh=$config_vars{'cmd_ssh'}" );
+				bail("Could not understand source \"$src\" in backup_interval()");
 			}
 			
-		# anonymous rsync
-		} elsif ( is_anon_rsync_path($src) )	{
-			if (0 == $extra_verbose)	{ $rsync_short_args .= 'q'; }
+		# if we have a backup script, run it
+		} elsif (defined($$sp_ref{'script'}))	{
+			# work in a temp dir, and make this the source for the rsync operation later
+			$tmpdir = "$config_vars{'snapshot_root'}/tmp/";
+			$src = $tmpdir;
 			
-		# local filesystem
-		} elsif ( is_real_local_abs_path($src) )	{
-			# no change
+			# remove the tmp directory if it's still there
+			if ( -e "$tmpdir" )	{
+				if (1 == $verbose)	{ print "rm -rf $tmpdir\n"; }
+				if (0 == $test)	{
+					$result = rmtree("$tmpdir", 0, 0);
+					if (0 == $result)	{
+						bail("Could not rmtree(\"$tmpdir\",0,0);");
+					}
+				}
+			}
 			
-		# this should have already been validated once, but better safe than sorry
+			# create the tmp directory
+			if (1 == $verbose)	{ print "mkdir -m 0755 -p $tmpdir\n"; }
+			if (0 == $test)	{
+				eval	{
+					mkpath( "$tmpdir", 0, 0755 );
+				};
+				if ($@)	{
+					bail("Unable to create \"$tmpdir\",\nPlease make sure you have the right permissions.");
+				}
+			}
+			
+			# change to the tmp directory
+			if (1 == $verbose)	{ print "cd $tmpdir\n"; }
+			if (0 == $test)	{
+				$result = chdir("$tmpdir");
+				if (0 == $result)	{
+					bail("Could not change directory to \"$tmpdir\"");
+				}
+			}
+			
+			# run backup script
+			if (1 == $verbose)	{ print "$$sp_ref{'script'}\n"; }
+			if (0 == $test)	{
+				system($$sp_ref{'script'});
+			}
+			
+			# change back to previous directory
+			if (1 == $verbose)	{ print "cd $cwd\n"; }
+			if (0 == $test)	{
+				chdir($cwd);
+			}
+			
+		# this should never happen
 		} else	{
-			bail("Could not understand source \"$src\" in backup_interval()");
+			bail("Either src or script must be defined in backup_interval()");
 		}
 		
 		# assemble the final command
 		@cmd_stack = (
-			$config_vars{'cmd_rsync'}, $rsync_short_args, @rsync_long_args_stack, $src, "$config_vars{'snapshot_root'}/$interval.0/$$sp_ref{'dest'}"
+			$config_vars{'cmd_rsync'}, $rsync_short_args, @rsync_long_args_stack,
+				$src, "$config_vars{'snapshot_root'}/$interval.0/$$sp_ref{'dest'}"
 		);
 		
 		# RUN THE RSYNC COMMAND FOR THIS BACKUP POINT
 		# BASED ON THE @cmd_stack VARS
 		if (1 == $verbose)	{ print join(' ', @cmd_stack, "\n"); }
 		if (0 == $test)		{ system(@cmd_stack); }
+		
+		
+		# remove the tmp directory if we created one
+		if (defined($tmpdir))	{
+			if ( -e "$tmpdir" )	{
+				if (1 == $verbose)	{ print "rm -rf $tmpdir\n"; }
+				if (0 == $test)	{
+					$result = rmtree("$tmpdir", 0, 0);
+					if (0 == $result)	{
+						bail("Could not rmtree(\"$tmpdir\",0,0);");
+					}
+				}
+			}
+		}
 	}
 	
 	# update mtime of $interval.0 to reflect snapshot time
