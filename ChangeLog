@@ -3,7 +3,7 @@ rsnapshot changelog
 http://www.rsnapshot.org/
 ------------------------------------------------------------------------------
 
-VERSION 1.2.0 (Jan ?? ??:?? 2005)
+VERSION 1.2.0 (Jan 31 21:43 2005)
 ------------------------------------------------------------------------------
 - Turned off buffering ($|=1)
 - Changed default lockfile to /var/run/rsnapshot.pid, for FHS compliance
