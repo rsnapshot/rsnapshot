@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/perl -w
 
 ########################################################################
 #                                                                      #
@@ -17,13 +17,29 @@
 
 # attention vi users: set ts=4 sw=4
 
+# a note about cruft:
+# this program is currently in transition.
+# the old way was to use external system commands for everything (cp, rm, etc).
+# this is being refactored, so the only external commands are rysnc and ssh.
+# any deprecated code will be marked with the following lines:
+
+# BEGIN CRUFT
+# (code goes here)
+# END CRUFT
+
+# when the time is right, these blocks will be removed, backward compatibility
+# with the deprecated config file vars will break, and the program will be
+# clean once again.
+
 ########################
 ### STANDARD MODULES ###
 ########################
 
+require 5;
 use strict;
-use warnings;
 use Getopt::Std;
+use File::Copy;
+use File::Path;
 
 #########################
 ### DECLARE VARIABLES ###
@@ -83,6 +99,11 @@ my $verbose = 0;
 
 # turn verbose on, but don't execute the commands
 my $test = 0;
+ 
+# BEGIN CRUFT #
+	# check for deprecated flags
+	my $cruft = 0;
+# END CRUFT #
  
 ##############################
 ### CORE PROGRAM STRUCTURE ###
@@ -175,26 +196,43 @@ if ( -f $config_file )	{
 			next;
 		}
 		
-		# REQUIRED EXTERNAL COMMANDS
-		foreach my $command (qw( rsync mkdir touch cp mv rm ))	{
-			if ($var eq "cmd_$command")	{
-				if ( -x $value )	{
-					$config_vars{"cmd_$command"} = $value;
+		# BEGIN CRUFT
+			# check for deprecated commands
+			foreach my $command (qw( mkdir touch mv rm ))	{
+				if ($var eq "cmd_$command")	{
+					$cruft = 1;
 					$line_syntax_ok = 1;
-				} else	{
-					bail("Could not find $value, please fix cmd_$command in $config_file");
+					last;
 				}
 			}
-		}
-		# OPTIONAL EXTERNAL COMMANDS
-		foreach my $command (qw( ssh ))	{
-			if ($var eq "cmd_$command")	{
+			
+			if ($var eq 'cmd_cp')	{
 				if ( -x $value )	{
-					$config_vars{"cmd_$command"} = $value;
+					$config_vars{'cmd_cp'} = $value;
 					$line_syntax_ok = 1;
 				} else	{
-					bail("Could not find $value, please fix cmd_$command in $config_file");
+					bail("Could not find $value, please fix cmd_cp in $config_file");
 				}
+			}
+		# END CRUFT
+		
+		# CHECK FOR RSYNC (required)
+		if ($var eq 'cmd_rsync')	{
+			if ( -x $value )	{
+				$config_vars{'cmd_rsync'} = $value;
+				$line_syntax_ok = 1;
+			} else	{
+				bail("Could not find $value, please fix cmd_rsync in $config_file");
+			}
+		}
+		
+		# CHECK FOR SSH (optional)
+		if ($var eq 'cmd_ssh')	{
+			if ( -x $value )	{
+				$config_vars{'cmd_ssh'} = $value;
+				$line_syntax_ok = 1;
+			} else	{
+				bail("Could not find $value, please fix cmd_ssh in $config_file");
 			}
 		}
 		
@@ -222,7 +260,7 @@ if ( -f $config_file )	{
 			if ( !defined($config_vars{'snapshot_root'}) )	{	bail("snapshot_root needs to be defined before backup points"); }
 			
 			# we have a valid file path
-			if ( -d "$src" )	{
+			if ( -e "$src" )	{
 				$line_syntax_ok = 1;
 				
 			# this wasn't on the filesystem
@@ -290,6 +328,30 @@ if ( -f $config_file )	{
 	exit(-1);
 }
 
+# BEGIN CRUFT
+	if ($cruft == 1)	{
+		print STDERR "\n";
+		print STDERR "----------------------------------------------------\n";
+		print STDERR "WARNING! The following commands have been deprecated\n";
+		print STDERR "and will be removed in a future release:\n";
+		print STDERR "----------------------------------------------------\n";
+		print STDERR "cmd_mkdir\n";
+		print STDERR "cmd_touch\n";
+		print STDERR "cmd_cp\n";
+		print STDERR "cmd_mv\n";
+		print STDERR "cmd_rm\n";
+		print STDERR "----------------------------------------------------\n";
+		print STDERR "Please remove these lines from $config_file\n";
+		print STDERR "----------------------------------------------------\n";
+		print STDERR "rsnapshot is now using the built-in Perl functions\n";
+		print STDERR "to accomplish the same tasks. This allows rsnapshot\n";
+		print STDERR "to be compatible with BSD, Solaris, etc., not just\n";
+		print STDERR "systems that use GNU cp\n";
+		print STDERR "----------------------------------------------------\n";
+		print STDERR "\n";
+	}
+# END CRUFT
+
 # BAIL OUT HERE IF THERE WERE ERRORS IN THE CONFIG FILE
 if ($file_syntax_ok == 0)	{
 	print STDERR "-----------------------------------\n";
@@ -299,20 +361,17 @@ if ($file_syntax_ok == 0)	{
 	exit(-1);
 }
  
-# CREATE THE SNAPSHOT ROOT IF IT DOESN'T EXIST, AND CHANGE THE FILE PERMISSIONS TO 0700
+# CREATE THE SNAPSHOT ROOT IF IT DOESN'T EXIST, WITH THE FILE PERMISSIONS 0700
 if ( ! -d "$config_vars{'snapshot_root'}" )	{
-	if ($verbose)	{ print "$config_vars{'cmd_mkdir'} -p $config_vars{'snapshot_root'}\n"; }
-	if ($test == 0)	{
-		system( $config_vars{'cmd_mkdir'}, '-p', "$config_vars{'snapshot_root'}" );
-	}
-	if ( ! -d "$config_vars{'snapshot_root'}" )	{
-		bail("Unable to create $config_vars{'snapshot_root'},\nPlease make sure you have the right permissions.");
-	}
 	
-	if ($verbose)	{ print "chmod 0700 $config_vars{'snapshot_root'}\n"; }
+	if ($verbose)	{ print "mkpath(\"$config_vars{'snapshot_root'}\", 0, 0700);\n"; }
 	if ($test == 0)	{
-		chmod( 0700, "$config_vars{'snapshot_root'}" )
-			or bail("Could not change permissions on $config_vars{'snapshot_root'}\nPlease make sure you have the right permissions.");
+		eval	{
+			mkpath( "$config_vars{'snapshot_root'}", 0, 0700 );
+		};
+		if ($@)	{
+			bail("Unable to create $config_vars{'snapshot_root'},\nPlease make sure you have the right permissions.");
+		}
 	}
 }
  
@@ -376,22 +435,23 @@ sub backup_interval	{
 	#
 	# remove oldest directory
 	if ( -d "$config_vars{'snapshot_root'}/$interval.$interval_max" )	{
-		
-		if ($verbose)	{ print "$config_vars{'cmd_rm'} -rf $config_vars{'snapshot_root'}/$interval.$interval_max/\n"; }
+		if ($verbose)	{ print "rmtree(\"$config_vars{'snapshot_root'}/$interval.$interval_max/\", 0, 1);\n"; }
 		if ($test == 0)	{
-			system( $config_vars{'cmd_rm'}, '-rf', "$config_vars{'snapshot_root'}/$interval.$interval_max/" );
+			my $result = rmtree( "$config_vars{'snapshot_root'}/$interval.$interval_max/", 0, 1 );
+			if ($result == 0)	{
+				bail("rmtree(\"$config_vars{'snapshot_root'}/$interval.$interval_max/\", 0, 1) failed\n");
+			}
 		}
 	}
 	
 	# rotate the middle ones
 	for (my $i=($interval_max-1); $i>0; $i--)	{
 		if ( -d "$config_vars{'snapshot_root'}/$interval.$i" )	{
-			
 			if ($verbose)	{
-				print "$config_vars{'cmd_mv'} $config_vars{'snapshot_root'}/$interval.$i/ $config_vars{'snapshot_root'}/$interval." . ($i+1) . "/\n";
+				print "move(\"$config_vars{'snapshot_root'}/$interval.$i/\", \"$config_vars{'snapshot_root'}/$interval." . ($i+1) . "/\");\n";
 			}
 			if ($test == 0)	{
-				system( $config_vars{'cmd_mv'}, "$config_vars{'snapshot_root'}/$interval.$i/", ("$config_vars{'snapshot_root'}/$interval." . ($i+1) . '/') );
+				move( "$config_vars{'snapshot_root'}/$interval.$i/", ("$config_vars{'snapshot_root'}/$interval." . ($i+1) . '/') );
 			}
 		}
 	}
@@ -399,10 +459,14 @@ sub backup_interval	{
 	# hard link (except for directories) .0 over to .1
 	if ( -d "$config_vars{'snapshot_root'}/$interval.0" )	{
 		
-		if ($verbose)	{ print "$config_vars{'cmd_cp'} -al $config_vars{'snapshot_root'}/$interval.0/ $config_vars{'snapshot_root'}/$interval.1/\n"; }
+		# BEGIN CRUFT
+		if ($verbose)	{ print "/bin/cp -al $config_vars{'snapshot_root'}/$interval.0/ $config_vars{'snapshot_root'}/$interval.1/\n"; }
 		if ($test == 0)	{
-			system( $config_vars{'cmd_cp'}, '-al', "$config_vars{'snapshot_root'}/$interval.0/", "$config_vars{'snapshot_root'}/$interval.1/" );
+			system( '/bin/cp', '-al', "$config_vars{'snapshot_root'}/$interval.0/", "$config_vars{'snapshot_root'}/$interval.1/" );
 		}
+		# END CRUFT
+		
+		# TODO: put recursive subroutine here
 		
 	}
 	
@@ -424,9 +488,17 @@ sub backup_interval	{
 		# don't mkdir unless we have to
 		my $destpath = "$config_vars{'snapshot_root'}/$interval.0/" . join('/', @dirs);
 		if ( ! -e "$destpath" )	{
-			if ($verbose)	{ print "$config_vars{'cmd_mkdir'} -p $destpath/\n"; }
+			
+			# TODO: get umask instead of 0755?
+			
+			if ($verbose)	{ print "mkpath(\"$destpath/\", 0, 0755);\n"; }
 			if ($test == 0)	{
-				system( $config_vars{'cmd_mkdir'}, '-p', "$destpath/" );
+				eval	{
+					mkpath( "$destpath/", 0, 0755 );
+				};
+				if ($@)	{
+					bail("Could not mkpath(\"$destpath/\", 0, 0755);");
+				}
 			}
 		}
 		
@@ -454,9 +526,15 @@ sub backup_interval	{
 	}
 	
 	# update mtime of $interval.0 to reflect snapshot time
-	if ($verbose)	{ print "$config_vars{'cmd_touch'} $config_vars{'snapshot_root'}/$interval.0/\n"; }
+	
+	# utime(time(), time(), 'foo');
+	
+	if ($verbose)	{ print "utime(time(), time(), \"$config_vars{'snapshot_root'}/$interval.0/\");\n"; }
 	if ($test == 0)	{
-		system( $config_vars{'cmd_touch'}, "$config_vars{'snapshot_root'}/$interval.0/" );
+		my $result = utime(time(), time(), "$config_vars{'snapshot_root'}/$interval.0/");
+		if ($result == 0)	{
+			bail("Could not utime(time(), time(), \"$config_vars{'snapshot_root'}/$interval.0/\");");
+		}
 	}
 }
 
@@ -473,28 +551,42 @@ sub rotate_interval	{
 	#
 	# delete the oldest one
 	if ( -d "$config_vars{'snapshot_root'}/$interval.$interval_max" )	{
-		if ($verbose)	{ print "$config_vars{'cmd_rm'} -rf $config_vars{'snapshot_root'}/$interval.$interval_max/\n"; }
+		
+		if ($verbose)	{ print "rmtree(\"$config_vars{'snapshot_root'}/$interval.$interval_max/\");\n"; }
 		if ($test == 0)	{
-			system( $config_vars{'cmd_rm'}, '-rf', "$config_vars{'snapshot_root'}/$interval.$interval_max/" );
+			my $result = rmtree( "$config_vars{'snapshot_root'}/$interval.$interval_max/" );
+			if ($result == 0)	{
+				bail("Could not rmtree(\"$config_vars{'snapshot_root'}/$interval.$interval_max/\");");
+			}
 		}
 	}
 	
 	# rotate the middle ones
 	for (my $i=($interval_max-1); $i>=0; $i--)	{
 		if ( -d "$config_vars{'snapshot_root'}/$interval.$i" )	{
-			if ($verbose)	{ print "$config_vars{'cmd_mv'} $config_vars{'snapshot_root'}/$interval.$i/ $config_vars{'snapshot_root'}/$interval." . ($i+1) . "/\n"; }
+			
+			if ($verbose)	{ print "move(\"$config_vars{'snapshot_root'}/$interval.$i/\", \"$config_vars{'snapshot_root'}/$interval." . ($i+1) . "/\");\n"; }
 			if ($test == 0)	{
-				system( $config_vars{'cmd_mv'}, "$config_vars{'snapshot_root'}/$interval.$i/", ("$config_vars{'snapshot_root'}/$interval." . ($i+1) . '/') );
+				my $result = 0;
+				
+				eval	{
+					$result = move( "$config_vars{'snapshot_root'}/$interval.$i/", ("$config_vars{'snapshot_root'}/$interval." . ($i+1) . '/') );
+				};
+				if ($result == 0)	{
+					bail("error during move(\"$config_vars{'snapshot_root'}/$interval.$i/)\", \"" . ("$config_vars{'snapshot_root'}/$interval." . ($i+1) . '/') . "\");");
+				}
 			}
 		}
 	}
 	
 	# hard link (except for directories) previous interval over to .0
 	if ( -d "$config_vars{'snapshot_root'}/$prev_interval.$prev_interval_max" )	{
+		# BEGIN CRUFT
 		if ($verbose)	{ print "$config_vars{'cmd_cp'} -al $config_vars{'snapshot_root'}/$prev_interval.$prev_interval_max/ $config_vars{'snapshot_root'}/$interval.0/\n"; }
 		if ($test == 0)	{
 			system( $config_vars{'cmd_cp'}, '-al', "$config_vars{'snapshot_root'}/$prev_interval.$prev_interval_max/", "$config_vars{'snapshot_root'}/$interval.0/" );
 		}
+		# END CRUFT
 	}
 }
 
