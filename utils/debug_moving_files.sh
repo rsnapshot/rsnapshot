@@ -7,7 +7,7 @@
 # http://www.rsnapshot.org/
 #
 # This is an abusive shell script designed to simulate users moving files
-# while a backup is occuring. Hopefully your users aren't this abusive.
+# while a backup is occuring. Hopefully your users aren't this evil.
 #
 # The general idea is that you create an "abuse" directory, include it in your
 # backup points, run this script in one terminal window and rsnapshot in the
