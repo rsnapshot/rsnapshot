@@ -623,6 +623,168 @@ sub show_usage	{
 	print "Type \"man rsnapshot\" for full details.\n";
 } 
  
+# this is a wrapper to call the GNU version of "cp" 
+# it might fail in mysterious ways if you have a different version of "cp"
+#
+sub gnu_cp_al	{
+	
+} 
+ 
+# this is the purpose built, native perl replacement for "cp -al".
+# it does not copy "special" files: block, char, fifo, or sockets
+# never the less, it does do regular files, directories, and symlinks
+# which should be enough for 95% of the normal cases.
+# if you absolutely have to have snapshots of FIFOs, etc, just
+# get GNU cp on your system, and specify it in the config file
+#
+# in the great perl tradition, this returns 1 on success, 0 on failure
+#
+sub native_cp_al	{
+	my $src    = shift(@_);
+	my $dest   = shift(@_);
+	my $dh     = undef;
+	my $result = 0;
+	
+	# make sure we were passed two arguments
+	if (!defined($src))  { return(0); }
+	if (!defined($dest)) { return(0); }
+	
+	# make sure we have a source directory
+	if ( ! -d "$src" )	{
+		print STDERR "native_cp_al() needs a valid directory as an argument\n";
+		return (0);
+	}
+	
+	# strip trailing slashes off the directories,
+	# since we'll add them back on later
+	$src  =~ s/\/$//;
+	$dest =~ s/\/$//;
+	
+	# LSTAT
+	my $st = lstat("$src");
+	if (!defined($st))	{
+		print STDERR "Could not lstat(\"$src\")\n";
+		return(0);
+	}
+	
+	# MKDIR
+	if ( ! -d "$dest" )	{
+		$result = mkdir("$dest");
+		if ( ! $result )	{
+			print STDERR "Warning! Could not mkdir(\"$dest\");\n";
+			return(0);
+		}
+	}
+	# CHOWN
+	$result = chown($st->uid, $st->gid, "$dest");
+	if (! $result)	{
+		print STDERR "Warning! Could not chown(" . $st->uid . ", " . $st->gid . ", \"$dest\");\n";
+		return(0);
+	}
+	# CHMOD
+	$result = chmod($st->mode, "$dest");
+	if (! $result)	{
+		print STDERR "Warning! Could not chmod(" . $st->mode . ", \"$dest\");\n";
+		return(0);
+	}
+	# UTIME
+	$result = utime($st->mtime, $st->mtime, "$dest");
+	if (! $result)	{
+		print STDERR "Warning! Could not utime(" . $st->mtime . ", " . $st->mtime . ", \"$dest\");\n";
+		return(0);
+	}
+	
+	# read dir contents
+	$dh = new DirHandle( "$src" );
+	
+	if (defined($dh))	{
+		my @nodes = $dh->read();
+		
+		shift(@nodes);	# .
+		shift(@nodes);	# ..
+		
+		# loop through all nodes in this dir
+		foreach my $node (@nodes)	{
+			
+			my $st = lstat("$src/$node");
+			if (!defined($st))	{
+				print STDERR "Could not lstat(\"$src/$node\")\n";
+				return(0);
+			}
+			
+			# $st->mode;	# 755
+			# $st->uid;		# 0
+			# $st->gid;		# 0
+			# $st->mtime;	# 10928436
+			# $st->ctime;	# 10928345
+			
+			# SYMLINK
+			if ( -l "$src/$node" )	{
+				print "SYMLINK: $src/$node\n";
+				
+				# SYMLINK
+				$result = symlink(readlink("$src/$node"), "$dest/$node");
+				if (! $result)	{
+					print STDERR "Warning! Could not symlink(readlink(\"$src/$node\"), \"$dest/$node\")\n";
+					return (0);
+				}
+				# CHOWN
+				$result = chown($st->uid, $st->gid, "$dest/$node");
+				if (! $result)	{
+					print STDERR "Warning! Could not chown(" . $st->uid ", " $st->gid . ", \"$dest/$node\")\n";
+					return (0);
+				}
+				
+			# FIFO
+			} elsif ( -p "$src/$node" )	{
+				print "Warning! Ignoring FIFO $src/$node\n";
+				
+			# SOCKET
+			} elsif ( -S "$src/$node" )	{
+				print "Warning! Ignoring socket: $src/$node\n";
+				
+			# BLOCK
+			} elsif ( -b "$src/$node" )	{
+				print "Warning! Ignoring special block file: $src/$node\n";
+				
+			# CHAR
+			} elsif ( -c "$src/$node" )	{
+				print "Warning! Ignoring special character file: $src/$node\n";
+				
+			# FILE
+			} elsif ( -f "$src/$node" )	{
+				print "FILE:    $src/$node\n";
+				
+				$result = link("$src/$node", "$dest/$node");
+				if (! $result)	{
+					print STDERR "Warning! Could not link(\"$src/$node\", \"$dest/$node\")\n";
+					return (0);
+				}
+				
+			# DIRECTORY
+			} elsif ( -d "$src/$node" )	{
+				print "DIR:     $src/$node\n";
+				
+				$result = native_cp_al("$src/$node", "$dest/$node");
+				if (! $result)	{
+					print STDERR "Warning! Recursion error in native_cp_al(\"$src/$node\", \"$dest/$node\")\n";
+					return (0);
+				}
+			}
+		}
+		
+	} else	{
+		print STDERR "Could not open $src. Do you have adequate permissions?\n";
+		return(0);
+	}
+	
+	# close open dir handle
+	if (defined($dh))	{ $dh->close(); }
+	undef( $dh );
+	
+	return (1);
+}
+
 #####################
 ### PERLDOC / POD ###
 #####################
