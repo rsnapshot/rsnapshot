@@ -17,6 +17,8 @@
 # "vanishing file" problems with rsync.
 ##############################################################################
 
+# $Id: debug_moving_files.sh,v 1.3 2005/04/02 07:37:07 scubaninja Exp $
+
 # change this path to your liking
 DIRECTORY=/path/to/abuse/dir/
 

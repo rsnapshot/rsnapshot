@@ -1,3 +1,5 @@
+dnl $Id: configure.ac,v 1.35 2005/04/02 07:37:05 scubaninja Exp $
+
 AC_INIT(rsnapshot, 1.2.1, nathan@rsnapshot.org)
 AM_INIT_AUTOMAKE
 AC_PROG_MAKE_SET

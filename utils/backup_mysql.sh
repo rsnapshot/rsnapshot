@@ -17,6 +17,8 @@
 # rsnapshot handles everything else.
 ##############################################################################
 
+# $Id: backup_mysql.sh,v 1.4 2005/04/02 07:37:07 scubaninja Exp $
+
 # backup the database
 /usr/bin/mysqldump -uroot --all-databases > mysqldump_all_databases.sql
 

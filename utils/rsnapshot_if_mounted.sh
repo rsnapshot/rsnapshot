@@ -29,6 +29,8 @@
 # Example: /usr/local/bin/rsnapshot_if_mounted.sh -v daily
 ##############################################################################
 
+# $Id: rsnapshot_if_mounted.sh,v 1.4 2005/04/02 07:37:07 scubaninja Exp $
+
 # path to rsnapshot
 RSNAPSHOT=/usr/local/bin/rsnapshot
 

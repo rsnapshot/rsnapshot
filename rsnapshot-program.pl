@@ -17,7 +17,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.259 2005/04/02 00:23:47 scubaninja Exp $
+# $Id: rsnapshot-program.pl,v 1.260 2005/04/02 07:37:05 scubaninja Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -77,6 +77,7 @@ my @reserved_words = qw(
 	archive
 	check-config-version
 	configtest
+	diff
 	delete
 	du
 	help
@@ -201,10 +202,12 @@ if (1 == $do_configtest) {
 	exit_configtest();
 }
 
-# if we're just using "du" to check the disk space, do it now (and exit)
-# this is down here because it needs to know the contents of the config file
+# if we're just using "du" or "rsnapshot-diff" to check the disk space, do it now (and exit)
+# these commands are down here because they needs to know the contents of the config file
 if ($cmd eq 'du') {
 	show_disk_usage();
+} elsif ($cmd eq 'diff') {
+	show_rsnapshot_diff();
 }
 
 #
@@ -369,7 +372,7 @@ sub parse_cmd_line_opts {
 	$cmd = $ARGV[0];
 	
 	# check for extra bogus arguments that getopts() didn't catch
-	if (defined($cmd) && ('du' ne $cmd)) {
+	if (defined($cmd) && ('du' ne $cmd) && ('diff' ne $cmd)) {
 		if (scalar(@ARGV) > 1) {
 			for (my $i=1; $i<scalar(@ARGV); $i++) {
 				print STDERR "Unknown option: $ARGV[$i]\n";
@@ -3803,6 +3806,13 @@ sub show_disk_usage {
 	
 	# shouldn't happen
 	exit(1);
+}
+
+# TODO: write this subroutine
+# accept two args from $ARGV[1] and [2], like "daily.0" "daily.1" etc.
+# stick the full snapshot_root path on the beginning, and call rsnapshot-diff with these args
+sub show_rsnapshot_diff {
+	
 }
 
 # This subroutine works the way I hoped rsync would under certain conditions.

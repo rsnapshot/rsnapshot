@@ -1,3 +1,5 @@
+# $Id: rsnapshot.spec,v 1.39 2005/04/02 07:37:06 scubaninja Exp $
+
 Name: rsnapshot
 Summary: Local and remote filesystem snapshot utility
 Version: 1.2.1

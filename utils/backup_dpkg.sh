@@ -13,4 +13,6 @@
 # rsnapshot handles everything else.
 ##############################################################################
 
+# $Id: backup_dpkg.sh,v 1.2 2005/04/02 07:37:06 scubaninja Exp $
+
 /usr/bin/dpkg --get-selections > dpkg_selections

@@ -18,4 +18,6 @@
 # rsnapshot handles everything else.
 ##############################################################################
 
+# $Id: backup_rsnapshot_cvsroot.sh,v 1.3 2005/04/02 07:37:07 scubaninja Exp $
+
 /usr/bin/wget http://cvs.sourceforge.net/cvstarballs/rsnapshot-cvsroot.tar.bz2 2>/dev/null

@@ -12,6 +12,8 @@
 # this was done before manually, now it's automatic
 ##############################################################################
 
+# $Id: make_cvs_snapshot.sh,v 1.5 2005/04/02 07:37:07 scubaninja Exp $
+
 if [ $PWD = "$HOME/projects/rsnapshot" ]; then
 	echo "This is not where you want to be. cp -r to a different directory first!"
 	echo "Quitting now!"

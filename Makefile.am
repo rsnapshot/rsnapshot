@@ -1,4 +1,4 @@
-# $Id: version #
+# $Id: Makefile.am,v 1.57 2005/04/02 07:38:52 scubaninja Exp $ #
 
 VERSION = 1.2.1
 

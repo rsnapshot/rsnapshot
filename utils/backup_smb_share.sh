@@ -22,6 +22,8 @@
 # be archived safely.
 ##############################################################################
 
+# $Id: backup_smb_share.sh,v 1.6 2005/04/02 07:37:07 scubaninja Exp $
+
 # IP or hostname to backup over SMB
 SERVER=192.168.1.10
 

@@ -17,6 +17,8 @@
 # rsnapshot handles everything else.
 ##############################################################################
 
+# $Id: backup_pgsql.sh,v 1.4 2005/04/02 07:37:07 scubaninja Exp $
+
 # backup the database
 /usr/local/pgsql/bin/pg_dumpall -Upostgres > pg_dumpall.sql
 
