@@ -413,21 +413,20 @@ sub parse_config_file {
 			next;
 		}
 		
-		# UPGRADE_NOT_COMPLETE
-		if ($var eq 'upgrade_not_complete') {
+		# CONFIG_VERSION
+		if ($var eq 'config_version') {
 			if (defined($value)) {
-				if ('1' eq $value) {
-					config_err($file_line_num, "$line - program upgrade not completed! See www.rsnapshot.org for instructions");
-					next;
-				} elsif ('0' eq $value) {
+				# right now 1.2 is the only possible value
+				if ('1.2' eq $value) {
+					$config_vars{'config_version'} = $value;
 					$line_syntax_ok = 1;
 					next;
 				} else {
-					config_err($file_line_num, "$line - program upgrade not completed! See www.rsnapshot.org for instructions");
+					config_err($file_line_num, "$line - config_version not recognized!");
 					next;
 				}
 			} else {
-				config_err($file_line_num, "$line - program upgrade not completed! See www.rsnapshot.org for instructions");
+				config_err($file_line_num, "$line - config_version not defined!");
 				next;
 			}
 		}
@@ -1080,9 +1079,17 @@ sub parse_config_file {
 	# SINS OF OMISSION
 	# (things that should be in the config file that aren't)
 	#
+	# make sure config_version was set
+	if (!defined($config_vars{'config_version'})) {
+		print_err ("config_version was not defined. rsnapshot can not continue.", 1);
+		syslog_err("config_version was not defined. rsnapshot can not continue.");
+		exit(1);
+	}
 	# make sure rsync was defined
 	if (!defined($config_vars{'cmd_rsync'})) {
-		print_err("cmd_rsync was not defined.", 1);
+		print_err ("cmd_rsync was not defined.", 1);
+		syslog_err("cmd_rsync was not defined.", 1);
+		exit(1);
 	}
 	# make sure we got a snapshot_root
 	if (!defined($config_vars{'snapshot_root'})) {

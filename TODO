@@ -1,5 +1,13 @@
 rsnapshot TODO list:
 
+1.2.0
+------------------------------------------------------------------------------
+Add config_version to:
+	upgrade script
+	RPM upgrade script
+	man page
+	HOWTO
+
 future versions (in no particular order)
 ------------------------------------------------------------------------------
 - Tighten up validation of third argument on backup points

@@ -1,6 +1,6 @@
---- rsnapshot.conf.default.in	2005-01-22 19:07:05.000000000 -0800
-+++ rsnapshot.conf.default.in.REDHAT	2005-01-22 19:26:14.000000000 -0800
-@@ -34,7 +34,7 @@
+--- rsnapshot.conf.default.in	2005-01-24 15:01:00.000000000 -0800
++++ rsnapshot.conf.default.in.rpm	2005-01-24 15:02:53.000000000 -0800
+@@ -40,7 +40,7 @@
  #
  # See the README file or the man page for more details.
  #
@@ -9,7 +9,7 @@
  
  # uncomment this to use the rm program instead of the built-in perl routine.
  @CMD_RM@
-@@ -49,7 +49,7 @@
+@@ -55,7 +55,7 @@
  @CMD_LOGGER@
  
  # Uncomment this to specify a path to "du" for disk usage checks.
@@ -18,7 +18,7 @@
  
  #########################################
  #           BACKUP INTERVALS            #
-@@ -127,7 +127,7 @@
+@@ -133,7 +133,7 @@
  # If you enable this, make sure the lockfile directory is not world
  # writable. Otherwise anyone can prevent the program from running.
  #
