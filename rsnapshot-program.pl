@@ -37,6 +37,9 @@ use POSIX qw(locale_h);	# setlocale()
 ###     DECLARE GLOBAL VARIABLES     ###
 ########################################
 
+# turn off buffering
+$| = 1;
+
 # version of rsnapshot
 my $VERSION = '1.1.6';
 
