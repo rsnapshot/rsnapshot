@@ -12,6 +12,7 @@ VERSION 1.1.7 (??? ?? ??:?? 2004)
 - Changed utils/backup_smb_share.sh to re-order the smbtar arguments
 - New safe_rename() function wraps around rename() calls to workaround a bug
   in a few Linux kernels
+- Added "-uroot" to utils/backup_mysql.sh example file
 
 VERSION 1.1.6 (Jul 05 16:35 2004)
 ------------------------------------------------------------------------------

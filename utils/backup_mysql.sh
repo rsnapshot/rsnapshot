@@ -18,7 +18,7 @@
 ##############################################################################
 
 # backup the database
-/usr/bin/mysqldump --all-databases > mysqldump_all_databases.sql
+/usr/bin/mysqldump -uroot --all-databases > mysqldump_all_databases.sql
 
 # make the backup readable only by root
 /bin/chmod 600 mysqldump_all_databases.sql
