@@ -142,12 +142,12 @@ getopt('c', \%opts);
 getopts('vVtqx', \%opts);
 $cmd = $ARGV[0];
 
-# ALTERNATE CONFIG FILE
+# alternate config file
 if (defined($opts{'c'}))	{
 	$config_file = $opts{'c'};
 }
 
-# VERBOSE (OR EXTRA VERBOSE)?
+# verbose (or extra verbose)?
 if (defined($opts{'v'}))	{
 	$verbose = 1;
 }
@@ -156,25 +156,25 @@ if (defined($opts{'V'}))	{
 	$extra_verbose = 1;
 }
 
-# DEBUG
+# debug
 if (defined($opts{'D'}))	{
 	$verbose = 1;
 	$extra_verbose = 1;
 	$debug = 1;
 }
 
-# TEST?
+# test?
 if (defined($opts{'t'}))	{
 	$test = 1;
 	$verbose = 1;
 }
 
-# QUIET?
+# quiet?
 if (defined($opts{'q'}))	{
 	$quiet = 1;
 }
 
-# ONE FILE SYSTEM?
+# one file system?
 if (defined($opts{'x'}))	{
 	$one_fs = 1;
 }
@@ -226,7 +226,7 @@ if ( -f "$config_file" )	{
 		my ($var, $value, $value2, $value3) = split(/\t+/, $line, 4);
 		
 		# warn about entries we don't understand, and immediately prevent the
-		# program from running or parsing anything else for security reasons
+		# program from running or parsing anything else
 		if (!defined($var) or !defined($value))	{
 			config_error($file_line_num, $line);
 			$file_syntax_ok = 0;
@@ -248,6 +248,7 @@ if ( -f "$config_file" )	{
 			# if path exists already, make sure it's a directory
 			if ((-e "$value") && (! -d "$value"))	{
 				config_error($file_line_num, $line);
+				# exit now since we'd get unnecessary failures by snapshot_root being undefined
 				bail("snapshot_root must be a directory");
 			}
 			
@@ -262,6 +263,7 @@ if ( -f "$config_file" )	{
 				$config_vars{'cmd_rsync'} = $value;
 				$have_rsync = 1;
 				$line_syntax_ok = 1;
+				next;
 			} else	{
 				config_error($file_line_num, $line);
 				bail("could not find $value, please fix cmd_rsync in $config_file");
@@ -274,6 +276,7 @@ if ( -f "$config_file" )	{
 				$config_vars{'cmd_ssh'} = $value;
 				$have_ssh = 1;
 				$line_syntax_ok = 1;
+				next;
 			} else	{
 				config_error($file_line_num, $line);
 				bail("could not find $value, please fix cmd_ssh in $config_file");
@@ -286,6 +289,7 @@ if ( -f "$config_file" )	{
 				$config_vars{'cmd_cp'} = $value;
 				$have_gnu_cp = 1;
 				$line_syntax_ok = 1;
+				next;
 			} else	{
 				config_error($file_line_num, $line);
 				bail("Could not find $value, please fix cmd_cp in $config_file");
@@ -306,6 +310,7 @@ if ( -f "$config_file" )	{
 			$hash{'number'}		= $value2;
 			push(@intervals, \%hash);
 			$line_syntax_ok = 1;
+			next;
 		}
 		
 		# BACKUP POINTS
@@ -319,13 +324,13 @@ if ( -f "$config_file" )	{
 			
 			# make sure we have a local path for the destination
 			# (we do NOT want a local path)
-			if (1 == is_valid_local_abs_path($dest))	{
+			if ( is_valid_local_abs_path($dest) )	{
 				bail("Backup destination $dest must be a local path");
 			}
 			
 			# make sure we aren't traversing directories (exactly 2 dots can't be next to each other)
-			if (1 == is_directory_traversal($src))	{ bail("Directory traversal attempted in $src"); }
-			if (1 == is_directory_traversal($dest))	{ bail("Directory traversal attempted in $dest"); }
+			if ( is_directory_traversal($src) )		{ bail("Directory traversal attempted in $src"); }
+			if ( is_directory_traversal($dest) )	{ bail("Directory traversal attempted in $dest"); }
 			
 			# validate source path
 			#
@@ -392,6 +397,8 @@ if ( -f "$config_file" )	{
 				}
 				push(@snapshot_points, \%hash);
 			}
+			
+			next;
 		}
 		
 		# BACKUP SCRIPTS
@@ -424,6 +431,8 @@ if ( -f "$config_file" )	{
 			$line_syntax_ok = 1;
 			
 			push(@snapshot_points, \%hash);
+			
+			next;
 		}
 		
 		# GLOBAL OPTIONS from the config file
@@ -436,6 +445,7 @@ if ( -f "$config_file" )	{
 			
 			if (1 == $value)	{ $one_fs = 1; }
 			$line_syntax_ok = 1;
+			next;
 		}
 		# LOCKFILE
 		if ($var eq 'lockfile')	{
@@ -445,21 +455,25 @@ if ( -f "$config_file" )	{
 			}
 			$config_vars{'lockfile'} = $value;
 			$line_syntax_ok = 1;
+			next;
 		}
 		# RSYNC SHORT ARGS
 		if ($var eq 'rsync_short_args')	{
 			$config_vars{'rsync_short_args'} = $value;
 			$line_syntax_ok = 1;
+			next;
 		}
 		# RSYNC LONG ARGS
 		if ($var eq 'rsync_long_args')	{
 			$config_vars{'rsync_long_args'} = $value;
 			$line_syntax_ok = 1;
+			next;
 		}
 		# SSH ARGS
 		if ($var eq 'ssh_args')	{
 			$config_vars{'ssh_args'} = $value;
 			$line_syntax_ok = 1;
+			next;
 		}
 		
 		# make sure we understood this line
@@ -467,6 +481,7 @@ if ( -f "$config_file" )	{
 		if (0 == $line_syntax_ok)	{
 			config_error($file_line_num, $line);
 			$file_syntax_ok = 0;
+			next;
 		}
 	}
 	close(CONFIG) or print STDERR "Warning! Could not close $config_file\n";
@@ -500,7 +515,8 @@ if (0 == $file_syntax_ok)	{
 	exit(-1);
 }
 
-# IF WE'RE USING A LOCKFILE, MAKE SURE ONE DOESN'T EXIST
+# IF WE'RE USING A LOCKFILE, TRY TO ADD IT
+# the program will bail if one exists
 if (defined($config_vars{'lockfile'}))	{
 	add_lockfile( $config_vars{'lockfile'} );
 }
@@ -508,8 +524,8 @@ if (defined($config_vars{'lockfile'}))	{
 # FIGURE OUT WHICH INTERVAL WE'RE RUNNING, AND HOW IT RELATES TO THE OTHERS
 # THEN RUN THE ACTION FOR THE CHOSEN INTERVAL
 # remember, in each hashref in this loop:
-#   interval is something like "daily", "weekly", etc.
-#   number is the number of these intervals to keep on the filesystem
+#   "interval" is something like "daily", "weekly", etc.
+#   "number" is the number of these intervals to keep on the filesystem
 #
 my $i = 0;
 foreach my $i_ref (@intervals)	{
@@ -588,12 +604,301 @@ if (defined($config_vars{'lockfile'}))	{
 	remove_lockfile($config_vars{'lockfile'});
 }
 
-# if we got this far, assume success
+# if we got this far, assume success. the program is done running
 exit(0);
 
 ###################
 ### SUBROUTINES ###
 ###################
+
+# concise usage information
+# runs when rsnapshot is called with no arguments
+sub show_usage	{
+	print "rsnapshot $VERSION\n";
+	print "Usage: rsnapshot [-vtxqVD] [-c /alt/config/file] <interval>|configtest|help|version\n";
+	print "Type \"rsnapshot help\" or \"man rsnapshot\" for more information.\n";
+}
+
+# extended usage information
+# runs when rsnapshot is called with "help" as an argument
+sub show_help	{
+	show_usage();
+	
+	print<<HERE;
+
+rsnapshot is a filesystem snapshot utility. It can take incremental
+snapshots of local and remote filesystems for any number of machines.
+
+rsnapshot comes with ABSOLUTELY NO WARRANTY.  This is free software,
+and you are welcome to redistribute it under certain conditions.
+See the GNU General Public License for details.
+
+Options:
+    -v verbose       - show equivalent shell commands being executed
+    -t test          - show equivalent shell commands that would be executed
+    -c [file]        - specify alternate config file (-c /path/to/file)
+    -x one_fs        - don't cross filesystems (same as -x option to rsync)
+    -q quiet         - supress non-fatal warnings
+    -V extra verbose - same as -v, but show rsync output as well
+    -D debug         - a firehose of diagnostic information
+HERE
+}
+
+# accepts an error string
+# prints to STDERR, and exits safely and consistently
+sub bail	{
+	my $str = shift(@_);
+	
+	if ($str)	{ print STDERR $str . "\n"; }
+	remove_lockfile($config_vars{'lockfile'});
+	exit(-1);
+}
+
+# accepts line number, errstr
+# prints a config file error
+sub config_error	{
+	my $line_num	= shift(@_);
+	my $errstr		= shift(@_);
+	
+	if (!defined($line_num))	{ $line_num = -1; }
+	if (!defined($errstr))		{ $errstr = 'config_error() called without an error string!'; }
+	
+	print STDERR "Error in $config_file on line $line_num: $errstr\n";
+}
+
+# accepts a string of options
+# returns an array_ref of parsed options
+# returns undef if there is an invalid option
+#
+# this is for individual backup points only
+sub parse_backup_opts	{
+	my $opts_str = shift(@_);
+	my @pairs;
+	my %parsed_opts;
+	
+	# make sure we got something
+	if (!defined($opts_str))	{ return (undef); }
+	if (!$opts_str)				{ return (undef); }
+	
+	# split on commas first
+	@pairs = split(/,/, $opts_str);
+	
+	# then loop through and split on equals
+	foreach my $pair (@pairs)	{
+		my ($name, $value) = split(/=/, $pair, 2);
+		if ( !defined($name) or !defined($value) )	{
+			return (undef);
+		}
+		
+		# parameters can't have spaces in them
+		$name =~ s/\s//go;
+		
+		# strip whitespace from both ends
+		$value =~ s/^\s{0,}//o;
+		$value =~ s/\s{0,}$//o;
+		
+		# ok, it's a name/value pair and it's ready for more validation
+		$parsed_opts{$name} = $value;
+	}
+	
+	# validate args
+	# ONE_FS
+	if ( defined($parsed_opts{'one_fs'}) )	{
+		if (!is_boolean($parsed_opts{'one_fs'}))	{
+			return (undef);
+		}
+	# RSYNC SHORT ARGS
+	} elsif ( defined($parsed_opts{'rsync_short_args'}) )	{
+		# pass unchecked
+		
+	# RSYNC LONG ARGS
+	} elsif ( defined($parsed_opts{'rsync_long_args'}) )	{
+		# pass unchecked
+		
+	# SSH ARGS
+	} elsif ( defined($parsed_opts{'ssh_args'}) )	{
+		# pass unchecked
+		
+	# if we don't know about it, it doesn't exist
+	} else	{
+		return (undef);
+	}
+	
+	
+	# if we got anything, return it as an array_ref
+	if (%parsed_opts)	{
+		return (\%parsed_opts);
+	}
+	
+	return (undef);
+}
+
+# accepts the path to the lockfile we will try to create
+# this either works, or exits the program at -1
+#
+# we don't use bail() to exit on error, because that would remove the
+# lockfile that may exist from another invocation
+sub add_lockfile	{
+	my $lockfile = shift(@_);
+	
+	if (!defined($lockfile))	{
+		print STDERR "add_lockfile() requires a value\n";
+		exit(-1);
+	}
+	
+	# valid?
+	if (0 == is_valid_local_abs_path($lockfile))	{
+		print STDERR "Lockfile $lockfile is not a valid file name\n";
+		exit(-1);
+	}
+	
+	# does a lockfile already exist?
+	if (1 == is_real_local_abs_path($lockfile))	{
+		print STDERR "Lockfile $lockfile exists, can not continue!\n";
+		exit(-1);
+	}
+	
+	if (1 == $verbose)	{ print "touch $lockfile\n"; }
+	
+	# create the lockfile
+	my $result = open(LOCKFILE, "> $lockfile");
+	if (!defined($result))	{
+		print STDERR "Could not write lockfile $lockfile\n";
+		exit(-1);
+	}
+	$result = close(LOCKFILE);
+	if (!defined($result))	{
+		print STDERR "Warning! Could not close lockfile $lockfile\n";
+	}
+}
+
+# accepts the path to a lockfile and tries to remove it
+# this subroutine either works, or it exits -1
+#
+# we don't use bail() to exit on error, because that would call
+# this subroutine twice in the event of a failure
+sub remove_lockfile	{
+	my $lockfile	= shift(@_);
+	my $result		= undef;
+	
+	if (defined($lockfile))	{
+		if (1 == $verbose)	{ print "rm -f $lockfile\n"; }
+		
+		if ( -e "$lockfile" )	{
+			$result = unlink($lockfile);
+			if (0 == $result)	{
+				print STDERR "Error! Could not remove lockfile $lockfile\n";
+				exit(-1);
+			}
+		}
+	}
+}
+
+# accepts one argument
+# checks to see if that argument is set to 1 or 0
+# returns 1 on success, 0 on failure
+sub is_boolean	{
+	my $var = shift(@_);
+	
+	if (!defined($var))	{ return (undef); }
+	
+	if (1 == $var)	{ return (1); }
+	if (0 == $var)	{ return (1); }
+	
+	return (0);
+}
+
+# accepts string
+# returns 1 if it is a comment line (beginning with #)
+# returns 0 otherwise
+sub is_comment	{
+	my $str = shift(@_);
+	
+	if (!defined($str))	{ return (undef); }
+	if ($str =~ /^#/)	{ return (1); }
+	return (0);
+}
+
+# accepts string
+# returns 1 if it is blank, or just pure white space
+# returns 0 otherwise
+sub is_blank	{
+	my $str = shift(@_);
+	
+	if (!defined($str))		{ return (undef); }
+	if ($str =~ /^\s*$/)	{ return (1); }
+	return (0);
+}
+
+# accepts path
+# returns 1 if it's a valid ssh absolute path
+# returns 0 otherwise
+sub is_ssh_path	{
+	my $path	= shift(@_);
+	
+	if (!defined($path))				{ return (undef); }
+	if ($path =~ m/^.*?\@.*?:\/.*$/)	{ return (1); }
+	
+	return (0);
+}
+
+# accepts path
+# returns 1 if it's a syntactically valid anonymous rsync path
+# returns 0 otherwise
+sub is_anon_rsync_path	{
+	my $path	= shift(@_);
+	
+	if (!defined($path))			{ return (undef); }
+	if ($path =~ m/^rsync:\/\/.*$/)	{ return (1); }
+	
+	return (0);
+}
+
+# accepts path
+# returns 1 if it's a syntactically valid absolute path
+# returns 0 otherwise
+sub is_valid_local_abs_path	{
+	my $path	= shift(@_);
+	
+	if (!defined($path))	{ return (undef); }
+	if ($path =~ m/^\//)	{ return (1); }
+	
+	return (0);
+}
+
+# accepts path
+# returns 1 if it's a real absolute path that currently exists
+# returns 0 otherwise
+sub is_real_local_abs_path	{
+	my $path	= shift(@_);
+	
+	if (!defined($path))	{ return (undef); }
+	if (1 == is_valid_local_abs_path($path))	{
+		if (-e "$path")	{
+			return (1);
+		}
+	}
+	
+	return (0);
+}
+
+sub is_directory_traversal	{
+	my $path = shift(@_);
+	
+	if (!defined($path))					{ return (undef); }
+	if ($path =~ m/[^\/\.]\.{2}[^\/\.]/)	{ return (1); }
+	return (0);
+}
+
+# accepts string
+# removes trailing slash, returns the string
+sub remove_trailing_slash	{
+	my $str = shift(@_);
+	
+	$str =~ s/\/+$//;
+	
+	return ($str);
+}
 
 # accepts the interval to act on (i.e. hourly)
 # this should be the smallest interval (i.e. hourly, not daily)
@@ -664,7 +969,7 @@ sub backup_interval	{
 			if (1 == $have_gnu_cp)	{
 				print "$config_vars{'cmd_cp'} -al $config_vars{'snapshot_root'}/$interval.0/ $config_vars{'snapshot_root'}/$interval.1/\n";
 			} else	{
-				print "native_cp_al(\"$config_vars{'snapshot_root'}/$interval.0/\", \"$config_vars{'snapshot_root'}/$interval.1/\");\n";
+				print "native_cp_al(\"$config_vars{'snapshot_root'}/$interval.0/\", \"$config_vars{'snapshot_root'}/$interval.1/\")\n";
 			}
 		}
 		# call generic cp_al() subroutine
@@ -677,6 +982,7 @@ sub backup_interval	{
 	}
 	
 	# SYNC LIVE FILESYSTEM DATA TO $interval.0
+	# loop through each backup point and backup script
 	foreach my $sp_ref (@snapshot_points)	{
 		my @cmd_stack				= undef;
 		my $src						= undef;
@@ -700,7 +1006,7 @@ sub backup_interval	{
 		my @dirs = split(/\//, $$sp_ref{'dest'});
 		pop(@dirs);
 		
-		# don't mkdir unless we have to
+		# don't mkdir for dest unless we have to
 		my $destpath = "$config_vars{'snapshot_root'}/$interval.0/" . join('/', @dirs);
 		if ( ! -e "$destpath" )	{
 			if (1 == $verbose)	{ print "mkdir -m 0755 -p $destpath/\n"; }
@@ -714,7 +1020,7 @@ sub backup_interval	{
 			}
 		}
 		
-		# IF WE HAVE A SOURCE DIRECTORY, FIGURE IT OUT
+		# IF WE HAVE A SRC DIRECTORY, SYNC IT TO DEST
 		if (defined($$sp_ref{'src'}))	{
 			# check opts, first unique to this backup point, and then global
 			#
@@ -784,12 +1090,13 @@ sub backup_interval	{
 			if (1 == $verbose)	{ print join(' ', @cmd_stack, "\n"); }
 			if (0 == $test)		{ system(@cmd_stack); }
 			
-		# OR, IF WE HAVE A BACKUP SCRIPT, RUN IT
+		# OR, IF WE HAVE A BACKUP SCRIPT, RUN IT, THEN SYNC IT TO DEST
 		} elsif (defined($$sp_ref{'script'}))	{
 			# work in a temp dir, and make this the source for the rsync operation later
 			$tmpdir = "$config_vars{'snapshot_root'}/tmp/";
 			
-			# remove the tmp directory if it's still there
+			# remove the tmp directory if it's still there for some reason
+			# (this shouldn't happen unless the program was killed prematurely, etc)
 			if ( -e "$tmpdir" )	{
 				if (1 == $verbose)	{ print "rm -rf $tmpdir\n"; }
 				if (0 == $test)	{
@@ -830,13 +1137,13 @@ sub backup_interval	{
 				system( $$sp_ref{'script'} );
 			}
 			
-			# change back to previous directory
+			# change back to the previous directory
 			if (1 == $verbose)	{ print "cd $cwd\n"; }
 			if (0 == $test)	{
 				chdir($cwd);
 			}
 			
-			# sync the output of the backup script into this snapshot
+			# sync the output of the backup script into this snapshot interval
 			# this is using a native function since rsync doesn't quite do what we want
 			#
 			# rsync sees that the timestamps are different, and insists
@@ -927,7 +1234,7 @@ sub rotate_interval	{
 				print "$config_vars{'snapshot_root'}/$interval.0/\n";
 			} else	{
 				print "native_cp_al(\"$config_vars{'snapshot_root'}/$prev_interval.$prev_interval_max/\", ";
-				print "\"$config_vars{'snapshot_root'}/$interval.0/\");\n";
+				print "\"$config_vars{'snapshot_root'}/$interval.0/\")\n";
 			}
 		}
 		if (0 == $test)	{
@@ -937,6 +1244,201 @@ sub rotate_interval	{
 			}
 		}
 	}
+}
+
+# stub subroutine
+# calls either gnu_cp_al() or native_cp_al()
+# returns the value directly from whichever subroutine it calls
+sub cp_al	{
+	my $src  = shift(@_);
+	my $dest = shift(@_);
+	my $result = 0;
+	
+	if (1 == $have_gnu_cp)	{
+		$result = gnu_cp_al("$src", "$dest");
+	} else	{
+		$result = native_cp_al("$src", "$dest");
+	}
+	
+	return ($result);
+}
+
+# this is a wrapper to call the GNU version of "cp"
+# it might fail in mysterious ways if you have a different version of "cp"
+#
+sub gnu_cp_al	{
+	my $src    = shift(@_);
+	my $dest   = shift(@_);
+	my $result = 0;
+	
+	# make sure we were passed two arguments
+	if (!defined($src))  { return(0); }
+	if (!defined($dest)) { return(0); }
+	
+	if ( ! -d "$src" )	{
+		print STDERR "gnu_cp_al() needs a valid directory as an argument\n";
+		return (0);
+	}
+	
+	# make the system call to GNU cp
+	$result = system( $config_vars{'cmd_cp'}, '-al', "$src", "$dest" );
+	if ($result != 0)	{
+		print STDERR "Warning! $config_vars{'cmd_cp'} failed. Perhaps this is not GNU cp?\n";
+		return (0);
+	}
+	
+	return (1);
+}
+
+# This is a purpose built, native perl replacement for GNU "cp -al".
+# However, it is not quite as good. it does not copy "special" files:
+# block, char, fifo, or sockets.
+# Never the less, it does do regular files, directories, and symlinks
+# which should be enough for 95% of the normal cases.
+# If you absolutely have to have snapshots of FIFOs, etc, just get GNU
+# cp on your system, and specify it in the config file.
+#
+# In the great perl tradition, this returns 1 on success, 0 on failure.
+#
+sub native_cp_al	{
+	my $src    = shift(@_);
+	my $dest   = shift(@_);
+	my $dh     = undef;
+	my $result = 0;
+	
+	# make sure we were passed two arguments
+	if (!defined($src))  { return(0); }
+	if (!defined($dest)) { return(0); }
+	
+	# make sure we have a source directory
+	if ( ! -d "$src" )	{
+		print STDERR "native_cp_al() needs a valid source directory as an argument\n";
+		return (0);
+	}
+	
+	# strip trailing slashes off the directories,
+	# since we'll add them back on later
+	$src  = remove_trailing_slash($src);
+	$dest = remove_trailing_slash($dest);
+	
+	# LSTAT SRC
+	my $st = lstat("$src");
+	if (!defined($st))	{
+		print STDERR "Could not lstat(\"$src\")\n";
+		return(0);
+	}
+	
+	# MKDIR DEST (AND SET MODE)
+	if ( ! -d "$dest" )	{
+		if (1 == $debug)	{ print "mkdir(\"$dest\", " . get_perms($st->mode) . ");\n"; }
+		
+		$result = mkdir("$dest", $st->mode);
+		if ( ! $result )	{
+			print STDERR "Warning! Could not mkdir(\"$dest\", $st->mode);\n";
+			return(0);
+		}
+	}
+	
+	# CHOWN DEST (if root)
+	if (0 == $<)	{
+		if (1 == $debug)	{ print "chown(" . $st->uid . ", " . $st->gid . ", \"$dest\");\n"; }
+		
+		$result = chown($st->uid, $st->gid, "$dest");
+		if (! $result)	{
+			print STDERR "Warning! Could not chown(" . $st->uid . ", " . $st->gid . ", \"$dest\");\n";
+			return(0);
+		}
+	}
+	
+	# READ DIR CONTENTS
+	$dh = new DirHandle( "$src" );
+	
+	if (defined($dh))	{
+		my @nodes = $dh->read();
+		
+		# loop through all nodes in this dir
+		foreach my $node (@nodes)	{
+			
+			# skip '.' and '..'
+			next if ($node =~ m/^\.\.?$/o);
+			
+			# make sure the node we just got is valid (this is highly unlikely to fail)
+			my $st = lstat("$src/$node");
+			if (!defined($st))	{
+				print STDERR "Could not lstat(\"$src/$node\")\n";
+				return(0);
+			}
+			
+			# SYMLINK (must be tested for first, because it will also pass the file and dir tests)
+			if ( -l "$src/$node" )	{
+				if (1 == $debug)	{ print "copy_symlink(\"$src/$node\", \"$dest/$node\")\n"; }
+				
+				$result = copy_symlink("$src/$node", "$dest/$node");
+				if (0 == $result)	{
+					bail("Error! copy_symlink(\"$src/$node\", \"$dest/$node\")");
+				}
+				
+			# FILE
+			} elsif ( -f "$src/$node" )	{
+				
+				# make a hard link
+				if (1 == $debug)	{ print "link(\"$src/$node\", \"$dest/$node\");\n"; }
+				
+				$result = link("$src/$node", "$dest/$node");
+				if (! $result)	{
+					print STDERR "Warning! Could not link(\"$src/$node\", \"$dest/$node\")\n";
+					return (0);
+				}
+				
+			# DIRECTORY
+			} elsif ( -d "$src/$node" )	{
+				
+				if (1 == $debug)	{ print "native_cp_al(\"$src/$node\", \"$dest/$node\")\n"; }
+				
+				# call this subroutine recursively, to create the directory
+				$result = native_cp_al("$src/$node", "$dest/$node");
+				if (! $result)	{
+					print STDERR "Warning! Recursion error in native_cp_al(\"$src/$node\", \"$dest/$node\")\n";
+					return (0);
+				}
+				
+			# FIFO
+			} elsif ( -p "$src/$node" )	{
+				if (0 == $quiet)	{ print STDERR "Warning! Ignoring FIFO $src/$node\n"; }
+				
+			# SOCKET
+			} elsif ( -S "$src/$node" )	{
+				if (0 == $quiet)	{ print STDERR "Warning! Ignoring socket: $src/$node\n"; }
+				
+			# BLOCK DEVICE
+			} elsif ( -b "$src/$node" )	{
+				if (0 == $quiet)	{ print STDERR "Warning! Ignoring special block file: $src/$node\n"; }
+				
+			# CHAR DEVICE
+			} elsif ( -c "$src/$node" )	{
+				if (0 == $quiet)	{ print STDERR "Warning! Ignoring special character file: $src/$node\n"; }
+			}
+		}
+		
+	} else	{
+		print STDERR "Could not open \"$src\". Do you have adequate permissions?\n";
+		return(0);
+	}
+	
+	# close open dir handle
+	if (defined($dh))	{ $dh->close(); }
+	undef( $dh );
+	
+	# UTIME DEST
+	if (1 == $debug)	{ print "utime(" . $st->atime . ", " . $st->mtime . ", \"$dest\");\n"; }
+	
+	$result = utime($st->atime, $st->mtime, "$dest");
+	if (! $result)	{
+		print STDERR "Warning! Could not utime(" . $st->atime . ", " . $st->mtime . ", \"$dest\");\n";
+		return(0);
+	}
+	
+	return (1);
 }
 
 # This subroutine works the way I hoped rsync would under certain conditions.
@@ -955,7 +1457,7 @@ sub rotate_interval	{
 # at the destination and using another inode for a new file with the exact same content.
 #
 # If anyone knows of a better way (that doesn't add dependencies) i'd love to hear it!
-
+#
 sub sync_if_different	{
 	my $src		= shift(@_);
 	my $dest	= shift(@_);
@@ -978,7 +1480,6 @@ sub sync_if_different	{
 	
 	# copy everything from src to dest
 	if (1 == $debug)	{ print "sync_cp_src_dest(\"$src\", \"$dest\")\n"; }
-	
 	$result = sync_cp_src_dest("$src", "$dest");
 	if ( ! $result )	{
 		bail("sync_cp_src_dest(\"$src\", \"$dest\")");
@@ -986,7 +1487,6 @@ sub sync_if_different	{
 	
 	# delete everything from dest that isn't in src
 	if (1 == $debug)	{ print "sync_rm_dest(\"$src\", \"$dest\")\n"; }
-	
 	$result = sync_rm_dest("$src", "$dest");
 	if ( ! $result )	{
 		bail("sync_rm_dest(\"$src\", \"$dest\")");
@@ -996,6 +1496,7 @@ sub sync_if_different	{
 }
 
 # accepts src, dest
+# "copies" everything from src to dest, mainly using hard links
 # called only from sync_if_different()
 sub sync_cp_src_dest	{
 	my $src		= shift(@_);
@@ -1137,6 +1638,7 @@ sub sync_cp_src_dest	{
 }
 
 # accepts src, dest
+# deletes everything from dest that isn't in src also
 # called only from sync_if_different()
 sub sync_rm_dest	{
 	my $src		= shift(@_);
@@ -1210,359 +1712,8 @@ sub sync_rm_dest	{
 	
 }
 
-# accepts an error string
-# prints to STDERR, and exits safely and consistently
-sub bail	{
-	my $str = shift(@_);
-	
-	if ($str)	{ print STDERR $str . "\n"; }
-	remove_lockfile($config_vars{'lockfile'});
-	exit(-1);
-}
-
-# accepts line number, errstr
-# prints a config file error
-sub config_error	{
-	my $line_num	= shift(@_);
-	my $errstr		= shift(@_);
-	
-	if (!defined($line_num))	{ $line_num = -1; }
-	if (!defined($errstr))		{ $errstr = 'config_error() called without an error string!'; }
-	
-	print STDERR "Error in $config_file on line $line_num: $errstr\n";
-}
-
-# accepts one argument
-# checks to see if that argument is set to 1 or 0
-# returns 1 on success, 0 on failure
-sub is_boolean	{
-	my $var = shift(@_);
-	
-	if (!defined($var))	{ return (undef); }
-	
-	if (1 == $var)	{ return (1); }
-	if (0 == $var)	{ return (1); }
-	
-	return (0);
-}
-
-# accepts string
-# returns 1 if it is a comment line (beginning with #)
-# returns 0 otherwise
-sub is_comment	{
-	my $str = shift(@_);
-	
-	if (!defined($str))	{ return (undef); }
-	if ($str =~ /^#/)	{ return (1); }
-	return (0);
-}
-
-# accepts string
-# returns 1 if it is blank, or just pure white space
-# returns 0 otherwise
-sub is_blank	{
-	my $str = shift(@_);
-	
-	if (!defined($str))		{ return (undef); }
-	if ($str =~ /^\s*$/)	{ return (1); }
-	return (0);
-}
-
-# accepts path
-# returns 1 if it's a valid ssh absolute path
-# returns 0 otherwise
-sub is_ssh_path	{
-	my $path	= shift(@_);
-	
-	if (!defined($path))				{ return (undef); }
-	if ($path =~ m/^.*?\@.*?:\/.*$/)	{ return (1); }
-	
-	return (0);
-}
-
-# accepts path
-# returns 1 if it's a syntactically valid anonymous rsync path
-# returns 0 otherwise
-sub is_anon_rsync_path	{
-	my $path	= shift(@_);
-	
-	if (!defined($path))			{ return (undef); }
-	if ($path =~ m/^rsync:\/\/.*$/)	{ return (1); }
-	
-	return (0);
-}
-
-# accepts path
-# returns 1 if it's a syntactically valid absolute path
-# returns 0 otherwise
-sub is_valid_local_abs_path	{
-	my $path	= shift(@_);
-	
-	if (!defined($path))	{ return (undef); }
-	if ($path =~ m/^\//)	{ return (1); }
-	
-	return (0);
-}
-
-# accepts path
-# returns 1 if it's a real absolute path that currently exists
-# returns 0 otherwise
-sub is_real_local_abs_path	{
-	my $path	= shift(@_);
-	
-	if (!defined($path))	{ return (undef); }
-	if (1 == is_valid_local_abs_path($path))	{
-		if (-e "$path")	{
-			return (1);
-		}
-	}
-	
-	return (0);
-}
-
-sub is_directory_traversal	{
-	my $path = shift(@_);
-	
-	if (!defined($path))					{ return (undef); }
-	if ($path =~ m/[^\/\.]\.{2}[^\/\.]/)	{ return (1); }
-	return (0);
-}
-
-# accepts string
-# removes trailing slash, returns the string
-sub remove_trailing_slash	{
-	my $str = shift(@_);
-	
-	$str =~ s/\/+$//;
-	
-	return ($str);
-}
-
-sub show_help	{
-	show_usage();
-	
-	print<<HERE;
-
-rsnapshot is a filesystem snapshot utility. It can take incremental
-snapshots of local and remote filesystems for any number of machines.
-
-rsnapshot comes with ABSOLUTELY NO WARRANTY.  This is free software,
-and you are welcome to redistribute it under certain conditions.
-See the GNU General Public License for details.
-
-Options:
-    -v verbose       - show equivalent shell commands being executed
-    -t test          - show equivalent shell commands that would be executed
-    -c [file]        - specify alternate config file (-c /path/to/file)
-    -x one_fs        - don't cross filesystems (same as -x option to rsync)
-    -q quiet         - supress non-fatal warnings
-    -V extra verbose - same as -v, but show rsync output as well
-    -D debug         - a firehose of diagnostic information
-HERE
-}
-
-sub show_usage	{
-	print "rsnapshot $VERSION\n";
-	print "Usage: rsnapshot [-vtxqVD] [-c /alt/config/file] <interval>|configtest|help|version\n";
-	print "Type \"rsnapshot help\" or \"man rsnapshot\" for more information.\n";
-}
-
-# stub subroutine
-# calls either gnu_cp_al() or native_cp_al()
-# returns the value directly from whichever subroutine it calls
-sub cp_al	{
-	my $src  = shift(@_);
-	my $dest = shift(@_);
-	my $result = 0;
-	
-	if (1 == $have_gnu_cp)	{
-		$result = gnu_cp_al("$src", "$dest");
-	} else	{
-		$result = native_cp_al("$src", "$dest");
-	}
-	
-	return ($result);
-}
-
-# this is a wrapper to call the GNU version of "cp"
-# it might fail in mysterious ways if you have a different version of "cp"
-#
-sub gnu_cp_al	{
-	my $src    = shift(@_);
-	my $dest   = shift(@_);
-	my $result = 0;
-	
-	# make sure we were passed two arguments
-	if (!defined($src))  { return(0); }
-	if (!defined($dest)) { return(0); }
-	
-	if ( ! -d "$src" )	{
-		print STDERR "gnu_cp_al() needs a valid directory as an argument\n";
-		return (0);
-	}
-	
-	# make the system call to GNU cp
-	$result = system( $config_vars{'cmd_cp'}, '-al', "$src", "$dest" );
-	if ($result != 0)	{
-		print STDERR "Warning! $config_vars{'cmd_cp'} failed. Perhaps this is not GNU cp?\n";
-		return (0);
-	}
-	
-	return (1);
-}
-
-# this is a purpose built, native perl replacement for "cp -al".
-# it does not copy "special" files: block, char, fifo, or sockets.
-# never the less, it does do regular files, directories, and symlinks
-# which should be enough for 95% of the normal cases.
-# if you absolutely have to have snapshots of FIFOs, etc, just
-# get GNU cp on your system, and specify it in the config file
-#
-# in the great perl tradition, this returns 1 on success, 0 on failure
-#
-sub native_cp_al	{
-	my $src    = shift(@_);
-	my $dest   = shift(@_);
-	my $dh     = undef;
-	my $result = 0;
-	
-	# make sure we were passed two arguments
-	if (!defined($src))  { return(0); }
-	if (!defined($dest)) { return(0); }
-	
-	# make sure we have a source directory
-	if ( ! -d "$src" )	{
-		print STDERR "native_cp_al() needs a valid source directory as an argument\n";
-		return (0);
-	}
-	
-	# strip trailing slashes off the directories,
-	# since we'll add them back on later
-	$src  = remove_trailing_slash($src);
-	$dest = remove_trailing_slash($dest);
-	
-	# LSTAT SRC
-	my $st = lstat("$src");
-	if (!defined($st))	{
-		print STDERR "Could not lstat(\"$src\")\n";
-		return(0);
-	}
-	
-	# MKDIR DEST (AND SET MODE)
-	if ( ! -d "$dest" )	{
-		if (1 == $debug)	{ print "mkdir(\"$dest\", " . get_perms($st->mode) . ");\n"; }
-		
-		$result = mkdir("$dest", $st->mode);
-		if ( ! $result )	{
-			print STDERR "Warning! Could not mkdir(\"$dest\", $st->mode);\n";
-			return(0);
-		}
-	}
-	
-	# CHOWN DEST (if root)
-	if (0 == $<)	{
-		if (1 == $debug)	{ print "chown(" . $st->uid . ", " . $st->gid . ", \"$dest\");\n"; }
-		
-		$result = chown($st->uid, $st->gid, "$dest");
-		if (! $result)	{
-			print STDERR "Warning! Could not chown(" . $st->uid . ", " . $st->gid . ", \"$dest\");\n";
-			return(0);
-		}
-	}
-	
-	# READ DIR CONTENTS
-	$dh = new DirHandle( "$src" );
-	
-	if (defined($dh))	{
-		my @nodes = $dh->read();
-		
-		# loop through all nodes in this dir
-		foreach my $node (@nodes)	{
-			
-			# skip '.' and '..'
-			next if ($node =~ m/^\.\.?$/o);
-			
-			# make sure the node we just got is valid (this is highly unlikely to fail)
-			my $st = lstat("$src/$node");
-			if (!defined($st))	{
-				print STDERR "Could not lstat(\"$src/$node\")\n";
-				return(0);
-			}
-			
-			# SYMLINK (must be tested for first, because it will also pass the file and dir tests)
-			if ( -l "$src/$node" )	{
-				if (1 == $debug)	{ print "copy_symlink(\"$src/$node\", \"$dest/$node\")\n"; }
-				
-				$result = copy_symlink("$src/$node", "$dest/$node");
-				if (0 == $result)	{
-					bail("Error! copy_symlink(\"$src/$node\", \"$dest/$node\")");
-				}
-				
-			# FILE
-			} elsif ( -f "$src/$node" )	{
-				
-				# make a hard link
-				if (1 == $debug)	{ print "link(\"$src/$node\", \"$dest/$node\");\n"; }
-				
-				$result = link("$src/$node", "$dest/$node");
-				if (! $result)	{
-					print STDERR "Warning! Could not link(\"$src/$node\", \"$dest/$node\")\n";
-					return (0);
-				}
-				
-			# DIRECTORY
-			} elsif ( -d "$src/$node" )	{
-				
-				if (1 == $debug)	{ print "native_cp_al(\"$src/$node\", \"$dest/$node\");\n"; }
-				
-				# call this subroutine recursively, to create the directory
-				$result = native_cp_al("$src/$node", "$dest/$node");
-				if (! $result)	{
-					print STDERR "Warning! Recursion error in native_cp_al(\"$src/$node\", \"$dest/$node\")\n";
-					return (0);
-				}
-				
-			# FIFO
-			} elsif ( -p "$src/$node" )	{
-				if (0 == $quiet)	{ print STDERR "Warning! Ignoring FIFO $src/$node\n"; }
-				
-			# SOCKET
-			} elsif ( -S "$src/$node" )	{
-				if (0 == $quiet)	{ print STDERR "Warning! Ignoring socket: $src/$node\n"; }
-				
-			# BLOCK DEVICE
-			} elsif ( -b "$src/$node" )	{
-				if (0 == $quiet)	{ print STDERR "Warning! Ignoring special block file: $src/$node\n"; }
-				
-			# CHAR DEVICE
-			} elsif ( -c "$src/$node" )	{
-				if (0 == $quiet)	{ print STDERR "Warning! Ignoring special character file: $src/$node\n"; }
-			}
-		}
-		
-	} else	{
-		print STDERR "Could not open \"$src\". Do you have adequate permissions?\n";
-		return(0);
-	}
-	
-	# close open dir handle
-	if (defined($dh))	{ $dh->close(); }
-	undef( $dh );
-	
-	# UTIME DEST
-	if (1 == $debug)	{ print "utime(" . $st->atime . ", " . $st->mtime . ", \"$dest\");\n"; }
-	
-	$result = utime($st->atime, $st->mtime, "$dest");
-	if (! $result)	{
-		print STDERR "Warning! Could not utime(" . $st->atime . ", " . $st->mtime . ", \"$dest\");\n";
-		return(0);
-	}
-	
-	return (1);
-}
-
 # accepts src, dest
-# copies a symlink
+# "copies" a symlink from src by recreating it in dest
 # returns 1 on success, 0 on failure
 sub copy_symlink	{
 	my $src		= shift(@_);
@@ -1613,134 +1764,6 @@ sub copy_symlink	{
 	return (1);
 }
 
-# accepts a string of options
-# returns an array_ref of parsed options
-# returns undef if there is an invalid option
-#
-# this is for individual backup points only
-sub parse_backup_opts	{
-	my $opts_str = shift(@_);
-	my @pairs;
-	my %parsed_opts;
-	
-	# make sure we got something
-	if (!defined($opts_str))	{ return (undef); }
-	if (!$opts_str)				{ return (undef); }
-	
-	# split on commas first
-	@pairs = split(/,/, $opts_str);
-	
-	# then loop through and split on equals
-	foreach my $pair (@pairs)	{
-		my ($name, $value) = split(/=/, $pair, 2);
-		if ( !defined($name) or !defined($value) )	{
-			return (undef);
-		}
-		
-		# parameters can't have spaces in them
-		$name =~ s/\s//go;
-		
-		# strip whitespace from both ends
-		$value =~ s/^\s{0,}//o;
-		$value =~ s/\s{0,}$//o;
-		
-		# ok, it's a name/value pair and it's ready for more validation
-		$parsed_opts{$name} = $value;
-	}
-	
-	# validate args
-	# ONE_FS
-	if ( defined($parsed_opts{'one_fs'}) )	{
-		if (!is_boolean($parsed_opts{'one_fs'}))	{
-			return (undef);
-		}
-	# RSYNC SHORT ARGS
-	} elsif ( defined($parsed_opts{'rsync_short_args'}) )	{
-		# pass unchecked
-		
-	# RSYNC LONG ARGS
-	} elsif ( defined($parsed_opts{'rsync_long_args'}) )	{
-		# pass unchecked
-		
-	# SSH ARGS
-	} elsif ( defined($parsed_opts{'ssh_args'}) )	{
-		# pass unchecked
-		
-	# if we don't know about it, it doesn't exist
-	} else	{
-		return (undef);
-	}
-	
-	
-	# if we got anything, return it as an array_ref
-	if (%parsed_opts)	{
-		return (\%parsed_opts);
-	}
-	
-	return (undef);
-}
-
-# accepts the path to the lockfile we will try to create
-# this either works, or exits the program at -1
-#
-# we don't use bail() to exit on error, because that would remove the
-# lockfile that may exist from another invocation
-sub add_lockfile	{
-	my $lockfile = shift(@_);
-	
-	if (!defined($lockfile))	{
-		print STDERR "add_lockfile() requires a value\n";
-		exit(-1);
-	}
-	
-	# valid?
-	if (0 == is_valid_local_abs_path($lockfile))	{
-		print STDERR "Lockfile $lockfile is not a valid file name\n";
-		exit(-1);
-	}
-	
-	# does a lockfile already exist?
-	if (1 == is_real_local_abs_path($lockfile))	{
-		print STDERR "Lockfile $lockfile exists, can not continue!\n";
-		exit(-1);
-	}
-	
-	if (1 == $verbose)	{ print "touch $lockfile\n"; }
-	
-	# create the lockfile
-	my $result = open(LOCKFILE, "> $lockfile");
-	if (!defined($result))	{
-		print STDERR "Could not write lockfile $lockfile\n";
-		exit(-1);
-	}
-	$result = close(LOCKFILE);
-	if (!defined($result))	{
-		print STDERR "Warning! Could not close lockfile $lockfile\n";
-	}
-}
-
-# accepts the path to a lockfile and tries to remove it
-# this subroutine either works, or it exits -1
-#
-# we don't use bail() to exit on error, because that would call
-# this subroutine twice in the event of a failure
-sub remove_lockfile	{
-	my $lockfile	= shift(@_);
-	my $result		= undef;
-	
-	if (defined($lockfile))	{
-		if (1 == $verbose)	{ print "rm -f $lockfile\n"; }
-		
-		if ( -e "$lockfile" )	{
-			$result = unlink($lockfile);
-			if (0 == $result)	{
-				print STDERR "Error! Could not remove lockfile $lockfile\n";
-				exit(-1);
-			}
-		}
-	}
-}
-
 # accepts a file permission number from $st->mode (i.e. 33188)
 # returns a "normal" file permission number (i.e. 644)
 # do the appropriate bit shifting to get a "normal" UNIX file permission mode
@@ -1760,17 +1783,20 @@ sub get_perms	{
 # returns 0 if they're the same, 1 if they're different
 # returns undef if one or both of the files can't be found, opened, or closed
 sub file_diff   {
-	my $file1 = shift(@_);
-	my $file2 = shift(@_);
-	
+	my $file1	= shift(@_);
+	my $file2	= shift(@_);
 	my $st1		= undef;
 	my $st2		= undef;
 	my $buf1	= undef;
 	my $buf2	= undef;
 	
+	# number of bytes to read at once
 	my $BUFSIZE = 16384;
 	
+	# while loop condition flag
 	my $done = 0;
+	
+	# boolean file comparison flag. assume they're the same.
 	my $is_different = 0;
 	
 	if (! -r "$file1")  { return (undef); }
@@ -1783,8 +1809,8 @@ sub file_diff   {
 	if (!defined($st1))	{ return (undef); }
 	if (!defined($st2))	{ return (undef); }
 	
-	# if they aren't even the same size, they can't possibly be the same,
-	# therefore, they are different.
+	# if the files aren't even the same size, they can't possibly be the same.
+	# don't waste time comparing them more intensively
 	if ($st1->size != $st2->size)	{
 		return (1);
 	}
@@ -1796,6 +1822,7 @@ sub file_diff   {
 	open(FILE2, "$file2") or return (undef);
 	
 	while ((0 == $done) && (read(FILE1, $buf1, $BUFSIZE)) && (read(FILE2, $buf2, $BUFSIZE)))	{
+		# exit this loop as soon as possible
 		if ($buf1 ne $buf2)	 {
 			$is_different = 1;
 			$done = 1;
