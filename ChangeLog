@@ -8,6 +8,7 @@ VERSION 1.0.8
 - Added support routines for the backup_script feature
 - Added two example backup scripts in the utils/ directory, one for Postgres,
   and one for downloading the CVS root for rsnapshot
+- Added syslog support using the "logger" command
 - Fixed ssh_args local override for individual backup points
 - Added additional comments to various sections of the code
 - Removed redundant rsync arguments from the default
