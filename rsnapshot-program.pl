@@ -638,15 +638,20 @@ sub parse_config_file	{
 			# remember src/dest
 			# also, first check to see that we're not backing up the snapshot directory
 			if ((is_real_local_abs_path("$src")) && ($config_vars{'snapshot_root'} =~ m/^$src/))	{
-						my %hash;
+				my %hash;
+				
 				$hash{'src'}	= $src;
 				$hash{'dest'}	= $dest;
-						if (defined($opts_ref))	{
-							$hash{'opts'} = $opts_ref;
-						}
+				if (defined($opts_ref))	{
+					$hash{'opts'} = $opts_ref;
+				}
+				
 				(my $snapshot_path = $config_vars{'snapshot_root'}) =~ s/^$src//;
+				
 				$hash{'opts'}{'extra_rsync_long_args'} .= sprintf(' --exclude=%s', $snapshot_path);
-						push(@backup_points, \%hash);
+				
+				push(@backup_points, \%hash);
+				
 			} else	{
 				my %hash;
 				$hash{'src'}	= $src;
