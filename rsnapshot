@@ -520,8 +520,9 @@ sub backup_interval	{
 	if (!defined($interval))	{ bail('backup_interval() expects an argument'); }
 	
 	# set up default args for rsync
-	my $default_rsync_args	= '-al';
-	if (1 == $extra_verbose)	{ $default_rsync_args .= 'v'; }
+	my $default_rsync_short_args	= '-al';
+	my $default_rsync_long_args		= '--delete --numeric-ids --devices';
+	if (1 == $extra_verbose)	{ $default_rsync_short_args .= 'v'; }
 	
 	# ROTATE DIRECTORIES
 	#
@@ -555,6 +556,7 @@ sub backup_interval	{
 	if ( -d "$config_vars{'snapshot_root'}/$interval.0" )	{
 		my $result;
 		
+		# decide which verbose message to show, if at all
 		if (1 == $verbose)	{
 			if (1 == $have_gnu_cp)	{
 				print "$config_vars{'cmd_cp'} -al $config_vars{'snapshot_root'}/$interval.0/ $config_vars{'snapshot_root'}/$interval.1/\n";
@@ -562,6 +564,7 @@ sub backup_interval	{
 				print "native_cp_al(\"$config_vars{'snapshot_root'}/$interval.0/\", \"$config_vars{'snapshot_root'}/$interval.1/\");\n";
 			}
 		}
+		# call generic cp_al() subroutine
 		if (0 == $test)	{
 			$result = cp_al( "$config_vars{'snapshot_root'}/$interval.0/", "$config_vars{'snapshot_root'}/$interval.1/" );
 			if (! $result)	{
@@ -572,9 +575,10 @@ sub backup_interval	{
 	
 	# SYNC LIVE DATA TO $interval.0
 	foreach my $sp_ref (@snapshot_points)	{
-		my $rsync_args	= $default_rsync_args;
-		my $src			= undef;
-		my @cmd_stack	= undef;
+		my @cmd_stack				= undef;
+		my $src						= undef;
+		my $rsync_short_args		= $default_rsync_short_args;
+		my @rsync_long_args_stack	= ( split(/\s/, $default_rsync_long_args) );
 		
 		# append a trailing slash if it's a directory
 		if ((-d "$$sp_ref{'src'}") && ($$sp_ref{'src'} !~ /\/$/))	{
@@ -610,43 +614,33 @@ sub backup_interval	{
 		# ONE_FS
 		if ( defined($$sp_ref{'opts'}) && defined($$sp_ref{'opts'}->{'one_fs'}) )	{
 			if (1 == $$sp_ref{'opts'}->{'one_fs'})	{
-				$rsync_args .= 'x';
+				$rsync_short_args .= 'x';
 			}
 		} elsif ($one_fs)	{
-			$rsync_args .= 'x';
+			$rsync_short_args .= 'x';
 		}
-		
-		
 		
 		# if this is a user@host:/path, use ssh
 		if ( is_ssh_path($src) )	{
-			@cmd_stack = (
-				$config_vars{'cmd_rsync'}, $rsync_args, '--delete', '--numeric-ids', '--devices', "--rsh=$config_vars{'cmd_ssh'}",
-				$src, "$config_vars{'snapshot_root'}/$interval.0/$$sp_ref{'dest'}"
-			);
+			push( @rsync_long_args_stack, "--rsh=$config_vars{'cmd_ssh'}" );
 			
 		# anonymous rsync
 		} elsif ( is_anon_rsync_path($src) )	{
-			if (0 == $extra_verbose)	{
-				$rsync_args .= 'q';
-			}
-			
-			@cmd_stack = (
-				$config_vars{'cmd_rsync'}, $rsync_args, '--delete', '--numeric-ids', '--devices',
-				$src, "$config_vars{'snapshot_root'}/$interval.0/$$sp_ref{'dest'}"
-			);
+			if (0 == $extra_verbose)	{ $rsync_short_args .= 'q'; }
 			
 		# local filesystem
 		} elsif ( is_real_local_abs_path($src) )	{
-			@cmd_stack = (
-				$config_vars{'cmd_rsync'}, $rsync_args, '--delete', '--numeric-ids', '--devices',
-				$src, "$config_vars{'snapshot_root'}/$interval.0/$$sp_ref{'dest'}"
-			);
+			# no change
 			
 		# this should have already been validated once, but better safe than sorry
 		} else	{
 			bail("Could not understand source \"$src\" in backup_interval()");
 		}
+		
+		# assemble the final command
+		@cmd_stack = (
+			$config_vars{'cmd_rsync'}, $rsync_short_args, @rsync_long_args_stack, $src, "$config_vars{'snapshot_root'}/$interval.0/$$sp_ref{'dest'}"
+		);
 		
 		# RUN THE RSYNC COMMAND FOR THIS BACKUP POINT
 		# BASED ON THE @cmd_stack VARS
@@ -1162,18 +1156,15 @@ sub remove_lockfile	{
 	my $lockfile	= shift(@_);
 	my $result		= undef;
 	
-	if (!defined($lockfile))	{
-		print STDERR "remove_lockfile() must be passed a value\n";
-		exit(-1);
-	}
-	
-	if (1 == $verbose)	{ print "rm -f $lockfile\n"; }
-	
-	$result = unlink($lockfile);
-	
-	if (0 == $result)	{
-		print STDERR "Error! Could not remove lockfile $lockfile\n";
-		exit(-1);
+	if (defined($lockfile))	{
+		if (1 == $verbose)	{ print "rm -f $lockfile\n"; }
+		
+		$result = unlink($lockfile);
+		
+		if (0 == $result)	{
+			print STDERR "Error! Could not remove lockfile $lockfile\n";
+			exit(-1);
+		}
 	}
 }
 
