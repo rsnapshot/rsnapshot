@@ -9,6 +9,8 @@ for version 1.0.x
 
 - Add HOWTO document into main source tree, pending TLDP peer review.
 
+- Investigate reported SuSE RPM incompatibility
+
 - Update string manipulations and comparisons of paths to use File::Spec and
   File::Basename functions where possible. Double check they're fully
   compatible with Perl 5.004
