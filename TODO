@@ -6,7 +6,7 @@ for version 1.0.x
   File::Basename functions where possible. Double check they're fully
   compatible with Perl 5.004
 
-- Add an file exclusion list feature, using "include" and "exclude" params
+- Add a file exclusion list feature, using "include" and "exclude" params
   in the config file. These will be passed directly as args to rsync.
 
 for version 2.0.x
