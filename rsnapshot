@@ -266,6 +266,16 @@ if ( -f $config_file )	{
 			
 			if ( !defined($config_vars{'snapshot_root'}) )	{	bail("snapshot_root needs to be defined before backup points"); }
 			
+			# make sure we have a full path for the source
+			if ($src  !~ /^\//)	{ bail("Backup source $src must be a full path"); }
+			
+			# make sure we have a local path for the destination
+			if ($dest =~ /^\//)	{ bail("Backup destination $dest must be a local path"); }
+			
+			# make sure we aren't traversing directories (exactly 2 dots can't be next to each other)
+			if ($src  =~ /[^\.]\.{2}[^\.]/)	{ bail("Directory traversal attempted in $src"); }
+			if ($dest =~ /[^\.]\.{2}[^\.]/)	{ bail("Directory traversal attempted in $dest"); }
+			
 			# we have a valid file path
 			if ( -e "$src" )	{
 				$line_syntax_ok = 1;
@@ -372,8 +382,7 @@ if ($file_syntax_ok == 0)	{
  
 # CREATE THE SNAPSHOT ROOT IF IT DOESN'T EXIST, WITH THE FILE PERMISSIONS 0700
 if ( ! -d "$config_vars{'snapshot_root'}" )	{
-	
-	if ($verbose)	{ print "mkpath(\"$config_vars{'snapshot_root'}\", 0, 0700);\n"; }
+	if ($verbose)	{ print "mkdir -m 0700 -p $config_vars{'snapshot_root'}\n"; }
 	if ($test == 0)	{
 		eval	{
 			mkpath( "$config_vars{'snapshot_root'}", 0, 0700 );
@@ -444,7 +453,7 @@ sub backup_interval	{
 	#
 	# remove oldest directory
 	if ( -d "$config_vars{'snapshot_root'}/$interval.$interval_max" )	{
-		if ($verbose)	{ print "rmtree(\"$config_vars{'snapshot_root'}/$interval.$interval_max/\", 0, 1);\n"; }
+		if ($verbose)	{ print "rm -rf $config_vars{'snapshot_root'}/$interval.$interval_max/\n"; }
 		if ($test == 0)	{
 			my $result = rmtree( "$config_vars{'snapshot_root'}/$interval.$interval_max/", 0, 1 );
 			if ($result == 0)	{
@@ -457,12 +466,12 @@ sub backup_interval	{
 	for (my $i=($interval_max-1); $i>0; $i--)	{
 		if ( -d "$config_vars{'snapshot_root'}/$interval.$i" )	{
 			if ($verbose)	{
-				print "rename(\"$config_vars{'snapshot_root'}/$interval.$i/\", \"$config_vars{'snapshot_root'}/$interval." . ($i+1) . "/\");\n";
+				print "mv $config_vars{'snapshot_root'}/$interval.$i/ $config_vars{'snapshot_root'}/$interval." . ($i+1) . "/\n";
 			}
 			if ($test == 0)	{
 				my $result = rename( "$config_vars{'snapshot_root'}/$interval.$i/", ("$config_vars{'snapshot_root'}/$interval." . ($i+1) . '/') );
 				if ($result == 0)	{
-					bail("Error on rename(\"$config_vars{'snapshot_root'}/$interval.$i/\", \"" . ("$config_vars{'snapshot_root'}/$interval." . ($i+1) . '/') . "\")");
+					bail("Error! rename(\"$config_vars{'snapshot_root'}/$interval.$i/\", \"" . ("$config_vars{'snapshot_root'}/$interval." . ($i+1) . '/') . "\")");
 				}
 			}
 		}
@@ -477,7 +486,7 @@ sub backup_interval	{
 			$result = cp_al( "$config_vars{'snapshot_root'}/$interval.0/", "$config_vars{'snapshot_root'}/$interval.1/" );
 		}
 		if (! $result)	{
-			bail("cp_al(\"$config_vars{'snapshot_root'}/$interval.0/\", \"$config_vars{'snapshot_root'}/$interval.1/\")");
+			bail("Error! cp_al(\"$config_vars{'snapshot_root'}/$interval.0/\", \"$config_vars{'snapshot_root'}/$interval.1/\")");
 		}
 	}
 	
@@ -499,10 +508,7 @@ sub backup_interval	{
 		# don't mkdir unless we have to
 		my $destpath = "$config_vars{'snapshot_root'}/$interval.0/" . join('/', @dirs);
 		if ( ! -e "$destpath" )	{
-			
-			# TODO: get umask instead of 0755?
-			
-			if ($verbose)	{ print "mkpath(\"$destpath/\", 0, 0755);\n"; }
+			if ($verbose)	{ print "mkdir -m 0755 -p $destpath/"; }
 			if ($test == 0)	{
 				eval	{
 					mkpath( "$destpath/", 0, 0755 );
@@ -537,10 +543,7 @@ sub backup_interval	{
 	}
 	
 	# update mtime of $interval.0 to reflect snapshot time
-	
-	# utime(time(), time(), 'foo');
-	
-	if ($verbose)	{ print "utime(time(), time(), \"$config_vars{'snapshot_root'}/$interval.0/\");\n"; }
+	if ($verbose)	{ print "touch $config_vars{'snapshot_root'}/$interval.0/\n"; }
 	if ($test == 0)	{
 		my $result = utime(time(), time(), "$config_vars{'snapshot_root'}/$interval.0/");
 		if ($result == 0)	{
@@ -562,8 +565,7 @@ sub rotate_interval	{
 	#
 	# delete the oldest one
 	if ( -d "$config_vars{'snapshot_root'}/$interval.$interval_max" )	{
-		
-		if ($verbose)	{ print "rmtree(\"$config_vars{'snapshot_root'}/$interval.$interval_max/\");\n"; }
+		if ($verbose)	{ print "rm -rf $config_vars{'snapshot_root'}/$interval.$interval_max/\n"; }
 		if ($test == 0)	{
 			my $result = rmtree( "$config_vars{'snapshot_root'}/$interval.$interval_max/" );
 			if ($result == 0)	{
@@ -575,8 +577,7 @@ sub rotate_interval	{
 	# rotate the middle ones
 	for (my $i=($interval_max-1); $i>=0; $i--)	{
 		if ( -d "$config_vars{'snapshot_root'}/$interval.$i" )	{
-			
-			if ($verbose)	{ print "rename(\"$config_vars{'snapshot_root'}/$interval.$i/\", \"$config_vars{'snapshot_root'}/$interval." . ($i+1) . "/\");\n"; }
+			if ($verbose)	{ print "mv $config_vars{'snapshot_root'}/$interval.$i/ $config_vars{'snapshot_root'}/$interval." . ($i+1) . "/\n"; }
 			if ($test == 0)	{
 				my $result = rename( "$config_vars{'snapshot_root'}/$interval.$i/", ("$config_vars{'snapshot_root'}/$interval." . ($i+1) . '/') );
 				if ($result == 0)	{
@@ -588,13 +589,20 @@ sub rotate_interval	{
 	
 	# hard link (except for directories) previous interval over to .0
 	if ( -d "$config_vars{'snapshot_root'}/$prev_interval.$prev_interval_max" )	{
-		if ($verbose)	{ print "$config_vars{'cmd_cp'} -al $config_vars{'snapshot_root'}/$prev_interval.$prev_interval_max/ $config_vars{'snapshot_root'}/$interval.0/\n"; }
+		if ($verbose)	{
+			if ($use_gnu_cp)	{
+				print "$config_vars{'cmd_cp'} -al $config_vars{'snapshot_root'}/$prev_interval.$prev_interval_max/ ";
+				print "$config_vars{'snapshot_root'}/$interval.0/\n";
+			} else	{
+				print "# perl: native_cp_al(\"$config_vars{'snapshot_root'}/$prev_interval.$prev_interval_max/\", ";
+				print "\"$config_vars{'snapshot_root'}/$interval.0/\");\n";
+			}
+		}
 		if ($test == 0)	{
 			my $result = cp_al( "$config_vars{'snapshot_root'}/$prev_interval.$prev_interval_max/", "$config_vars{'snapshot_root'}/$interval.0/" );
 			if (! $result)	{
 				bail("Error! cp_al(\"$config_vars{'snapshot_root'}/$prev_interval.$prev_interval_max/\", \"$config_vars{'snapshot_root'}/$interval.0/\") failed");
 			}
-			# system( $config_vars{'cmd_cp'}, '-al', "$config_vars{'snapshot_root'}/$prev_interval.$prev_interval_max/", "$config_vars{'snapshot_root'}/$interval.0/" );
 		}
 	}
 }
