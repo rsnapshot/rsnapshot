@@ -10,11 +10,12 @@ rsnaptar
 backup_pgsql.sh
 ------------------------------------------------------------------------------
     An example script to backup a PostgreSQL database, to be invoked from
-    rsnapshot using the "backup_script" parameter.
+    rsnapshot using the "backup_script" parameter. You will probably need to
+    modify this for your setup.
 
 backup_rsnapshot_cvsroot.sh
 ------------------------------------------------------------------------------
     An example script to backup the CVS repository for the rsnapshot project,
     which is hosted on SourceForge. This script is a good example of using
-    wget to archive web content in your backups. This script is designed to
-    be invoked from rsnapshot using the "backup_script" parameter.
+    the wget program to archive web content in your backups. This script is
+    designed to be invoked from rsnapshot using the "backup_script" parameter.
