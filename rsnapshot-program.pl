@@ -1623,7 +1623,7 @@ sub file_diff   {
 	if (!defined($st2))	{ return (undef); }
 	
 	# if they aren't even the same size, they can't possibly be the same,
-	# so return that they're different and don't bother opening up the files at all
+	# therefore, they are different.
 	if ($st1->size != $st2->size)	{
 		return (1);
 	}
