@@ -41,7 +41,7 @@ use POSIX qw(locale_h);	# setlocale()
 $| = 1;
 
 # version of rsnapshot
-my $VERSION = '1.2.2';
+my $VERSION = '1.2.1';
 
 # command or interval to execute (first cmd line arg)
 my $cmd;
@@ -128,7 +128,7 @@ my $default_ssh_args			= undef;
 my $default_du_args				= '-csh';
 
 # set default for use_lazy_deletes
-my $use_lazy_deletes		= 0; # do not delete the oldest archive until after backup
+my $use_lazy_deletes = 0;	# do not delete the oldest archive until after backup
 
 # exactly how the program was called, with all arguments
 # this is set before getopts() modifies @ARGV
@@ -2387,7 +2387,7 @@ sub handle_interval {
 		# this is not the most frequent unit, just rotate
 		rotate_higher_interval( $id_ref );
 	}
-
+	
 	if ( -d "$config_vars{'snapshot_root'}/$$id_ref{'interval'}.delete" ) {
 		display_rm_rf("$config_vars{'snapshot_root'}/$$id_ref{'interval'}.delete/");
 		my $result = rm_rf_bg( "$config_vars{'snapshot_root'}/$$id_ref{'interval'}.delete/" );
@@ -2474,13 +2474,14 @@ sub rotate_lowest_snapshots {
 			# if use_lazy_deletes is set move the oldest directory to interval.delete
 			# otherwise preform the default behavior
 			if (1 == $use_lazy_deletes) {
-				print_cmd("mv ",
-					"$config_vars{'snapshot_root'}/$interval.$interval_max/ ",
-					"$config_vars{'snapshot_root'}/$interval.delete/");
+				print_cmd("mv",
+					"$config_vars{'snapshot_root'}/$interval.$interval_max/",
+					"$config_vars{'snapshot_root'}/$interval.delete/"
+				);
 				
 				my $result = safe_rename(
 					"$config_vars{'snapshot_root'}/$interval.$interval_max",
-					("$config_vars{'snapshot_root'}/$interval.delete")
+					"$config_vars{'snapshot_root'}/$interval.delete"
 				);
 				if (0 == $result) {
 					my $errstr = '';
@@ -2502,7 +2503,7 @@ sub rotate_lowest_snapshots {
 	if ($interval_max > 0) {
 		for (my $i=($interval_max-1); $i>0; $i--) {
 			if ( -d "$config_vars{'snapshot_root'}/$interval.$i" ) {
-				print_cmd("mv ",
+				print_cmd("mv",
 							"$config_vars{'snapshot_root'}/$interval.$i/ ",
 							"$config_vars{'snapshot_root'}/$interval." . ($i+1) . "/");
 				
@@ -4904,9 +4905,9 @@ B<use_lazy_deletes    1>
 =over 4
 
 Changes default behavior of rsnapshot and does not initially remove the 
-oldest snapshot.  Instead it move that directory to "name".delete, and 
+oldest snapshot.  Instead it move that directory to "interval".delete, and 
 continues as normal.  Once the backup has been completed a background job
-will be created to remove the "name".delete directory, and rsnapshot will
+will be created to remove the "interval".delete directory, and rsnapshot will
 return immediately.  This has been reported to significantly speed up the 
 backup process since it does not wait for the directory to be deleted prior
 to starting.
