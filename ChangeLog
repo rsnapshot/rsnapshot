@@ -3,6 +3,11 @@ rsnapshot changelog
 http://www.rsnapshot.org/
 ------------------------------------------------------------------------------
 
+VERSION 1.1.2 (??? ?? ??:?? 2004)
+------------------------------------------------------------------------------
+- Fixed a slightly inconvenient permissions issue in rsnaptar
+- Added support for arbitrary arguments to backup_script files
+
 VERSION 1.1.1 (Feb 11 23:24 2004)
 ------------------------------------------------------------------------------
 - Changed some fatal errors to warnings in some recursive subroutines

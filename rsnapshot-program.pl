@@ -491,14 +491,20 @@ if ( -f "$config_file" )	{
 		
 		# BACKUP SCRIPTS
 		if ($var eq 'backup_script')	{
-			my $script		= $value;	# backup script to run
+			my $full_script	= $value;	# backup script to run (including args)
 			my $dest		= $value2;	# dest directory
-			my %hash;
+			my %hash;					# tmp hash to stick in the backup points array
+			my $script;					# script file (no args)
+			my @script_argv;			# tmp spot to help us seperate the script from the args
 			
 			if ( !defined($config_vars{'snapshot_root'}) )	{
 				config_err($file_line_num, "$line - snapshot_root needs to be defined before backup scripts");
 				next;
 			}
+			
+			# get the base name of the script, not counting any arguments to it
+			@script_argv = split(/\s+/, $full_script);
+			$script = $script_argv[0];
 			
 			# make sure the script is a full path
 			if (1 == is_valid_local_abs_path($dest))	{
@@ -520,7 +526,7 @@ if ( -f "$config_file" )	{
 				config_err($file_line_num, "$line - Backup script \"$script\" is not executable or does not exist");
 			}
 			
-			$hash{'script'}	= $script;
+			$hash{'script'}	= $full_script;
 			$hash{'dest'}	= $dest;
 			
 			$line_syntax_ok = 1;
