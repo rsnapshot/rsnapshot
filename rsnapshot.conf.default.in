@@ -78,6 +78,11 @@ verbose		2
 #
 #lockfile	/var/lock/subsys/rsnapshot
 
+# If your version of rsync supports --link-dest, you should enable this.
+# The default is 0 (off).
+#
+#link_dest	0
+
 # If this is enabled, rsync won't span filesystem partitions within a
 # backup point. This essentially passes the -x option to rsync.
 # The default is 0 (off).

@@ -96,6 +96,7 @@ my $have_ssh	= 0;
 my $test			= 0; # turn verbose on, but don't execute any filesystem commands
 my $do_configtest	= 0; # parse config file and exit
 my $one_fs			= 0; # one file system (don't cross partitions within a backup point)
+my $link_dest		= 0; # use the --link-dest option to rsync
 
 # how much noise should we make? the default is 2
 #
@@ -472,6 +473,15 @@ if ( -f "$config_file" )	{
 		# GLOBAL OPTIONS from the config file
 		# ALL ARE OPTIONAL
 		#
+		# LINK_DEST
+		if ($var eq 'link_dest')	{
+			if (!defined($value))		{ bail("link_dest can not be blank"); }
+			if (!is_boolean($value))	{ bail("\"$value\" is not a valid entry, must be 0 or 1 only"); }
+			
+			if (1 == $value)	{ $link_dest = 1; }
+			$line_syntax_ok = 1;
+			next;
+		}
 		# ONE_FS
 		if ($var eq 'one_fs')	{
 			if (!defined($value))		{ bail("one_fs can not be blank"); }
@@ -1088,23 +1098,39 @@ sub backup_interval	{
 		}
 	}
 	
-	# hard link (except for directories, symlinks, and special files) .0 over to .1
+	# .0 and .1 require more attention:
 	if ( -d "$config_vars{'snapshot_root'}/$interval.0" )	{
 		my $result;
 		
-		# decide which verbose message to show, if at all
-		if ($verbose > 2)	{
-			if (1 == $have_gnu_cp)	{
-				print "$config_vars{'cmd_cp'} -al $config_vars{'snapshot_root'}/$interval.0/ $config_vars{'snapshot_root'}/$interval.1/\n";
-			} else	{
-				print "native_cp_al(\"$config_vars{'snapshot_root'}/$interval.0/\", \"$config_vars{'snapshot_root'}/$interval.1/\")\n";
+		# if we're using rsync --link-dest, we need to mv .0 to .1 now
+		if (1 == $link_dest)	{
+			# show verbose messages
+			if ($verbose > 2)	{
+				print "mv $config_vars{'snapshot_root'}/$interval.0/ $config_vars{'snapshot_root'}/$interval.1/\n";
 			}
-		}
-		# call generic cp_al() subroutine
-		if (0 == $test)	{
-			$result = cp_al( "$config_vars{'snapshot_root'}/$interval.0/", "$config_vars{'snapshot_root'}/$interval.1/" );
-			if (! $result)	{
-				bail("Error! cp_al(\"$config_vars{'snapshot_root'}/$interval.0/\", \"$config_vars{'snapshot_root'}/$interval.1/\")");
+			# move .0 to .1
+			if (0 == $test)	{
+				my $result = rename( "$config_vars{'snapshot_root'}/$interval.0/", "$config_vars{'snapshot_root'}/$interval.1/" );
+				if (0 == $result)	{
+					bail("Error! rename(\"$config_vars{'snapshot_root'}/$interval.0/\", \"$config_vars{'snapshot_root'}/$interval.1/\")");
+				}
+			}
+		# otherwise, we hard link (except for directories, symlinks, and special files) .0 over to .1
+		} else	{
+			# decide which verbose message to show, if at all
+			if ($verbose > 2)	{
+				if (1 == $have_gnu_cp)	{
+					print "$config_vars{'cmd_cp'} -al $config_vars{'snapshot_root'}/$interval.0/ $config_vars{'snapshot_root'}/$interval.1/\n";
+				} else	{
+					print "native_cp_al(\"$config_vars{'snapshot_root'}/$interval.0/\", \"$config_vars{'snapshot_root'}/$interval.1/\")\n";
+				}
+			}
+			# call generic cp_al() subroutine
+			if (0 == $test)	{
+				$result = cp_al( "$config_vars{'snapshot_root'}/$interval.0/", "$config_vars{'snapshot_root'}/$interval.1/" );
+				if (! $result)	{
+					bail("Error! cp_al(\"$config_vars{'snapshot_root'}/$interval.0/\", \"$config_vars{'snapshot_root'}/$interval.1/\")");
+				}
 			}
 		}
 	}
@@ -1206,6 +1232,11 @@ sub backup_interval	{
 			# this should have already been validated once, but better safe than sorry
 			} else	{
 				bail("Could not understand source \"$src\" in backup_interval()");
+			}
+			
+			# if we're using --link-dest, we'll need to specify .1 as the link-dest directory
+			if (1 == $link_dest)	{
+				push(@rsync_long_args_stack, "--link-dest=$config_vars{'snapshot_root'}/$interval.1/$$sp_ref{'dest'}");
 			}
 			
 			# assemble the final command
