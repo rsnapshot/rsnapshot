@@ -16,6 +16,10 @@ INSTALLATION
         su
         make install
 
+        Also, make sure and see the README file or the ChangeLog for
+        some minor but important differences between the 1.0 and 1.1
+        releases.
+
     IF YOU ARE INSTALLING FOR THE FIRST TIME (and just want the defaults):
 
         ./configure

@@ -1,25 +1,14 @@
 rsnapshot TODO list:
 
-for version 1.0.x
+for version 1.1.x
 ------------------------------------------------------------------------------
-- Add include/exclude and include_file/exclude_file feature to local args,
-  currently it's just on the global level
-
-- Document all this new stuff in the man page (and HOWTO):
-    logfile
-    loglevel
-    include
-    exclude
-    include_file
-    exclude_file
-    The new exit status (1 instead of -1/255 now)
-
 - Figure out a way to do transfers the other way: from clients to the server
   instead of just from the server to the clients. Of course it will have to
   be very secure. Ideally we could support chroot environments for the
   connecting clients. This will probably result in a "backup_sync" parameter,
   as well as a designated root directory to allow clients to rsync into, that
-  will then be synced into the main snapshots.
+  will then be synced into the main snapshots. This sync directory will need
+  to be on the same filesystem as the actual snapshots, to allow hard links.
 
 - Update string manipulations and comparisons of paths to use File::Spec and
   File::Basename functions where possible. Double check they're fully

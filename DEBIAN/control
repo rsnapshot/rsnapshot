@@ -14,4 +14,4 @@ Description: Local and remote filesystem snapshot utility
              machines. rsnapshot makes extensive use of
              hard links, so disk space is only used when
              absolutely necessary.
-installed-size: 140
+installed-size: 196

@@ -70,11 +70,22 @@ interval	weekly	4
 #
 verbose		2
 
+# Same as "verbose" above, but controls the amount of data sent to the
+# logfile, if one is being used. The default is 3.
+loglevel	3
+
+# If you enable this, data will be written to the file you specify. The
+# amount of data written is controlled by the "loglevel" parameter.
+#logfile	/var/log/rsnapshot
+
 # The include and exclude parameters, if enabled, simply get passed directly
-# to rsync. Please look up the --include and --exclude options in the
-# rsync man page for more details.
+# to rsync. If you have multiple include/exclude patterns, put each one on a
+# seperate line. Please look up the --include and --exclude options in the
+# rsync man page for more details. 
 # 
 #include	???
+#include	???
+#exclude	???
 #exclude	???
 
 # The include_file and exclude_file parameters, if enabled, simply get

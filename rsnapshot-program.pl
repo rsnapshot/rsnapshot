@@ -81,9 +81,6 @@ my %opts;
 # command or interval to execute (first cmd line arg)
 my $cmd;
 
-# assume the config file syntax is OK unless we encounter problems
-my $file_syntax_ok = 1;
-
 # count the lines in the config file, so the user can pinpoint errors more precisely
 my $file_line_num = 0;
 
@@ -124,7 +121,8 @@ my $rsync_include_args		= undef;
 my $rsync_include_file_args	= undef;
 
 # assume everything will go well. one slip up and the flag will be toggled
-my $run_perfect	= 1;
+my $run_perfect		= 1;
+my $config_perfect	= 1;
 
 # remember what directory we started in
 my $cwd = cwd();
@@ -269,8 +267,7 @@ if ( -f "$config_file" )	{
 		# warn about entries we don't understand, and immediately prevent the
 		# program from running or parsing anything else
 		if (!defined($var) or !defined($value))	{
-			config_error($file_line_num, $line);
-			$file_syntax_ok = 0;
+			config_err($file_line_num, $line);
 			next;
 		}
 		
@@ -278,20 +275,29 @@ if ( -f "$config_file" )	{
 		if ($var eq 'snapshot_root')	{
 			# make sure this is a full path
 			if (0 == is_valid_local_abs_path($value))	{
-				config_error($file_line_num, "$line - snapshot_root must be a full path");
-				$file_syntax_ok = 0;
+				config_err($file_line_num, "$line - snapshot_root must be a full path");
 				next;
+			# if the snapshot root already exists:
+			} elsif ( -e "$value" )	{
+				# if path exists already, make sure it's a directory
+				if ((-e "$value") && (! -d "$value"))	{
+					config_err($file_line_num, "$line - snapshot_root must be a directory");
+					next;
+				}
+				# make sure it's readable
+				if ( ! -r "$value" )	{
+					config_err($file_line_num, "$line - snapshot_root exists but is not readable");
+					next;
+				}
+				# make sure it's writable
+				if ( ! -w "$value" )	{
+					config_err($file_line_num, "$line - snapshot_root exists but is not writable");
+					next;
+				}
 			}
 			
 			# remove the trailing slash(es) if present
 			$value = remove_trailing_slash($value);
-			
-			# if path exists already, make sure it's a directory
-			if ((-e "$value") && (! -d "$value"))	{
-				config_error($file_line_num, $line);
-				# exit now since we'd get unnecessary failures by snapshot_root being undefined
-				bail("snapshot_root must be a directory");
-			}
 			
 			$config_vars{'snapshot_root'} = $value;
 			$line_syntax_ok = 1;
@@ -300,63 +306,77 @@ if ( -f "$config_file" )	{
 		
 		# CHECK FOR RSYNC (required)
 		if ($var eq 'cmd_rsync')	{
-			if ((-f "$value") && (-x "$value"))	{
+			if ((-f "$value") && (-x "$value") && (1 == is_real_local_abs_path($value)))	{
 				$config_vars{'cmd_rsync'} = $value;
 				$have_rsync = 1;
 				$line_syntax_ok = 1;
 				next;
 			} else	{
-				config_error($file_line_num, $line);
-				bail("Could not execute $value, please fix cmd_rsync in $config_file");
+				config_err($file_line_num, "$line - $value is not executable");
 			}
 		}
 		
 		# CHECK FOR SSH (optional)
 		if ($var eq 'cmd_ssh')	{
-			if ((-f "$value") && (-x "$value"))	{
+			if ((-f "$value") && (-x "$value") && (1 == is_real_local_abs_path($value)))	{
 				$config_vars{'cmd_ssh'} = $value;
 				$have_ssh = 1;
 				$line_syntax_ok = 1;
 				next;
 			} else	{
-				config_error($file_line_num, $line);
-				bail("Could not execute $value, please fix cmd_ssh in $config_file");
+				config_err($file_line_num, "$line - $value is not executable");
 			}
 		}
 		
 		# CHECK FOR GNU cp (optional)
 		if ($var eq 'cmd_cp')	{
-			if ((-f "$value") && (-x "$value"))	{
+			if ((-f "$value") && (-x "$value") && (1 == is_real_local_abs_path($value)))	{
 				$config_vars{'cmd_cp'} = $value;
 				$have_gnu_cp = 1;
 				$line_syntax_ok = 1;
 				next;
 			} else	{
-				config_error($file_line_num, $line);
-				bail("Could not execute $value, please fix cmd_cp in $config_file");
+				config_err($file_line_num, "$line - $value is not executable");
 			}
 		}
 		
 		# CHECK FOR LOGGER (syslog program) (optional)
 		if ($var eq 'cmd_logger')	{
-			if ((-f "$value") && (-x "$value"))	{
+			if ((-f "$value") && (-x "$value") && (1 == is_real_local_abs_path($value)))	{
 				$config_vars{'cmd_logger'} = $value;
 				$line_syntax_ok = 1;
 				next;
 			} else	{
-				config_error($file_line_num, $line);
-				bail("Could not execute $value, please fix cmd_logger in $config_file");
+				config_err($file_line_num, "$line - $value is not executable");
 			}
 		}
 		
 		# INTERVALS
 		if ($var eq 'interval')	{
-			if (!defined($value))		{ bail("Interval can not be blank"); }
-			if ($value !~ m/^[\w\d]+$/)	{ bail("\"$value\" is not a valid interval, must be alphanumeric characters only"); }
+			# check if interval is blank
+			if (!defined($value))		{ config_err($file_line_num, "$line - Interval can not be blank"); }
 			
-			if (!defined($value2))		{ bail("\"$value\" number can not be blank"); }
-			if ($value2 !~ m/^\d+$/)	{ bail("\"$value2\" is not a legal value for an interval"); }
-			if ($value2 <= 0)			{ bail("\"$value\" must be at least 1 or higher"); }
+			# check if number is actually a number
+			if ($value !~ m/^[\w\d]+$/)	{
+				config_err($file_line_num,
+					"$line - \"$value\" is not a valid interval, must be alphanumeric characters only");
+			}
+			
+			# check if number is blank
+			if (!defined($value2))		{
+				config_err($file_line_num, "$line - \"$value\" number can not be blank");
+			}
+			
+			# check if number is valid
+			if ($value2 !~ m/^\d+$/)	{
+				config_err($file_line_num, "$line - \"$value2\" is not a legal value for an interval");
+			# ok, it's a number. is it positive?
+			} else	{
+				# make sure number is positive
+				if ($value2 <= 0)			{
+					config_err($file_line_num, "$line - \"$value\" must be at least 1 or higher");
+				}
+			}
 			
 			my %hash;
 			$hash{'interval'}	= $value;
@@ -374,18 +394,23 @@ if ( -f "$config_file" )	{
 			my $opts_ref	= undef;	# array_ref to hold parsed opts
 			
 			if ( !defined($config_vars{'snapshot_root'}) )	{
-				bail("snapshot_root needs to be defined before backup points");
+				config_err($file_line_num, "$line - snapshot_root needs to be defined before backup points");
+				next;
 			}
 			
 			# make sure we have a local path for the destination
 			# (we do NOT want an absolute path)
 			if ( is_valid_local_abs_path($dest) )	{
-				bail("Backup destination $dest must be a local path");
+				config_err($file_line_num, "$line - Backup destination $dest must be a local path");
 			}
 			
 			# make sure we aren't traversing directories (exactly 2 dots can't be next to each other)
-			if ( is_directory_traversal($src) )		{ bail("Directory traversal attempted in $src"); }
-			if ( is_directory_traversal($dest) )	{ bail("Directory traversal attempted in $dest"); }
+			if ( is_directory_traversal($src) )		{
+				config_err($file_line_num, "$line - Directory traversal attempted in $src");
+			}
+			if ( is_directory_traversal($dest) )	{
+				config_err($file_line_num, "$line - Directory traversal attempted in $dest");
+			}
 			
 			# validate source path
 			#
@@ -396,7 +421,9 @@ if ( -f "$config_file" )	{
 			# syntactically valid remote ssh?
 			} elsif ( is_ssh_path($src) )	{
 				# if it's an absolute ssh path, make sure we have ssh
-				if (0 == $have_ssh)	{ bail("Cannot handle $src, cmd_ssh not defined in $config_file"); }
+				if (0 == $have_ssh)	{
+					config_err($file_line_num, "$line - Cannot handle $src, cmd_ssh not defined in $config_file");
+				}
 				$line_syntax_ok = 1;
 				
 			# if it's anonymous rsync, we're ok
@@ -405,18 +432,20 @@ if ( -f "$config_file" )	{
 				
 			# fear the unknown
 			} else	{
-				bail("Source directory \"$src\" doesn't exist");
+				config_err($file_line_num, "$line - Source directory \"$src\" doesn't exist");
 			}
 			
 			# validate destination path
 			#
-			if ( is_valid_local_abs_path($dest) )	{ bail("Full paths not allowed for backup destinations"); }
+			if ( is_valid_local_abs_path($dest) )	{
+				config_err($file_line_num, "$line - Full paths not allowed for backup destinations");
+			}
 			
 			# if we have special options specified for this backup point, remember them
 			if (defined($opt_str) && $opt_str)	{
 				$opts_ref = parse_backup_opts($opt_str);
 				if (!defined($opts_ref))	{
-					bail("Syntax error on line $file_line_num in extra opts: $opt_str");
+					config_err($file_line_num, "$line - Syntax error on line $file_line_num in extra opts: $opt_str");
 				}
 			}
 			
@@ -467,23 +496,28 @@ if ( -f "$config_file" )	{
 			my %hash;
 			
 			if ( !defined($config_vars{'snapshot_root'}) )	{
-				bail("snapshot_root needs to be defined before backup points");
+				config_err($file_line_num, "$line - snapshot_root needs to be defined before backup scripts");
+				next;
 			}
 			
 			# make sure the script is a full path
 			if (1 == is_valid_local_abs_path($dest))	{
-				bail("Backup destination $dest must be a local path");
+				config_err($file_line_num, "$line - Backup destination $dest must be a local path");
 			}
 			
 			# make sure we aren't traversing directories (exactly 2 dots can't be next to each other)
-			if (1 == is_directory_traversal($dest))	{ bail("Directory traversal attempted in $dest"); }
+			if (1 == is_directory_traversal($dest))	{
+				config_err($file_line_num, "$line - Directory traversal attempted in $dest");
+			}
 			
 			# validate destination path
-			if ( is_valid_local_abs_path($dest) )	{ bail("Full paths not allowed for backup destinations"); }
+			if ( is_valid_local_abs_path($dest) )	{
+				config_err($file_line_num, "$line - Full paths not allowed for backup destinations");
+			}
 			
 			# make sure script exists and is executable
-			if ((! -f "$script") or (! -x "$script"))	{
-				bail("Backup script \"$script\" is not executable or does not exist");
+			if ((! -f "$script") or (! -x "$script") && is_real_local_abs_path($script))	{
+				config_err($file_line_num, "$line - Backup script \"$script\" is not executable or does not exist");
 			}
 			
 			$hash{'script'}	= $script;
@@ -501,8 +535,14 @@ if ( -f "$config_file" )	{
 		#
 		# LINK_DEST
 		if ($var eq 'link_dest')	{
-			if (!defined($value))		{ bail("link_dest can not be blank"); }
-			if (!is_boolean($value))	{ bail("\"$value\" is not a legal value for link_dest, must be 0 or 1 only"); }
+			if (!defined($value))	{
+				config_err($file_line_num, "$line - link_dest can not be blank");
+				next;
+			}
+			if (!is_boolean($value))	{
+				config_err($file_line_num, "$line - \"$value\" is not a legal value for link_dest, must be 0 or 1 only");
+				next;
+			}
 			
 			if (1 == $value)	{ $link_dest = 1; }
 			$line_syntax_ok = 1;
@@ -510,8 +550,12 @@ if ( -f "$config_file" )	{
 		}
 		# ONE_FS
 		if ($var eq 'one_fs')	{
-			if (!defined($value))		{ bail("one_fs can not be blank"); }
-			if (!is_boolean($value))	{ bail("\"$value\" is not a legal value for one_fs, must be 0 or 1 only"); }
+			if (!defined($value))	{
+				config_err($file_line_num, "$line - one_fs can not be blank");
+			}
+			if (!is_boolean($value))	{
+				config_err($file_line_num, "$line - \"$value\" is not a legal value for one_fs, must be 0 or 1 only");
+			}
 			
 			if (1 == $value)	{ $one_fs = 1; }
 			$line_syntax_ok = 1;
@@ -519,9 +563,9 @@ if ( -f "$config_file" )	{
 		}
 		# LOCKFILE
 		if ($var eq 'lockfile')	{
-			if (!defined($value))	{ bail("lockfile can not be blank"); }
+			if (!defined($value))	{ config_err($file_line_num, "$line - lockfile can not be blank"); }
 			if (0 == is_valid_local_abs_path("$value"))	{
-				 bail("lockfile must be a full path");
+				 config_err($file_line_num, "$line - lockfile must be a full path");
 			}
 			$config_vars{'lockfile'} = $value;
 			$line_syntax_ok = 1;
@@ -550,13 +594,13 @@ if ( -f "$config_file" )	{
 		# INCLUDE FILE
 		if ($var eq 'include_file')	{
 			if (0 == is_real_local_abs_path($value))	{
-				bail("include_file $value must be a valid absolute path");
+				config_err($file_line_num, "$line - include_file $value must be a valid absolute path");
 			} elsif (1 == is_directory_traversal($value))	{
-				bail("Directory traversal attempted in $value");
+				config_err($file_line_num, "$line - Directory traversal attempted in $value");
 			} elsif (( -e "$value" ) && ( ! -f "$value" ))	{
-				bail("include_file $value exists, but is not a file");
+				config_err($file_line_num, "$line - include_file $value exists, but is not a file");
 			} elsif ( ! -r "$value" )	{
-				bail("include_file $value exists, but is not readable");
+				config_err($file_line_num, "$line - include_file $value exists, but is not readable");
 			} else	{
 				if (!defined($rsync_include_file_args))	{
 					$rsync_include_file_args = "--include-from=$value";
@@ -570,13 +614,13 @@ if ( -f "$config_file" )	{
 		# EXCLUDE FILE
 		if ($var eq 'exclude_file')	{
 			if (0 == is_real_local_abs_path($value))	{
-				bail("exclude_file $value must be a valid absolute path");
+				config_err($file_line_num, "$line - exclude_file $value must be a valid absolute path");
 			} elsif (1 == is_directory_traversal($value))	{
-				bail("Directory traversal attempted in $value");
+				config_err($file_line_num, "$line - Directory traversal attempted in $value");
 			} elsif (( -e "$value" ) && ( ! -f "$value" ))	{
-				bail("exclude_file $value exists, but is not a file");
+				config_err($file_line_num, "$line - exclude_file $value exists, but is not a file");
 			} elsif ( ! -r "$value" )	{
-				bail("exclude_file $value exists, but is not readable");
+				config_err($file_line_num, "$line - exclude_file $value exists, but is not readable");
 			} else	{
 				if (!defined($rsync_include_file_args))	{
 					$rsync_include_file_args = "--exclude-from=$value";
@@ -608,11 +652,11 @@ if ( -f "$config_file" )	{
 		# LOGFILE
 		if ($var eq 'logfile')	{
 			if (0 == is_valid_local_abs_path($value))	{
-				bail("logfile must be a valid absolute path");
+				config_err($file_line_num, "$line - logfile must be a valid absolute path");
 			} elsif (1 == is_directory_traversal($value))	{
-				bail("Directory traversal attempted in $value");
+				config_err($file_line_num, "$line - Directory traversal attempted in $value");
 			} elsif (( -e "$value" ) && ( ! -f "$value" ))	{
-				bail("logfile $value exists, but is not a file");
+				config_err($file_line_num, "$line - logfile $value exists, but is not a file");
 			} else	{
 				$config_vars{'logfile'} = $value;
 				$line_syntax_ok = 1;
@@ -629,7 +673,7 @@ if ( -f "$config_file" )	{
 				$line_syntax_ok = 1;
 				next;
 			} else	{
-				bail('verbose must be a value between 1 and 5');
+				config_err($file_line_num, "$line - verbose must be a value between 1 and 5");
 			}
 		}
 		# LOGLEVEL
@@ -642,16 +686,18 @@ if ( -f "$config_file" )	{
 				$line_syntax_ok = 1;
 				next;
 			} else	{
-				bail('loglevel must be a value between 1 and 5');
+				config_err($file_line_num, "$line - loglevel must be a value between 1 and 5");
 			}
 		}
 		
 		# make sure we understood this line
 		# if not, warn the user, and prevent the program from executing
-		if (0 == $line_syntax_ok)	{
-			config_error($file_line_num, $line);
-			$file_syntax_ok = 0;
-			next;
+		# however, don't bother if the user has already been notified
+		if (1 == $config_perfect)	{
+			if (0 == $line_syntax_ok)	{
+				config_err($file_line_num, $line);
+				next;
+			}
 		}
 	}
 	close(CONFIG) or print_err("Warning! Could not close $config_file", 2);
@@ -659,7 +705,6 @@ if ( -f "$config_file" )	{
 	# make sure we got rsync in there somewhere
 	if (0 == $have_rsync)	{
 		print_err("cmd_rsync was not defined.", 1);
-		$file_syntax_ok = 0;
 	}
 } else	{
 	# warn that the config file could not be found
@@ -679,7 +724,7 @@ if ( -f "$config_file" )	{
 
 # SINS OF COMMISSION
 # (incorrect entries in config file)
-if (0 == $file_syntax_ok)	{
+if (0 == $config_perfect)	{
 	print_err("---------------------------------------------------------------------", 1);
 	print_err("Errors were found in $config_file, rsnapshot can not continue.", 1);
 	print_err("If you think an entry looks right, make sure you don't have", 1);
@@ -758,7 +803,7 @@ if (defined($rsync_include_file_args))	{
 
 # CONFIG TEST ONLY?
 # if so, pronounce success and quit right here
-if ($do_configtest && $file_syntax_ok)	{
+if ((1 == $do_configtest) && (1 == $config_perfect))	{
 	print "Syntax OK\n";
 	exit(0);
 }
@@ -936,14 +981,16 @@ sub bail	{
 
 # accepts line number, errstr
 # prints a config file error
-sub config_error	{
+sub config_err	{
 	my $line_num	= shift(@_);
 	my $errstr		= shift(@_);
 	
 	if (!defined($line_num))	{ $line_num = -1; }
-	if (!defined($errstr))		{ $errstr = 'config_error() called without an error string!'; }
+	if (!defined($errstr))		{ $errstr = 'config_err() called without an error string!'; }
 	
 	print_err("$config_file on line $line_num: $errstr", 1);
+	
+	$config_perfect = 0;
 }
 
 # accepts a string (or an array)
@@ -993,10 +1040,10 @@ sub print_cmd	{
 			
 			# wrap if we're at the edge
 			if ($chars > $colmax)	{
-				print "\\\n  ";
+				print "\\\n    ";
 				
-				# 2 spaces + string length
-				$chars = 2 + length($tokens[$i]);
+				# 4 spaces + string length
+				$chars = 4 + length($tokens[$i]);
 			}
 			
 			# print out this token
@@ -1208,6 +1255,10 @@ sub parse_backup_opts	{
 	my @pairs;
 	my %parsed_opts;
 	
+	# pre-buffer extra rsync arguments
+	my $rsync_include_args		= undef;
+	my $rsync_include_file_args	= undef;
+	
 	# make sure we got something
 	if (!defined($opts_str))	{ return (undef); }
 	if (!$opts_str)				{ return (undef); }
@@ -1231,31 +1282,132 @@ sub parse_backup_opts	{
 		
 		# ok, it's a name/value pair and it's ready for more validation
 		$parsed_opts{$name} = $value;
-	}
-	
-	# validate args
-	# ONE_FS
-	if ( defined($parsed_opts{'one_fs'}) )	{
-		if (!is_boolean($parsed_opts{'one_fs'}))	{
+		
+		# VALIDATE ARGS
+		# one_fs
+		if ( $name eq 'one_fs' )	{
+			if (!is_boolean($parsed_opts{'one_fs'}))	{
+				return (undef);
+			}
+		# rsync short args
+		} elsif ( $name eq 'rsync_short_args' )	{
+			# pass unchecked
+			
+		# rsync long args
+		} elsif ( $name eq 'rsync_long_args' )	{
+			# pass unchecked
+			
+		# ssh args
+		} elsif ( $name eq 'ssh_args' )	{
+			# pass unchecked
+			
+		# include
+		} elsif ( $name eq 'include' )	{
+			# don't validate contents
+			# coerce into rsync_include_args
+			# then remove the "include" key/value pair
+			if (!defined($rsync_include_args))	{
+				$rsync_include_args = "--include=$parsed_opts{'include'}";
+			} else	{
+				$rsync_include_args .= " --include=$parsed_opts{'include'}";
+			}
+			
+			delete($parsed_opts{'include'});
+			
+		# exclude
+		} elsif ( $name eq 'exclude' )	{
+			# don't validate contents
+			# coerce into rsync_include_args
+			# then remove the "include" key/value pair
+			if (!defined($rsync_include_args))	{
+				$rsync_include_args = "--exclude=$parsed_opts{'exclude'}";
+			} else	{
+				$rsync_include_args .= " --exclude=$parsed_opts{'exclude'}";
+			}
+			
+			delete($parsed_opts{'exclude'});
+			
+		# include file
+		} elsif ( $name eq 'include_file' )	{
+			# verify that this file exists and is readable
+			if (0 == is_real_local_abs_path($value))	{
+				print_err("include_file $value must be a valid absolute path", 2);
+				return (undef);
+			} elsif (1 == is_directory_traversal($value))	{
+				print_err("Directory traversal attempted in $value", 2);
+				return (undef);
+			} elsif (( -e "$value" ) && ( ! -f "$value" ))	{
+				print_err("include_file $value exists, but is not a file", 2);
+				return (undef);
+			} elsif ( ! -r "$value" )	{
+				print_err("include_file $value exists, but is not readable", 2);
+				return (undef);
+			}
+			
+			# coerce into rsync_include_file_args
+			# then remove the "include_file" key/value pair
+			if (!defined($rsync_include_file_args))	{
+				$rsync_include_file_args = "--include-from=$parsed_opts{'include_file'}";
+			} else	{
+				$rsync_include_file_args .= " --include-from=$parsed_opts{'include_file'}";
+			}
+			
+			delete($parsed_opts{'include_file'});
+			
+		# exclude file
+		} elsif ( $name eq 'exclude_file' )	{
+			# verify that this file exists and is readable
+			if (0 == is_real_local_abs_path($value))	{
+				print_err("exclude_file $value must be a valid absolute path", 2);
+				return (undef);
+			} elsif (1 == is_directory_traversal($value))	{
+				print_err("Directory traversal attempted in $value", 2);
+				return (undef);
+			} elsif (( -e "$value" ) && ( ! -f "$value" ))	{
+				print_err("exclude_file $value exists, but is not a file", 2);
+				return (undef);
+			} elsif ( ! -r "$value" )	{
+				print_err("exclude_file $value exists, but is not readable", 2);
+				return (undef);
+			}
+			
+			# coerce into rsync_include_file_args
+			# then remove the "exclude_file" key/value pair
+			if (!defined($rsync_include_file_args))	{
+				$rsync_include_file_args = "--exclude-from=$parsed_opts{'exclude_file'}";
+			} else	{
+				$rsync_include_file_args .= " --exclude-from=$parsed_opts{'exclude_file'}";
+			}
+			
+			delete($parsed_opts{'exclude_file'});
+			
+		# if we don't know about it, it doesn't exist
+		} else	{
 			return (undef);
 		}
-	# RSYNC SHORT ARGS
-	} elsif ( defined($parsed_opts{'rsync_short_args'}) )	{
-		# pass unchecked
-		
-	# RSYNC LONG ARGS
-	} elsif ( defined($parsed_opts{'rsync_long_args'}) )	{
-		# pass unchecked
-		
-	# SSH ARGS
-	} elsif ( defined($parsed_opts{'ssh_args'}) )	{
-		# pass unchecked
-		
-	# if we don't know about it, it doesn't exist
-	} else	{
-		return (undef);
 	}
 	
+	# merge rsync_include_args and rsync_file_include_args in with either $global_default_rsync_long_args
+	# or $parsed_opts{'rsync_long_args'}
+	if (defined($rsync_include_args) or defined($rsync_include_file_args))	{
+		# if we never defined rsync_long_args, populate it with the global default
+		if (!defined($parsed_opts{'rsync_long_args'}))	{
+			if (defined($config_vars{'rsync_long_args'}))	{
+				$parsed_opts{'rsync_long_args'} = $config_vars{'rsync_long_args'};
+			} else	{
+				$parsed_opts{'rsync_long_args'} = $global_default_rsync_long_args;
+			}
+		}
+		
+		# now we have something in our local rsync_long_args
+		# let's concatenate the include/exclude/file stuff to it
+		if (defined($rsync_include_args))	{
+			$parsed_opts{'rsync_long_args'} .= " $rsync_include_args";
+		}
+		if (defined($rsync_include_file_args))	{
+			$parsed_opts{'rsync_long_args'} .= " $rsync_include_file_args";
+		}
+	}
 	
 	# if we got anything, return it as an array_ref
 	if (%parsed_opts)	{
@@ -1356,7 +1508,8 @@ sub is_valid_loglevel	{
 sub is_boolean	{
 	my $var = shift(@_);
 	
-	if (!defined($var))	{ return (undef); }
+	if (!defined($var))		{ return (0); }
+	if ($var !~ m/^\d+$/)	{ return (0); }
 	
 	if (1 == $var)	{ return (1); }
 	if (0 == $var)	{ return (1); }
@@ -1411,18 +1564,6 @@ sub is_anon_rsync_path	{
 }
 
 # accepts path
-# returns 1 if it's a syntactically valid absolute path
-# returns 0 otherwise
-sub is_valid_local_abs_path	{
-	my $path	= shift(@_);
-	
-	if (!defined($path))	{ return (undef); }
-	if ($path =~ m/^\//)	{ return (1); }
-	
-	return (0);
-}
-
-# accepts path
 # returns 1 if it's a real absolute path that currently exists
 # returns 0 otherwise
 sub is_real_local_abs_path	{
@@ -1438,11 +1579,32 @@ sub is_real_local_abs_path	{
 	return (0);
 }
 
+# accepts path
+# returns 1 if it's a syntactically valid absolute path
+# returns 0 otherwise
+sub is_valid_local_abs_path	{
+	my $path	= shift(@_);
+	
+	if (!defined($path))	{ return (undef); }
+	if ($path =~ m/^\//)	{
+		if (0 == is_directory_traversal($path))	{
+			 return (1);
+		}
+	}
+	
+	return (0);
+}
+
 sub is_directory_traversal	{
 	my $path = shift(@_);
 	
-	if (!defined($path))					{ return (undef); }
-	if ($path =~ m/[^\/\.]\.{2}[^\/\.]/)	{ return (1); }
+	if (!defined($path))		{ return (undef); }
+	
+	# /..
+	if ($path =~ m/\/\.\./)	{ return (1); }
+	
+	# ../
+	if ($path =~ m/\.\.\//)	{ return (1); }
 	return (0);
 }
 
@@ -1548,15 +1710,6 @@ sub backup_interval	{
 			}
 		# otherwise, we hard link (except for directories, symlinks, and special files) .0 over to .1
 		} else	{
-			# decide which verbose message to show, if at all
-			if (1 == $have_gnu_cp)	{
-				print_cmd("$config_vars{'cmd_cp'} -al $config_vars{'snapshot_root'}/$interval.0/ ",
-							"$config_vars{'snapshot_root'}/$interval.1/");
-			} else	{
-				print_cmd("native_cp_al(\"$config_vars{'snapshot_root'}/$interval.0/\", ",
-							"\"$config_vars{'snapshot_root'}/$interval.1/\")");
-			}
-			
 			# call generic cp_al() subroutine
 			if (0 == $test)	{
 				$result = cp_al(
@@ -1701,7 +1854,7 @@ sub backup_interval	{
 					# if we got this error and we were attempting --link-dest, there's
 					# a very good chance that this version of rsync is too old.
 					#
-					if ((1 == $link_dest) && (1 == $result))	{
+					if ((1 == $link_dest) && (1 == $retval))	{
 						print_err ("$config_vars{'cmd_rsync'} returned $retval. Does this version of rsync support --link-dest?", 2);
 						syslog_err("$config_vars{'cmd_rsync'} returned $retval. Does this version of rsync support --link-dest?");
 					} else	{
@@ -1714,7 +1867,9 @@ sub backup_interval	{
 		# OR, IF WE HAVE A BACKUP SCRIPT, RUN IT, THEN SYNC IT TO DEST
 		} elsif (defined($$sp_ref{'script'}))	{
 			# work in a temp dir, and make this the source for the rsync operation later
-			$tmpdir = "$config_vars{'snapshot_root'}/tmp/";
+			# not having a trailing slash is a subtle distinction. it allows us to use
+			# the same path if it's NOT a directory when we try to delete it.
+			$tmpdir = "$config_vars{'snapshot_root'}/tmp";
 			
 			# remove the tmp directory if it's still there for some reason
 			# (this shouldn't happen unless the program was killed prematurely, etc)
@@ -1722,12 +1877,24 @@ sub backup_interval	{
 				print_cmd("rm -rf $tmpdir");
 				
 				if (0 == $test)	{
-					$result = rmtree("$tmpdir", 0, 0);
-					if (0 == $result)	{
-						bail("Could not rmtree(\"$tmpdir\",0,0);");
+					# if it's a dir, delete it
+					if ( -d "$tmpdir" )	{
+						$result = rmtree("$tmpdir", 0, 0);
+						if (0 == $result)	{
+							bail("Could not rmtree(\"$tmpdir\",0,0);");
+						}
+					# if for some stupid reason it's a file, unlink it
+					} else	{
+						$result = unlink("$tmpdir");
+						if (0 == $result)	{
+							bail("unlink(\"$tmpdir\")");
+						}
 					}
 				}
 			}
+			
+			# we're creating now, not destroying. the tmp dir needs a trailing slash
+			$tmpdir .= '/';
 			
 			# create the tmp directory
 			print_cmd("mkdir -m 0755 -p $tmpdir");
@@ -1777,6 +1944,31 @@ sub backup_interval	{
 			
 			if (0 == $test)	{
 				chdir($cwd);
+			}
+			
+			# if we're using link_dest, pull back the previous files (as links) that were moved up if.
+			# this is because in this situation, .0 will always be empty, so we'll pull select things
+			# from .1 back to .0 if possible. these will be used as a baseline for diff comparisons by
+			# sync_if_different() down below.
+			if (1 == $link_dest)	{
+				my $lastdir	= "$config_vars{'snapshot_root'}/$interval.1/$$sp_ref{'dest'}/";
+				my $curdir	= "$config_vars{'snapshot_root'}/$interval.0/$$sp_ref{'dest'}/";
+				
+				# if we even have files from last time
+				if ( -e "$lastdir" )	{
+					
+					# and we're not somehow clobbering an existing directory (shouldn't happen)
+					if ( ! -e "$curdir" )	{
+						
+						# call generic cp_al() subroutine
+						if (0 == $test)	{
+							$result = cp_al( "$lastdir", "$curdir" );
+							if (! $result)	{
+								bail("Error! cp_al(\"$lastdir\", \"$curdir/\")");
+							}
+						}
+					}
+				}
 			}
 			
 			# sync the output of the backup script into this snapshot interval
@@ -1908,14 +2100,18 @@ sub rotate_interval	{
 # stub subroutine
 # calls either gnu_cp_al() or native_cp_al()
 # returns the value directly from whichever subroutine it calls
+# also prints out what's happening to the screen, if appropriate
 sub cp_al	{
 	my $src  = shift(@_);
 	my $dest = shift(@_);
 	my $result = 0;
 	
 	if (1 == $have_gnu_cp)	{
+		print_cmd("$config_vars{'cmd_cp'} -al $src $dest");
 		$result = gnu_cp_al("$src", "$dest");
+		
 	} else	{
+		print_cmd("native_cp_al(\"$src\", \"$dest\")");
 		$result = native_cp_al("$src", "$dest");
 	}
 	
@@ -2801,6 +2997,63 @@ are 1 through 5. The default is 2.
 4        Extra Verbose    Same as verbose, but with still more output
 
 5        Debug            All kinds of information
+
+=back
+
+B<loglevel            3>
+
+=over 4
+
+This number means the same thing as B<verbose> above, but it determines how
+much data is written to the logfile, if one is being written.
+
+=back
+
+B<logfile             /var/log/rsnapshot>
+
+=over 4
+
+Full filesystem path to the rsnapshot log file. If this is defined, a log file
+will be written, with the amount of data being controlled by B<loglevel>. If
+this is commented out, no log file will be written.
+
+=back
+
+B<include             ???>
+
+=over 4
+
+This gets passed directly to rsync using the --include directive. This
+parameter can be specified as many times as needed, with one pattern defined
+per line. See the rsync(1) man page for the syntax.
+
+=back
+
+B<exclude             ???>
+
+=over 4
+
+This gets passed directly to rsync using the --exclude directive. This
+parameter can be specified as many times as needed, with one pattern defined
+per line. See the rsync(1) man page for the syntax.
+
+=back
+
+B<include_file        /path/to/include/file>
+
+=over 4
+
+This gets passed directly to rsync using the --include-from directive. See the
+rsync(1) man page for the syntax.
+
+=back
+
+B<exclude_file        /path/to/exclude/file>
+
+=over 4
+
+This gets passed directly to rsync using the --exclude-from directive. See the
+rsync(1) man page for the syntax.
 
 =back
 

@@ -129,7 +129,7 @@
 .\" ========================================================================
 .\"
 .IX Title "RSNAPSHOT-PROGRAM 1"
-.TH RSNAPSHOT-PROGRAM 1 "2004-01-20" "perl v5.8.0" "User Contributed Perl Documentation"
+.TH RSNAPSHOT-PROGRAM 1 "2004-01-24" "perl v5.8.0" "User Contributed Perl Documentation"
 .SH "NAME"
 rsnapshot \- remote filesystem snapshot utility
 .SH "SYNOPSIS"
@@ -301,6 +301,63 @@ are 1 through 5. The default is 2.
 4        Extra Verbose    Same as verbose, but with still more output
 .Sp
 5        Debug            All kinds of information
+.RE
+.RE
+.RS 4
+.Sp
+\&\fBloglevel            3\fR
+.Sp
+.RS 4
+This number means the same thing as \fBverbose\fR above, but it determines how
+much data is written to the logfile, if one is being written.
+.RE
+.RE
+.RS 4
+.Sp
+\&\fBlogfile             /var/log/rsnapshot\fR
+.Sp
+.RS 4
+Full filesystem path to the rsnapshot log file. If this is defined, a log file
+will be written, with the amount of data being controlled by \fBloglevel\fR. If
+this is commented out, no log file will be written.
+.RE
+.RE
+.RS 4
+.Sp
+\&\fBinclude             ???\fR
+.Sp
+.RS 4
+This gets passed directly to rsync using the \-\-include directive. This
+parameter can be specified as many times as needed, with one pattern defined
+per line. See the \fIrsync\fR\|(1) man page for the syntax.
+.RE
+.RE
+.RS 4
+.Sp
+\&\fBexclude             ???\fR
+.Sp
+.RS 4
+This gets passed directly to rsync using the \-\-exclude directive. This
+parameter can be specified as many times as needed, with one pattern defined
+per line. See the \fIrsync\fR\|(1) man page for the syntax.
+.RE
+.RE
+.RS 4
+.Sp
+\&\fBinclude_file        /path/to/include/file\fR
+.Sp
+.RS 4
+This gets passed directly to rsync using the \-\-include\-from directive. See the
+\&\fIrsync\fR\|(1) man page for the syntax.
+.RE
+.RE
+.RS 4
+.Sp
+\&\fBexclude_file        /path/to/exclude/file\fR
+.Sp
+.RS 4
+This gets passed directly to rsync using the \-\-exclude\-from directive. See the
+\&\fIrsync\fR\|(1) man page for the syntax.
 .RE
 .RE
 .RS 4
