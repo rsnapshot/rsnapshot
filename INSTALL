@@ -1,4 +1,4 @@
-rsnapshot 0.9.6
+rsnapshot 1.0.0
 http://rsnapshot.sourceforge.net
 
 rsnapshot is a filesystem snapshot utility. It can take incremental
@@ -15,33 +15,39 @@ UPGRADING
 	require a trailing slash. See /etc/rsnapshot.conf.default for
 	a syntactically valid example.
 	
+	If you are upgrading from 0.9.4 or later, please note that
+    several commands are now deprecated. Please see README for more
+    information.
+	
 INSTALLATION
 	
-	QUICK INSTALLATION
+	THE EASY WAY
 		su root
 		make install
 		cp /etc/rsnapshot.conf.default /etc/rsnapshot.conf
 		
 	THE HARD WAY
 		su root
-		cp rsnapshot /usr/local/bin/rsnapshot
-		chown 0:0 /usr/local/bin/rsnapshot
+		mkdir -p /usr/local/bin/
+		cp -f rsnapshot /usr/local/bin/rsnapshot
 		chmod 755 /usr/local/bin/rsnapshot
+		chown 0:0 /usr/local/bin/rsnapshot
 		
 		mkdir -p /usr/local/man/man1/
-		cat rsnapshot.1 | gzip -9c > /usr/local/man/man1/rsnapshot.1.gz
-		chown 0:0 /usr/local/man/man1/rsnapshot.1.gz
-		chmod 644 /usr/local/man/man1/rsnapshot.1.gz
+		rm -f /usr/local/man/man1/rsnapshot.1.gz
+		cp -f rsnapshot.1 /usr/local/man/man1/rsnapshot.1
+		chmod 644 /usr/local/man/man1/rsnapshot.1
+		chown 0:0 /usr/local/man/man1/rsnapshot.1
 		
-		cp rsnapshot.conf /etc/rsnapshot.conf.default
+		cp -f rsnapshot.conf /etc/rsnapshot.conf.default
+		chmod 600 /etc/rsnapshot.conf.default
+		chown 0:0 /etc/rsnapshot.conf.default
 		
-		# if you don't already have a config file
+		# if you are installing for the first time
 		# cp -i rsnapshot.conf /etc/rsnapshot.conf
 		
 		chown 0:0 /etc/rsnapshot.conf /etc/rsnapshot.conf.default
 		chmod 600 /etc/rsnapshot.conf /etc/rsnapshot.conf.default
-		
-		cp /etc/rsnapshot.conf.default /etc/rsnapshot.conf
 		
 QUICK START (for the impatient)
 	see the README file if you want the 30 second overview

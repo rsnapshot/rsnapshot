@@ -59,6 +59,7 @@ install:
 	chown 0:0 /usr/local/bin/rsnapshot
 	
 	mkdir -p /usr/local/man/man1/
+	rm -f /usr/local/man/man1/rsnapshot.1.gz
 	cp -f rsnapshot.1 /usr/local/man/man1/rsnapshot.1
 	chmod 644 /usr/local/man/man1/rsnapshot.1
 	chown 0:0 /usr/local/man/man1/rsnapshot.1

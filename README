@@ -1,4 +1,4 @@
-rsnapshot 0.9.6
+rsnapshot 1.0.0
 http://rsnapshot.sourceforge.net
 
 rsnapshot is a filesystem snapshot utility. It can take incremental
@@ -11,7 +11,7 @@ See the GNU General Public Licence for details.
 For installation instructions, read INSTALL
 
 ---------------------------------------------------------------------
-NOTICE:
+UPGRADE NOTICE:
 ---------------------------------------------------------------------
 rsnapshot has changed internally since 0.9.4. In the previous
 version, almost all tasks were handled by external shell
@@ -19,22 +19,16 @@ commands (mkdir, mv, etc). In this version, almost all of these
 external dependencies have been replaced with native Perl
 implementations. This has a few noticable effects:
 
-1) If you are upgrading from 0.9.4, you should remove the following
-   lines from your /etc/rsnapshot.conf file:
+1) If you are upgrading from 0.9.4 or above, you should remove the
+   following lines from your /etc/rsnapshot.conf file:
       
       cmd_mkdir	/bin/mkdir
       cmd_touch	/bin/touch
       cmd_mv	/bin/mv
       cmd_rm	/bin/rm
       
-   If you fail to remove these lines, the program will run just
-   fine, but will print out a warning about these commands being
-   deprecated. This grace period will be removed in a future
-   release.
+   If you fail to remove these lines, the program will not work.
     
-   In this case, you should not notice any discernable differences
-   in the behaviour of rsnapshot as compared to the previous release.
-
 2) rsnapshot is now compatible with a much wider range of systems.
    In addition to Linux, rsnapshot should now work with practically
    any UNIX variant out there.

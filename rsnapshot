@@ -17,20 +17,6 @@
 
 # attention vi users: set ts=4 sw=4
 
-# a note about cruft:
-# this program is currently in transition.
-# the old way was to use external system commands for everything (cp, rm, etc).
-# this is being refactored, so the only external commands are rysnc and ssh.
-# any deprecated code will be marked with the following lines:
-
-# BEGIN CRUFT
-# (code goes here)
-# END CRUFT
-
-# when the time is right, these blocks will be removed, backward compatibility
-# with the deprecated config file vars will break, and the program will be
-# clean once again.
-
 ########################
 ### STANDARD MODULES ###
 ########################
@@ -46,7 +32,7 @@ use File::stat;
 ### DECLARE VARIABLES ###
 #########################
 
-my $VERSION = '0.9.6';
+my $VERSION = '1.0.0';
 
 # default configuration file
 my $config_file	= '/etc/rsnapshot.conf'; 
@@ -107,11 +93,6 @@ my $test = 0;
  
 # don't display warnings about FIFOs and special files if enabled
 my $quiet = 0;
- 
-# BEGIN CRUFT #
-	# check for deprecated flags
-	my $cruft = 0;
-# END CRUFT #
  
 ##############################
 ### CORE PROGRAM STRUCTURE ###
@@ -211,17 +192,6 @@ if ( -f $config_file )	{
 			$line_syntax_ok = 1;
 			next;
 		}
-		
-		# BEGIN CRUFT
-			# check for deprecated commands
-			foreach my $command (qw( mkdir touch mv rm ))	{
-				if ($var eq "cmd_$command")	{
-					$cruft = 1;
-					$line_syntax_ok = 1;
-					last;
-				}
-			}
-		# END CRUFT
 		
 		# CHECK FOR RSYNC (required)
 		if ($var eq 'cmd_rsync')	{
@@ -361,32 +331,6 @@ if ( -f $config_file )	{
 	print STDERR "Config file \"$config_file\" does not exist or is not readable.\n";
 	exit(-1);
 }
-
-# BEGIN CRUFT
-	if ($cruft == 1)	{
-		print STDERR "\n";
-		print STDERR "----------------------------------------------------\n";
-		print STDERR "WARNING! The following commands have been deprecated\n";
-		print STDERR "and will be removed in a future release:\n";
-		print STDERR "----------------------------------------------------\n";
-		print STDERR "cmd_mkdir\n";
-		print STDERR "cmd_touch\n";
-		print STDERR "cmd_mv\n";
-		print STDERR "cmd_rm\n";
-		print STDERR "----------------------------------------------------\n";
-		print STDERR "Please remove these lines from $config_file\n";
-		print STDERR "----------------------------------------------------\n";
-		print STDERR "rsnapshot is now using the built-in Perl functions\n";
-		print STDERR "to accomplish the same tasks. This allows rsnapshot\n";
-		print STDERR "to be compatible with BSD, Solaris, etc., not just\n";
-		print STDERR "systems that use GNU cp\n";
-		print STDERR "----------------------------------------------------\n";
-		print STDERR "Furthermore, cmd_cp is now optional, but MUST point\n";
-		print STDERR "to the GNU version of cp if specified\n";
-		print STDERR "----------------------------------------------------\n";
-		print STDERR "\n";
-	}
-# END CRUFT
 
 # BAIL OUT HERE IF THERE WERE ERRORS IN THE CONFIG FILE
 if ($file_syntax_ok == 0)	{
@@ -877,10 +821,10 @@ B<rsnapshot> [B<-v>] [B<-t>] [B<-q>] [B<-c> /alt/config/file] [command]
 B<rsnapshot> is a filesystem snapshot utility. It can take incremental
 snapshots of local and remote filesystems for any number of machines.
 
-Local filesystem snapshots are handled with rsync. Secure remote
-connections are handled with B<rsync(1)> over B<ssh(1)>, while
-anonymous rsync connections simply use an rsync server. Both remote
-and local transfers depend on rsync.
+Local filesystem snapshots are handled with B<rsync(1)>. Secure remote
+connections are handled with rsync over B<ssh(1)>, while anonymous
+rsync connections simply use an rsync server. Both remote and local
+transfers depend on rsync.
 
 B<rsnapshot> saves much more disk space than you might imagine. The amount
 of space required is roughly the size of one full backup, plus a copy
@@ -893,9 +837,9 @@ of cron jobs. It is possible, however, to run as any arbitrary user
 with an alternate configuration file.
 
 All important options are specified in a configuration file, which is
-located by default at B</etc/rsnapshot.conf>, although an alternate
-one can be specified on the command line. There are also additional
-options which can be passed on the command line.
+located by default at B</etc/rsnapshot.conf>. An alternate one can be
+specified on the command line. There are also additional options which
+can be passed on the command line.
 
 The command line options are as follows:
 
@@ -907,7 +851,7 @@ B<-t> test, show shell commands that would be executed
 
 B<-q> quiet, supress non-fatal warnings
 
-B<-c> specify an alternate config file
+B<-c> path to alternate config file
 
 =back
 
@@ -929,16 +873,16 @@ B<cmd_rsync>     full path to rsync
 
 B<cmd_ssh>       full path to ssh (optional, only required for remote backups)
 
-B<cmd_cp>        full path to cp  (optional)
+B<cmd_cp>        full path to cp  (optional, but must be GNU version)
 
 =over 4
 
 cmd_cp is a special case. It should be uncommented if the GNU version of cp
 is available. If you are on a platform with a different version of cp (BSD,
 Solaris, IRIX, Mac OS X, etc.), it should be commented out. If you do not
-have GNU cp, rsnapshot will use a native implementation instead. However,
-because of cross-platform issues, the native Perl version is not able to
-take snapshots of the following special filetypes:
+specify a path to GNU cp, rsnapshot will use a native implementation instead.
+However, because of cross-platform issues, the native Perl version is not
+able to take snapshots of the following special filetypes:
 
 =over 4
 
@@ -1192,7 +1136,7 @@ drwxr-xr-x    /.private/.snapshots
 
 =back
 
-Mount the /.private/.snapshots directory over read-only NFS, a read-only
+Export the /.private/.snapshots directory over read-only NFS, a read-only
 Samba share, etc.
 
 If you do not plan on making the backups readable by regular users, be
@@ -1207,9 +1151,9 @@ install the public key on each machine you want to backup. If you are
 backing up system files from remote machines, this probably means
 unattended root logins.
 
-BE CAREFUL! If the private key is obtained by an attacker,
-they will have free run of all your systems. If you are
-unclear on how to do this, see B<ssh(1)>, B<sshd(1)>, and B<ssh-keygen(1)>.
+BE CAREFUL! If the private key is obtained by an attacker, they will
+have free run of all your systems. If you are unclear on how to do this,
+see B<ssh(1)>, B<sshd(1)>, and B<ssh-keygen(1)>.
 
 rsync transfers are done using the --numeric-ids option. This means that
 user names and group names are ignored during transfers, but the UID/GID
@@ -1217,15 +1161,15 @@ information is kept intact. The assumption is that the backups will be
 restored in the same environment they came from. Without this option,
 multi-server backups would be unmanageable.
 
-If you remove backup points in the config file, they will permanently stay in
-the snapshots directory unless you remove the files yourself.
-If you want to conserve disk space, you will need to go into
-the <snapshot_root> directory and manually remove the files from the
-smallest interval's .0 directory.
+If you remove backup points in the config file, the previously archived
+files under those points will permanently stay in the snapshots directory
+unless you remove the files yourself. If you want to conserve disk space,
+you will need to go into the <snapshot_root> directory and manually
+remove the files from the smallest interval's ".0" directory.
 
-For example, if you were previously
-backing up /home/ in home/, and hourly is your smallest interval, you
-would need to do the following to reclaim that disk space:
+For example, if you were previously backing up /home/ in home/, and
+hourly is your smallest interval, you would need to do the following to
+reclaim that disk space:
 
 =over 4
 

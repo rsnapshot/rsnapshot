@@ -1,10 +1,5 @@
 rsnapshot TODO list:
 
-for version 1.0.x
-------------------------------------------------------------------------------
-Test 0.9.x versions thoroughly on as many obscure UNIX platforms as possible.
-Remove deprecated cruft before final 1.0 release.
-
 for version 2.0.x
 ------------------------------------------------------------------------------
 Possibly rewrite it in C, if there's time or inclination. This would allow
