@@ -10,6 +10,7 @@ VERSION 1.1.5 (??? ?? ??:?? 2004)
 - Exit 1 if we basically finish ok, but with some minor errors
 - Print PID in lockfile
 - Added a few more comments, clarified some existing comments
+- Made some minor updates to the man page
 
 VERSION 1.1.4 (May 16 23:44 2004)
 ------------------------------------------------------------------------------
