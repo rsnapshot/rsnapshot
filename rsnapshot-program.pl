@@ -290,7 +290,7 @@ sub parse_cmd_line_opts	{
 	my $result;
 	
 	# get command line options
-	$result = getopts('vVtqxc:', \%opts);
+	$result = getopts('vVtqxDc:', \%opts);
 	
 	#
 	# validate command line args
@@ -1693,7 +1693,6 @@ sub set_posix_locale	{
 # returns no arguments
 # creates the snapshot_root directory (chmod 0700), if it doesn't exist and no_create_root == 0
 sub create_snapshot_root	{
-	
 	# attempt to create the directory if it doesn't exist
 	if ( ! -d "$config_vars{'snapshot_root'}" )	{
 		
