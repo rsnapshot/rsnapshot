@@ -129,7 +129,7 @@
 .\" ========================================================================
 .\"
 .IX Title "rsnapshot 1"
-.TH rsnapshot 1 "2005-01-23" "" ""
+.TH rsnapshot 1 "2005-01-24" "" ""
 .SH "NAME"
 rsnapshot \- remote filesystem snapshot utility
 .SH "SYNOPSIS"
@@ -171,7 +171,7 @@ The command line options are as follows:
 .Sp
 \&\fB\-x\fR one filesystem, don't cross partitions within each backup point
 .Sp
-\&\fB\-q\fR quiet, supress non-fatal warnings
+\&\fB\-q\fR quiet, suppress non-fatal warnings
 .Sp
 \&\fB\-V\fR same as \-v, but with more detail
 .Sp
@@ -180,7 +180,7 @@ The command line options are as follows:
 .SH "CONFIGURATION"
 .IX Header "CONFIGURATION"
 \&\fB/etc/rsnapshot.conf\fR is the default configuration file. All parameters
-in this file must be seperated by tabs. \fB/etc/rsnapshot.conf.default\fR
+in this file must be separated by tabs. \fB/etc/rsnapshot.conf.default\fR
 can be used as a reference.
 .PP
 It is recommended that you copy \fB/etc/rsnapshot.conf.default\fR to
@@ -553,7 +553,7 @@ additional disk space will be taken up.
 .RS 4
 .RE
 .PP
-Remember that tabs must seperate all elements, and that
+Remember that tabs must separate all elements, and that
 there must be a trailing slash on the end of every directory.
 .PP
 A hash mark (#) on the beginning of a line is treated
@@ -661,9 +661,9 @@ support the \*(L"\-csh\*(R" command line arguments, and to be in your path.
 .RS 4
 \&\fB0\fR  All operations completed successfully
 .Sp
-\&\fB1\fR  A fatal error occured
+\&\fB1\fR  A fatal error occurred
 .Sp
-\&\fB2\fR  Some warnings occured, but the backup still finished
+\&\fB2\fR  Some warnings occurred, but the backup still finished
 .RE
 .SH "FILES"
 .IX Header "FILES"
@@ -690,7 +690,7 @@ permissions and ssh authentication issues.
 Swat them, or report them to \fBnathan@rsnapshot.org\fR
 .SH "NOTES"
 .IX Header "NOTES"
-Make sure your /etc/rsnapshot.conf file has all elements seperated by tabs.
+Make sure your /etc/rsnapshot.conf file has all elements separated by tabs.
 See /etc/rsnapshot.conf.default for a working example file.
 .PP
 Make sure you put a trailing slash on the end of all directory references.
@@ -727,7 +727,7 @@ For ssh to work unattended through cron, you will probably want to use
 public key logins. Create an ssh key with no passphrase for root, and
 install the public key on each machine you want to backup. If you are
 backing up system files from remote machines, this probably means
-unattended root logins. Another posibility is to create a second user
+unattended root logins. Another possibility is to create a second user
 on the machine just for backups. Give the user a different name such
 as \*(L"rsnapshot\*(R", but keep the \s-1UID\s0 and \s-1GID\s0 set to 0, to give root
 privileges. However, make logins more restrictive, either through ssh

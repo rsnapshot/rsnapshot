@@ -243,7 +243,7 @@ Options:
     -t test          - show verbose output, but don't touch anything
     -c [file]        - specify alternate config file (-c /path/to/file)
     -x one_fs        - don't cross filesystems (same as -x option to rsync)
-    -q quiet         - supress non-fatal warnings
+    -q quiet         - suppress non-fatal warnings
     -V extra verbose - same as -v, but with more detail
     -D debug         - a firehose of diagnostic information
 HERE
@@ -684,7 +684,7 @@ sub parse_config_file {
 			#
 			# in the old way, when rsnapshot detects the snapshot_root is under a backup point, the files and
 			# directories under that backup point are enumerated and get turned into several distinct rsync calls.
-			# for example, if you tried to back up "/", it would do a seperate rsync invocation for "/bin/", "/etc/",
+			# for example, if you tried to back up "/", it would do a separate rsync invocation for "/bin/", "/etc/",
 			# and so on. this wouldn't be so bad except that it makes certain rsync options like one_fs and the
 			# include/exclude rules act funny since rsync isn't starting where the user expects (and there is no
 			# really good way to provide a workaround, either automatically or manually). however, changing this
@@ -784,7 +784,7 @@ sub parse_config_file {
 			my $dest		= $value2;	# dest directory
 			my %hash;					# tmp hash to stick in the backup points array
 			my $script;					# script file (no args)
-			my @script_argv;			# tmp spot to help us seperate the script from the args
+			my @script_argv;			# tmp spot to help us separate the script from the args
 			
 			if ( !defined($config_vars{'snapshot_root'}) ) {
 				config_err($file_line_num, "$line - snapshot_root needs to be defined before backup scripts");
@@ -1447,7 +1447,7 @@ sub bail {
 }
 
 # accepts a string (or an array)
-# prints the string, but seperates it across multiple lines with backslashes if necessary
+# prints the string, but separates it across multiple lines with backslashes if necessary
 # also logs the command, but on a single line
 sub print_cmd {
 	# take all arguments and make them into one string
@@ -3958,7 +3958,7 @@ B<-c> path to alternate config file
 
 B<-x> one filesystem, don't cross partitions within each backup point
 
-B<-q> quiet, supress non-fatal warnings
+B<-q> quiet, suppress non-fatal warnings
 
 B<-V> same as -v, but with more detail
 
@@ -3969,7 +3969,7 @@ B<-D> a firehose of diagnostic information
 =head1 CONFIGURATION
 
 B</etc/rsnapshot.conf> is the default configuration file. All parameters
-in this file must be seperated by tabs. B</etc/rsnapshot.conf.default>
+in this file must be separated by tabs. B</etc/rsnapshot.conf.default>
 can be used as a reference.
 
 It is recommended that you copy B</etc/rsnapshot.conf.default> to
@@ -4340,7 +4340,7 @@ additional disk space will be taken up.
 
 =back
 
-Remember that tabs must seperate all elements, and that
+Remember that tabs must separate all elements, and that
 there must be a trailing slash on the end of every directory.
 
 A hash mark (#) on the beginning of a line is treated
@@ -4459,9 +4459,9 @@ support the "-csh" command line arguments, and to be in your path.
 
 B<0>  All operations completed successfully
 
-B<1>  A fatal error occured
+B<1>  A fatal error occurred
 
-B<2>  Some warnings occured, but the backup still finished
+B<2>  Some warnings occurred, but the backup still finished
 
 =back
 
@@ -4494,7 +4494,7 @@ Swat them, or report them to B<nathan@rsnapshot.org>
 
 =head1 NOTES
 
-Make sure your /etc/rsnapshot.conf file has all elements seperated by tabs.
+Make sure your /etc/rsnapshot.conf file has all elements separated by tabs.
 See /etc/rsnapshot.conf.default for a working example file.
 
 Make sure you put a trailing slash on the end of all directory references.
@@ -4533,7 +4533,7 @@ For ssh to work unattended through cron, you will probably want to use
 public key logins. Create an ssh key with no passphrase for root, and
 install the public key on each machine you want to backup. If you are
 backing up system files from remote machines, this probably means
-unattended root logins. Another posibility is to create a second user
+unattended root logins. Another possibility is to create a second user
 on the machine just for backups. Give the user a different name such
 as "rsnapshot", but keep the UID and GID set to 0, to give root
 privileges. However, make logins more restrictive, either through ssh
