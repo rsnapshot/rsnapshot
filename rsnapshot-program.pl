@@ -1615,7 +1615,7 @@ sub file_diff   {
 	if (! -r "$file1")  { return (undef); }
 	if (! -r "$file2")  { return (undef); }
 	
-	# CHECK FILE SIZES AND INODES FIRST
+	# CHECK FILE SIZES FIRST
 	$st1 = lstat("$file1");
 	$st2 = lstat("$file2");
 	
@@ -1626,12 +1626,6 @@ sub file_diff   {
 	# therefore, they are different.
 	if ($st1->size != $st2->size)	{
 		return (1);
-	}
-	
-	# if the files have the same inode, they are hard links to the same file.
-	# therefore, they are the same.
-	if ($st1->ino == $st2->ino) {
-		return (0);
 	}
 	
 	# ok, we're still here. that means we have to...
