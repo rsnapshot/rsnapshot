@@ -53,8 +53,7 @@ debian:
 	rm -rf ${DPKG_BUILD_DIR}/
 	
 install:
-	rm -f /usr/local/bin/rsnapshot
-	cp rsnapshot /usr/local/bin/rsnapshot
+	cp -f rsnapshot /usr/local/bin/rsnapshot
 	chmod 755 /usr/local/bin/rsnapshot
 	chown 0:0 /usr/local/bin/rsnapshot
 	
@@ -63,8 +62,7 @@ install:
 	chmod 644 /usr/local/man/man1/rsnapshot.1.gz
 	chown 0:0 /usr/local/man/man1/rsnapshot.1.gz
 	
-	rm -f /etc/rsnapshot.conf.default
-	cp rsnapshot.conf /etc/rsnapshot.conf.default
+	cp -f rsnapshot.conf /etc/rsnapshot.conf.default
 	chmod 600 /etc/rsnapshot.conf.default
 	chown 0:0 /etc/rsnapshot.conf.default
 	@echo
