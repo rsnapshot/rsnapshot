@@ -33,7 +33,7 @@ DATE=`/bin/date +%Y-%m-%d`
 # the e-mail address the notification is being sent to must have their GPG key
 # in the public keyring of the user running this backup
 #
-#GPG="/usr/bin/gpg"
+GPG="/usr/bin/gpg"
 
 # GET E-MAIL ADDRESS
 if [ ! $1 ]; then
@@ -62,8 +62,8 @@ done
 cd -
 
 # there are probably sensitive files here, so use the strictest permissions
-${CHMOD} -R 0600 ${TAR_DIR}/
-${CHMOD} 0700 ${TAR_DIR}/
+${CHMOD} -R 0600 ${TAR_DIR}/${DATE}/*
+${CHMOD} 0700 ${TAR_DIR}/${DATE}/
 
 ${CAT} <<EOF | ${SENDMAIL}
 To: ${TO_EMAIL}
