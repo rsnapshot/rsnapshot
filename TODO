@@ -1,13 +1,7 @@
 rsnapshot TODO list:
 
-Come up with an elegant way to handle additional protocols,
-probably using a web style prefix (i.e. http://path/to/http/server).
+Handle additional protocols, using a web style prefix (i.e. http://path/to/http/server).
 Make sure that if the file downloaded is the same as the one yesterday,
 that it will link today's file to yesterdays. It seems unavoidable to
 waste bandwidth with a non rsync system, but at least we can prevent
 the wasting of disk space.
-
-Decide on what to do about the slash issue with rsync/ssh. Currently
-rsnapshot.conf only supports directories as sources (since it adds
-a trailing slash to every entry). Will having the slash at the end
-make this too confusing and error prone?

@@ -97,7 +97,15 @@ if ( -f $config_file )	{
 		
 		# SNAPSHOT_ROOT
 		if ($var eq 'snapshot_root')	{
-			$config_vars{'snapshot_root'} = $value;
+			# remove the trailing slash
+			if ($value =~ /\/$/)	{
+				chop($value);
+				$config_vars{'snapshot_root'} = $value;
+				
+			# there is no trailing slash to remove
+			} else	{
+				$config_vars{'snapshot_root'} = $value;
+			}
 			next;
 		}
 		
@@ -272,7 +280,7 @@ sub backup_interval	{
 		}
 	}
 	
-	# WE HAVE AN $interval.0 DIRECTORY
+	# we have an $interval.0 directory
 	if ( -d "$config_vars{'snapshot_root'}/$interval.0" )	{
 		# hard link (except for directories) .0 over to .1
 		if ($verbose)	{ print "$config_vars{'cmd_cp'} -al $config_vars{'snapshot_root'}/$interval.0/ $config_vars{'snapshot_root'}/$interval.1\n"; }
@@ -287,7 +295,7 @@ sub backup_interval	{
 		my $src;
 		
 		# append a trailing slash if it's a directory
-		if ( (-d $$sp_ref{'src'}) && ($$sp_ref{'src'} !~ /\/$/) )	{
+		if ((-d "$$sp_ref{'src'}") && ($$sp_ref{'src'} !~ /\/$/))	{
 			$src = $$sp_ref{'src'} . '/';
 		} else	{
 			$src = $$sp_ref{'src'};
@@ -299,7 +307,7 @@ sub backup_interval	{
 		
 		# don't mkdir unless we have to
 		my $destpath = "$config_vars{'snapshot_root'}/$interval.0/" . join('/', @dirs);
-		if ( ! -e $destpath )	{
+		if ( ! -e "$destpath" )	{
 			if ($verbose)	{ print "$config_vars{'cmd_mkdir'} -p $destpath\n"; }
 			if ($test == 0)	{
 				system( $config_vars{'cmd_mkdir'}, '-p', $destpath );
@@ -308,9 +316,6 @@ sub backup_interval	{
 		
 		# if this is a user@host:/path, use ssh
 		if ($src =~ /^.*?\@.*?:\/.*$/)	{
-			if ($src !~ /\/$/)	{
-				$src .= '/';
-			}
 			if ($verbose)	{ print "$config_vars{'cmd_rsync'} -al --delete --numeric-ids --devices --rsh=$config_vars{'cmd_ssh'} $src $config_vars{'snapshot_root'}/$interval.0/$$sp_ref{'dest'}\n"; }
 			if ($test == 0)	{
 				system( $config_vars{'cmd_rsync'}, '-al', '--delete', '--numeric-ids', '--devices', "--rsh=$config_vars{'cmd_ssh'}", $src, "$config_vars{'snapshot_root'}/$interval.0/$$sp_ref{'dest'}" );
@@ -514,9 +519,9 @@ taken up is basically one full snapshot, plus each changed file.
 
 =back
 
-B<backup>  /local/path             relative/path
+B<backup>  /local/path/             relative/path/
 
-B<backup>  root@example.com:/path  relative/path
+B<backup>  root@example.com:/path/  relative/path/
 
 =over 4
 
@@ -526,15 +531,15 @@ B<backup /etc     etc>
 
 =over 4
 
-Backs up /etc to <snapshot_root>/<interval>.0/etc
+Backs up /etc/ to <snapshot_root>/<interval>.0/etc/
 
 =back
 
-B<backup root@example.com:/home example.com/home>
+B<backup root@example.com:/home/ example.com/home/>
 
 =over 4
 
-Backs up /etc to <snapshot_root>/<interval>.0/example.com/home
+Backs up /etc/ to <snapshot_root>/<interval>.0/example.com/home/
 
 =back
 
@@ -572,15 +577,15 @@ B<interval>        weekly  7
 
 B<interval>        monthly 3
 
-B<backup>  /etc                        localhost/etc
+B<backup>  /etc/                        localhost/etc/
 
-B<backup>  /home                       localhost/home
+B<backup>  /home/                       localhost/home/
 
-B<backup>  root@foo.com:/etc           example.com/etc
+B<backup>  root@foo.com:/etc/           example.com/etc/
 
-B<backup>  root@foo.com:/home          example.com/home
+B<backup>  root@foo.com:/home/          example.com/home/
 
-B<backup>  root@mail.foo.com.com:/home mail.foo.com/home
+B<backup>  root@mail.foo.com.com:/home/ mail.foo.com/home/
 
 =back
 
@@ -649,6 +654,11 @@ permissions and ssh authentication issues.
 Swat them, or report them to rsnapshot@scubaninja.com
 
 =head1 NOTES
+
+Make sure you put a trailing slash on the end of all directory references.
+If you don't, you may have extra directories created in your snapshots.
+For more information on how the trailing slash is handled, see the
+B<rsync(1)> manpage.
 
 Make sure your snapshot directory is only readable by root. If you would
 like regular users to be able to restore their own backups, there are a
