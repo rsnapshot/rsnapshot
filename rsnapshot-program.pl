@@ -36,7 +36,11 @@ use File::stat;
 ### DECLARE VARIABLES ###
 #########################
 
+# version of rsnapshot
 my $VERSION = '1.0.8';
+
+# exactly how the program was called, with all arguments
+my $run_string = "$0 " . join(' ', @ARGV);
 
 # default configuration file
 my $config_file;
@@ -530,6 +534,7 @@ if ( -f "$config_file" )	{
 	if (-e "$config_file.default")	{
 		print STDERR "Did you copy $config_file.default to $config_file yet?\n";
 	}
+	log_err("Config file \"$config_file\" does not exist or is not readable");
 	exit(-1);
 }
 
@@ -539,6 +544,7 @@ if (0 == $file_syntax_ok)	{
 	print STDERR "Errors were found in $config_file, rsnapshot can not continue.\n";
 	print STDERR "If you think an entry looks right, make sure you don't have\n";
 	print STDERR "spaces where only tabs should be.\n";
+	log_err("Errors were found in $config_file, rsnapshot can not continue.");
 	exit(-1);
 }
 
@@ -632,6 +638,8 @@ if (defined($config_vars{'lockfile'}))	{
 }
 
 # if we got this far, assume success. the program is done running
+log_msg("$run_string: completed successfully");
+
 exit(0);
 
 ###################
@@ -677,6 +685,7 @@ sub bail	{
 	my $str = shift(@_);
 	
 	if ($str)	{ print STDERR $str . "\n"; }
+	log_err($str);
 	remove_lockfile($config_vars{'lockfile'});
 	exit(-1);
 }
@@ -691,6 +700,46 @@ sub config_error	{
 	if (!defined($errstr))		{ $errstr = 'config_error() called without an error string!'; }
 	
 	print STDERR "Error in $config_file on line $line_num: $errstr\n";
+}
+
+# log messages to syslog
+# accepts message, facility, level
+# only message is required
+# return 1 on success, undef on failure
+sub log_msg	{
+	my $msg			= shift(@_);
+	my $facility	= shift(@_);
+	my $level		= shift(@_);
+	my $result		= undef;
+	
+	if (!defined($msg))			{ return (undef); }
+	if (!defined($facility))	{ $facility	= 'user'; }
+	if (!defined($level))		{ $level	= 'notice'; }
+	
+	# verbose to display messages, extra verbose to display errors
+	if ( (1 == $extra_verbose) or ((1 == $verbose) && ($level ne 'err')) )	{
+		print "$config_vars{'cmd_logger'} -i -p $facility.$level -t rsnapshot $msg\n";
+	}
+	# log to syslog
+	if (0 == $test)	{
+		if (defined($config_vars{'cmd_logger'}))	{
+			$result = system($config_vars{'cmd_logger'}, '-i', '-p', "$facility.$level", '-t', 'rsnapshot', $msg);
+			if (0 != $result)	{
+				print STDERR "Warning! Could not log to syslog:\n";
+				print STDERR "$config_vars{'cmd_logger'} -i -p $facility.$level -t rsnapshot $msg\n";
+			}
+		}
+	}
+	
+	return (1);
+}
+
+# log errors to syslog
+# accepts error message
+# returns 1 on success, undef on failure
+sub log_err	{
+	my $msg = shift(@_);
+	return log_msg($msg, 'user', 'err');
 }
 
 # accepts a string of options
@@ -770,18 +819,21 @@ sub add_lockfile	{
 	
 	if (!defined($lockfile))	{
 		print STDERR "add_lockfile() requires a value\n";
+		log_err('add_lockfile() requires a value');
 		exit(-1);
 	}
 	
 	# valid?
 	if (0 == is_valid_local_abs_path($lockfile))	{
 		print STDERR "Lockfile $lockfile is not a valid file name\n";
+		log_err("Lockfile $lockfile is not a valid file name");
 		exit(-1);
 	}
 	
 	# does a lockfile already exist?
 	if (1 == is_real_local_abs_path($lockfile))	{
 		print STDERR "Lockfile $lockfile exists, can not continue!\n";
+		log_err("Lockfile $lockfile exists, can not continue");
 		exit(-1);
 	}
 	
@@ -791,6 +843,7 @@ sub add_lockfile	{
 	my $result = open(LOCKFILE, "> $lockfile");
 	if (!defined($result))	{
 		print STDERR "Could not write lockfile $lockfile\n";
+		log_err("Could not write lockfile $lockfile");
 		exit(-1);
 	}
 	$result = close(LOCKFILE);
@@ -809,12 +862,13 @@ sub remove_lockfile	{
 	my $result		= undef;
 	
 	if (defined($lockfile))	{
-		if (1 == $verbose)	{ print "rm -f $lockfile\n"; }
-		
 		if ( -e "$lockfile" )	{
+			if (1 == $verbose)	{ print "rm -f $lockfile\n"; }
+			
 			$result = unlink($lockfile);
 			if (0 == $result)	{
 				print STDERR "Error! Could not remove lockfile $lockfile\n";
+				log_err("Error! Could not remove lockfile $lockfile");
 				exit(-1);
 			}
 		}
