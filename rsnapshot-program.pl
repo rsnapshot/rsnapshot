@@ -392,7 +392,7 @@ if ( -f "$config_file" )	{
 			# check if interval is blank
 			if (!defined($value))		{ config_err($file_line_num, "$line - Interval can not be blank"); }
 			
-			# check if number is actually a number
+			# check if interval is actually a number
 			if ($value !~ m/^[\w\d]+$/)	{
 				config_err($file_line_num,
 					"$line - \"$value\" is not a valid interval, must be alphanumeric characters only");
@@ -440,7 +440,7 @@ if ( -f "$config_file" )	{
 				config_err($file_line_num, "$line - Backup destination $dest must be a local path");
 			}
 			
-			# make sure we aren't traversing directories (exactly 2 dots can't be next to each other)
+			# make sure we aren't traversing directories
 			if ( is_directory_traversal($src) )		{
 				config_err($file_line_num, "$line - Directory traversal attempted in $src");
 			}
@@ -833,6 +833,13 @@ if (defined($config_vars{'no_create_root'}))	{
 	}
 }
 
+# CONFIG TEST ONLY?
+# if so, pronounce success and quit right here
+if ((1 == $do_configtest) && (1 == $config_perfect))	{
+	print "Syntax OK\n";
+	exit(0);
+}
+
 # SET VARIOUS DEFAULTS IN CASE THEY GOT OVERLOOKED
 # if we didn't manage to get a verbose level yet, either through the config file
 # or the command line, use the default
@@ -856,13 +863,6 @@ if (defined($rsync_include_file_args))	{
 		$config_vars{'rsync_long_args'} = $global_default_rsync_long_args;
 	}
 	$config_vars{'rsync_long_args'} .= " $rsync_include_file_args";
-}
-
-# CONFIG TEST ONLY?
-# if so, pronounce success and quit right here
-if ((1 == $do_configtest) && (1 == $config_perfect))	{
-	print "Syntax OK\n";
-	exit(0);
 }
 
 ########################
@@ -892,13 +892,11 @@ foreach my $i_ref (@intervals)	{
 		$interval_num = $i;
 		
 		# how many of these intervals should we keep?
-		if ($$i_ref{'number'} > 0)	{
-			$interval_max = $$i_ref{'number'} - 1;
-		} else	{
-			bail("$$i_ref{'interval'} can not be set to 0");
-		}
+		# we start counting from 0, so subtract one
+		# i.e. 6 intervals == interval.0 .. interval.5
+		$interval_max = $$i_ref{'number'} - 1;
 		
-		# ok, exit this entire block
+		# we found our interval, exit the foreach loop
 		last;
 	}
 	
@@ -914,11 +912,7 @@ foreach my $i_ref (@intervals)	{
 	# for the interval we're currently set to run?
 	# i.e. daily.0/ might get pulled from hourly.6/
 	#
-	if ($$i_ref{'number'} > 0)	{
-		$prev_interval_max = $$i_ref{'number'} - 1;
-	} else	{
-		bail("$$i_ref{'interval'} can not be set to 0");
-	}
+	$prev_interval_max = $$i_ref{'number'} - 1;
 	
 	$i++;
 }
@@ -928,8 +922,6 @@ undef($i);
 if (!defined($interval_num))	{
 	bail("Interval \"$cmd\" unknown, check $config_file");
 }
-
-# if we got this far, the config file is valid
 
 ################################
 ### BEGIN FILESYSTEM ACTIONS ###
@@ -981,6 +973,7 @@ if (1 == $run_perfect)	{
 } else	{
 	syslog_err("$run_string: completed, but with some errors");
 	log_err   ("$run_string: completed, but with some errors", 2);
+	exit (1);
 }
 
 exit(0);
