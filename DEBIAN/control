@@ -3,8 +3,8 @@ Version: 1.0.8-1
 Priority: optional
 Section: utils
 Maintainer: Nathan Rosenquist <nathan@rsnapshot.org>
-Depends: perl, rsync, bsdutils, fileutils | coreutils
-Recommends: ssh
+Depends: perl, rsync, fileutils | coreutils
+Recommends: ssh, bsdutils
 Architecture: all
 Description: Local and remote filesystem snapshot utility
              .
