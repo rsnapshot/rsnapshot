@@ -854,8 +854,12 @@ if ((1 == $do_configtest) && (1 == $config_perfect))	{
 # if we're just checking the disk space, don't run the whole program
 # this is orphaned down here because it needs to know the contents of the config file
 if ($cmd eq 'du')	{
-	show_disk_usage();
-	exit(0);
+	my $retval = show_disk_usage();
+	if (1 == $retval)	{
+		exit (0);
+	} else	{
+		exit(1);
+	}
 }
 
 # SET VARIOUS DEFAULTS IN CASE THEY GOT OVERLOOKED
