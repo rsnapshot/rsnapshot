@@ -490,7 +490,13 @@ sub backup_interval	{
 	if ( -d "$config_vars{'snapshot_root'}/$interval.0" )	{
 		my $result;
 		
-		if ($verbose)	{ print "cp -al $config_vars{'snapshot_root'}/$interval.0/ $config_vars{'snapshot_root'}/$interval.1/\n"; }
+		if ($verbose)	{
+			if ($use_gnu_cp)	{
+				print "$config_vars{'cmd_cp'} -al $config_vars{'snapshot_root'}/$interval.0/ $config_vars{'snapshot_root'}/$interval.1/\n";
+			} else	{
+				print "# perl: native_cp_al(\"$config_vars{'snapshot_root'}/$interval.0/\", \"$config_vars{'snapshot_root'}/$interval.1/\");\n";
+			}
+		}
 		if ($test == 0)	{
 			$result = cp_al( "$config_vars{'snapshot_root'}/$interval.0/", "$config_vars{'snapshot_root'}/$interval.1/" );
 			if (! $result)	{
@@ -676,14 +682,14 @@ sub gnu_cp_al	{
 	if (!defined($dest)) { return(0); }
 	
 	if ( ! -d "$src" )	{
-		print STDERR "native_cp_al() needs a valid directory as an argument\n";
+		print STDERR "gnu_cp_al() needs a valid directory as an argument\n";
 		return (0);
 	}
 	
-	$result = system( $config_vars{'cmd_cp'}, "$src", "$dest" );
+	$result = system( $config_vars{'cmd_cp'}, '-al', "$src", "$dest" );
 	if ($result != 0)	{
-		print STDERR "Warning! GNU cp failed, trying native Perl copy\n";
-		return (native_cp_al( "$src", "$dest" ));
+		print STDERR "Warning! $config_vars{'cmd_cp'} failed. Perhaps this is not GNU cp?\n";
+		return (0);
 	}
 	
 	return (1);
@@ -780,10 +786,12 @@ sub native_cp_al	{
 					return (0);
 				}
 				# CHOWN
-				$result = chown($st->uid, $st->gid, "$dest/$node");
-				if (! $result)	{
-					print STDERR "Warning! Could not chown(" . $st->uid . ", " . $st->gid . ", \"$dest/$node\")\n";
-					return (0);
+				if ( -e "$dest/$node" )	{
+					$result = chown($st->uid, $st->gid, "$dest/$node");
+					if (! $result)	{
+						print STDERR "Warning! Could not chown(" . $st->uid . ", " . $st->gid . ", \"$dest/$node\")\n";
+						return (0);
+					}
 				}
 				
 			# FIFO
