@@ -65,7 +65,7 @@ interval	weekly	4
 ############################################
 
 # If your version of rsync supports --link-dest, you should enable this.
-# This is now the preferred way to support special files (FIFOs, etc).
+# This is the best way to support special files (FIFOs, etc) cross-platform.
 # The default is 0 (off).
 #
 #link_dest	0
