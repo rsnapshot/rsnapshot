@@ -239,16 +239,6 @@ if ($cmd eq 'configtest')	{
 }
 # if we made it here, we didn't exit
 
-########################
-### SET POSIX LOCALE ###
-########################
-
-# this fixes some reported problems with rmtree()
-# or at least, we hope it will after testing
-
-print_msg("Setting locale to POSIX \"C\"", 4);
-setlocale(POSIX::LC_ALL, 'C');
-
 #########################
 ### PARSE CONFIG FILE ###
 #########################
@@ -829,6 +819,14 @@ if ((1 == $do_configtest) && (1 == $config_perfect))	{
 	print "Syntax OK\n";
 	exit(0);
 }
+
+########################
+### SET POSIX LOCALE ###
+########################
+
+# this fixes some potential problems with rmtree()
+print_msg("Setting locale to POSIX \"C\"", 4);
+setlocale(POSIX::LC_ALL, 'C');
 
 #############################################
 ### PREPARE TO RUN THE PROGRAM "FOR REAL" ###
