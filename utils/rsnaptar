@@ -8,6 +8,9 @@
 # snapshot root. Sends an e-mail to an address specified on the command line
 # when finished.
 #
+# I set this up in cron to run once a week, take the tar files,
+# and make DVD-RW backups of the latest snapshot. Your mileage may vary.
+#
 # http://rsnapshot.scubaninja.com/
 ##############################################################################
 
