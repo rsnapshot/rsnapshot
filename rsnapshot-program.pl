@@ -1109,10 +1109,8 @@ sub parse_config_file {
 	if (0 == $config_perfect) {
 		print_err("---------------------------------------------------------------------", 1);
 		print_err("Errors were found in $config_file,", 1);
-		print_err("rsnapshot can not continue.", 1);
-		print_err("", 1);
-		print_err("If you think an entry looks right, make sure you don't have", 1);
-		print_err("spaces where only tabs should be.", 1);
+		print_err("rsnapshot can not continue. If you think an entry looks right, make", 1);
+		print_err("sure you don't have spaces where only tabs should be.", 1);
 		
 		# if this wasn't a test, report the error to syslog
 		if (0 == $do_configtest) {
@@ -1654,6 +1652,7 @@ sub print_err {
 	if (0 == $have_printed_run_string) {
 		if ((!defined($verbose)) or ($level <= $verbose)) {
 			print STDERR "----------------------------------------------------------------------------\n";
+			print STDERR "rsnapshot encountered an error! The program was invoked with these options:\n";
 			print STDERR wrap_cmd($run_string, 76, 4), "\n";
 			print STDERR "----------------------------------------------------------------------------\n";
 		}
