@@ -13,6 +13,8 @@ VERSION 1.0.11 (? ? ??:?? 2004)
 - Added logfile and loglevel parameters to the config file
 - Added logging feature
 - Moved loglevel/verbose number validation into a seperate subroutine
+- Added much more error checking on the config file
+- Changed @snapshot_points to @backup_points for more consistent terminology
 
 VERSION 1.0.10 (Jan 20 00:43 2004)
 ------------------------------------------------------------------------------

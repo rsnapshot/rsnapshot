@@ -50,7 +50,7 @@ my %config_vars;
 
 # array of hash_refs containing the destination backup point
 # and either a source dir or a script to run
-my @snapshot_points;
+my @backup_points;
 
 # "intervals" are user defined time periods (i.e. hourly, daily)
 # this array holds hash_refs containing the name of the interval,
@@ -346,7 +346,7 @@ if ( -f "$config_file" )	{
 			if ($value !~ m/^[\w\d]+$/)	{ bail("\"$value\" is not a valid entry, must be alphanumeric characters only"); }
 			
 			if (!defined($value2))		{ bail("\"$value\" number can not be blank"); }
-			if ($value2 !~ m/^\d+$/)	{ bail("\"$value2\" is not an integer"); }
+			if ($value2 !~ m/^\d+$/)	{ bail("\"$value2\" is not a valid entry for an interval"); }
 			if ($value2 <= 0)			{ bail("\"$value\" must be at least 1 or higher"); }
 			
 			my %hash;
@@ -434,7 +434,7 @@ if ( -f "$config_file" )	{
 						if (defined($opts_ref))	{
 							$hash{'opts'} = $opts_ref;
 						}
-						push(@snapshot_points, \%hash);
+						push(@backup_points, \%hash);
 					}
 				}
 				closedir(SRC);
@@ -445,7 +445,7 @@ if ( -f "$config_file" )	{
 				if (defined($opts_ref))	{
 					$hash{'opts'} = $opts_ref;
 				}
-				push(@snapshot_points, \%hash);
+				push(@backup_points, \%hash);
 			}
 			
 			next;
@@ -482,7 +482,7 @@ if ( -f "$config_file" )	{
 			
 			$line_syntax_ok = 1;
 			
-			push(@snapshot_points, \%hash);
+			push(@backup_points, \%hash);
 			
 			next;
 		}
@@ -592,13 +592,6 @@ if ( -f "$config_file" )	{
 		print_err("cmd_rsync was not defined.", 1);
 		$file_syntax_ok = 0;
 	}
-	
-	# CONFIG TEST ONLY?
-	# if so, pronounce success and quit right here
-	if ($do_configtest && $file_syntax_ok)	{
-		print "Syntax OK\n";
-		exit(0);
-	}
 } else	{
 	# warn that the config file could not be found
 	print STDERR "Config file \"$config_file\" does not exist or is not readable.\n";
@@ -615,7 +608,8 @@ if ( -f "$config_file" )	{
 	exit(-1);
 }
 
-# BAIL OUT HERE IF THERE WERE ERRORS IN THE CONFIG FILE
+# SINS OF COMMISSION
+# (incorrect entries in config file)
 if (0 == $file_syntax_ok)	{
 	print_err("---------------------------------------------------------------------", 1);
 	print_err("Errors were found in $config_file, rsnapshot can not continue.", 1);
@@ -631,6 +625,43 @@ if (0 == $file_syntax_ok)	{
 	exit(-1);
 }
 
+# SINS OF OMISSION
+# (things that should be in the config file that aren't)
+#
+# make sure we got a snapshot_root
+if (!defined($config_vars{'snapshot_root'}))	{
+	print_err ("snapshot_root was not defined. rsnapshot can not continue.", 1);
+	syslog_err("snapshot_root was not defined. rsnapshot can not continue.");
+	exit(-1);
+}
+# make sure we have at least one interval
+if (0 == scalar(@intervals))	{
+	print_err ("At least one interval must be set. rsnapshot can not continue.", 1);
+	syslog_err("At least one interval must be set. rsnapshot can not continue.");
+	exit(-1);
+}
+# make sure we have at least one backup point
+if (0 == scalar(@backup_points))	{
+	print_err ("At least one backup point must be set. rsnapshot can not continue.", 1);
+	syslog_err("At least one backup point must be set. rsnapshot can not continue.");
+	exit(-1);
+}
+
+# OTHER SITUATIONS THAT SHOULD NOT HAPPEN
+# (various undesirable interactions)
+#
+# make sure that we don't have only one copy of the first interval,
+# yet expect rotations on the second interval
+if (scalar(@intervals) > 1)	{
+	if (defined($intervals[0]->{'number'}))	{
+		if (1 == $intervals[0]->{'number'})	{
+			print_err ("Can not have first interval set to 1, and have a second interval", 1);
+			syslog_err("Can not have first interval set to 1, and have a second interval");
+			exit(-1);
+		}
+	}
+}
+
 # if we didn't manage to get a verbose level yet, either through the config file
 # or the command line, use the default
 if (!defined($verbose))	{
@@ -640,6 +671,17 @@ if (!defined($verbose))	{
 if (!defined($loglevel))	{
 	$loglevel = $default_loglevel;
 }
+
+# CONFIG TEST ONLY?
+# if so, pronounce success and quit right here
+if ($do_configtest && $file_syntax_ok)	{
+	print "Syntax OK\n";
+	exit(0);
+}
+
+#############################################
+### PREPARE TO RUN THE PROGRAM "FOR REAL" ###
+#############################################
 
 # FIGURE OUT WHICH INTERVAL WE'RE RUNNING, AND HOW IT RELATES TO THE OTHERS
 # THEN RUN THE ACTION FOR THE CHOSEN INTERVAL
@@ -931,18 +973,16 @@ sub log_msg	{
 	if ((0 == $test) && (0 == $do_configtest))	{
 		if (defined($config_vars{'logfile'}))	{
 			$result = open (LOG, ">> $config_vars{'logfile'}");
-			if (0 == $result)	{
-				print STDERR "Could not open logfile $config_vars{'logfile'} for writing";
-				syslog_err  ("Could not open logfile $config_vars{'logfile'} for writing");
+			if ((!defined($result)) or (0 == $result))	{
+				print STDERR "Could not open logfile $config_vars{'logfile'} for writing\n";
 				exit(-1);
 			}
 			
 			print LOG '[', get_cur_date(), '] ', $str, "\n";
 			
 			$result = close(LOG);
-			if (0 == $result)	{
-				print STDERR "Could not close logfile $config_vars{'logfile'}";
-				syslog_err  ("Could not close logfile $config_vars{'logfile'}");
+			if ((!defined($result)) or (0 == $result))	{
+				print STDERR "Could not close logfile $config_vars{'logfile'}\n";
 			}
 		}
 	}
@@ -1430,7 +1470,7 @@ sub backup_interval	{
 	
 	# SYNC LIVE FILESYSTEM DATA TO $interval.0
 	# loop through each backup point and backup script
-	foreach my $sp_ref (@snapshot_points)	{
+	foreach my $sp_ref (@backup_points)	{
 		my @cmd_stack				= undef;
 		my $src						= undef;
 		my $script					= undef;
