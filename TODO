@@ -2,9 +2,10 @@ rsnapshot TODO list:
 
 for version 1.0.x
 ------------------------------------------------------------------------------
-add super verbose feature using -V flag, trigger verbosity in rsync, etc
++ Add remote destination directories over ssh
++ Add super verbose feature using -V flag, trigger verbosity in rsync, etc
 
 for version 2.0.x
 ------------------------------------------------------------------------------
-Possibly rewrite it in C, if there's time or inclination. This would allow
-all the benefits of GNU cp combined with total compatibility.
++ Possibly rewrite it in C, if there's time or inclination. This would allow
+  all the benefits of GNU cp combined with total compatibility.
