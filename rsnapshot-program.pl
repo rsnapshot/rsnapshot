@@ -1854,7 +1854,9 @@ sub backup_interval	{
 			print_cmd(@cmd_stack);
 			
 			if (0 == $test)	{
-				$result = system(join(' ', @cmd_stack));
+				# TODO: figure out if using join() like this caused regession errors
+				#$result = system(join(' ', @cmd_stack));
+				$result = system(@cmd_stack);
 				if ($result != 0)	{
 					# bitmask return value
 					my $retval = get_retval($result);
