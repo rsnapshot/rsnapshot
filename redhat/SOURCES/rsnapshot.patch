@@ -1,20 +1,20 @@
---- rsnapshot.conf.default.in	2003-12-19 18:56:53.000000000 -0800
-+++ rsnapshot.conf.default.in.RPM	2003-12-19 19:06:38.000000000 -0800
-@@ -24,7 +24,7 @@
+--- rsnapshot.conf.default.in	Fri Dec 26 17:19:18 2003
++++ rsnapshot.conf.default.in.RPM	Fri Dec 26 17:24:05 2003
+@@ -28,7 +28,7 @@
  #
- @CMD_RSYNC@
- #@CMD_SSH@
+ # See the README file or the man page for more details.
+ #
 -#cmd_cp		/bin/cp
 +cmd_cp		/bin/cp
  
- # BACKUP INTERVALS
- # (must be unique and in ascending order, i.e. hourly, daily, weekly, etc.)
-@@ -43,7 +43,7 @@
- #ssh_args			-p 22
- 
- # make sure the lockfile directory is not world writable!
+ # rsync must be enabled for anything to work.
+ @CMD_RSYNC@
+@@ -67,7 +67,7 @@
+ # If you enable the lockfile, make sure the lockfile directory is
+ # not world writable. Otherwise anyone can prevent the program from running.
+ #
 -#lockfile	/var/lock/subsys/rsnapshot
 +lockfile	/var/lock/subsys/rsnapshot
  
- # don't span filesystems within a backup point
- #one_fs		0
+ # If this is enabled, rsync won't span filesystem partitions within a
+ # backup point. This essentially passes the -x option to rsync.

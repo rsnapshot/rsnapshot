@@ -8,7 +8,7 @@ Group: Applications/System
 Source: http://www.rsnapshot.org/downloads/rsnapshot-1.0.8.tar.gz
 Patch: rsnapshot.patch
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
-Requires: perl, rsync
+Requires: perl, rsync, util-linux
 
 %description
 This is a remote backup program that uses rsync to take backup snapshots of filesystems. 
@@ -21,7 +21,8 @@ It uses hard links to save space on disk.
 %patch
 
 %build
-./configure --prefix=/usr --sysconfdir=/etc --mandir=/usr/share --with-perl=/usr/bin/perl --with-rsync=/usr/bin/rsync --with-ssh=/usr/bin/ssh
+./configure --prefix=/usr --sysconfdir=/etc --mandir=/usr/share/man --with-perl=/usr/bin/perl \
+	--with-rsync=/usr/bin/rsync --with-ssh=/usr/bin/ssh --with-logger=/usr/bin/logger
 
 %install
 install -d $RPM_BUILD_ROOT/%{_bindir}
@@ -49,6 +50,9 @@ rm -rf $RPM_BUILD_DIR/%{name}-%{version}/
 %verify(user group mode md5 size mtime) %{_mandir}/man1/rsnapshot.1*
 
 %changelog
+* Fri Dec 26 2003 Nathan Rosenquist <nathan@rsnapshot.org>
+- Added util-linux dependency, and --with-logger= option
+
 * Fri Dec 19 2003 Nathan Rosenquist <nathan@rsnapshot.org>
 - now fully support autoconf
 
