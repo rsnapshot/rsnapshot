@@ -2,8 +2,7 @@ rsnapshot TODO list:
 
 for version 1.0.x
 ------------------------------------------------------------------------------
-- Test autoconf install process on Redhat, Fedora, Solaris, Mac OS X, *BSD,
-  and maybe IRIX if it's convenient
+- Test autoconf install process on Redhat, Fedora, Solaris, Mac OS X
 
 - Possibly get autoconf to detect rsync, ssh, and the GNU version of CP and
   write a file based on this information. This may or may not be practical.
