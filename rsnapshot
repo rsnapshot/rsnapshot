@@ -86,6 +86,10 @@ my $prev_interval;
 # i.e. cp -al hourly.$prev_interval_max/ daily.0/
 my $prev_interval_max;
 
+# this determines whether we will use GNU cp, or the native Perl implementation
+# by default, we use native Perl
+my $use_gnu_cp = 0;
+
 # command line flags
 my %opts; 
 
@@ -206,16 +210,18 @@ if ( -f $config_file )	{
 					last;
 				}
 			}
-			
-			if ($var eq 'cmd_cp')	{
-				if ( -x $value )	{
-					$config_vars{'cmd_cp'} = $value;
-					$line_syntax_ok = 1;
-				} else	{
-					bail("Could not find $value, please fix cmd_cp in $config_file");
-				}
-			}
 		# END CRUFT
+		
+		# CHECK FOR GNU cp
+		if ($var eq 'cmd_cp')	{
+			if ( -x $value )	{
+				$config_vars{'cmd_cp'} = $value;
+				$line_syntax_ok = 1;
+				$use_gnu_cp = 1;
+			} else	{
+				bail("Could not find $value, please fix cmd_cp in $config_file");
+			}
+		}
 		
 		# CHECK FOR RSYNC (required)
 		if ($var eq 'cmd_rsync')	{
@@ -338,7 +344,6 @@ if ( -f $config_file )	{
 		print STDERR "----------------------------------------------------\n";
 		print STDERR "cmd_mkdir\n";
 		print STDERR "cmd_touch\n";
-		print STDERR "cmd_cp\n";
 		print STDERR "cmd_mv\n";
 		print STDERR "cmd_rm\n";
 		print STDERR "----------------------------------------------------\n";
@@ -581,12 +586,14 @@ sub rotate_interval	{
 	
 	# hard link (except for directories) previous interval over to .0
 	if ( -d "$config_vars{'snapshot_root'}/$prev_interval.$prev_interval_max" )	{
-		# BEGIN CRUFT
 		if ($verbose)	{ print "$config_vars{'cmd_cp'} -al $config_vars{'snapshot_root'}/$prev_interval.$prev_interval_max/ $config_vars{'snapshot_root'}/$interval.0/\n"; }
 		if ($test == 0)	{
-			system( $config_vars{'cmd_cp'}, '-al', "$config_vars{'snapshot_root'}/$prev_interval.$prev_interval_max/", "$config_vars{'snapshot_root'}/$interval.0/" );
+			my $result = cp_al( "$config_vars{'snapshot_root'}/$prev_interval.$prev_interval_max/", "$config_vars{'snapshot_root'}/$interval.0/" );
+			if (! $result)	{
+				bail("Error! cp_al(\"$config_vars{'snapshot_root'}/$prev_interval.$prev_interval_max/\", \"$config_vars{'snapshot_root'}/$interval.0/\") failed");
+			}
+			# system( $config_vars{'cmd_cp'}, '-al', "$config_vars{'snapshot_root'}/$prev_interval.$prev_interval_max/", "$config_vars{'snapshot_root'}/$interval.0/" );
 		}
-		# END CRUFT
 	}
 }
 
@@ -623,11 +630,44 @@ sub show_usage	{
 	print "Type \"man rsnapshot\" for full details.\n";
 } 
  
+sub cp_al	{
+	my $src  = shift(@_);
+	my $dest = shift(@_);
+	my $result = 0;
+	
+	if ($use_gnu_cp == 1)	{
+		$result = gnu_cp_al("$src", "$dest");
+	} else	{
+		$result = native_cp_al("$src", "$dest");
+	}
+	
+	return ($result);
+}
+ 
 # this is a wrapper to call the GNU version of "cp" 
 # it might fail in mysterious ways if you have a different version of "cp"
 #
 sub gnu_cp_al	{
+	my $src    = shift(@_);
+	my $dest   = shift(@_);
+	my $result = 0;
 	
+	# make sure we were passed two arguments
+	if (!defined($src))  { return(0); }
+	if (!defined($dest)) { return(0); }
+	
+	if ( ! -d "$src" )	{
+		print STDERR "native_cp_al() needs a valid directory as an argument\n";
+		return (0);
+	}
+	
+	$result = system( $config_vars{'cmd_cp'}, "$src", "$dest" );
+	if ($result != 0)	{
+		print STDERR "Warning! GNU cp failed, trying native Perl copy\n";
+		return (native_cp_al( "$src", "$dest" ));
+	}
+	
+	return (1);
 } 
  
 # this is the purpose built, native perl replacement for "cp -al".
@@ -731,7 +771,7 @@ sub native_cp_al	{
 				# CHOWN
 				$result = chown($st->uid, $st->gid, "$dest/$node");
 				if (! $result)	{
-					print STDERR "Warning! Could not chown(" . $st->uid ", " $st->gid . ", \"$dest/$node\")\n";
+					print STDERR "Warning! Could not chown(" . $st->uid . ", " . $st->gid . ", \"$dest/$node\")\n";
 					return (0);
 				}
 				
