@@ -1,18 +1,14 @@
---- rsnapshot.conf.default	Sun May 16 17:35:01 2004
-+++ rsnapshot.conf.default.RPM	Sun May 16 17:36:34 2004
-@@ -34,10 +34,10 @@
+--- rsnapshot.conf.default.in	Mon May 17 00:02:47 2004
++++ rsnapshot.conf.default.in.RPM	Mon May 17 00:03:21 2004
+@@ -34,7 +34,7 @@
  #
  # See the README file or the man page for more details.
  #
--#cmd_cp		/bin/cp
-+cmd_cp		/bin/cp
+-#@CMD_CP@
++@CMD_CP@
  
  # uncomment this to use the rm program instead of the built-in perl routine
--#cmd_rm		/bin/rm
-+cmd_rm		/bin/rm
- 
- # rsync must be enabled for anything to work.
- cmd_rsync	/usr/bin/rsync
+ #@CMD_RM@
 @@ -122,7 +122,7 @@
  # If you enable the lockfile, make sure the lockfile directory is
  # not world writable. Otherwise anyone can prevent the program from running.

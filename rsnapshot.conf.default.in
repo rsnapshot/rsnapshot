@@ -34,7 +34,7 @@ snapshot_root	/.snapshots/
 #
 # See the README file or the man page for more details.
 #
-#cmd_cp		/bin/cp
+#@CMD_CP@
 
 # uncomment this to use the rm program instead of the built-in perl routine
 #@CMD_RM@
