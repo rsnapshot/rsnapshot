@@ -572,9 +572,9 @@ sub backup_interval	{
 	
 	# SYNC LIVE DATA TO $interval.0
 	foreach my $sp_ref (@snapshot_points)	{
-		my $src;
-		
-		my $rsync_args = $default_rsync_args;
+		my $rsync_args	= $default_rsync_args;
+		my $src			= undef;
+		my @cmd_stack	= undef;
 		
 		# append a trailing slash if it's a directory
 		if ((-d "$$sp_ref{'src'}") && ($$sp_ref{'src'} !~ /\/$/))	{
@@ -620,10 +620,10 @@ sub backup_interval	{
 		
 		# if this is a user@host:/path, use ssh
 		if ( is_ssh_path($src) )	{
-			if (1 == $verbose)	{ print "$config_vars{'cmd_rsync'} $rsync_args --delete --numeric-ids --devices --rsh=$config_vars{'cmd_ssh'} $src $config_vars{'snapshot_root'}/$interval.0/$$sp_ref{'dest'}\n"; }
-			if (0 == $test)	{
-				system( $config_vars{'cmd_rsync'}, $rsync_args, '--delete', '--numeric-ids', '--devices', "--rsh=$config_vars{'cmd_ssh'}", $src, "$config_vars{'snapshot_root'}/$interval.0/$$sp_ref{'dest'}" );
-			}
+			@cmd_stack = (
+				$config_vars{'cmd_rsync'}, $rsync_args, '--delete', '--numeric-ids', '--devices', "--rsh=$config_vars{'cmd_ssh'}",
+				$src, "$config_vars{'snapshot_root'}/$interval.0/$$sp_ref{'dest'}"
+			);
 			
 		# anonymous rsync
 		} elsif ( is_anon_rsync_path($src) )	{
@@ -631,21 +631,27 @@ sub backup_interval	{
 				$rsync_args .= 'q';
 			}
 			
-			if (1 == $verbose)	{ print "$config_vars{'cmd_rsync'} $rsync_args --delete --numeric-ids --devices $src $config_vars{'snapshot_root'}/$interval.0/$$sp_ref{'dest'}\n"; }
-			if (0 == $test)	{
-				system( $config_vars{'cmd_rsync'}, $rsync_args, '--delete', '--numeric-ids', '--devices', $src, "$config_vars{'snapshot_root'}/$interval.0/$$sp_ref{'dest'}" );
-			}
+			@cmd_stack = (
+				$config_vars{'cmd_rsync'}, $rsync_args, '--delete', '--numeric-ids', '--devices',
+				$src, "$config_vars{'snapshot_root'}/$interval.0/$$sp_ref{'dest'}"
+			);
 			
 		# local filesystem
 		} elsif ( is_real_local_abs_path($src) )	{
-			if (1 == $verbose)	{ print "$config_vars{'cmd_rsync'} $rsync_args --delete --numeric-ids --devices $src $config_vars{'snapshot_root'}/$interval.0/$$sp_ref{'dest'}\n"; }
-			if (0 == $test)	{
-				system( $config_vars{'cmd_rsync'}, $rsync_args, '--delete', '--numeric-ids', '--devices', $src, "$config_vars{'snapshot_root'}/$interval.0/$$sp_ref{'dest'}" );
-			}
+			@cmd_stack = (
+				$config_vars{'cmd_rsync'}, $rsync_args, '--delete', '--numeric-ids', '--devices',
+				$src, "$config_vars{'snapshot_root'}/$interval.0/$$sp_ref{'dest'}"
+			);
+			
 		# this should have already been validated once, but better safe than sorry
 		} else	{
 			bail("Could not understand source \"$src\" in backup_interval()");
 		}
+		
+		# RUN THE RSYNC COMMAND FOR THIS BACKUP POINT
+		# BASED ON THE @cmd_stack VARS
+		if (1 == $verbose)	{ print join(' ', @cmd_stack, "\n"); }
+		if (0 == $test)		{ system(@cmd_stack); }
 	}
 	
 	# update mtime of $interval.0 to reflect snapshot time
