@@ -2,12 +2,13 @@ rsnapshot TODO list:
 
 for version 1.0.x
 ------------------------------------------------------------------------------
++ Add -V print statements to native_cp_al()
 + Add an file exclusion list feature
 + Add a "one_fs" feature to the config file
 + Come up with a generalized way to pass arbitrary args to rsync and ssh
-+ Support for SSH tunnelling
-+ Add lock file to prevent a second cron task running
-  before the first one stops
++ Support for SSH tunnelling (this may be handled by arbitrary args)
++ Add lock file to prevent a second cron task from running
+  before the first one stops (don't forget to trap for signals)
 
 for version 2.0.x
 ------------------------------------------------------------------------------
