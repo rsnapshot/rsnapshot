@@ -17,7 +17,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.262 2005/04/02 23:37:37 scubaninja Exp $
+# $Id: rsnapshot-program.pl,v 1.263 2005/04/02 23:42:16 scubaninja Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -585,6 +585,18 @@ sub parse_config_file {
 		if ($var eq 'cmd_du') {
 			if ((-f "$value") && (-x "$value") && (1 == is_real_local_abs_path($value))) {
 				$config_vars{'cmd_du'} = $value;
+				$line_syntax_ok = 1;
+				next;
+			} else {
+				config_err($file_line_num, "$line - $value is not executable");
+				next;
+			}
+		}
+		
+		# CHECK FOR rsnapshot-diff (optional)
+		if ($var eq 'cmd_rsnapshot_diff') {
+			if ((-f "$value") && (-x "$value") && (1 == is_real_local_abs_path($value))) {
+				$config_vars{'cmd_rsnapshot_diff'} = $value;
 				$line_syntax_ok = 1;
 				next;
 			} else {
@@ -4744,17 +4756,19 @@ Here is a list of allowed parameters:
 
 =over 4
 
-B<config_version>    Config file version (required). Default is 1.2
+B<config_version>     Config file version (required). Default is 1.2
 
-B<snapshot_root>     Local filesystem path to save all snapshots
+B<snapshot_root>      Local filesystem path to save all snapshots
 
-B<no_create_root>    If set to 1, rsnapshot won't create snapshot_root directory
+B<no_create_root>     If set to 1, rsnapshot won't create snapshot_root directory
 
-B<cmd_rsync>         Full path to rsync (required)
+B<cmd_rsync>          Full path to rsync (required)
 
-B<cmd_ssh>           Full path to ssh (optional)
+B<cmd_ssh>            Full path to ssh (optional)
 
-B<cmd_cp>            Full path to cp  (optional, but must be GNU version)
+B<cmd_cp>             Full path to cp  (optional, but must be GNU version)
+
+B<cmd_rsnapshot_diff> Full path to rsnapshot-diff (optional)
 
 =over 4
 
