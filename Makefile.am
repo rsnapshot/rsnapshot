@@ -76,7 +76,7 @@ tar:
 	
 	@# utils
 	/bin/mkdir rsnapshot-$(VERSION)/utils/
-	/bin/cp utils/README utils/rsnaptar utils/backup_pgsql.sh utils/backup_rsnapshot_cvsroot.sh rsnapshot-$(VERSION)/utils/
+	/bin/cp utils/README utils/rsnaptar utils/backup_pgsql.sh utils/backup_rsnapshot_cvsroot.sh utils/backup_smb_share.sh rsnapshot-$(VERSION)/utils/
 	
 	@# change ownership to root, and delete build dir
 	chown -R root:root rsnapshot-$(VERSION)/
