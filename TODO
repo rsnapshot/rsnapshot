@@ -1,0 +1,12 @@
+TODO:
+	
+update the Makefile to use variables, ideally by calling
+./rsnapshot version_only for the app version number
+	
+come up with an elegant way to handle additional protocols,
+probably using a web style prefix (i.e. http://path/to/http/server)
+
+decide on what to do about the slash issue with rsync/ssh. currently
+rsnapshot.conf only supports directories as sources (since it adds
+a trailing slash to every entry). will having the slash at the end
+make this too confusing and error prone?
