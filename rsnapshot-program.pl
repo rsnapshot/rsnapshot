@@ -1040,6 +1040,7 @@ sub bail	{
 
 # accepts line number, errstr
 # prints a config file error
+# also sets global $config_perfect var off
 sub config_err	{
 	my $line_num	= shift(@_);
 	my $errstr		= shift(@_);
@@ -1049,6 +1050,7 @@ sub config_err	{
 	
 	print_err("$config_file on line $line_num: $errstr", 1);
 	
+	# invalidate entire config file
 	$config_perfect = 0;
 }
 
@@ -1140,6 +1142,7 @@ sub print_msg	{
 # accepts string, and level
 # prints string if level is as high as verbose
 # logs string if level is as high as loglevel
+# also sets global $run_perfect to 0
 sub print_err	{
 	my $str		= shift(@_);
 	my $level	= shift(@_);
@@ -1147,7 +1150,7 @@ sub print_err	{
 	if (!defined($str))		{ return (undef); }
 	if (!defined($level))	{ $level = 0; }
 	
-	# this run is no longer perfect since we have an error
+	# we can no longer say the execution of the program has been error free
 	$run_perfect = 0;
 	
 	chomp($str);
@@ -1200,6 +1203,7 @@ sub log_msg	{
 
 # accepts string, and level
 # logs string if level is as high as loglevel
+# also sets global var $run_perfect to 0
 sub log_err	{
 	my $str		= shift(@_);
 	my $level	= shift(@_);
@@ -1250,6 +1254,7 @@ sub syslog_msg	{
 # log errors to syslog
 # accepts error message
 # returns 1 on success, undef on failure
+# also sets global var $run_perfect to 0
 sub syslog_err	{
 	my $msg = shift(@_);
 	
@@ -1262,8 +1267,8 @@ sub syslog_err	{
 # accepts no arguments
 # returns the current date (for the logfile)
 #
-# Yes, I'm sure there's a wonderful module that can do this all for me,
-# but unless it comes standard with Perl 5.004 and later, I'd rather do it this way :)
+# there's probably a wonderful module that can do this all for me,
+# but unless it comes standard with perl 5.004 and later, i'd rather do it this way :)
 #
 sub get_cur_date	{
 	# localtime() gives us an array with these elements:
@@ -1517,6 +1522,10 @@ sub add_lockfile	{
 			syslog_err("Could not write lockfile $lockfile");
 			exit(1);
 		}
+		
+		# print PID to lockfile
+		print LOCKFILE $$;
+		
 		$result = close(LOCKFILE);
 		if (!defined($result))	{
 			print_err("Warning! Could not close lockfile $lockfile", 2);
