@@ -647,8 +647,8 @@ if (0 == scalar(@backup_points))	{
 	exit(1);
 }
 
-# OTHER SITUATIONS THAT SHOULD NOT HAPPEN
-# (various undesirable interactions)
+# SINS OF CONFUSION
+# (various, specific, undesirable interactions)
 #
 # make sure that we don't have only one copy of the first interval,
 # yet expect rotations on the second interval
@@ -662,6 +662,7 @@ if (scalar(@intervals) > 1)	{
 	}
 }
 
+# SET VERBOSE LEVEL AND LOGLEVEL IF WE HAVEN'T YET
 # if we didn't manage to get a verbose level yet, either through the config file
 # or the command line, use the default
 if (!defined($verbose))	{
