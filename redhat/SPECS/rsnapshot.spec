@@ -48,9 +48,9 @@ install -m 600 rsnapshot.conf.default $RPM_BUILD_ROOT/etc/rsnapshot.conf
 #
 # upgrade rsnapshot config file
 #
-RSNAPSHOT_CONFIG_VERSION=`/usr/bin/rsnapshot check-config-version`
+RSNAPSHOT_CONFIG_VERSION=`%{_bindir}/rsnapshot check-config-version`
 if test $? != 0; then
-	echo "Error upgrading rsnapshot.conf"
+	echo "Error upgrading %{_sysconfdir}/rsnapshot.conf"
 fi
 
 if test "$RSNAPSHOT_CONFIG_VERSION" = "1.2"; then
@@ -59,12 +59,12 @@ if test "$RSNAPSHOT_CONFIG_VERSION" = "1.2"; then
 fi
 
 if test "$RSNAPSHOT_CONFIG_VERSION" = "unknown"; then
-	/usr/bin/rsnapshot upgrade-config-file
+	%{_bindir}/rsnapshot upgrade-config-file
 	RETVAL=$?
 	exit $RETVAL
 fi
 
-echo "Error upgrading rsnapshot.conf. Config format unknown!"
+echo "Error upgrading %{_sysconfdir}/rsnapshot.conf. Config format unknown!"
 exit 1
 
 
@@ -81,8 +81,8 @@ rm -rf $RPM_BUILD_DIR/%{name}-%{version}/
 %verify(user group mode md5 size mtime) %{_mandir}/man1/rsnapshot.1*
 
 %changelog
-* Sun Jan 23 2005 Nathan Rosenquist <nathan@rsnapshot.org>
-- Added perl upgrade script, modified from utils/upgrade_rsnapshot.pl
+* Sun Jan 29 2005 Nathan Rosenquist <nathan@rsnapshot.org>
+- Added upgrade script
 
 * Sat Jan 22 2005 Nathan Rosenquist <nathan@rsnapshot.org>
 - Added --with-du option
