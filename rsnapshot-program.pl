@@ -2106,10 +2106,10 @@ mysqldump -uusername mydatabase > mydatabase.sql
 
 =back
 
-rsnapshot will take that file and move it into the db_backup/ directory inside
-the snapshot interval, just the same as if it had been sitting on the filesystem.
-If the backup script generates the same output on the next run, no additional
-disk space will be taken up.
+rsnapshot will take the generated "mydatabase.sql" file and move it into the
+db_backup/ directory inside the snapshot interval, just the same as if it had
+been sitting on the filesystem. If the backup script generates the same output
+on the next run, no additional disk space will be taken up.
 
 =back
 
