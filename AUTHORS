@@ -35,3 +35,6 @@ Peter Palfrader <weasel@debian.org>
 
 Nicolas Kaiser <nikai@nikai.net>
     - Fixed typos in program and man page
+
+David Cantrell <david@cantrell.org.uk>
+    - Wrote the rsnapshot-diff utility
