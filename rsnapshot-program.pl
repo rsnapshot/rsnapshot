@@ -3126,7 +3126,7 @@ sub show_disk_usage	{
 	my $intervals_str = '';
 	
 	foreach my $interval_ref (@intervals)	{
-		if (-e "$config_vars{'snapshot_root'}/$$interval_ref{'interval'}.0/")	{
+		if (-r "$config_vars{'snapshot_root'}/$$interval_ref{'interval'}.0/")	{
 			$intervals_str .= "$config_vars{'snapshot_root'}/$$interval_ref{'interval'}.* ";
 		}
 	}
@@ -3139,7 +3139,7 @@ sub show_disk_usage	{
 			return (1);
 		}
 	} else	{
-		print_err('No intervals defined!');
+		print STDERR ("No intervals visible! Do you have permission to see the snapshot root?\n");
 	}
 	
 	return (undef);
