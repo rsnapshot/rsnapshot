@@ -1924,8 +1924,8 @@ sub is_comment {
 sub is_blank {
 	my $str = shift(@_);
 	
-	if (!defined($str))		{ return (undef); }
-	if ($str =~ m/^\s*$/)	{ return (1); }
+	if (!defined($str))	{ return (undef); }
+	if ($str =~ m/\S/)	{ return (1); }
 	return (0);
 }
 

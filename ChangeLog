@@ -13,6 +13,7 @@ VERSION 1.1.7 (??? ?? ??:?? 2004)
 - New safe_rename() function wraps around rename() calls to workaround a bug
   in a few Linux kernels
 - Added "-uroot" to utils/backup_mysql.sh example file
+- Changed regex in is_blank() subroutine
 
 VERSION 1.1.6 (Jul 05 16:35 2004)
 ------------------------------------------------------------------------------
