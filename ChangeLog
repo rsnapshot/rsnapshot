@@ -15,6 +15,7 @@ VERSION 1.1.5 (??? ?? ??:?? 2004)
 - Added a new exit code, for warnings (2)
 - rsync exit codes 23 and 24 make rsnapshot return a warning exit code
 - Changed link_dest comment in config file to mention "cross-platform"
+- Added utils/debug_moving_files.sh abuse script for testing
 
 VERSION 1.1.4 (May 16 23:44 2004)
 ------------------------------------------------------------------------------
