@@ -2,12 +2,11 @@ rsnapshot TODO list:
 
 for version 1.0.x
 ------------------------------------------------------------------------------
-+ Fully test the one_fs global and local config file params
++ Add lock file to prevent a second cron task from running
+  before the first one stops (don't forget to trap for signals)
 + Add an file exclusion list feature
 + Implement a generalized way to pass arbitrary args to rsync and ssh
 + Support for SSH tunnelling (this may be handled by arbitrary args)
-+ Add lock file to prevent a second cron task from running
-  before the first one stops (don't forget to trap for signals)
 
 for version 2.0.x
 ------------------------------------------------------------------------------
