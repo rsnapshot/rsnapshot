@@ -400,6 +400,11 @@ if ( -f "$config_file" )	{
 			$config_vars{'rsync_long_args'} = $value;
 			$line_syntax_ok = 1;
 		}
+		# TODO SSH ARGS (they're all short since it's a BSD project, and they'll be wrapped in quotes)
+		# i.e.:
+		# 	ssh_args		-xyz -p 22
+		# becomes:
+		# 	rsync -av --rsh="/usr/bin/ssh -xyz -p 22" /home/foo/bar user@domain.com:/home/foo/bar
 		
 		# make sure we understood this line
 		# if not, warn the user, and prevent the program from executing
