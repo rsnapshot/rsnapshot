@@ -1805,6 +1805,36 @@ sub is_directory_traversal	{
 	return (0);
 }
 
+# accepts path
+# returns 1 if it's a file (doesn't have a trailing slash)
+# returns 0 otherwise
+sub is_file	{
+	my $path = shift(@_);
+	
+	if (!defined($path))	{ return (undef); }
+	
+	if ($path !~ m/\/$/o)	{
+		return (1);
+	}
+	
+	return (0);
+}
+
+# accepts path
+# returns 1 if it's a directory (has a trailing slash)
+# returns 0 otherwise
+sub is_directory	{
+	my $path = shift(@_);
+	
+	if (!defined($path))	{ return (undef); }
+	
+	if ($path =~ m/\/$/o)	{
+		return (1);
+	}
+	
+	return (0);
+}
+
 # accepts string
 # removes trailing slash, returns the string
 sub remove_trailing_slash	{
@@ -2036,6 +2066,29 @@ sub backup_interval	{
 			if (1 == $link_dest)	{
 				if ( -d "$config_vars{'snapshot_root'}/$interval.1/$$sp_ref{'dest'}" )	{
 					push(@rsync_long_args_stack, "--link-dest=$config_vars{'snapshot_root'}/$interval.1/$$sp_ref{'dest'}");
+				}
+			}
+			
+			# SPECIAL EXCEPTION:
+			#   If we're using --link-dest AND the source is a file AND we have a copy from the last time,
+			#   manually link interval.1/foo to interval.0/foo
+			#
+			#   This is necessary because --link-dest only works on directories
+			#
+			if ((1 == $link_dest) && (is_file($src)) && (-f "$config_vars{'snapshot_root'}/$interval.1/$$sp_ref{'dest'}"))	{
+				# these are both "destination" paths, but we're moving from .1 to .0
+				my $srcpath		= "$config_vars{'snapshot_root'}/$interval.1/$$sp_ref{'dest'}";
+				my $destpath	= "$config_vars{'snapshot_root'}/$interval.0/$$sp_ref{'dest'}";
+				
+				print_cmd("ln $srcpath $destpath");
+				
+				if (0 == $test)	{
+					$result = link( "$srcpath", "$destpath" );
+					
+					if (!defined($result) or (0 == $result))	{
+						print_err ("link(\"$srcpath\", \"$destpath\") failed", 2);
+						syslog_err("link(\"$srcpath\", \"$destpath\") failed");
+					}
 				}
 			}
 			

@@ -18,7 +18,8 @@ VERSION 1.1.5 (??? ?? ??:?? 2004)
 - Changed link_dest comment in config file to mention "cross-platform"
 - Added utils/debug_moving_files.sh abuse script for testing
 - Added 'du' option to show disk usage in snapshot_root
-- moved setlocale() after begin message
+- Moved setlocale() after begin message
+- Added manual link() call when we're using --link-dest and a single file
 
 VERSION 1.1.4 (May 16 23:44 2004)
 ------------------------------------------------------------------------------
