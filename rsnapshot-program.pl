@@ -2180,6 +2180,12 @@ sub rotate_lowest_snapshots	{
 	}
 }
 
+# TODO: break out the guts of this subroutine into two more subs:
+#  rsync_backup_point()
+#  exec_backup_script()
+#
+# they will each be called from inside handle_backup_point(), as appropriate
+
 # accepts interval, backup_point_ref, ssh_rsync_args_ref
 # returns no args
 # runs rsync on the given backup point
