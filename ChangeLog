@@ -64,6 +64,7 @@ VERSION 1.2.0 (Jan ?? ??:?? 2005)
   up, which occurred when snapshot root was more than one level down from a
   backup point
 - Added commented out du_args to rsnapshot.conf.default.in
+- Added descriptive error if "du" fails
 
 VERSION 1.1.6 (Jul 05 16:35 2004)
 ------------------------------------------------------------------------------

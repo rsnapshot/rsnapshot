@@ -3643,6 +3643,9 @@ sub show_disk_usage {
 				exit(0);
 			} else {
 				# exit showing error
+				print STDERR "Error while calling $cmd_du.\n";
+				print STDERR "Please make sure this version of du supports the \"$du_args\" flags.\n";
+				print STDERR "GNU du is recommended.\n";
 				exit(1);
 			}
 		}
