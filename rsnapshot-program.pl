@@ -2129,7 +2129,7 @@ sub backup_interval	{
 	
 	# SYNC LIVE FILESYSTEM DATA TO $interval.0
 	# loop through each backup point and backup script
-	foreach my $sp_ref (@backup_points)	{
+	foreach my $bp_ref (@backup_points)	{
 		my @cmd_stack				= ();
 		my $src						= undef;
 		my $script					= undef;
@@ -2140,16 +2140,16 @@ sub backup_interval	{
 		my @rsync_long_args_stack	= ( split(/\s/, $default_rsync_long_args) );
 		
 		# append a trailing slash if src is a directory
-		if (defined($$sp_ref{'src'}))	{
-			if ((-d "$$sp_ref{'src'}") && ($$sp_ref{'src'} !~ /\/$/))	{
-				$src = $$sp_ref{'src'} . '/';
+		if (defined($$bp_ref{'src'}))	{
+			if ((-d "$$bp_ref{'src'}") && ($$bp_ref{'src'} !~ /\/$/))	{
+				$src = $$bp_ref{'src'} . '/';
 			} else	{
-				$src = $$sp_ref{'src'};
+				$src = $$bp_ref{'src'};
 			}
 		}
 		
 		# create missing parent directories inside the $interval.x directory
-		my @dirs = split(/\//, $$sp_ref{'dest'});
+		my @dirs = split(/\//, $$bp_ref{'dest'});
 		pop(@dirs);
 		
 		# don't mkdir for dest unless we have to
@@ -2174,7 +2174,7 @@ sub backup_interval	{
 		}
 		
 		# IF WE HAVE A SRC DIRECTORY, SYNC IT TO DEST
-		if (defined($$sp_ref{'src'}))	{
+		if (defined($$bp_ref{'src'}))	{
 			# check opts, first unique to this backup point, and then global
 			#
 			# with all these checks, we try the local option first, and if
@@ -2185,20 +2185,20 @@ sub backup_interval	{
 			# whereas the subsequent options append to them
 			#
 			# RSYNC SHORT ARGS
-			if ( defined($$sp_ref{'opts'}) && defined($$sp_ref{'opts'}->{'rsync_short_args'}) )	{
-				$rsync_short_args = $$sp_ref{'opts'}->{'rsync_short_args'};
+			if ( defined($$bp_ref{'opts'}) && defined($$bp_ref{'opts'}->{'rsync_short_args'}) )	{
+				$rsync_short_args = $$bp_ref{'opts'}->{'rsync_short_args'};
 			}
 			# RSYNC LONG ARGS
-			if ( defined($$sp_ref{'opts'}) && defined($$sp_ref{'opts'}->{'rsync_long_args'}) )	{
-				@rsync_long_args_stack = split(/\s/, $$sp_ref{'opts'}->{'rsync_long_args'});
+			if ( defined($$bp_ref{'opts'}) && defined($$bp_ref{'opts'}->{'rsync_long_args'}) )	{
+				@rsync_long_args_stack = split(/\s/, $$bp_ref{'opts'}->{'rsync_long_args'});
 			}
 			# SSH ARGS
-			if ( defined($$sp_ref{'opts'}) && defined($$sp_ref{'opts'}->{'ssh_args'}) )	{
-				$ssh_args = $$sp_ref{'opts'}->{'ssh_args'};
+			if ( defined($$bp_ref{'opts'}) && defined($$bp_ref{'opts'}->{'ssh_args'}) )	{
+				$ssh_args = $$bp_ref{'opts'}->{'ssh_args'};
 			}
 			# ONE_FS
-			if ( defined($$sp_ref{'opts'}) && defined($$sp_ref{'opts'}->{'one_fs'}) )	{
-				if (1 == $$sp_ref{'opts'}->{'one_fs'})	{
+			if ( defined($$bp_ref{'opts'}) && defined($$bp_ref{'opts'}->{'one_fs'}) )	{
+				if (1 == $$bp_ref{'opts'}->{'one_fs'})	{
 					$rsync_short_args .= 'x';
 				}
 			} elsif ($one_fs)	{
@@ -2235,8 +2235,8 @@ sub backup_interval	{
 			
 			# if we're using --link-dest, we'll need to specify .1 as the link-dest directory
 			if (1 == $link_dest)	{
-				if ( -d "$config_vars{'snapshot_root'}/$interval.1/$$sp_ref{'dest'}" )	{
-					push(@rsync_long_args_stack, "--link-dest=$config_vars{'snapshot_root'}/$interval.1/$$sp_ref{'dest'}");
+				if ( -d "$config_vars{'snapshot_root'}/$interval.1/$$bp_ref{'dest'}" )	{
+					push(@rsync_long_args_stack, "--link-dest=$config_vars{'snapshot_root'}/$interval.1/$$bp_ref{'dest'}");
 				}
 			}
 			
@@ -2246,10 +2246,10 @@ sub backup_interval	{
 			#
 			#   This is necessary because --link-dest only works on directories
 			#
-			if ((1 == $link_dest) && (is_file($src)) && (-f "$config_vars{'snapshot_root'}/$interval.1/$$sp_ref{'dest'}"))	{
+			if ((1 == $link_dest) && (is_file($src)) && (-f "$config_vars{'snapshot_root'}/$interval.1/$$bp_ref{'dest'}"))	{
 				# these are both "destination" paths, but we're moving from .1 to .0
-				my $srcpath		= "$config_vars{'snapshot_root'}/$interval.1/$$sp_ref{'dest'}";
-				my $destpath	= "$config_vars{'snapshot_root'}/$interval.0/$$sp_ref{'dest'}";
+				my $srcpath		= "$config_vars{'snapshot_root'}/$interval.1/$$bp_ref{'dest'}";
+				my $destpath	= "$config_vars{'snapshot_root'}/$interval.0/$$bp_ref{'dest'}";
 				
 				print_cmd("ln $srcpath $destpath");
 				
@@ -2290,7 +2290,7 @@ sub backup_interval	{
 			push(@cmd_stack, $src);
 			#
 			# dest
-			push(@cmd_stack, "$config_vars{'snapshot_root'}/$interval.0/$$sp_ref{'dest'}");
+			push(@cmd_stack, "$config_vars{'snapshot_root'}/$interval.0/$$bp_ref{'dest'}");
 			#
 			# END RSYNC COMMAND ASSEMBLY
 			
@@ -2338,14 +2338,14 @@ sub backup_interval	{
 						# set this directory to rollback if we're using link_dest
 						# (since $interval.0/ will have been moved to $interval.1/ by now)
 						if (1 == $link_dest)	{
-							push(@rollback_points, $$sp_ref{'dest'});
+							push(@rollback_points, $$bp_ref{'dest'});
 						}
 					}
 				}
 			}
 			
 		# OR, IF WE HAVE A BACKUP SCRIPT, RUN IT, THEN SYNC IT TO DEST
-		} elsif (defined($$sp_ref{'script'}))	{
+		} elsif (defined($$bp_ref{'script'}))	{
 			# work in a temp dir, and make this the source for the rsync operation later
 			# not having a trailing slash is a subtle distinction. it allows us to use
 			# the same path if it's NOT a directory when we try to delete it.
@@ -2406,16 +2406,16 @@ sub backup_interval	{
 			# the backup script should return 0 on success, anything else is
 			# considered a failure.
 			#
-			print_cmd($$sp_ref{'script'});
+			print_cmd($$bp_ref{'script'});
 			
 			if (0 == $test)	{
-				$result = system( $$sp_ref{'script'} );
+				$result = system( $$bp_ref{'script'} );
 				if ($result != 0)	{
 					# bitmask return value
 					my $retval = get_retval($result);
 					
-					print_err ("backup_script $$sp_ref{'script'} returned $retval", 2);
-					syslog_err("backup_script $$sp_ref{'script'} returned $retval");
+					print_err ("backup_script $$bp_ref{'script'} returned $retval", 2);
+					syslog_err("backup_script $$bp_ref{'script'} returned $retval");
 				}
 			}
 			
@@ -2436,8 +2436,8 @@ sub backup_interval	{
 			# from .1 back to .0 if possible. these will be used as a baseline for diff comparisons by
 			# sync_if_different() down below.
 			if (1 == $link_dest)	{
-				my $lastdir	= "$config_vars{'snapshot_root'}/$interval.1/$$sp_ref{'dest'}/";
-				my $curdir	= "$config_vars{'snapshot_root'}/$interval.0/$$sp_ref{'dest'}/";
+				my $lastdir	= "$config_vars{'snapshot_root'}/$interval.1/$$bp_ref{'dest'}/";
+				my $curdir	= "$config_vars{'snapshot_root'}/$interval.0/$$bp_ref{'dest'}/";
 				
 				# if we even have files from last time
 				if ( -e "$lastdir" )	{
@@ -2462,12 +2462,12 @@ sub backup_interval	{
 			# rsync sees that the timestamps are different, and insists
 			# on changing things even if the files are bit for bit identical on content.
 			#
-			print_cmd("sync_if_different(\"$tmpdir\", \"$config_vars{'snapshot_root'}/$interval.0/$$sp_ref{'dest'}\")");
+			print_cmd("sync_if_different(\"$tmpdir\", \"$config_vars{'snapshot_root'}/$interval.0/$$bp_ref{'dest'}\")");
 			
 			if (0 == $test)	{
-				$result = sync_if_different("$tmpdir", "$config_vars{'snapshot_root'}/$interval.0/$$sp_ref{'dest'}");
+				$result = sync_if_different("$tmpdir", "$config_vars{'snapshot_root'}/$interval.0/$$bp_ref{'dest'}");
 				if (!defined($result))	{
-					print_err("Warning! sync_if_different(\"$tmpdir\", \"$$sp_ref{'dest'}\") returned undef", 2);
+					print_err("Warning! sync_if_different(\"$tmpdir\", \"$$bp_ref{'dest'}\") returned undef", 2);
 				}
 			}
 			
