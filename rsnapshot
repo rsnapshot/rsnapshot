@@ -35,7 +35,7 @@
 ### STANDARD MODULES ###
 ########################
 
-require 5;
+require 5.004;
 use strict;
 use Getopt::Std;
 use File::Path;
