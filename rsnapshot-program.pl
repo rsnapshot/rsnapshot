@@ -308,7 +308,7 @@ if ( -f "$config_file" )	{
 			$line_syntax_ok = 1;
 		}
 		
-		# BACKUP points
+		# BACKUP POINTS
 		if ($var eq 'backup')	{
 			my $src			= $value;	# source directory
 			my $dest		= $value2;	# dest directory
