@@ -4,9 +4,6 @@ for version 1.1.x
 ------------------------------------------------------------------------------
 - Add interactive mode to generate config files.
 
-- Add cmd_rm back in as an optional parameter. It seems that Perl's rmtree()
-  doesn't work under certain conditions.
-
 - Add rsync STDOUT/STDERR output to logfile at higher log settings. This will
   be accomplished by opening the rsync command as a pipe to a filehandle and
   printing / logging the output.
