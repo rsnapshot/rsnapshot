@@ -12,6 +12,11 @@ VERSION 1.2.1 (??? ?? ??:?? 2005)
 - Added rsnapshot-diff to Autoconf/Automake install/build process
 - Added sha1sum to utils/sign_packages.sh
 - Added a CVS Id to key files
+- Fixed exit value for some test invocations
+- Added 'rsnapshot diff' front-end to rsnapshot-diff
+- Added cmd_rsnapshot_diff
+- Added cmd_preexec
+- Added cmd_postexec
 
 VERSION 1.2.0 (Jan 31 21:43 2005)
 ------------------------------------------------------------------------------
