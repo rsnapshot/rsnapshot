@@ -698,6 +698,9 @@ if (!defined($interval_num))	{
 ### BEGIN FILESYSTEM ACTIONS ###
 ################################
 
+# log the beginning of this run
+log_msg("$run_string: started", 2);
+
 # IF WE'RE USING A LOCKFILE, TRY TO ADD IT
 # the program will bail if one exists
 if (defined($config_vars{'lockfile'}))	{
@@ -734,11 +737,13 @@ if (defined($config_vars{'lockfile'}))	{
 }
 
 # IF WE GOT THIS FAR, THE PROGRAM IS DONE RUNNING
-# WRITE TO SYSLOG WITH THE STATUS OF THE OUTCOME
+# WRITE TO THE LOG AND SYSLOG WITH THE STATUS OF THE OUTCOME
 if (1 == $run_perfect)	{
 	syslog_msg("$run_string: completed successfully");
+	log_msg   ("$run_string: completed successfully", 2);
 } else	{
 	syslog_err("$run_string: completed, but with some errors");
+	log_err   ("$run_string: completed, but with some errors", 2);
 }
 
 exit(0);
