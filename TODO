@@ -2,8 +2,6 @@ rsnapshot TODO list:
 
 Future versions (in no particular order)
 ------------------------------------------------------------------------------
-- Add backup_script to rollback feature
-
 - Add global and per-backup "bwlimit" parameter, and pass it along to rsync
 
 - Revamp config file to allow better representation of hierarchial data
@@ -19,9 +17,6 @@ Future versions (in no particular order)
 - Look into using IPC to make backup calls asynchronous (with a configurable
   limit on the upper number of simultaneous backups, and auto-limiting to
   one backup job per remote or local host at once).
-
-- Add pre/post backup script capability, to allow users to run arbitrary
-  scripts at key times during the backup
 
 - Add interactive mode to generate config files.
 
