@@ -289,13 +289,22 @@ sub find_config_file	{
 sub get_cmd_line_opts	{
 	# hold command line flags from getopt
 	my %opts;
-
+	my $result;
+	
 	# GET COMMAND LINE OPTIONS
-	getopt('c', \%opts);
-	getopts('vVtqx', \%opts);
+	$result = getopts('vVtqxc:', \%opts);
+	
+	# die if we don't understand all the flags
+	if (1 != $result)	{
+		# At this point, getopts() will have printed out "Unknown option: -X"
+		print "Type \"rsnapshot help\" or \"man rsnapshot\" for more information.\n";
+		exit(1);
+	}
+	
+	# set command
 	$cmd = $ARGV[0];
 	
-	# alternate config file
+	# alternate config file?
 	if (defined($opts{'c'}))	{
 		$config_file = $opts{'c'};
 	}
@@ -1200,7 +1209,7 @@ sub bail	{
 	}
 	
 	# write to syslog if we're running for real (and we have a message)
-	if ((0 == $do_configtest) && (0 == $test) && ('' ne $str))	{
+	if ((0 == $do_configtest) && (0 == $test) && defined($str) && ('' ne $str))	{
 		syslog_err($str);
 	}
 	
