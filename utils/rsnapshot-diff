@@ -1,5 +1,18 @@
 #!/usr/bin/perl
 
+##############################################################################
+# rsnapshot-diff
+# by David Cantrell <david@cantrell.org.uk>
+#
+# This program calculates the differences between two directories. It is
+# designed to work with two different subdirectories under the rsnapshot
+# snapshot_root. For example:
+#
+#   rsnapshot-diff /.snapshots/daily.0/ /.snapshots/daily.1/
+#
+# http://www.rsnapshot.org/
+##############################################################################
+
 use warnings;
 use strict;
 
