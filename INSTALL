@@ -45,9 +45,33 @@ INSTALLATION
             --mandir=/usr/local/man
                 This will install the man page under /usr/local/man
 
+            --with-perl=/usr/bin/perl
+                Specify your preferred path to perl. If you don't specify
+                this, the build process will detect the first version of perl
+                it finds in your path.
+
+            --with-rsync=/usr/bin/rsync
+                Specify your preferred path to rsync. If you don't specify
+                this, the build process will detect the first version of rsync
+                it finds in your path. You can always change this later by
+                editing the config file (rsnapshot.conf).
+                
+            --with-ssh=/usr/bin/ssh
+                Specify your preferred path to ssh. If you don't specify this,
+                the build process will detect the first version of ssh it
+                finds in your path. SSH is an optional feature, so it is OK if
+                it isn't on your system. Either way, if you want to use ssh,
+                you need to specifically enable this feature by uncommenting
+                the "cmd_ssh" parameter in the config file (rsnapshot.conf).
+ 
+            --without-ssh
+                Skip checks for ssh. You can always enable it later by editing
+                the config file (rsnapshot.conf).
+
 CONFIGURATION
     Edit /etc/rsnapshot.conf to suit your tastes. The exact location of this
     file depends on how you installed rsnapshot.
 
-    Type "man rsnapshot" for the full documentation.
+    Type "man rsnapshot" for the full documentation, or view it online at
+    http://www.rsnapshot.org/
 
