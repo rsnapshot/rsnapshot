@@ -2,6 +2,8 @@ rsnapshot TODO list:
 
 for version 1.0.x
 ------------------------------------------------------------------------------
+- Add --link-dest option, if we have the newest version of rsync
+
 - Add HOWTO document into main source tree, pending TLDP peer review.
 
 - Update string manipulations and comparisons of paths to use File::Spec and
