@@ -7,6 +7,12 @@ rsnaptar
     an e-mail when it's done. You may need to edit some of the variables by
     hand.
 
+backup_mysql.sh
+------------------------------------------------------------------------------
+    An example script to backup a MySQL database, to be invoked from rsnapshot
+    using the "backup_script" parameter. You will probably need to modify this
+    for your setup.
+
 backup_pgsql.sh
 ------------------------------------------------------------------------------
     An example script to backup a PostgreSQL database, to be invoked from
