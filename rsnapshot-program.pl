@@ -17,7 +17,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.260 2005/04/02 07:37:05 scubaninja Exp $
+# $Id: rsnapshot-program.pl,v 1.261 2005/04/02 08:06:35 scubaninja Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -3808,11 +3808,60 @@ sub show_disk_usage {
 	exit(1);
 }
 
-# TODO: write this subroutine
+# TODO: add cmd_rsnapshot_diff argument to config file
 # accept two args from $ARGV[1] and [2], like "daily.0" "daily.1" etc.
 # stick the full snapshot_root path on the beginning, and call rsnapshot-diff with these args
+# NOTE: since this is a read-only operation, we're not concerned with directory traversals and relative paths
 sub show_rsnapshot_diff {
+	my $cmd_rsnapshot_diff = 'rsnapshot-diff';
 	
+	# this will only hold two entries, no more no less
+	my @paths_in	= ();
+	my @paths_out	= ();
+	
+	# first, make sure we have permission to see the snapshot root
+	if ( ! -r "$config_vars{'snapshot_root'}" ) {
+		print STDERR ("ERROR: Permission denied\n");
+		exit(1);
+	}
+	
+	# see if we even got the right number of arguments
+	if (!defined($ARGV[1]) or !defined($ARGV[2])) {
+		print STDERR "Usage: rsnapshot diff [interval|dir] [interval|dir]\n";
+		exit(1);
+	}
+	
+	$paths_in[0] = $ARGV[1];	# the 1st path is the 2nd cmd line argument
+	$paths_in[1] = $ARGV[2];	# the 2nd path is the 3rd cmd line argument
+	
+	for (my $i=0; $i<=1; $i++) {
+		# no interval would start with ../
+		if (is_directory_traversal( "$paths_in[$i]" )) {
+			$paths_out[$i] = $paths_in[$i];
+			
+		# if this directory exists locally, it must be local
+		} elsif ( -e "$paths_in[$i]" ) {
+			$paths_out[$i] = $paths_in[$i];
+			
+		# absolute path
+		} elsif (is_valid_local_abs_path( "$paths_in[$i]" )) {
+			$paths_out[$i] = $paths_in[$i];
+			
+		# we didn't find it locally, but it's in the snapshot root
+		} elsif ( -e "$config_vars{'snapshot_root'}/$paths_in[$i]" ) {
+			$paths_out[$i] = "$config_vars{'snapshot_root'}/$paths_in[$i]";
+		}
+	}
+	
+	# double check to make sure it exists and it's a directory
+	if ( (!defined($paths_out[0]) or (!defined($paths_out[1]))) or ((! -d "$paths_out[0]") or (! -d "$paths_out[1]")) ) {
+		print STDERR "ERROR: Arguments must be valid directories\n";
+		exit(1);
+	}
+	
+	# TODO: make this really do something
+	print "rsnapshot-diff $paths_out[0] $paths_out[1]\n";
+	exit(0);
 }
 
 # This subroutine works the way I hoped rsync would under certain conditions.
