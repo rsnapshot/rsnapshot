@@ -28,7 +28,7 @@ require 5.004;
 use strict;
 use DirHandle;
 use Cwd;				# cwd()
-use Getopt::Std;		# getopt(), getopts()
+use Getopt::Std;		# getopts()
 use File::Path;			# mkpath(), rmtree()
 use File::stat;			# stat(), lstat()
 use POSIX qw(locale_h);	# setlocale()
