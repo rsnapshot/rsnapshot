@@ -4,6 +4,8 @@ for version 1.1.x
 ------------------------------------------------------------------------------
 - Add e-mail reporting patch from David Tejedor.
 
+- Clarify time ordering of intervals in man page and HOWTO
+
 - Add rollback feature for link_dest
 
 - Audit warning/error designations
