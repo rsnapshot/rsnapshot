@@ -1,6 +1,6 @@
 bin_SCRIPTS = rsnapshot
 man_MANS = rsnapshot.1
-sysconf_DATA = rsnapshot.conf
+sysconf_DATA = rsnapshot.conf.default
 
 DEB_BUILD_DIR = deb_build_dir
 

@@ -1,0 +1,68 @@
+#################################################
+# rsnapshot.conf - rsnapshot configuration file #
+#################################################
+#                                               #
+# PLEASE BE AWARE OF THE FOLLOWING RULES:       #
+#                                               #
+# This file requires tabs between elements      #
+#                                               #
+# Directories require a trailing slash:         #
+#   right: /home/                               #
+#   wrong: /home                                #
+#                                               #
+#################################################
+
+# root directory to keep snapshots in
+snapshot_root	/.snapshots/
+
+# EXTERNAL PROGRAM DEPENDENCIES
+#
+# LINUX USERS:   Make sure you uncomment "cmd_cp". This gives you extra features.
+# EVERYONE ELSE: Leave "cmd_cp" commented out for compatibility.
+#
+# See the README file or the man page for more details.
+#
+cmd_rsync	/usr/bin/rsync
+cmd_ssh		/usr/bin/ssh
+#cmd_cp		/bin/cp
+
+# BACKUP INTERVALS
+# (must be unique and in ascending order, i.e. hourly, daily, weekly, etc.)
+interval	hourly	6
+interval	daily	7
+interval	weekly	4
+# interval	monthly	3
+
+# GLOBAL OPTIONS
+#
+# default rsync args
+#rsync_short_args	-al
+#rsync_long_args	--delete --numeric-ids --devices
+#
+# ssh has no args by default, but you can specify them here
+#ssh_args			-p 22
+
+# make sure the lockfile directory is not world writable!
+#lockfile	/var/lock/subsys/rsnapshot
+
+# don't span filesystems within a backup point
+#one_fs		0
+
+#####################
+### BACKUP POINTS ###
+#####################
+
+# LOCALHOST
+backup	/home/			localhost/home/
+backup	/etc/			localhost/etc/
+backup	/usr/local/		localhost/usr/local/
+#backup	/etc/passwd		localhost/etc/passwd
+#backup	/home/foo/My Documents/	localhost/home/foo/My Documents/
+#backup	/foo/bar/		localhost/foo/bar/			one_fs=1, rsync_short_args=-urltvpog, rsync_long_args=--timeout=60 --cvs-exclude
+
+# EXAMPLE.COM
+#backup	root@example.com:/home/	example.com/home/
+#backup	root@example.com:/etc/	example.com/home/
+
+# RSYNC.SAMBA.ORG
+#backup	rsync://rsync.samba.org/rsyncftp/	rsync.samba.org/rsyncftp/
