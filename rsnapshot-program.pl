@@ -1399,7 +1399,7 @@ sub print_err {
 	
 	# print to STDERR
 	if ((!defined($verbose)) or ($level <= $verbose)) {
-		print STDERR 'ERROR: ', $str, "\n";
+		print STDERR "$run_string: ERROR: ", $str, "\n";
 	}
 	
 	# write to log
@@ -1478,7 +1478,7 @@ sub log_err {
 	
 	chomp($str);
 	
-	$str = 'ERROR: ' . $str;
+	$str = "$run_string: ERROR: " . $str;
 	log_msg($str, $level);
 }
 
@@ -1536,7 +1536,7 @@ sub syslog_err {
 	# this run is no longer perfect since we have an error
 	raise_error();
 	
-	return syslog_msg("ERROR: $msg", 'user', 'err');
+	return syslog_msg("$run_string: ERROR: $msg", 'user', 'err');
 }
 
 # sets exit code for at least a warning
@@ -1925,7 +1925,7 @@ sub is_blank {
 	my $str = shift(@_);
 	
 	if (!defined($str))	{ return (undef); }
-	if ($str =~ m/\S/)	{ return (1); }
+	if ($str !~ m/\S/)	{ return (1); }
 	return (0);
 }
 
