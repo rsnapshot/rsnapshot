@@ -10,9 +10,11 @@ This package was put together by Nathan Rosenquist
 The changes were very minimal - merely adding support for the Debian
 package maintenance scheme, by adding various debian/* files, and
 changing the location files are installed to conform to Debian Policy.
-Also, there is a "utils" directory in the original source tree not
-included here. It simply contains some ad-hoc shell scripts that can
-be customized to be useful with rsnapshot.
+Also, there is a "utils" directory in the original source tree that
+is installed under /usr/share/doc/rsnapshot/utils/. It simply contains
+some ad-hoc shell scripts that can be customized to be useful with
+rsnapshot. Since they are installed in the doc/ hierarchy, they are
+chmod 644 when installed.
 
 
 COPYRIGHT
