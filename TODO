@@ -2,6 +2,9 @@ rsnapshot TODO list:
 
 for version 1.0.x
 ------------------------------------------------------------------------------
+- Remove checks before calling print_* subroutines, just call them and let
+  the routines decide whether to print or log
+
 - Do COMPREHENSIVE test before next release
 
 - Keep track of whether we hit any non-fatal errors during the run, then
