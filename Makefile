@@ -79,4 +79,6 @@ uninstall:
 	rm -f /usr/local/man/man1/rsnapshot.1
 	rm -f /usr/local/man/man1/rsnapshot.1.gz
 	rm -f /etc/rsnapshot.conf.default
-	
+	@echo
+	@echo "Leaving /etc/rsnapshot.conf"
+	@echo
