@@ -37,7 +37,3 @@ for version 1.1.x
   speeds. I.E. some things would get backed up hourly, whereas other backup
   points would get backed up daily.
 
-- Update string manipulations and comparisons of paths to use File::Spec and
-  File::Basename functions where possible. Double check they're fully
-  compatible with Perl 5.004.
-
