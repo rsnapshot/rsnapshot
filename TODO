@@ -2,8 +2,6 @@ rsnapshot TODO list:
 
 for version 1.0.x
 ------------------------------------------------------------------------------
-- Add documentation for rsync_short_args and rsync_long_args
-
 - Tie up loose ends with the autoconf build system
   - $sysconfdir/rsnapshot.conf should only be installed if it doesn't exist,
     if at all. There should be zero chance that the users config will ever
@@ -20,8 +18,6 @@ for version 1.0.x
 
 - Add an file exclusion list feature, using "include" and "exclude" params
   in the config file. These will be passed directly as args to rsync.
-
-- Document ssh_args option
 
 - Add support for rsh using this syntax: rsh://[user@]domain:/foo/bar/
 

@@ -1433,6 +1433,14 @@ List of long arguments to pass to rsync. If not specified,
 
 =back
 
+B<ssh_args			-p 22>
+
+=over 4
+
+Arguments to be passed to ssh. If not specified, the default is none.
+
+=back
+
 B<lockfile    /var/lock/subsys/rsnapshot>
 
 =over 4
