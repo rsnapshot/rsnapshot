@@ -237,7 +237,7 @@ if (0 == $interval_num)	{
 	
 } else	{
 	# this is not the most frequent unit, just rotate
-	rotate_interval($cmd, $prev_interval);
+	rotate_higher_interval($cmd, $prev_interval);
 }
 
 # if we have a lockfile, remove it
@@ -2521,13 +2521,13 @@ sub backup_lowest_interval	{
 # the previous interval's highest numbered dir to this interval's .0,
 #
 # does not return a value, it bails instantly if there's a problem
-sub rotate_interval	{
+sub rotate_higher_interval	{
 	my $interval		= shift(@_);	# i.e. daily
 	my $prev_interval	= shift(@_);	# i.e. hourly
 	
 	# this should never happen
 	if (!defined($interval) or !defined($prev_interval))	{
-		bail('rotate_interval() expects 2 arguments');
+		bail('rotate_higher_interval() expects 2 arguments');
 	}
 	
 	# ROTATE DIRECTORIES
