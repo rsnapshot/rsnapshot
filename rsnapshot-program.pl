@@ -636,6 +636,10 @@ if (0 == $file_syntax_ok)	{
 if (!defined($verbose))	{
 	$verbose = $default_verbose;
 }
+# same for loglevel
+if (!defined($loglevel))	{
+	$loglevel = $default_loglevel;
+}
 
 
 # FIGURE OUT WHICH INTERVAL WE'RE RUNNING, AND HOW IT RELATES TO THE OTHERS
