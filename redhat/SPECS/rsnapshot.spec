@@ -1,11 +1,11 @@
 Name: rsnapshot
 Summary: Local and remote filesystem snapshot utility
-Version: 1.0.4
+Version: 1.0.5
 Release: 1
 BuildArch: noarch
 Copyright: GPL
 Group: Applications/System
-Source: http://rsnapshot.scubaninja.com/downloads/rsnapshot-1.0.4.tar.gz
+Source: http://rsnapshot.scubaninja.com/downloads/rsnapshot-1.0.5.tar.gz
 Patch: rsnapshot.patch
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
 Requires: perl, rsync
