@@ -2163,11 +2163,13 @@ sub backup_interval	{
 						print_warn ("Some files and/or directories in $src vanished during rsync operation", 4);
 						syslog_warn("Some files and/or directories in $src vanished during rsync operation");
 						
+					# other error
 					} else	{
 						print_err ("$config_vars{'cmd_rsync'} returned $retval", 2);
 						syslog_err("$config_vars{'cmd_rsync'} returned $retval");
 						
-						# set this directory to rollback
+						# set this directory to rollback if we're using link_dest
+						# (since $interval.0/ will have been moved to $interval.1/ by now)
 						if (1 == $link_dest)	{
 							push(@rollback_points, $$sp_ref{'dest'});
 						}
@@ -2262,7 +2264,7 @@ sub backup_interval	{
 				chdir($cwd);
 			}
 			
-			# if we're using link_dest, pull back the previous files (as links) that were moved up if.
+			# if we're using link_dest, pull back the previous files (as links) that were moved up if any.
 			# this is because in this situation, .0 will always be empty, so we'll pull select things
 			# from .1 back to .0 if possible. these will be used as a baseline for diff comparisons by
 			# sync_if_different() down below.
@@ -3198,17 +3200,24 @@ sub file_diff   {
 # accepts no arguments
 # calls the 'du' command to show rsnapshot's disk usage
 # returns 1/undef
+#
+# this subroutine isn't like a lot of the "real" ones that write to logfiles, etc.
+# that's why the print_* subroutines aren't used here.
+#
 sub show_disk_usage	{
-	my @interval_names = ();
 	my $intervals_str = '';
 	
-	foreach my $interval_ref (@intervals)	{
-		if (-r "$config_vars{'snapshot_root'}/$$interval_ref{'interval'}.0/")	{
-			$intervals_str .= "$config_vars{'snapshot_root'}/$$interval_ref{'interval'}.* ";
+	# find the intervals that apply here
+	if (-r "$config_vars{'snapshot_root'}/")	{
+		foreach my $interval_ref (@intervals)	{
+			if (-r "$config_vars{'snapshot_root'}/$$interval_ref{'interval'}.0/")	{
+				$intervals_str .= "$config_vars{'snapshot_root'}/$$interval_ref{'interval'}.* ";
+			}
 		}
 	}
-	chomp($intervals_str);
+	chop($intervals_str);
 	
+	# if we can see any of them, find out how much space they're taking up
 	if ('' ne $intervals_str)	{
 		print "du -csh $intervals_str\n\n";
 		my $retval = system("du -csh $intervals_str");
