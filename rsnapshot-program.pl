@@ -1248,11 +1248,12 @@ sub remove_lockfile	{
 	if (defined($lockfile))	{
 		if (1 == $verbose)	{ print "rm -f $lockfile\n"; }
 		
-		$result = unlink($lockfile);
-		
-		if (0 == $result)	{
-			print STDERR "Error! Could not remove lockfile $lockfile\n";
-			exit(-1);
+		if ( -e "$lockfile" )	{
+			$result = unlink($lockfile);
+			if (0 == $result)	{
+				print STDERR "Error! Could not remove lockfile $lockfile\n";
+				exit(-1);
+			}
 		}
 	}
 }
