@@ -1,99 +1,121 @@
-# GET THE VERSION NUMBER DIRECTLY FROM THE PROGRAM
-VERSION=`./rsnapshot version_only`
-DEB_BUILD_DIR="rsnapshot_deb"
+# the classics
+CP=/bin/cp
+RM=/bin/rm
+CAT=/bin/cat
+CHMOD=/bin/chmod
+CHOWN=/bin/chown
+MKDIR=/bin/mkdir
+
+# variable locations
+ID=id
+SED=sed
+GREP=grep
+GNU_TAR=tar
+INSTALL=install
+DPKG=dpkg
+POD2MAN=pod2man
+POD2HTML=pod2html
+
+# execute programs to populate variables
+VERSION = `./rsnapshot version_only`
+INSTALL_UID = `${ID} -u`
+INSTALL_GID = `${ID} -g`
+
+# directory paths
+INSTALL_DIR=/usr/local
+BIN_DIR=${INSTALL_DIR}/bin
+MAN_DIR=${INSTALL_DIR}/man
+SYSCONF_DIR=/etc
+DEB_BUILD_DIR=rsnapshot_deb
 
 default:
 	@echo "it's written in perl, just type make install"
 	
 man:
-	pod2man rsnapshot > rsnapshot.1
+	${POD2MAN} rsnapshot > rsnapshot.1
 	
 html:
-	pod2html rsnapshot | grep -v 'link rev' > rsnapshot.html
-	rm -f pod2htmd.x~~
-	rm -f pod2htmi.x~~
+	${POD2HTML} rsnapshot | ${GREP} -v 'link rev' > rsnapshot.html
+	${RM} -f pod2htmd.*
+	${RM} -f pod2htmi.*
 	
 clean:
-	rm -rf rsnapshot-${VERSION}/
-	rm -f rsnapshot-${VERSION}.tar.gz
-	rm -f rsnapshot-${VERSION}-1.deb
-	rm -f rsnapshot.html
-	rm -rf ${DEB_BUILD_DIR}/
+	${RM} -rf rsnapshot-${VERSION}/
+	${RM} -rf ${DEB_BUILD_DIR}/
+	${RM} -f rsnapshot-${VERSION}.tar.gz
+	${RM} -f rsnapshot-${VERSION}-1.deb
+	${RM} -f rsnapshot.html
+	${RM} -f pod2htmd.*
+	${RM} -f pod2htmi.*
 	
 tar:
-	rm -f rsnapshot-${VERSION}.tar.gz
+	${RM} -f rsnapshot-${VERSION}.tar.gz
 	
-	# core files
-	mkdir rsnapshot-${VERSION}
-	cp rsnapshot rsnapshot.conf Makefile COPYING INSTALL README TODO ChangeLog rsnapshot-${VERSION}/
-	pod2man rsnapshot > rsnapshot-${VERSION}/rsnapshot.1
+	@# core files
+	${MKDIR} rsnapshot-${VERSION}
+	${CP} rsnapshot rsnapshot.conf Makefile COPYING INSTALL README TODO ChangeLog rsnapshot-${VERSION}/
+	${POD2MAN} rsnapshot > rsnapshot-${VERSION}/rsnapshot.1
 	
-	# debian
-	mkdir rsnapshot-${VERSION}/DEBIAN/
-	cp DEBIAN/{control,conffiles} rsnapshot-${VERSION}/DEBIAN/
+	@# debian
+	${MKDIR} rsnapshot-${VERSION}/DEBIAN/
+	${CP} DEBIAN/{control,conffiles} rsnapshot-${VERSION}/DEBIAN/
 	
-	# redhat
-	mkdir rsnapshot-${VERSION}/redhat/
-	mkdir rsnapshot-${VERSION}/redhat/SOURCES/
-	mkdir rsnapshot-${VERSION}/redhat/SPECS/
-	cp redhat/README rsnapshot-${VERSION}/redhat/
-	cp redhat/SOURCES/rsnapshot.patch rsnapshot-${VERSION}/redhat/SOURCES/
-	cp redhat/SPECS/rsnapshot.spec rsnapshot-${VERSION}/redhat/SPECS/
+	@# redhat
+	${MKDIR} rsnapshot-${VERSION}/redhat/
+	${MKDIR} rsnapshot-${VERSION}/redhat/SOURCES/
+	${MKDIR} rsnapshot-${VERSION}/redhat/SPECS/
+	${CP} redhat/README rsnapshot-${VERSION}/redhat/
+	${CP} redhat/SOURCES/rsnapshot.patch rsnapshot-${VERSION}/redhat/SOURCES/
+	${CP} redhat/SPECS/rsnapshot.spec rsnapshot-${VERSION}/redhat/SPECS/
 	
-	# utils
-	mkdir rsnapshot-${VERSION}/utils/
-	cp utils/rsnaptar rsnapshot-${VERSION}/utils/
+	@# utils
+	${MKDIR} rsnapshot-${VERSION}/utils/
+	${CP} utils/rsnaptar rsnapshot-${VERSION}/utils/
 	
-	# change ownership to root, and delete build dir
-	chown -R root:root rsnapshot-${VERSION}/
-	tar czf rsnapshot-${VERSION}.tar.gz rsnapshot-${VERSION}/
-	rm -rf rsnapshot-${VERSION}/
+	@# change ownership to root (or current user), and delete build dir
+	${CHOWN} -R ${INSTALL_UID}:${INSTALL_GID} rsnapshot-${VERSION}/
+	${GNU_TAR} czf rsnapshot-${VERSION}.tar.gz rsnapshot-${VERSION}/
+	${RM} -rf rsnapshot-${VERSION}/
 	
 debian:
-	mkdir -p ${DEB_BUILD_DIR}/{DEBIAN,usr/bin,etc,usr/share/man/man1}
-	cp DEBIAN/{control,conffiles} ${DEB_BUILD_DIR}/DEBIAN/
+	${MKDIR} -p ${DEB_BUILD_DIR}/{DEBIAN,usr/bin,etc,usr/share/man/man1}
+	${CP} DEBIAN/{control,conffiles} ${DEB_BUILD_DIR}/DEBIAN/
 	
-	cat rsnapshot | sed 's/\/usr\/local\/bin/\/usr\/bin/g' > ${DEB_BUILD_DIR}/usr/bin/rsnapshot
-	chmod 755 ${DEB_BUILD_DIR}/usr/bin/rsnapshot
+	${CAT} rsnapshot | ${SED} 's/\/usr\/local\/bin/\/usr\/bin/g' > ${DEB_BUILD_DIR}/usr/bin/rsnapshot
+	${CHMOD} 755 ${DEB_BUILD_DIR}/usr/bin/rsnapshot
 	
-	pod2man ${DEB_BUILD_DIR}/usr/bin/rsnapshot | gzip -9c > ${DEB_BUILD_DIR}/usr/share/man/man1/rsnapshot.1.gz
-	chmod 644 ${DEB_BUILD_DIR}/usr/share/man/man1/rsnapshot.1.gz
+	${POD2MAN} ${DEB_BUILD_DIR}/usr/bin/rsnapshot | gzip -9c > ${DEB_BUILD_DIR}/usr/share/man/man1/rsnapshot.1.gz
+	${CHMOD} 644 ${DEB_BUILD_DIR}/usr/share/man/man1/rsnapshot.1.gz
 	
-	cat rsnapshot.conf | sed s/#cmd_cp/cmd_cp/ > ${DEB_BUILD_DIR}/etc/rsnapshot.conf
-	cp ${DEB_BUILD_DIR}/etc/rsnapshot.conf ${DEB_BUILD_DIR}/etc/rsnapshot.conf.default
-	chmod 600 ${DEB_BUILD_DIR}/etc/rsnapshot.conf ${DEB_BUILD_DIR}/etc/rsnapshot.conf.default
+	${CAT} rsnapshot.conf | ${SED} 's/#cmd_cp/cmd_cp/' > ${DEB_BUILD_DIR}/etc/rsnapshot.conf
+	${CP} ${DEB_BUILD_DIR}/etc/rsnapshot.conf ${DEB_BUILD_DIR}/etc/rsnapshot.conf.default
+	${CHMOD} 600 ${DEB_BUILD_DIR}/etc/rsnapshot.conf
+	${CHMOD} 644 ${DEB_BUILD_DIR}/etc/rsnapshot.conf.default
 	
-	chown -R root:root ${DEB_BUILD_DIR}/
-	dpkg -b ${DEB_BUILD_DIR}/ rsnapshot-${VERSION}-1.deb
-	rm -rf ${DEB_BUILD_DIR}/
+	${CHOWN} -R ${INSTALL_UID}:${INSTALL_GID} ${DEB_BUILD_DIR}/
+	${DPKG} -b ${DEB_BUILD_DIR}/ rsnapshot-${VERSION}-1.deb
+	${RM} -rf ${DEB_BUILD_DIR}/
 	
 install:
-	mkdir -p /usr/local/bin/
-	cp -f rsnapshot /usr/local/bin/rsnapshot
-	chmod 755 /usr/local/bin/rsnapshot
-	chown root:root /usr/local/bin/rsnapshot
-	
-	mkdir -p /usr/local/man/man1/
-	rm -f /usr/local/man/man1/rsnapshot.1.gz
-	cp -f rsnapshot.1 /usr/local/man/man1/rsnapshot.1
-	chmod 644 /usr/local/man/man1/rsnapshot.1
-	chown root:root /usr/local/man/man1/rsnapshot.1
-	
-	cp -f rsnapshot.conf /etc/rsnapshot.conf.default
-	chmod 600 /etc/rsnapshot.conf.default
-	chown root:root /etc/rsnapshot.conf.default
+	${INSTALL} -d ${BIN_DIR}/
+	${INSTALL} -d ${MAN_DIR}/man1/
+	${INSTALL} -d ${SYSCONF_DIR}/
+	${INSTALL} -m 755 -o ${INSTALL_UID} -g ${INSTALL_GID} rsnapshot ${BIN_DIR}/rsnapshot
+	${INSTALL} -m 644 -o ${INSTALL_UID} -g ${INSTALL_GID} rsnapshot.conf ${SYSCONF_DIR}/rsnapshot.conf.default
+	${INSTALL} -m 644 -o ${INSTALL_UID} -g ${INSTALL_GID} rsnapshot.1 ${MAN_DIR}/man1/rsnapshot.1
+	${RM} -f ${MAN_DIR}/man1/rsnapshot.1.gz
 	@echo
-	@echo "+--------------------------------------------------------------------------+"
-	@echo "| Example config file installed in /etc/rsnapshot.conf.default             |"
-	@echo "| Copy this file to /etc/rsnapshot.conf, and modify it to suit your system |"
-	@echo "+ -------------------------------------------------------------------------+"
+	@echo "---------------------------------------------------------------------"
+	@echo "Example config file installed in ${SYSCONF_DIR}/rsnapshot.conf.default."
+	@echo "Copy this file to ${SYSCONF_DIR}/rsnapshot.conf, and modify it for your system."
+	@echo "---------------------------------------------------------------------"
 	@echo
 	
 uninstall:
-	rm -f /usr/local/bin/rsnapshot
-	rm -f /usr/local/man/man1/rsnapshot.1
-	rm -f /usr/local/man/man1/rsnapshot.1.gz
-	rm -f /etc/rsnapshot.conf.default
+	${RM} -f ${BIN_DIR}/rsnapshot
+	${RM} -f ${MAN_DIR}/man1/rsnapshot.1
+	${RM} -f ${MAN_DIR}/man1/rsnapshot.1.gz
+	${RM} -f ${SYSCONF_DIR}/rsnapshot.conf.default
 	@echo
 	@echo "Leaving /etc/rsnapshot.conf"
 	@echo
