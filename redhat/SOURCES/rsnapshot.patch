@@ -13,7 +13,7 @@
  # If you enable the lockfile, make sure the lockfile directory is
  # not world writable. Otherwise anyone can prevent the program from running.
  #
--#lockfile	/var/run/rsnapshot
+-#lockfile	/var/run/rsnapshot.pid
 +lockfile	/var/lock/subsys/rsnapshot
  
  ###############################

@@ -6,6 +6,7 @@ http://www.rsnapshot.org/
 VERSION 1.1.7 (??? ?? ??:?? 2004)
 ------------------------------------------------------------------------------
 - Turned off buffering ($|=1)
+- Changed default lockfile to /var/run/rsnapshot.pid, for FHS compliance
 
 VERSION 1.1.6 (Jul 05 16:35 2004)
 ------------------------------------------------------------------------------
