@@ -2153,7 +2153,7 @@ B<backup>  root@foo.com:/etc/           foo.com/etc/
 
 B<backup>  root@foo.com:/home/          foo.com/home/
 
-B<backup>  root@mail.foo.com.com:/home/ mail.foo.com/home/
+B<backup>  root@mail.foo.com:/home/     mail.foo.com/home/
 
 B<backup>  rsync://example.com/pub/     example.com/pub/
 
