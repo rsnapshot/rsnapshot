@@ -129,12 +129,12 @@
 .\" ========================================================================
 .\"
 .IX Title "RSNAPSHOT 1"
-.TH RSNAPSHOT 1 "2003-09-14" "perl v5.8.0" "User Contributed Perl Documentation"
+.TH RSNAPSHOT 1 "2003-10-24" "perl v5.8.0" "User Contributed Perl Documentation"
 .SH "NAME"
 rsnapshot \- remote filesystem snapshot utility
 .SH "SYNOPSIS"
 .IX Header "SYNOPSIS"
-\&\fBrsnapshot\fR [\fB\-v\fR] [\fB\-t\fR] [\fB\-q\fR] [\fB\-c\fR /alt/config/file] [command]
+\&\fBrsnapshot\fR [\fB\-vVtq\fR] [\fB\-c\fR /alt/config/file] [command]
 .SH "DESCRIPTION"
 .IX Header "DESCRIPTION"
 \&\fBrsnapshot\fR is a filesystem snapshot utility. It can take incremental
@@ -164,6 +164,8 @@ The command line options are as follows:
 .Sp
 .RS 4
 \&\fB\-v\fR verbose, show shell commands being executed
+.Sp
+\&\fB\-V\fR same as \-v, but show rsync output as well
 .Sp
 \&\fB\-t\fR test, show shell commands that would be executed
 .Sp
