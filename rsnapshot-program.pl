@@ -287,11 +287,10 @@ sub find_config_file	{
 # returns no args
 # sets some global flag variables
 sub get_cmd_line_opts	{
-	# hold command line flags from getopt
 	my %opts;
 	my $result;
 	
-	# GET COMMAND LINE OPTIONS
+	# get command line options
 	$result = getopts('vVtqxc:', \%opts);
 	
 	# die if we don't understand all the flags
