@@ -86,8 +86,8 @@ my $prev_interval;
 # i.e. cp -al hourly.$prev_interval_max/ daily.0/
 my $prev_interval_max;
 
-# this determines whether we will use GNU cp, or the native Perl implementation
-# by default, we use native Perl
+# this determines whether we will use GNU cp, or the native perl implementation
+# by default, we use native perl
 my $use_gnu_cp = 0;
 
 # command line flags
@@ -188,15 +188,18 @@ if ( -f $config_file )	{
 		
 		# SNAPSHOT_ROOT
 		if ($var eq 'snapshot_root')	{
-			# remove the trailing slash
-			if ($value =~ /\/$/)	{
-				chop($value);
-				$config_vars{'snapshot_root'} = $value;
-				
-			# there is no trailing slash to remove
-			} else	{
-				$config_vars{'snapshot_root'} = $value;
+			# make sure this is a full path
+			if ($value !~ /^\//)	{
+				print STDERR "Error in $config_file on line $file_line_num: $line - snapshot_root must be a full path\n";
+				$file_syntax_ok = 0;
+				next;
 			}
+			
+			# remove the trailing slash, if present
+			if ($value =~ /\/$/)	{ chop( $value ); }
+			
+			$config_vars{'snapshot_root'} = $value;
+			
 			$line_syntax_ok = 1;
 			next;
 		}
@@ -309,11 +312,11 @@ if ( -f $config_file )	{
 				readdir(SRC);	# .
 				readdir(SRC);	# ..
 				
-				while (my $dir = readdir(SRC))	{
-					if ("$src/$dir" ne "$config_vars{'snapshot_root'}")	{
+				while (my $node = readdir(SRC))	{
+					if ("$src/$node" ne "$config_vars{'snapshot_root'}")	{
 						my %hash;
-						$hash{'src'}	= "$src/$dir";
-						$hash{'dest'}	= "$dest/$dir";
+						$hash{'src'}	= "$src/$node";
+						$hash{'dest'}	= "$dest/$node";
 						push(@snapshot_points, \%hash);
 					}
 				}
@@ -326,8 +329,8 @@ if ( -f $config_file )	{
 			}
 		}
 		
-		# CHECK TO SEE THAT WE UNDERSTOOD THIS LINE
-		# IF NOT, WARN THE USER, AND PREVENT THE PROGRAM FROM EXECUTING
+		# make sure we understood this line
+		# if not, warn the user, and prevent the program from executing
 		if ($line_syntax_ok == 0)	{
 			print STDERR "Error in $config_file on line $file_line_num: $line\n";
 			$file_syntax_ok = 0;
@@ -681,7 +684,7 @@ sub gnu_cp_al	{
 } 
  
 # this is the purpose built, native perl replacement for "cp -al".
-# it does not copy "special" files: block, char, fifo, or sockets
+# it does not copy "special" files: block, char, fifo, or sockets.
 # never the less, it does do regular files, directories, and symlinks
 # which should be enough for 95% of the normal cases.
 # if you absolutely have to have snapshots of FIFOs, etc, just
@@ -710,14 +713,14 @@ sub native_cp_al	{
 	$src  =~ s/\/$//;
 	$dest =~ s/\/$//;
 	
-	# LSTAT
+	# LSTAT SRC
 	my $st = lstat("$src");
 	if (!defined($st))	{
 		print STDERR "Could not lstat(\"$src\")\n";
 		return(0);
 	}
 	
-	# MKDIR
+	# MKDIR DEST
 	if ( ! -d "$dest" )	{
 		$result = mkdir("$dest");
 		if ( ! $result )	{
@@ -725,26 +728,26 @@ sub native_cp_al	{
 			return(0);
 		}
 	}
-	# CHOWN
+	# CHOWN DEST
 	$result = chown($st->uid, $st->gid, "$dest");
 	if (! $result)	{
 		print STDERR "Warning! Could not chown(" . $st->uid . ", " . $st->gid . ", \"$dest\");\n";
 		return(0);
 	}
-	# CHMOD
+	# CHMOD DEST
 	$result = chmod($st->mode, "$dest");
 	if (! $result)	{
 		print STDERR "Warning! Could not chmod(" . $st->mode . ", \"$dest\");\n";
 		return(0);
 	}
-	# UTIME
+	# UTIME DEST
 	$result = utime($st->mtime, $st->mtime, "$dest");
 	if (! $result)	{
 		print STDERR "Warning! Could not utime(" . $st->mtime . ", " . $st->mtime . ", \"$dest\");\n";
 		return(0);
 	}
 	
-	# read dir contents
+	# READ DIR CONTENTS
 	$dh = new DirHandle( "$src" );
 	
 	if (defined($dh))	{
@@ -762,16 +765,8 @@ sub native_cp_al	{
 				return(0);
 			}
 			
-			# $st->mode;	# 755
-			# $st->uid;		# 0
-			# $st->gid;		# 0
-			# $st->mtime;	# 10928436
-			# $st->ctime;	# 10928345
-			
 			# SYMLINK
 			if ( -l "$src/$node" )	{
-				print "SYMLINK: $src/$node\n";
-				
 				# SYMLINK
 				$result = symlink(readlink("$src/$node"), "$dest/$node");
 				if (! $result)	{
@@ -787,24 +782,24 @@ sub native_cp_al	{
 				
 			# FIFO
 			} elsif ( -p "$src/$node" )	{
-				print "Warning! Ignoring FIFO $src/$node\n";
+				print STDERR "Warning! Ignoring FIFO $src/$node\n";
 				
 			# SOCKET
 			} elsif ( -S "$src/$node" )	{
-				print "Warning! Ignoring socket: $src/$node\n";
+				print STDERR "Warning! Ignoring socket: $src/$node\n";
 				
-			# BLOCK
+			# BLOCK DEVICE
 			} elsif ( -b "$src/$node" )	{
-				print "Warning! Ignoring special block file: $src/$node\n";
+				print STDERR "Warning! Ignoring special block file: $src/$node\n";
 				
-			# CHAR
+			# CHAR DEVICE
 			} elsif ( -c "$src/$node" )	{
-				print "Warning! Ignoring special character file: $src/$node\n";
+				print STDERR "Warning! Ignoring special character file: $src/$node\n";
 				
 			# FILE
 			} elsif ( -f "$src/$node" )	{
-				print "FILE:    $src/$node\n";
 				
+				# make a hard link
 				$result = link("$src/$node", "$dest/$node");
 				if (! $result)	{
 					print STDERR "Warning! Could not link(\"$src/$node\", \"$dest/$node\")\n";
@@ -813,8 +808,8 @@ sub native_cp_al	{
 				
 			# DIRECTORY
 			} elsif ( -d "$src/$node" )	{
-				print "DIR:     $src/$node\n";
 				
+				# call this subroutine recursively, to create the directory
 				$result = native_cp_al("$src/$node", "$dest/$node");
 				if (! $result)	{
 					print STDERR "Warning! Recursion error in native_cp_al(\"$src/$node\", \"$dest/$node\")\n";
