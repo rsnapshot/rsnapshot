@@ -291,62 +291,62 @@ if ( -f "$config_file" )	{
 		
 		# CHECK FOR RSYNC (required)
 		if ($var eq 'cmd_rsync')	{
-			if ( -x "$value" )	{
+			if ((-f "$value") && (-x "$value"))	{
 				$config_vars{'cmd_rsync'} = $value;
 				$have_rsync = 1;
 				$line_syntax_ok = 1;
 				next;
 			} else	{
 				config_error($file_line_num, $line);
-				bail("could not find $value, please fix cmd_rsync in $config_file");
+				bail("Could not execute $value, please fix cmd_rsync in $config_file");
 			}
 		}
 		
 		# CHECK FOR SSH (optional)
 		if ($var eq 'cmd_ssh')	{
-			if ( -x "$value" )	{
+			if ((-f "$value") && (-x "$value"))	{
 				$config_vars{'cmd_ssh'} = $value;
 				$have_ssh = 1;
 				$line_syntax_ok = 1;
 				next;
 			} else	{
 				config_error($file_line_num, $line);
-				bail("could not find $value, please fix cmd_ssh in $config_file");
+				bail("Could not execute $value, please fix cmd_ssh in $config_file");
 			}
 		}
 		
 		# CHECK FOR GNU cp (optional)
 		if ($var eq 'cmd_cp')	{
-			if ( -x "$value" )	{
+			if ((-f "$value") && (-x "$value"))	{
 				$config_vars{'cmd_cp'} = $value;
 				$have_gnu_cp = 1;
 				$line_syntax_ok = 1;
 				next;
 			} else	{
 				config_error($file_line_num, $line);
-				bail("Could not find $value, please fix cmd_cp in $config_file");
+				bail("Could not execute $value, please fix cmd_cp in $config_file");
 			}
 		}
 		
 		# CHECK FOR LOGGER (syslog program) (optional)
 		if ($var eq 'cmd_logger')	{
-			if ( -x "$value" )	{
+			if ((-f "$value") && (-x "$value"))	{
 				$config_vars{'cmd_logger'} = $value;
 				$line_syntax_ok = 1;
 				next;
 			} else	{
 				config_error($file_line_num, $line);
-				bail("Could not find $value, please fix cmd_logger in $config_file");
+				bail("Could not execute $value, please fix cmd_logger in $config_file");
 			}
 		}
 		
 		# INTERVALS
 		if ($var eq 'interval')	{
 			if (!defined($value))		{ bail("Interval can not be blank"); }
-			if ($value !~ m/^[\w\d]+$/)	{ bail("\"$value\" is not a valid entry, must be alphanumeric characters only"); }
+			if ($value !~ m/^[\w\d]+$/)	{ bail("\"$value\" is not a valid interval, must be alphanumeric characters only"); }
 			
 			if (!defined($value2))		{ bail("\"$value\" number can not be blank"); }
-			if ($value2 !~ m/^\d+$/)	{ bail("\"$value2\" is not a valid entry for an interval"); }
+			if ($value2 !~ m/^\d+$/)	{ bail("\"$value2\" is not a legal value for an interval"); }
 			if ($value2 <= 0)			{ bail("\"$value\" must be at least 1 or higher"); }
 			
 			my %hash;
@@ -473,7 +473,7 @@ if ( -f "$config_file" )	{
 			if ( is_valid_local_abs_path($dest) )	{ bail("Full paths not allowed for backup destinations"); }
 			
 			# make sure script exists and is executable
-			if ( ! -x "$script" )	{
+			if ((! -f "$script") or (! -x "$script"))	{
 				bail("Backup script \"$script\" is not executable or does not exist");
 			}
 			
@@ -493,7 +493,7 @@ if ( -f "$config_file" )	{
 		# LINK_DEST
 		if ($var eq 'link_dest')	{
 			if (!defined($value))		{ bail("link_dest can not be blank"); }
-			if (!is_boolean($value))	{ bail("\"$value\" is not a valid entry, must be 0 or 1 only"); }
+			if (!is_boolean($value))	{ bail("\"$value\" is not a legal value for link_dest, must be 0 or 1 only"); }
 			
 			if (1 == $value)	{ $link_dest = 1; }
 			$line_syntax_ok = 1;
@@ -502,7 +502,7 @@ if ( -f "$config_file" )	{
 		# ONE_FS
 		if ($var eq 'one_fs')	{
 			if (!defined($value))		{ bail("one_fs can not be blank"); }
-			if (!is_boolean($value))	{ bail("\"$value\" is not a valid entry, must be 0 or 1 only"); }
+			if (!is_boolean($value))	{ bail("\"$value\" is not a legal value for one_fs, must be 0 or 1 only"); }
 			
 			if (1 == $value)	{ $one_fs = 1; }
 			$line_syntax_ok = 1;
@@ -605,7 +605,7 @@ if ( -f "$config_file" )	{
 	}
 	
 	# exit showing an error
-	exit(-1);
+	exit(1);
 }
 
 # SINS OF COMMISSION
@@ -622,7 +622,7 @@ if (0 == $file_syntax_ok)	{
 	}
 	
 	# exit showing an error
-	exit(-1);
+	exit(1);
 }
 
 # SINS OF OMISSION
@@ -632,19 +632,19 @@ if (0 == $file_syntax_ok)	{
 if (!defined($config_vars{'snapshot_root'}))	{
 	print_err ("snapshot_root was not defined. rsnapshot can not continue.", 1);
 	syslog_err("snapshot_root was not defined. rsnapshot can not continue.");
-	exit(-1);
+	exit(1);
 }
 # make sure we have at least one interval
 if (0 == scalar(@intervals))	{
 	print_err ("At least one interval must be set. rsnapshot can not continue.", 1);
 	syslog_err("At least one interval must be set. rsnapshot can not continue.");
-	exit(-1);
+	exit(1);
 }
 # make sure we have at least one backup point
 if (0 == scalar(@backup_points))	{
 	print_err ("At least one backup point must be set. rsnapshot can not continue.", 1);
 	syslog_err("At least one backup point must be set. rsnapshot can not continue.");
-	exit(-1);
+	exit(1);
 }
 
 # OTHER SITUATIONS THAT SHOULD NOT HAPPEN
@@ -657,7 +657,7 @@ if (scalar(@intervals) > 1)	{
 		if (1 == $intervals[0]->{'number'})	{
 			print_err ("Can not have first interval set to 1, and have a second interval", 1);
 			syslog_err("Can not have first interval set to 1, and have a second interval");
-			exit(-1);
+			exit(1);
 		}
 	}
 }
@@ -833,12 +833,21 @@ HERE
 sub bail	{
 	my $str = shift(@_);
 	
-	if ($str)	{ print_err($str, 1); }
+	# print out error
+	if ($str)	{
+		print_err($str, 1);
+	}
+	
+	# write to syslog if we're running for real
 	if (0 == $do_configtest)	{
 		syslog_err($str);
 	}
+	
+	# get rid of the lockfile, if it exists
 	remove_lockfile($config_vars{'lockfile'});
-	exit(-1);
+	
+	# exit showing an error
+	exit(1);
 }
 
 # accepts line number, errstr
@@ -881,8 +890,20 @@ sub print_cmd	{
 	log_msg($str, 3);
 	
 	if (!defined($verbose) or ($verbose >= 3))	{
-		# loop through all the tokens and print them out, wrapping when necessary
-		for (my $i=0; $i<scalar(@tokens); $i++)	{
+		
+		# print the first token as a special exception, since we should never start out by line wrapping
+		if (defined($tokens[0]))	{
+			$chars = (length($tokens[0]) + 1);
+			print $tokens[0];
+			
+			# don't forget to put the space back in
+			if (scalar(@tokens) > 1)	{
+				print ' ';
+			}
+		}
+		
+		# loop through the rest of the tokens and print them out, wrapping when necessary
+		for (my $i=1; $i<scalar(@tokens); $i++)	{
 			# keep track of where we are (plus a space)
 			$chars += (length($tokens[$i]) + 1);
 			
@@ -973,15 +994,15 @@ sub log_msg	{
 	if ((0 == $test) && (0 == $do_configtest))	{
 		if (defined($config_vars{'logfile'}))	{
 			$result = open (LOG, ">> $config_vars{'logfile'}");
-			if ((!defined($result)) or (0 == $result))	{
+			if (!defined($result))	{
 				print STDERR "Could not open logfile $config_vars{'logfile'} for writing\n";
-				exit(-1);
+				exit(1);
 			}
 			
 			print LOG '[', get_cur_date(), '] ', $str, "\n";
 			
 			$result = close(LOG);
-			if ((!defined($result)) or (0 == $result))	{
+			if (!defined($result))	{
 				print STDERR "Could not close logfile $config_vars{'logfile'}\n";
 			}
 		}
@@ -1161,7 +1182,7 @@ sub parse_backup_opts	{
 }
 
 # accepts the path to the lockfile we will try to create
-# this either works, or exits the program at -1
+# this either works, or exits the program with a return value of 1
 #
 # we don't use bail() to exit on error, because that would remove the
 # lockfile that may exist from another invocation
@@ -1171,21 +1192,21 @@ sub add_lockfile	{
 	if (!defined($lockfile))	{
 		print_err ('add_lockfile() requires a value', 1);
 		syslog_err('add_lockfile() requires a value');
-		exit(-1);
+		exit(1);
 	}
 	
 	# valid?
 	if (0 == is_valid_local_abs_path($lockfile))	{
 		print_err ("Lockfile $lockfile is not a valid file name", 1);
 		syslog_err("Lockfile $lockfile is not a valid file name");
-		exit(-1);
+		exit(1);
 	}
 	
 	# does a lockfile already exist?
 	if (1 == is_real_local_abs_path($lockfile))	{
 		print_err ("Lockfile $lockfile exists, can not continue!", 1);
 		syslog_err("Lockfile $lockfile exists, can not continue");
-		exit(-1);
+		exit(1);
 	}
 	
 	# create the lockfile
@@ -1196,7 +1217,7 @@ sub add_lockfile	{
 		if (!defined($result))	{
 			print_err ("Could not write lockfile $lockfile", 1);
 			syslog_err("Could not write lockfile $lockfile");
-			exit(-1);
+			exit(1);
 		}
 		$result = close(LOCKFILE);
 		if (!defined($result))	{
@@ -1206,7 +1227,7 @@ sub add_lockfile	{
 }
 
 # accepts the path to a lockfile and tries to remove it
-# this subroutine either works, or it exits -1
+# this subroutine either works, or it exits with a return value of 1
 #
 # we don't use bail() to exit on error, because that would call
 # this subroutine twice in the event of a failure
@@ -1222,7 +1243,7 @@ sub remove_lockfile	{
 				if (0 == $result)	{
 					print_err ("Could not remove lockfile $lockfile", 1);
 					syslog_err("Error! Could not remove lockfile $lockfile");
-					exit(-1);
+					exit(1);
 				}
 			}
 		}
@@ -1587,6 +1608,9 @@ sub backup_interval	{
 			if (0 == $test)	{
 				$result = system(@cmd_stack);
 				if ($result != 0)	{
+					# bitmask return value
+					my $retval = get_retval($result);
+						
 					# 0 signifies success
 					# 1 is the return code for "syntax or usage error"
 					#
@@ -1594,11 +1618,11 @@ sub backup_interval	{
 					# a very good chance that this version of rsync is too old.
 					#
 					if ((1 == $link_dest) && (1 == $result))	{
-						print_err ("rsync returned $result. Does this version of rsync support --link-dest?", 2);
-						syslog_err("rsync returned $result. Does this version of rsync support --link-dest?");
+						print_err ("$config_vars{'cmd_rsync'} returned $retval. Does this version of rsync support --link-dest?", 2);
+						syslog_err("$config_vars{'cmd_rsync'} returned $retval. Does this version of rsync support --link-dest?");
 					} else	{
-						print_err ("rsync returned $result", 2);
-						syslog_err("rsync returned $result");
+						print_err ("$config_vars{'cmd_rsync'} returned $retval", 2);
+						syslog_err("$config_vars{'cmd_rsync'} returned $retval");
 					}
 				}
 			}
@@ -1656,8 +1680,11 @@ sub backup_interval	{
 			if (0 == $test)	{
 				$result = system( $$sp_ref{'script'} );
 				if ($result != 0)	{
-					print_err ("backup_script $$sp_ref{'script'} returned $result", 2);
-					syslog_err("backup_script $$sp_ref{'script'} returned $result");
+					# bitmask return value
+					my $retval = get_retval($result);
+					
+					print_err ("backup_script $$sp_ref{'script'} returned $retval", 2);
+					syslog_err("backup_script $$sp_ref{'script'} returned $retval");
 				}
 			}
 			
@@ -1789,7 +1816,7 @@ sub rotate_interval	{
 			}
 		} else	{
 			print_err("$prev_interval must be above 1 to keep snapshots at the $interval level", 1);
-			exit(-1);
+			exit(1);
 		}
 	}
 }
@@ -1878,7 +1905,16 @@ sub native_cp_al	{
 	
 	# MKDIR DEST (AND SET MODE)
 	if ( ! -d "$dest" )	{
-		if ($verbose > 4)	{ print_cmd("mkdir(\"$dest\", " . get_perms($st->mode) . ");"); }
+		# print and/or log this if necessary
+		if (($verbose > 4) or ($loglevel > 4))	{
+			my $cmd_string = "mkdir(\"$dest\", " . get_perms($st->mode) . ")";
+		
+			if ($verbose > 4)	{
+				print_cmd($cmd_string);
+			} elsif ($loglevel > 4)	{
+				log_msg($cmd_string, 4);
+			}
+		}
 		
 		$result = mkdir("$dest", $st->mode);
 		if ( ! $result )	{
@@ -1889,7 +1925,16 @@ sub native_cp_al	{
 	
 	# CHOWN DEST (if root)
 	if (0 == $<)	{
-		if ($verbose > 4)	{ print_cmd("chown(" . $st->uid . ", " . $st->gid . ", \"$dest\");"); }
+		# print and/or log this if necessary
+		if (($verbose > 4) or ($loglevel > 4))	{
+			my $cmd_string = "chown(" . $st->uid . ", " . $st->gid . ", \"$dest\")";
+		
+			if ($verbose > 4)	{
+				print_cmd($cmd_string);
+			} elsif ($loglevel > 4)	{
+				log_msg($cmd_string, 4);
+			}
+		}
 		
 		$result = chown($st->uid, $st->gid, "$dest");
 		if (! $result)	{
@@ -1919,7 +1964,16 @@ sub native_cp_al	{
 			
 			# SYMLINK (must be tested for first, because it will also pass the file and dir tests)
 			if ( -l "$src/$node" )	{
-				if ($verbose > 4)	{ print_cmd("copy_symlink(\"$src/$node\", \"$dest/$node\")"); }
+				# print and/or log this if necessary
+				if (($verbose > 4) or ($loglevel > 4))	{
+					my $cmd_string = "copy_symlink(\"$src/$node\", \"$dest/$node\")";
+				
+					if ($verbose > 4)	{
+						print_cmd($cmd_string);
+					} elsif ($loglevel > 4)	{
+						log_msg($cmd_string, 4);
+					}
+				}
 				
 				$result = copy_symlink("$src/$node", "$dest/$node");
 				if (0 == $result)	{
@@ -1928,10 +1982,18 @@ sub native_cp_al	{
 				
 			# FILE
 			} elsif ( -f "$src/$node" )	{
+				# print and/or log this if necessary
+				if (($verbose > 4) or ($loglevel > 4))	{
+					my $cmd_string = "link(\"$src/$node\", \"$dest/$node\");";
+				
+					if ($verbose > 4)	{
+						print_cmd($cmd_string);
+					} elsif ($loglevel > 4)	{
+						log_msg($cmd_string, 4);
+					}
+				}
 				
 				# make a hard link
-				if ($verbose > 4)	{ print_cmd("link(\"$src/$node\", \"$dest/$node\");"); }
-				
 				$result = link("$src/$node", "$dest/$node");
 				if (! $result)	{
 					print_err("Warning! Could not link(\"$src/$node\", \"$dest/$node\")", 2);
@@ -1940,8 +2002,16 @@ sub native_cp_al	{
 				
 			# DIRECTORY
 			} elsif ( -d "$src/$node" )	{
+				# print and/or log this if necessary
+				if (($verbose > 4) or ($loglevel > 4))	{
+					my $cmd_string = "native_cp_al(\"$src/$node\", \"$dest/$node\")";
 				
-				if ($verbose > 4)	{ print_cmd("native_cp_al(\"$src/$node\", \"$dest/$node\")"); }
+					if ($verbose > 4)	{
+						print_cmd($cmd_string);
+					} elsif ($loglevel > 4)	{
+						log_msg($cmd_string, 4);
+					}
+				}
 				
 				# call this subroutine recursively, to create the directory
 				$result = native_cp_al("$src/$node", "$dest/$node");
@@ -1952,19 +2022,19 @@ sub native_cp_al	{
 				
 			# FIFO
 			} elsif ( -p "$src/$node" )	{
-				print_err("Warning! Ignoring FIFO $src/$node", 1);
+				print_err("Warning! Ignoring FIFO $src/$node", 2);
 				
 			# SOCKET
 			} elsif ( -S "$src/$node" )	{
-				print_err("Warning! Ignoring socket: $src/$node", 1);
+				print_err("Warning! Ignoring socket: $src/$node", 2);
 				
 			# BLOCK DEVICE
 			} elsif ( -b "$src/$node" )	{
-				print_err("Warning! Ignoring special block file: $src/$node", 1);
+				print_err("Warning! Ignoring special block file: $src/$node", 2);
 				
 			# CHAR DEVICE
 			} elsif ( -c "$src/$node" )	{
-				print_err("Warning! Ignoring special character file: $src/$node", 1);
+				print_err("Warning! Ignoring special character file: $src/$node", 2);
 			}
 		}
 		
@@ -1978,8 +2048,16 @@ sub native_cp_al	{
 	undef( $dh );
 	
 	# UTIME DEST
-	if ($verbose > 4)	{ print_cmd("utime(" . $st->atime . ", " . $st->mtime . ", \"$dest\");"); }
+	# print and/or log this if necessary
+	if (($verbose > 4) or ($loglevel > 4))	{
+		my $cmd_string = "utime(" . $st->atime . ", " . $st->mtime . ", \"$dest\");";
 	
+		if ($verbose > 4)	{
+			print_cmd($cmd_string);
+		} elsif ($loglevel > 4)	{
+			log_msg($cmd_string, 4);
+		}
+	}
 	$result = utime($st->atime, $st->mtime, "$dest");
 	if (! $result)	{
 		print_err("Warning! Could not utime(" . $st->atime . ", " . $st->mtime . ", \"$dest\");", 2);
@@ -2027,14 +2105,32 @@ sub sync_if_different	{
 	$dest = remove_trailing_slash($dest);
 	
 	# copy everything from src to dest
-	if ($verbose > 4)	{ print_cmd("sync_cp_src_dest(\"$src\", \"$dest\")"); }
+	# print and/or log this if necessary
+	if (($verbose > 4) or ($loglevel > 4))	{
+		my $cmd_string = "sync_cp_src_dest(\"$src\", \"$dest\")";
+	
+		if ($verbose > 4)	{
+			print_cmd($cmd_string);
+		} elsif ($loglevel > 4)	{
+			log_msg($cmd_string, 4);
+		}
+	}
 	$result = sync_cp_src_dest("$src", "$dest");
 	if ( ! $result )	{
 		bail("sync_cp_src_dest(\"$src\", \"$dest\")");
 	}
 	
 	# delete everything from dest that isn't in src
-	if ($verbose > 4)	{ print_cmd("sync_rm_dest(\"$src\", \"$dest\")"); }
+	# print and/or log this if necessary
+	if (($verbose > 4) or ($loglevel > 4))	{
+		my $cmd_string = "sync_rm_dest(\"$src\", \"$dest\")";
+	
+		if ($verbose > 4)	{
+			print_cmd($cmd_string);
+		} elsif ($loglevel > 4)	{
+			log_msg($cmd_string, 4);
+		}
+	}
 	$result = sync_rm_dest("$src", "$dest");
 	if ( ! $result )	{
 		bail("sync_rm_dest(\"$src\", \"$dest\")");
@@ -2162,19 +2258,19 @@ sub sync_cp_src_dest	{
 				
 			# FIFO
 			} elsif ( -p "$src/$node" )	{
-				print_err("Warning! Ignoring FIFO $src/$node", 1);
+				print_err("Warning! Ignoring FIFO $src/$node", 2);
 				
 			# SOCKET
 			} elsif ( -S "$src/$node" )	{
-				print_err("Warning! Ignoring socket: $src/$node", 1);
+				print_err("Warning! Ignoring socket: $src/$node", 2);
 				
 			# BLOCK DEVICE
 			} elsif ( -b "$src/$node" )	{
-				print_err("Warning! Ignoring special block file: $src/$node", 1);
+				print_err("Warning! Ignoring special block file: $src/$node", 2);
 				
 			# CHAR DEVICE
 			} elsif ( -c "$src/$node" )	{
-				print_err("Warning! Ignoring special character file: $src/$node", 1);
+				print_err("Warning! Ignoring special character file: $src/$node", 2);
 			}
 		}
 	}
@@ -2288,8 +2384,16 @@ sub copy_symlink	{
 	}
 	
 	# CREATE THE SYMLINK
-	if ($verbose > 4)	{ print_cmd("symlink(\"" . readlink("$src") . "\", \"$dest\");"); }
+	# print and/or log this if necessary
+	if (($verbose > 4) or ($loglevel > 4))	{
+		my $cmd_string = "symlink(\"" . readlink("$src") . "\", \"$dest\");";
 	
+		if ($verbose > 4)	{
+			print_cmd($cmd_string);
+		} elsif ($loglevel > 4)	{
+			log_msg($cmd_string, 4);
+		}
+	}
 	$result = symlink(readlink("$src"), "$dest");
 	if (! $result)	{
 		print_err("Warning! Could not symlink(readlink(\"$src\"), \"$dest\")", 2);
@@ -2299,9 +2403,19 @@ sub copy_symlink	{
 	# CHOWN DEST (if root)
 	if (0 == $<)	{
 		if ( -e "$dest" )	{
-			if ($verbose > 4)	{ print_cmd("chown(" . $st->uid . ", " . $st->gid . ", \"$dest\");"); }
+			# print and/or log this if necessary
+			if (($verbose > 4) or ($loglevel > 4))	{
+				my $cmd_string = "chown(" . $st->uid . ", " . $st->gid . ", \"$dest\");";
+			
+				if ($verbose > 4)	{
+					print_cmd($cmd_string);
+				} elsif ($loglevel > 4)	{
+					log_msg($cmd_string, 4);
+				}
+			}
 			
 			$result = chown($st->uid, $st->gid, "$dest");
+			
 			if (! $result)	{
 				print_err("Warning! Could not chown(" . $st->uid . ", " . $st->gid . ", \"$dest\")", 2);
 				return (0);
@@ -2325,6 +2439,21 @@ sub get_perms	{
 	my $mode = sprintf("%04o", ($raw_mode & 07777));
 	
 	return ($mode);
+}
+
+# accepts return value from the system() command
+# bitmasks it, and returns the same thing "echo $?" would
+sub get_retval	{
+	my $retval = shift(@_);
+	
+	if (!defined($retval))	{
+		bail('get_retval() was not passed a value');
+	}
+	if ($retval !~ m/^\d+$/)	{
+		bail("get_retval() was passed $retval, a number is required");
+	}
+	
+	return ($retval / 256);
 }
 
 # accepts two file paths
