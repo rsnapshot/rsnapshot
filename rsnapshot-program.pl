@@ -1012,9 +1012,8 @@ sub print_cmd	{
 	
 	if (!defined($str))	{ return (undef); }
 	
-	# remove newline and consolidate slashes and spaces
+	# remove newline and consolidate spaces
 	chomp($str);
-	$str =~ s/\/+/\//g;
 	$str =~ s/\s+/ /g;
 	
 	# break up string into individual pieces
@@ -1758,7 +1757,13 @@ sub backup_interval	{
 		pop(@dirs);
 		
 		# don't mkdir for dest unless we have to
-		my $destpath = "$config_vars{'snapshot_root'}/$interval.0/" . join('/', @dirs) . '/';
+		my $destpath = "$config_vars{'snapshot_root'}/$interval.0/" . join('/', @dirs);
+		
+		# make sure we have a trailing slash
+		if ($destpath !~ m/\/$/)	{
+			$destpath .= '/';
+		}
+		
 		if ( ! -e "$destpath" )	{
 			print_cmd("mkdir -m 0755 -p $destpath");
 			

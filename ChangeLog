@@ -5,6 +5,7 @@ http://www.rsnapshot.org/
 
 VERSION 1.1.2 (??? ?? ??:?? 2004)
 ------------------------------------------------------------------------------
+- Fixed slash formatting issue with non-ssh rsync protocol calls
 - Fixed a slightly inconvenient permissions issue in rsnaptar
 - Added support for arbitrary arguments to backup_script files
 
