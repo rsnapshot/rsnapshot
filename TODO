@@ -2,11 +2,14 @@ rsnapshot TODO list:
 
 for version 1.0.x
 ------------------------------------------------------------------------------
++ Use "install" in makefile instead of fileutils commands (cp, etc)
 + Add lock file to prevent a second cron task from running
   before the first one stops (don't forget to trap for signals)
 + Add an file exclusion list feature
 + Implement a generalized way to pass arbitrary args to rsync and ssh
 + Support for SSH tunnelling (this may be handled by arbitrary args)
++ Add support for connecting to an rsync daemon requiring authentication,
+  either using the --password-file flag or RSYNC_PASSWORD env var
 
 for version 2.0.x
 ------------------------------------------------------------------------------
