@@ -4674,6 +4674,14 @@ Peter Palfrader (B<weasel@debian.org>)
 
 =back
 
+Nicolas Kaiser <nikai@nikai.net>
+
+=over 4
+
+- Fixed typos in program and man page
+
+=back
+
 =head1 COPYRIGHT
 
 Copyright (C) 2003-2005 Nathan Rosenquist

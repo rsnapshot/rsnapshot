@@ -32,3 +32,6 @@ Bharat Mediratta <bharat@menalto.com>
 
 Peter Palfrader <weasel@debian.org>
     - Enhanced error reporting to include command line options
+
+Nicolas Kaiser <nikai@nikai.net>
+    - Fixed typos in program and man page
