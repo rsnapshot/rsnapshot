@@ -181,13 +181,10 @@ if ( -f "$config_file" )	{
 		my $line_syntax_ok = 0;
 		
 		# ignore comments
-		if ($line =~ /^#/)	{ next; }
+		if (is_comment($line))	{ next; }
 		
 		# ignore blank lines
-		if ($line =~ /^$/)	{ next; }
-		
-		# ignore lines that are pure white space
-		if ($line =~ /^\s*$/)	{ next; }
+		if (is_blank($line))	{ next; }
 		
 		# parse line
 		my ($var, $value, $value2, $value3) = split(/\t+/, $line, 4);
@@ -203,7 +200,7 @@ if ( -f "$config_file" )	{
 		# SNAPSHOT_ROOT
 		if ($var eq 'snapshot_root')	{
 			# make sure this is a full path
-			if ($value !~ /^\//)	{
+			if (0 == is_valid_local_abs_path($value))	{
 				config_error($file_line_num, "$line - snapshot_root must be a full path");
 				$file_syntax_ok = 0;
 				next;
@@ -264,7 +261,7 @@ if ( -f "$config_file" )	{
 			if (!defined($value))		{ bail("Interval can not be blank"); }
 			if ($value !~ m/^[\w\d]+$/)	{ bail("\"$value\" is not a valid entry, must be alphanumeric characters only"); }
 			
-			if (!defined($value2))		{ bail("\$value\" number can not be blank"); }
+			if (!defined($value2))		{ bail("\"$value\" number can not be blank"); }
 			if ($value2 !~ m/^\d+$/)	{ bail("\"$value2\" is not an integer"); }
 			if (0 == $value2)			{ bail("\"$value\" can not be 0"); }
 			
@@ -285,11 +282,14 @@ if ( -f "$config_file" )	{
 			if ( !defined($config_vars{'snapshot_root'}) )	{	bail("snapshot_root needs to be defined before backup points"); }
 			
 			# make sure we have a local path for the destination
-			if ($dest =~ /^\//)	{ bail("Backup destination $dest must be a local path"); }
+			# (we do NOT want a local path)
+			if (1 == is_valid_local_abs_path($dest))	{
+				bail("Backup destination $dest must be a local path");
+			}
 			
 			# make sure we aren't traversing directories (exactly 2 dots can't be next to each other)
-			if ($src  =~ /[^\.]\.{2}[^\.]/)	{ bail("Directory traversal attempted in $src"); }
-			if ($dest =~ /[^\.]\.{2}[^\.]/)	{ bail("Directory traversal attempted in $dest"); }
+			if (1 == is_directory_traversal($src))	{ bail("Directory traversal attempted in $src"); }
+			if (1 == is_directory_traversal($dest))	{ bail("Directory traversal attempted in $dest"); }
 			
 			# validate source path
 			#
@@ -332,7 +332,7 @@ if ( -f "$config_file" )	{
 				opendir(SRC, "$src") or bail("Could not open $src");
 				
 				while (my $node = readdir(SRC))	{
-					next if ($node =~ m/^\.\.?$/);	# skip '.' and '..'
+					next if ($node =~ m/^\.\.?$/o);	# skip '.' and '..'
 					
 					if ("$src/$node" ne "$config_vars{'snapshot_root'}")	{
 						my %hash;
@@ -726,12 +726,35 @@ sub is_boolean	{
 	return (0);
 }
 
+# accepts string
+# returns 1 if it is a comment line (beginning with #)
+# returns 0 otherwise
+sub is_comment	{
+	my $str = shift(@_);
+	
+	if (!defined($str))	{ return (undef); }
+	if ($str =~ /^#/)	{ return (1); }
+	return (0);
+}
+
+# accepts string
+# returns 1 if it is blank, or just pure white space
+# returns 0 otherwise
+sub is_blank	{
+	my $str = shift(@_);
+	
+	if (!defined($str))		{ return (undef); }
+	if ($str =~ /^\s*$/)	{ return (1); }
+	return (0);
+}
+
 # accepts path
 # returns 1 if it's a valid ssh absolute path
 # returns 0 otherwise
 sub is_ssh_path	{
 	my $path	= shift(@_);
 	
+	if (!defined($path))				{ return (undef); }
 	if ($path =~ m/^.*?\@.*?:\/.*$/)	{ return (1); }
 	
 	return (0);
@@ -743,7 +766,7 @@ sub is_ssh_path	{
 sub is_anon_rsync_path	{
 	my $path	= shift(@_);
 	
-	if (!defined($path))			{ return (0); }
+	if (!defined($path))			{ return (undef); }
 	if ($path =~ m/^rsync:\/\/.*$/)	{ return (1); }
 	
 	return (0);
@@ -755,7 +778,7 @@ sub is_anon_rsync_path	{
 sub is_valid_local_abs_path	{
 	my $path	= shift(@_);
 	
-	if (!defined($path))	{ return (0); }
+	if (!defined($path))	{ return (undef); }
 	if ($path =~ m/^\//)	{ return (1); }
 	
 	return (0);
@@ -767,12 +790,20 @@ sub is_valid_local_abs_path	{
 sub is_real_local_abs_path	{
 	my $path	= shift(@_);
 	
-	if (!defined($path))	{ return (0); }
+	if (!defined($path))	{ return (undef); }
 	if (1 == is_valid_local_abs_path($path))	{
 		if (-e "$path")	{
 			return (1);
 		}
 	}
+}
+
+sub is_directory_traversal	{
+	my $path = shift(@_);
+	
+	if (!defined($path))				{ return (undef); }
+	if ($path =~ m/[^\.]\.{2}[^\.]/)	{ return (1); }
+	return (0);
 }
 
 # accepts string
@@ -921,7 +952,7 @@ sub native_cp_al	{
 		foreach my $node (@nodes)	{
 			
 			# skip '.' and '..'
-			next if ($node =~ m/^\.\.?$/);
+			next if ($node =~ m/^\.\.?$/o);
 			
 			# make sure the node we just got is valid (this is highly unlikely to fail)
 			my $st = lstat("$src/$node");
