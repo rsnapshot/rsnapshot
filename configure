@@ -2381,3 +2381,13 @@ if test "$no_create" != yes; then
   $ac_cs_success || { (exit 1); exit 1; }
 fi
 
+
+# this is kludgy, but it works
+RSNAPSHOT_SYSCONFDIR=`eval echo ${sysconfdir}`
+
+echo ""
+echo "Now type \"make install\""
+echo ""
+echo "After rsnapshot is installed, don't forget to copy"
+echo "$RSNAPSHOT_SYSCONFDIR/rsnapshot.conf.default to $RSNAPSHOT_SYSCONFDIR/rsnapshot.conf"
+echo ""
