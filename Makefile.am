@@ -57,7 +57,7 @@ tar: man
 	
 	@# utils
 	/bin/mkdir rsnapshot-$(VERSION)/utils/
-	/bin/cp utils/{rsnaptar,*.sh,*.pl,README} rsnapshot-$(VERSION)/utils/
+	/bin/cp utils/{rsnaptar,*.sh,README} rsnapshot-$(VERSION)/utils/
 	
 	@# change ownership to root, and delete build dir
 	chown -R root:root rsnapshot-$(VERSION)/
