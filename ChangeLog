@@ -6,6 +6,8 @@ http://www.rsnapshot.org/
 VERSION 1.1.6 (??? ?? ??:?? 2004)
 ------------------------------------------------------------------------------
 - Moved the bulk of the program into smaller subroutines (finally)
+- show_disk_usage() now exits the program directly instead of returning a
+  value
 
 VERSION 1.1.5 (Jun 20 20:56 2004)
 ------------------------------------------------------------------------------

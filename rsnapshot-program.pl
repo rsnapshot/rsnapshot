@@ -189,7 +189,7 @@ if ($cmd eq 'configtest')	{
 }
 
 # PARSE CONFIG FILE
-if ( -f "$config_file" )	{
+if (defined($config_file) && (-f "$config_file") && (-r "$config_file"))	{
 	# parse the config file
 	# if there is a problem, this subroutine will exit the program and notify the user of the error
 	#
@@ -224,16 +224,11 @@ if (1 == $do_configtest)	{
 	}
 }
 
-# SHOW DISK SPACE?
-# if we're just checking the disk space, don't run the whole program
+# if we're just using "du" to check the disk space, do it now
 # this is orphaned down here because it needs to know the contents of the config file
+# show_disk_usage() will exit the program with an appropriate exit code either way
 if ($cmd eq 'du')	{
-	my $retval = show_disk_usage();
-	if (!defined($retval))	{
-		exit (1);
-	} else	{
-		exit(0);
-	}
+	show_disk_usage();
 }
 
 #
@@ -3312,7 +3307,7 @@ sub file_diff   {
 
 # accepts no arguments
 # calls the 'du' command to show rsnapshot's disk usage
-# returns 1/undef
+# exits the program with 0 for success, 1 for failure
 #
 # this subroutine isn't like a lot of the "real" ones that write to logfiles, etc.
 # that's why the print_* subroutines aren't used here.
@@ -3335,13 +3330,15 @@ sub show_disk_usage	{
 		print "du -csh $intervals_str\n\n";
 		my $retval = system("du -csh $intervals_str");
 		if (0 == $retval)	{
-			return (1);
+			# exit with success
+			exit(0);
 		}
 	} else	{
 		print STDERR ("No intervals directories visible. Do you have permission to see the snapshot root?\n");
 	}
 	
-	return (undef);
+	# exit showing error
+	exit(1);
 }
 
 #####################
