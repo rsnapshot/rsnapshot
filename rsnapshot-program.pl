@@ -2171,8 +2171,8 @@ sub rotate_lowest_snapshots	{
 				
 				if (0 == $test)	{
 					my $result = rename(
-									"$config_vars{'snapshot_root'}/$interval.$i/",
-									("$config_vars{'snapshot_root'}/$interval." . ($i+1) . '/')
+									"$config_vars{'snapshot_root'}/$interval.$i",
+									("$config_vars{'snapshot_root'}/$interval." . ($i+1))
 					);
 					if (0 == $result)	{
 						my $errstr = '';
