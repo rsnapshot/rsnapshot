@@ -1,0 +1,11 @@
+--- rsnapshot.conf	Fri Oct 24 23:09:36 2003
++++ rsnapshot.conf-redhat	Wed Oct 29 22:42:58 2003
+@@ -21,7 +21,7 @@
+ # see the man page for more details.
+ cmd_rsync	/usr/bin/rsync
+ cmd_ssh		/usr/bin/ssh
+-#cmd_cp		/bin/cp
++cmd_cp		/bin/cp
+ 
+ # BACKUP INTERVALS
+ # (must be unique and in ascending order, i.e. hourly, daily, weekly, etc.)
