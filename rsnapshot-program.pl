@@ -69,6 +69,24 @@ my @intervals;
 # this is a convenient reference to some of the data from and metadata about @intervals
 my $interval_data_ref;
 
+# intervals can't have these values, because they're either taken by other commands
+# or reserved for future use
+my @reserved_words = qw(
+	archive
+	check-config-version
+	configtest
+	delete
+	du
+	help
+	history
+	list
+	restore
+	rollback
+	upgrade-config-file
+	version
+	version-only
+);
+
 # global flags that change the outcome of the program,
 # and are configurable by both cmd line and config flags
 #
@@ -112,6 +130,9 @@ my $default_du_args				= '-csh';
 # exactly how the program was called, with all arguments
 # this is set before getopts() modifies @ARGV
 my $run_string = "$0 " . join(' ', @ARGV);
+
+# if we have any errors, we print the run string once, at the top of the list
+my $have_printed_run_string = 0;
 
 ########################################
 ###         SIGNAL HANDLERS          ###
@@ -569,7 +590,15 @@ sub parse_config_file {
 			# check if interval is blank
 			if (!defined($value)) { config_err($file_line_num, "$line - Interval can not be blank"); }
 			
-			# check if interval is actually a number
+			foreach my $word (@reserved_words) {
+				if ($value eq $word) {
+					config_err($file_line_num,
+						"$line - \"$value\" is not a valid interval, reserved word conflict");
+					next;
+				}
+			}
+			
+			# make sure interval is alpha-numeric
 			if ($value !~ m/^[\w\d]+$/) {
 				config_err($file_line_num,
 					"$line - \"$value\" is not a valid interval, must be alphanumeric characters only");
@@ -1079,7 +1108,9 @@ sub parse_config_file {
 	# (incorrect entries in config file)
 	if (0 == $config_perfect) {
 		print_err("---------------------------------------------------------------------", 1);
-		print_err("Errors were found in $config_file, rsnapshot can not continue.", 1);
+		print_err("Errors were found in $config_file,", 1);
+		print_err("rsnapshot can not continue.", 1);
+		print_err("", 1);
 		print_err("If you think an entry looks right, make sure you don't have", 1);
 		print_err("spaces where only tabs should be.", 1);
 		
@@ -1617,9 +1648,23 @@ sub print_err {
 	
 	chomp($str);
 	
+	# print the run string once
+	# this way we know where the message came from if it's in an e-mail
+	# but we can still read messages at the console
+	if (0 == $have_printed_run_string) {
+		if ((!defined($verbose)) or ($level <= $verbose)) {
+			print STDERR "----------------------------------------------------------------------------\n";
+			print STDERR wrap_cmd($run_string, 76, 4), "\n";
+			print STDERR "----------------------------------------------------------------------------\n";
+		}
+		
+		$have_printed_run_string = 1;
+	}
+	
 	# print to STDERR
 	if ((!defined($verbose)) or ($level <= $verbose)) {
-		print STDERR $run_string, ": ERROR: ", $str, "\n";
+		#print STDERR $run_string, ": ERROR: ", $str, "\n";
+		print STDERR "ERROR: ", $str, "\n";
 	}
 	
 	# write to log
