@@ -232,7 +232,7 @@ if ( -f $config_file )	{
 			}
 		}
 		
-		# CHECK FOR GNU cp
+		# CHECK FOR GNU cp (optional)
 		if ($var eq 'cmd_cp')	{
 			if ( -x $value )	{
 				$config_vars{'cmd_cp'} = $value;
@@ -346,9 +346,6 @@ if ( -f $config_file )	{
 		print STDERR "cmd_touch\n";
 		print STDERR "cmd_mv\n";
 		print STDERR "cmd_rm\n";
-		print STDERR "\n";
-		print STDERR "Furthermore, cmd_cp is now optional, but MUST point\n";
-		print STDERR "to the GNU version of cp if specified\n";
 		print STDERR "----------------------------------------------------\n";
 		print STDERR "Please remove these lines from $config_file\n";
 		print STDERR "----------------------------------------------------\n";
@@ -356,6 +353,9 @@ if ( -f $config_file )	{
 		print STDERR "to accomplish the same tasks. This allows rsnapshot\n";
 		print STDERR "to be compatible with BSD, Solaris, etc., not just\n";
 		print STDERR "systems that use GNU cp\n";
+		print STDERR "----------------------------------------------------\n";
+		print STDERR "Furthermore, cmd_cp is now optional, but MUST point\n";
+		print STDERR "to the GNU version of cp if specified\n";
 		print STDERR "----------------------------------------------------\n";
 		print STDERR "\n";
 	}
@@ -470,16 +470,15 @@ sub backup_interval	{
 	
 	# hard link (except for directories) .0 over to .1
 	if ( -d "$config_vars{'snapshot_root'}/$interval.0" )	{
+		my $result;
 		
-		# BEGIN CRUFT
-		if ($verbose)	{ print "/bin/cp -al $config_vars{'snapshot_root'}/$interval.0/ $config_vars{'snapshot_root'}/$interval.1/\n"; }
+		if ($verbose)	{ print "cp -al $config_vars{'snapshot_root'}/$interval.0/ $config_vars{'snapshot_root'}/$interval.1/\n"; }
 		if ($test == 0)	{
-			system( '/bin/cp', '-al', "$config_vars{'snapshot_root'}/$interval.0/", "$config_vars{'snapshot_root'}/$interval.1/" );
+			$result = cp_al( "$config_vars{'snapshot_root'}/$interval.0/", "$config_vars{'snapshot_root'}/$interval.1/" );
 		}
-		# END CRUFT
-		
-		# TODO: put recursive subroutine here
-		
+		if (! $result)	{
+			bail("cp_al(\"$config_vars{'snapshot_root'}/$interval.0/\", \"$config_vars{'snapshot_root'}/$interval.1/\")");
+		}
 	}
 	
 	# SYNC LIVE DATA TO $interval.0
