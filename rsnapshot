@@ -281,12 +281,7 @@ if ( -f $config_file )	{
 				
 			# ok, let's see if it's a syntactically valid remote ssh pattern
 			} else	{
-				# remote ssh path needs to be absolute
-				if ($src !~ /^.*?\@.*?:\/.*$/)	{
-					bail("Backup source $src must be a full path");
-				}
-				
-				# if it's an ssh path, make sure we have ssh
+				# if it's an absolute ssh path, make sure we have ssh
 				if ( $src =~ /^.*?\@.*?:\/.*$/ )	{
 					if (!defined($config_vars{'cmd_ssh'}))	{
 						bail("Cannot handle $src, cmd_ssh not defined in $config_file");
