@@ -96,7 +96,11 @@ debian:
 	${DPKG} -b ${DEB_BUILD_DIR}/ rsnapshot-${VERSION}-1.deb
 	${RM} -rf ${DEB_BUILD_DIR}/
 	
-install:
+# workaround for Mac OS X, possibly others with case insensitive filenames
+# this prevents make from looking at "INSTALL" instead of this target
+install: install-all
+
+install-all:
 	${INSTALL} -d ${BIN_DIR}/
 	${INSTALL} -d ${MAN_DIR}/man1/
 	${INSTALL} -d ${SYSCONF_DIR}/
