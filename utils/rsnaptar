@@ -2,7 +2,7 @@
 
 ##############################################################################
 # rsnaptar
-# by Nathan Rosenquist <rsnapshot@scubaninja.com>
+# by Nathan Rosenquist <nathan@rsnapshot.org>
 #
 # A quick hack of a shell script to tar up backup points from the rsnapshot
 # snapshot root. Sends an e-mail to an address specified on the command line
@@ -11,7 +11,7 @@
 # I set this up in cron to run once a week, take the tar files,
 # and make DVD-RW backups of the latest snapshot. Your mileage may vary.
 #
-# http://rsnapshot.scubaninja.com/
+# http://www.rsnapshot.org/
 ##############################################################################
 
 # DIRECTORIES

@@ -1,5 +1,5 @@
 rsnapshot 1.0.5
-http://rsnapshot.scubaninja.com/
+http://www.rsnapshot.org/
 
 ------------------------------------------------------------------------------
 rsnapshot comes with ABSOLUTELY NO WARRANTY.  This is free software,
@@ -91,7 +91,7 @@ new snapshot, rotate the old ones, and retain the most recent six
 (hourly.0 - hourly.5).
 
 For the full documentation, type "man rsnapshot" once it is installed,
-or visit http://rsnapshot.scubaninja.com/
+or visit http://www.rsnapshot.org/
 
 ------------------------------------------------------------------------------
 CONTRIBUTORS
@@ -99,7 +99,7 @@ CONTRIBUTORS
 Mike Rubel - http://www.mikerubel.org/computers/rsync_snapshots/
 	- Created the original shell scripts on which this project is based
 
-Nathan Rosenquist <rsnapshot@scubaninja.com>
+Nathan Rosenquist <nathan@rsnapshot.org>
 	- Primary author and maintainer
 
 Carl Wilhelm Soderstrom <chrome@real-time.com>

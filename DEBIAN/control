@@ -2,7 +2,7 @@ Package: rsnapshot
 Version: 1.0.5-1
 Priority: optional
 Section: utils
-Maintainer: Nathan Rosenquist <rsnapshot@scubaninja.com>
+Maintainer: Nathan Rosenquist <nathan@rsnapshot.org>
 Depends: perl, rsync, fileutils | coreutils
 Recommends: ssh
 Architecture: all

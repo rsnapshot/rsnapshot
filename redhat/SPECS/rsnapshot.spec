@@ -5,7 +5,7 @@ Release: 1
 BuildArch: noarch
 Copyright: GPL
 Group: Applications/System
-Source: http://rsnapshot.scubaninja.com/downloads/rsnapshot-1.0.5.tar.gz
+Source: http://www.rsnapshot.org/downloads/rsnapshot-1.0.5.tar.gz
 Patch: rsnapshot.patch
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
 Requires: perl, rsync
@@ -49,7 +49,7 @@ rm -rf $RPM_BUILD_DIR/%{name}-%{version}/
 %verify(user group mode md5 size mtime) %{_mandir}/man1/rsnapshot.1*
 
 %changelog
-* Wed Nov 05 2003 Nathan Rosenquist <rsnapshot@scubaninja.com>
+* Wed Nov 05 2003 Nathan Rosenquist <nathan@rsnapshot.org>
 - Removed fileutils dependency, added verification info
 
 * Tue Nov 04 2003 Nathan Rosenquist <rsnapshot@scubaninja.com>

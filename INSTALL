@@ -1,5 +1,5 @@
 rsnapshot 1.0.5
-http://rsnapshot.scubaninja.com/
+http://www.rsnapshot.org/
 
 rsnapshot is a filesystem snapshot utility. It can take incremental
 snapshots of local and remote filesystems for any number of machines.

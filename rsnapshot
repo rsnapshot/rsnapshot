@@ -9,7 +9,7 @@
 # http://www.mikerubel.org/computers/rsync_snapshots/                  #
 #                                                                      #
 # The official rsnapshot website is located at                         #
-# http://rsnapshot.scubaninja.com/                                     #
+# http://www.rsnapshot.org/                                            #
 #                                                                      #
 # rsnapshot comes with ABSOLUTELY NO WARRANTY.  This is free software, #
 # and you are welcome to redistribute it under certain conditions.     #
@@ -1501,7 +1501,7 @@ Rewritten and expanded in Perl by Nathan Rosenquist
 
 =over 4
 
-B<http://rsnapshot.scubaninja.com/>
+B<http://www.rsnapshot.org/>
 
 =back
 
@@ -1550,7 +1550,7 @@ permissions and ssh authentication issues.
 
 =head1 BUGS
 
-Swat them, or report them to B<rsnapshot@scubaninja.com>
+Swat them, or report them to B<nathan@rsnapshot.org>
 
 =head1 NOTES
 
