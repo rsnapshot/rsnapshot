@@ -829,9 +829,9 @@ sub backup_interval	{
 			# rsync sees that the timestamps are different, and insists
 			# on changing things even if the files are bit for bit identical on content.
 			#
-			if (1 == $verbose)	{ print "sync_if_different(\"$tmpdir\", \"$$sp_ref{'dest'}\")\n"; }
+			if (1 == $verbose)	{ print "sync_if_different(\"$tmpdir\", \"$config_vars{'snapshot_root'}/$interval.0/$$sp_ref{'dest'}\")\n"; }
 			if (0 == $test)	{
-				$result = sync_if_different("$tmpdir", "$$sp_ref{'dest'}");
+				$result = sync_if_different("$tmpdir", "$config_vars{'snapshot_root'}/$interval.0/$$sp_ref{'dest'}");
 				if (!defined($result))	{
 					bail("sync_if_different(\"$tmpdir\", \"$$sp_ref{'dest'}\") returned undef");
 				}
