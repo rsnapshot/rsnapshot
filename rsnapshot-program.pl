@@ -1171,7 +1171,7 @@ sub backup_interval	{
 			# anonymous rsync
 			} elsif ( is_anon_rsync_path($src) )	{
 				# make rsync quiet if we're not running EXTRA verbose
-				if ($verbose < 3)	{ $rsync_short_args .= 'q'; }
+				if ($verbose < 4)	{ $rsync_short_args .= 'q'; }
 				
 			# this should have already been validated once, but better safe than sorry
 			} else	{
