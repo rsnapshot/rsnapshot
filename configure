@@ -776,6 +776,7 @@ Optional Packages:
   --with-perl=PATH	  Specify the path to perl
   --with-rsync=PATH       Specify the path to rsync
   --with-ssh=PATH         Specify the path to ssh
+  --with-logger=PATH      Specify the path to logger
 
 Report bugs to <nathan@rsnapshot.org>.
 _ACEOF
@@ -1745,6 +1746,79 @@ fi
 CMD_SSH="cmd_ssh	$SSH"
 
 
+
+
+
+# Check whether --with-logger or --without-logger was given.
+if test "${with_logger+set}" = set; then
+  withval="$with_logger"
+
+		if test "x$withval" != "xno"; then
+			if test -x "$withval"; then
+				LOGGER=$withval
+			else
+				{ { echo "$as_me:$LINENO: error: logger not found" >&5
+echo "$as_me: error: logger not found" >&2;}
+   { (exit 1); exit 1; }; }
+			fi
+		else
+			LOGGER=no
+		fi
+
+
+fi;
+if test "$LOGGER" != "no"; then
+	if test "$LOGGER" = ""; then
+		# Extract the first word of "logger", so it can be a program name with args.
+set dummy logger; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_path_LOGGER+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  case $LOGGER in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_LOGGER="$LOGGER" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_LOGGER="$as_dir/$ac_word$ac_exec_ext"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+  test -z "$ac_cv_path_LOGGER" && ac_cv_path_LOGGER="no"
+  ;;
+esac
+fi
+LOGGER=$ac_cv_path_LOGGER
+
+if test -n "$LOGGER"; then
+  echo "$as_me:$LINENO: result: $LOGGER" >&5
+echo "${ECHO_T}$LOGGER" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
+	fi
+fi
+if test "$LOGGER" = "no"; then
+	SSH=/path/to/logger
+fi
+CMD_LOGGER="cmd_logger	$LOGGER"
+
+
+
+
 ac_config_files="$ac_config_files rsnapshot:rsnapshot-preamble.pl:rsnapshot-program.pl"
 
 
@@ -2347,6 +2421,8 @@ s,@CMD_RSYNC@,$CMD_RSYNC,;t t
 s,@RSYNC@,$RSYNC,;t t
 s,@SSH@,$SSH,;t t
 s,@CMD_SSH@,$CMD_SSH,;t t
+s,@LOGGER@,$LOGGER,;t t
+s,@CMD_LOGGER@,$CMD_LOGGER,;t t
 CEOF
 
 _ACEOF

@@ -95,6 +95,41 @@ fi
 dnl either way, set the cmd_ssh var
 AC_SUBST(CMD_SSH, "cmd_ssh	$SSH")
 
+
+
+dnl
+dnl LOGGER CHECK (optional program)
+dnl
+dnl if the user specified a path, try that first
+AC_ARG_WITH(logger,
+	[  --with-logger=PATH      Specify the path to logger ],
+	[
+		if test "x$withval" != "xno"; then
+			if test -x "$withval"; then
+				LOGGER=$withval
+			else
+				AC_MSG_ERROR(logger not found)
+			fi
+		else
+			LOGGER=no
+		fi
+	]
+)
+dnl if the user didn't specify a path, hunt for it
+if test "$LOGGER" != "no"; then
+	if test "$LOGGER" = ""; then
+		AC_PATH_PROG(LOGGER, logger, no)
+	fi
+fi
+dnl if we couldn't find it, provide an example
+if test "$LOGGER" = "no"; then
+	SSH=/path/to/logger
+fi
+dnl either way, set the cmd_ssh var
+AC_SUBST(CMD_LOGGER, "cmd_logger	$LOGGER")
+
+
+
 dnl Combine the preamble with a normal, working script
 AC_CONFIG_FILES(rsnapshot:rsnapshot-preamble.pl:rsnapshot-program.pl)
 
