@@ -42,7 +42,7 @@ rm -rf $RPM_BUILD_DIR/%{name}-%{version}/
 
 %files
 %defattr(-,root,root)
-%doc GPL README INSTALL TODO
+%doc COPYING README INSTALL TODO
 %config %{_sysconfdir}/rsnapshot.conf.default
 %config(noreplace) %{_sysconfdir}/rsnapshot.conf
 %{_bindir}/rsnapshot

@@ -23,10 +23,9 @@ clean:
 tar:
 	rm -f rsnapshot-${VERSION}.tar.gz
 	
-	
 	# core files
 	mkdir rsnapshot-${VERSION}
-	cp rsnapshot rsnapshot.conf Makefile GPL INSTALL README TODO rsnapshot-${VERSION}/
+	cp rsnapshot rsnapshot.conf Makefile COPYING INSTALL README TODO rsnapshot-${VERSION}/
 	pod2man rsnapshot > rsnapshot-${VERSION}/rsnapshot.1
 	
 	# debian
