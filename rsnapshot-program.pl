@@ -588,7 +588,7 @@ sub parse_config_file {
 			# make sure we have a local path for the destination
 			# (we do NOT want an absolute path)
 			if ( is_valid_local_abs_path($dest) ) {
-				config_err($file_line_num, "$line - Backup destination $dest must be a local path");
+				config_err($file_line_num, "$line - Backup destination $dest must be a local, relative path");
 				next;
 			}
 			
@@ -711,7 +711,7 @@ sub parse_config_file {
 			
 			# make sure the script is a full path
 			if (1 == is_valid_local_abs_path($dest)) {
-				config_err($file_line_num, "$line - Backup destination $dest must be a local path");
+				config_err($file_line_num, "$line - Backup destination $dest must be a local, relative path");
 				next;
 			}
 			

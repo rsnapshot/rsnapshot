@@ -3,7 +3,7 @@ rsnapshot changelog
 http://www.rsnapshot.org/
 ------------------------------------------------------------------------------
 
-VERSION CVS-unstable-post-1.1.6 (??? ?? ??:?? 2004)
+VERSION CVS-unstable-post-1.1.6 (??? ?? ??:?? ????)
 ------------------------------------------------------------------------------
 - Turned off buffering ($|=1)
 - Changed default lockfile to /var/run/rsnapshot.pid, for FHS compliance
@@ -21,6 +21,7 @@ VERSION CVS-unstable-post-1.1.6 (??? ?? ??:?? 2004)
   point args to allow additive include/exclude rules.
 - Added safe_rename() subroutine to work around a semi-obscure bug in certain
   Linux kernels
+- Clarified error message about local/relative paths in config file parsing
 
 VERSION 1.1.6 (Jul 05 16:35 2004)
 ------------------------------------------------------------------------------
