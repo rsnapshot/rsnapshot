@@ -104,9 +104,6 @@ my $default_rsync_short_args	= '-a';
 my $default_rsync_long_args		= '--delete --numeric-ids';
 my $default_ssh_args			= undef;
 
-# display variable for "rm". this gets set to the full path if we have the command
-my $display_rm = 'rm';
-
 # exactly how the program was called, with all arguments
 # this is set before getopt() can destroy it
 my $run_string = "$0 " . join(' ', @ARGV);
@@ -465,7 +462,6 @@ sub parse_config_file	{
 		if ($var eq 'cmd_rm')	{
 			if ((-f "$value") && (-x "$value") && (1 == is_real_local_abs_path($value)))	{
 				$config_vars{'cmd_rm'} = $value;
-				$display_rm = $value;
 				$line_syntax_ok = 1;
 				next;
 			} else	{
@@ -2113,7 +2109,7 @@ sub rotate_lowest_snapshots	{
 	#
 	# remove oldest directory
 	if ( (-d "$config_vars{'snapshot_root'}/$interval.$interval_max") && ($interval_max > 0) )	{
-		print_cmd("$display_rm -rf $config_vars{'snapshot_root'}/$interval.$interval_max/");
+		display_rm_rf("$config_vars{'snapshot_root'}/$interval.$interval_max/");
 		if (0 == $test)	{
 			my $result = rm_rf( "$config_vars{'snapshot_root'}/$interval.$interval_max/" );
 			if (0 == $result)	{
@@ -2170,6 +2166,8 @@ sub rotate_lowest_snapshots	{
 		# otherwise, we hard link (except for directories, symlinks, and special files) .0 over to .1
 		} else	{
 			# call generic cp_al() subroutine
+			display_cp_al( "$config_vars{'snapshot_root'}/$interval.0/", "$config_vars{'snapshot_root'}/$interval.1/" );
+			
 			if (0 == $test)	{
 				$result = cp_al(
 							"$config_vars{'snapshot_root'}/$interval.0/",
@@ -2420,12 +2418,9 @@ sub exec_backup_script	{
 	if (!defined($bp_ref))		{ bail('bp_ref not defined in handle_backup_point()'); }
 	
 	# other misc variables
-	my @cmd_stack				= undef;
-	my @rsync_long_args_stack	= undef;
-	my $src						= undef;
-	my $script					= undef;
-	my $tmpdir					= undef;
-	my $result					= undef;
+	my $script	= undef;
+	my $tmpdir	= undef;
+	my $result	= undef;
 	
 	# remember what directory we started in
 	my $cwd = cwd();
@@ -2442,7 +2437,7 @@ sub exec_backup_script	{
 	# remove the tmp directory if it's still there for some reason
 	# (this shouldn't happen unless the program was killed prematurely, etc)
 	if ( -e "$tmpdir" )	{
-		print_cmd("$display_rm -rf $tmpdir");
+		display_rm_rf("$tmpdir");
 		
 		if (0 == $test)	{
 			$result = rm_rf("$tmpdir");
@@ -2526,6 +2521,7 @@ sub exec_backup_script	{
 				
 				# call generic cp_al() subroutine
 				if (0 == $test)	{
+					display_cp_al( "$lastdir", "$curdir" );
 					$result = cp_al( "$lastdir", "$curdir" );
 					if (! $result)	{
 						print_err("Warning! cp_al(\"$lastdir\", \"$curdir/\")", 2);
@@ -2552,7 +2548,7 @@ sub exec_backup_script	{
 	
 	# remove the tmp directory
 	if ( -e "$tmpdir" )	{
-		print_cmd("$display_rm -rf $tmpdir");
+		display_rm_rf("$tmpdir");
 		
 		if (0 == $test)	{
 			$result = rm_rf("$tmpdir");
@@ -2669,7 +2665,7 @@ sub rotate_higher_interval	{
 	#
 	# delete the oldest one (if we're keeping more than one)
 	if ( -d "$config_vars{'snapshot_root'}/$interval.$interval_max" )	{
-		print_cmd("$display_rm -rf $config_vars{'snapshot_root'}/$interval.$interval_max/");
+		display_rm_rf("$config_vars{'snapshot_root'}/$interval.$interval_max/");
 		
 		if (0 == $test)	{
 			my $result = rm_rf( "$config_vars{'snapshot_root'}/$interval.$interval_max/" );
@@ -2737,6 +2733,22 @@ sub rotate_higher_interval	{
 	}
 }
 
+# accepts src, dest
+# prints out the cp -al command that would be run, based on config file data
+sub display_cp_al	{
+	my $src		= shift(@_);
+	my $dest	= shift(@_);
+	
+	if (!defined($src))		{ bail('src not defined in display_cp_al()'); }
+	if (!defined($dest))	{ bail('dest not defined in display_cp_al()'); }
+	
+	if (defined($config_vars{'cmd_cp'}))	{
+		print_cmd("$config_vars{'cmd_cp'} -al $src $dest");
+	} else	{
+		print_cmd("native_cp_al(\"$src\", \"$dest\")");
+	}
+}
+
 # stub subroutine
 # calls either gnu_cp_al() or native_cp_al()
 # returns the value directly from whichever subroutine it calls
@@ -2748,12 +2760,10 @@ sub cp_al	{
 	
 	# use gnu cp if we have it
 	if (defined($config_vars{'cmd_cp'}))	{
-		print_cmd("$config_vars{'cmd_cp'} -al $src $dest");
 		$result = gnu_cp_al("$src", "$dest");
 		
 	# fall back to the built-in native perl replacement
 	} else	{
-		print_cmd("native_cp_al(\"$src\", \"$dest\")");
 		$result = native_cp_al("$src", "$dest");
 	}
 	
@@ -2987,6 +2997,20 @@ sub native_cp_al	{
 	}
 	
 	return (1);
+}
+
+# accepts a path
+# displays the rm command according to the config file
+sub display_rm_rf	{
+	my $path = shift(@_);
+	
+	if (!defined($path))	{ bail('display_rm_rf() requires an argument'); }
+	
+	if (defined($config_vars{'cmd_rm'}))	{
+		print_cmd("$config_vars{'cmd_rm'} -rf $path");
+	} else	{
+		print_cmd("rm -rf $path");
+	}
 }
 
 # stub subroutine
@@ -3478,9 +3502,6 @@ sub file_diff   {
 	# number of bytes to read at once
 	my $BUFSIZE = 16384;
 	
-	# while loop condition flag
-	my $done = 0;
-	
 	# boolean file comparison flag. assume they're the same.
 	my $is_different = 0;
 	
@@ -3515,7 +3536,7 @@ sub file_diff   {
 	}
 	
 	# compare files
-	while ((0 == $done) && (read(FILE1, $buf1, $BUFSIZE)) && (read(FILE2, $buf2, $BUFSIZE)))	{
+	while (read(FILE1, $buf1, $BUFSIZE) && read(FILE2, $buf2, $BUFSIZE))	{
 		# exit this loop as soon as possible
 		if ($buf1 ne $buf2)	 {
 			$is_different = 1;
