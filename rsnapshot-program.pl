@@ -716,13 +716,13 @@ sub log_msg	{
 	if (!defined($facility))	{ $facility	= 'user'; }
 	if (!defined($level))		{ $level	= 'notice'; }
 	
-	# verbose to display messages, extra verbose to display errors
-	if ( (1 == $extra_verbose) or ((1 == $verbose) && ($level ne 'err')) )	{
-		print "$config_vars{'cmd_logger'} -i -p $facility.$level -t rsnapshot $msg\n";
-	}
-	# log to syslog
-	if (0 == $test)	{
-		if (defined($config_vars{'cmd_logger'}))	{
+	if (defined($config_vars{'cmd_logger'}))	{
+		# verbose to display messages, extra verbose to display errors
+		if ( (1 == $extra_verbose) or ((1 == $verbose) && ($level ne 'err')) )	{
+			print "$config_vars{'cmd_logger'} -i -p $facility.$level -t rsnapshot $msg\n";
+		}
+		# log to syslog
+		if (0 == $test)	{
 			$result = system($config_vars{'cmd_logger'}, '-i', '-p', "$facility.$level", '-t', 'rsnapshot', $msg);
 			if (0 != $result)	{
 				print STDERR "Warning! Could not log to syslog:\n";
