@@ -833,8 +833,8 @@ sub is_real_local_abs_path	{
 sub is_directory_traversal	{
 	my $path = shift(@_);
 	
-	if (!defined($path))				{ return (undef); }
-	if ($path =~ m/[^\.]\.{2}[^\.]/)	{ return (1); }
+	if (!defined($path))					{ return (undef); }
+	if ($path =~ m/[^\/\.]\.{2}[^\/\.]/)	{ return (1); }
 	return (0);
 }
 
@@ -1137,9 +1137,6 @@ sub add_lockfile	{
 		print STDERR "Could not write lockfile $lockfile\n";
 		exit(-1);
 	}
-	
-	# use the current PID
-	print LOCKFILE $$;
 	
 	$result = close(LOCKFILE);
 	if (!defined($result))	{
