@@ -2143,6 +2143,27 @@ hourly.0/ will be rsynced directly from the filesystem.
 
 =back
 
+B<verbose             2>
+
+=over 4
+
+The amount of information to print out when the program is run. Allowed values
+are 1 through 5. The default is 2.
+
+1        Quiet            Show fatal errors only
+
+2        Default          Show warnings and errors
+
+3        Verbose          Show equivalent shell commands being executed
+
+4        Extra Verbose    Same as verbose, but with still more output
+
+5        Debug            All kinds of information
+
+=back
+
+
+
 B<rsync_short_args    -a>
 
 =over 4

@@ -2,8 +2,6 @@ rsnapshot TODO list:
 
 for version 1.0.x
 ------------------------------------------------------------------------------
-- Document "verbose" feature in the man page
-
 - Add HOWTO document into main source tree, pending TLDP peer review.
 
 - Update string manipulations and comparisons of paths to use File::Spec and
