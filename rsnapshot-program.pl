@@ -311,6 +311,18 @@ if ( -f "$config_file" )	{
 			}
 		}
 		
+		# CHECK FOR LOGGER (syslog program) (optional)
+		if ($var eq 'cmd_logger')	{
+			if ( -x "$value" )	{
+				$config_vars{'cmd_logger'} = $value;
+				$line_syntax_ok = 1;
+				next;
+			} else	{
+				config_error($file_line_num, $line);
+				bail("Could not find $value, please fix cmd_logger in $config_file");
+			}
+		}
+		
 		# INTERVALS
 		if ($var eq 'interval')	{
 			if (!defined($value))		{ bail("Interval can not be blank"); }
