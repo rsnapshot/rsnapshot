@@ -4,7 +4,12 @@ http://www.rsnapshot.org/
 ------------------------------------------------------------------------------
 
 VERSION 1.0.8
-
+- Added backup_script option to have rsnapshot invoke backup scripts directly
+- Added support routines for the backup_script feature
+- Added two example backup scripts in the utils/ directory, one for Postgres,
+  and one for downloading the CVS root for rsnapshot
+- Fixed ssh_args local override for individual backup points
+- Added additional comments to various sections of the code
 
 VERSION 1.0.7
 - Added ssh_args parameter to pass arbitrary args to ssh
