@@ -211,7 +211,7 @@ get_current_interval();
 check_valid_interval($cmd);
 
 # log the beginning of this run
-log_msg("$run_string: started", 2);
+log_startup();
 
 # this is reported to fix some semi-obscure problems with rmtree()
 set_posix_locale();
@@ -223,14 +223,7 @@ add_lockfile();
 create_snapshot_root();
 
 # actually run the backup job
-if (0 == $interval_num)	{
-	# if this is the most frequent interval, actually do the backups here
-	backup_lowest_interval($cmd);
-	
-} else	{
-	# this is not the most frequent unit, just rotate
-	rotate_higher_interval($cmd, $prev_interval);
-}
+handle_interval($cmd);
 
 # if we have a lockfile, remove it
 remove_lockfile();
@@ -1584,6 +1577,13 @@ sub get_current_date	{
 }
 
 # accepts no arguments
+# returns no arguments
+# simply prints out a startup message to the logs and STDOUT
+sub log_startup	{
+	log_msg("$run_string: started", 2);
+}
+
+# accepts no arguments
 # returns undef if lockfile isn't defined in the config file, and 1 upon success
 # also, it can make the program exit with 1 as the return value if it can't create the lockfile
 #
@@ -2011,6 +2011,25 @@ sub remove_trailing_slash	{
 	$str =~ s/\/+$//;
 	
 	return ($str);
+}
+
+# accepts an interval
+# returns no arguments
+# calls the appropriate subroutine, depending on whether this is the lowest interval or a higher one
+#
+sub handle_interval	{
+	my $interval = shift(@_);
+	
+	if (!defined($interval))	{ bail('interval not defined in handle_interval()'); }
+	
+	if (0 == $interval_num)	{
+		# if this is the most frequent interval, actually do the backups here
+		backup_lowest_interval($interval);
+		
+	} else	{
+		# this is not the most frequent unit, just rotate
+		rotate_higher_interval($interval, $prev_interval);
+	}
 }
 
 # accepts the interval to act on (i.e. hourly)
