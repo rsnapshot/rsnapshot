@@ -9,7 +9,7 @@ dnl PERL CHECK (required program)
 dnl
 dnl if the user specified a path, try that first
 AC_ARG_WITH(perl,
-	[  --with-perl=PATH		Specify the path to perl ],
+	[  --with-perl=PATH	  Specify the path to perl ],
 	[
 		if test "x$withval" != "xno"; then
 			if test -x "$withval"; then

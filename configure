@@ -773,7 +773,7 @@ if test -n "$ac_init_help"; then
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
-  --with-perl=PATH		Specify the path to perl
+  --with-perl=PATH	  Specify the path to perl
   --with-rsync=PATH       Specify the path to rsync
   --with-ssh=PATH         Specify the path to ssh
 
