@@ -1274,13 +1274,13 @@ B<daily>, B<weekly> and B<monthly> have been defined in B</etc/rsnapshot.conf>
 
 =over 4
 
-B<0 */4 * * *         /usr/bin/rsnapshot hourly>
+B<0 */4 * * *         /usr/local/bin/rsnapshot hourly>
 
-B<50 23 * * *         /usr/bin/rsnapshot daily>
+B<50 23 * * *         /usr/local/bin/rsnapshot daily>
 
-B<40 23 1,8,15,22 * * /usr/bin/rsnapshot weekly>
+B<40 23 1,8,15,22 * * /usr/local/bin/rsnapshot weekly>
 
-B<30 23 1 * *         /usr/bin/rsnapshot monthly>
+B<30 23 1 * *         /usr/local/bin/rsnapshot monthly>
 
 =back
 
