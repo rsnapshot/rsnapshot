@@ -7,6 +7,7 @@ VERSION 1.0.7
 - Added ssh_args parameter to pass arbitrary args to ssh
 - Made changes to the autoconf build scripts so the default config file would
   be based on the --prefix and --sysconfdir values at configure time
+- Provided more helpful error messages when the config file is not found
 
 VERSION 1.0.6
 - added \n to utime() debug message
