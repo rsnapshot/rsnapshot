@@ -2,6 +2,11 @@ rsnapshot TODO list:
 
 for version 1.1.x
 ------------------------------------------------------------------------------
+- Figure out a good solution to this: when an rsync transfer fails, and
+  link_dest is being used, the smallest interval files are still moved up
+  one. This requires a full transfer next time. What's the cleanest way to
+  handle this?
+
 - Figure out a way to do transfers the other way: from clients to the server
   instead of just from the server to the clients. Of course it will have to
   be very secure. Ideally we could support chroot environments for the
