@@ -1402,6 +1402,35 @@ hourly.0/ will be rsynced directly from the filesystem.
 
 =back
 
+B<rsync_short_args    -al>
+
+=over 4
+
+List of short arguments to pass to rsync. If not specified,
+"-al" is the default.
+
+=back
+
+B<rsync_long_args     --delete --numeric-ids --devices>
+
+=over 4
+
+List of long arguments to pass to rsync. If not specified,
+"--delete --numeric-ids --devices" is the default.
+
+=back
+
+B<lockfile    /var/lock/subsys/rsnapshot>
+
+=over 4
+
+Lockfile to use when rsnapshot is run. This prevents a second invocation
+from clobbering the first one. If not specified, no lock file is used.
+Make sure to use a directory that is not world writeable for security
+reasons.
+
+=back
+
 B<one_fs  1>
 
 =over 4

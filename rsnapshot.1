@@ -128,8 +128,8 @@
 .rm #[ #] #H #V #F C
 .\" ========================================================================
 .\"
-.IX Title "RSNAPSHOT 1"
-.TH RSNAPSHOT 1 "2003-11-13" "perl v5.8.0" "User Contributed Perl Documentation"
+.IX Title "RSNAPSHOT-PROGRAM 1"
+.TH RSNAPSHOT-PROGRAM 1 "2003-11-26" "perl v5.8.0" "User Contributed Perl Documentation"
 .SH "NAME"
 rsnapshot \- remote filesystem snapshot utility
 .SH "SYNOPSIS"
@@ -270,6 +270,35 @@ Example:
 daily.0/ will be copied from hourly.5/, and weekly.0/ will be copied from daily.6/
 .Sp
 hourly.0/ will be rsynced directly from the filesystem.
+.RE
+.RE
+.RS 4
+.Sp
+\&\fBrsync_short_args    \-al\fR
+.Sp
+.RS 4
+List of short arguments to pass to rsync. If not specified,
+\&\*(L"\-al\*(R" is the default.
+.RE
+.RE
+.RS 4
+.Sp
+\&\fBrsync_long_args     \-\-delete \-\-numeric\-ids \-\-devices\fR
+.Sp
+.RS 4
+List of long arguments to pass to rsync. If not specified,
+\&\*(L"\-\-delete \-\-numeric\-ids \-\-devices\*(R" is the default.
+.RE
+.RE
+.RS 4
+.Sp
+\&\fBlockfile    /var/lock/subsys/rsnapshot\fR
+.Sp
+.RS 4
+Lockfile to use when rsnapshot is run. This prevents a second invocation
+from clobbering the first one. If not specified, no lock file is used.
+Make sure to use a directory that is not world writeable for security
+reasons.
 .RE
 .RE
 .RS 4
