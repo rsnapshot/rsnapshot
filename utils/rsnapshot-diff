@@ -1,0 +1,36 @@
+#!/usr/bin/perl
+
+use warnings;
+use strict;
+
+eval {
+	require File::Find::Rule;
+};
+if ($@) {
+	print STDERR "Could not load File::Find::Rule\n";
+	print STDERR "Please install this module from CPAN, and try again\n";
+	exit(1);
+}
+
+my($dir1, $dir2) = @ARGV;
+
+die("Need to give me two directories\n")
+    unless($dir1 && $dir2 && -d $dir1 && -d $dir2);
+
+my %files1 = map {
+    $_ = substr($_, length($dir1)); ($_, 1)
+} File::Find::Rule->file()->in($dir1);
+my %files2 = map {
+    $_ = substr($_, length($dir2)); ($_, 1)
+} File::Find::Rule->file()->in($dir2);
+my @added_files = grep { !exists($files1{$_}) } keys(%files2);
+my @deleted_files = grep { !exists($files2{$_}) } keys(%files1);
+
+my($added_space, $saved_space) = (0, 0);
+$added_space += (stat("$dir2/$_"))[7] foreach (@added_files);
+$saved_space += (stat("$dir1/$_"))[7] foreach (@deleted_files);
+
+print "Added ".scalar(@added_files)." files\n";
+print "  which take up $added_space bytes\n";
+print "Deleted ".scalar(@deleted_files)." files\n";
+print "  which saved $saved_space bytes\n"; 
