@@ -1595,7 +1595,7 @@ sub is_comment	{
 	my $str = shift(@_);
 	
 	if (!defined($str))	{ return (undef); }
-	if ($str =~ /^#/)	{ return (1); }
+	if ($str =~ m/^#/)	{ return (1); }
 	return (0);
 }
 
@@ -1606,7 +1606,7 @@ sub is_blank	{
 	my $str = shift(@_);
 	
 	if (!defined($str))		{ return (undef); }
-	if ($str =~ /^\s*$/)	{ return (1); }
+	if ($str =~ m/^\s*$/)	{ return (1); }
 	return (0);
 }
 
@@ -1684,6 +1684,9 @@ sub is_valid_local_abs_path	{
 	return (0);
 }
 
+# accepts path
+# returns 1 if it's a directory traversal attempt
+# returns 0 if it's safe
 sub is_directory_traversal	{
 	my $path = shift(@_);
 	
