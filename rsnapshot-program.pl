@@ -40,7 +40,7 @@ use File::stat;
 my $VERSION = '1.0.8';
 
 # default configuration file
-my $config_file	= '/etc/rsnapshot.conf';
+my $config_file;
 
 # hash to hold variables from the configuration file
 my %config_vars;
@@ -107,11 +107,20 @@ my $cwd = cwd();
 ### AUTOCONF STUFF ###
 ######################
 
-# if this script has been run through autoconf, use the appropriate config file
+# this file works "as-is", and when it has been parsed by autoconf for installation
+# the variables with "@" symbols on both sides get replaced during ./configure
+
+# if --sysconfdir was not set explicitly during ./configure, but we did use autoconf
 if ('@sysconfdir@' eq '${prefix}/etc')	{
 	$config_file = '@prefix@/etc/rsnapshot.conf';
+	
+# if --sysconfdir was set explicitly at ./configure, overriding the --prefix setting
 } elsif ('@sysconfdir@' ne ('@' . 'sysconfdir' . '@'))	{
 	$config_file = '@sysconfdir@/rsnapshot.conf';
+	
+# if all else fails, use the old standard from the pre-autoconf versions
+} else	{
+	$config_file = '/etc/rsnapshot.conf';
 }
 
 ###############
