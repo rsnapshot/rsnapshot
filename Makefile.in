@@ -401,7 +401,7 @@ tar:
 
 	@# utils
 	/bin/mkdir rsnapshot-$(VERSION)/utils/
-	/bin/cp utils/README utils/rsnaptar utils/backup_mysql.sh utils/backup_pgsql.sh utils/backup_rsnapshot_cvsroot.sh utils/backup_smb_share.sh utils/make_cvs_snapshot.sh utils/sign_packages.sh utils/rsnapshot_if_mounted.sh utils/debug_moving_files.sh rsnapshot-$(VERSION)/utils/
+	/bin/cp utils/README utils/rsnaptar utils/backup_mysql.sh utils/backup_pgsql.sh utils/backup_rsnapshot_cvsroot.sh utils/backup_smb_share.sh utils/make_cvs_snapshot.sh utils/sign_packages.sh utils/rsnapshot_if_mounted.sh utils/debug_moving_files.sh utils/backup_dpkg.sh rsnapshot-$(VERSION)/utils/
 
 	@# change ownership to root, and delete build dir
 	chown -R root:root rsnapshot-$(VERSION)/

@@ -40,6 +40,9 @@ use POSIX qw(locale_h);	# setlocale()
 # version of rsnapshot
 my $VERSION = '1.1.6';
 
+# command or interval to execute (first cmd line arg)
+my $cmd;
+
 # default configuration file
 my $config_file;
 
@@ -62,9 +65,6 @@ my @intervals;
 # store interval data (mostly info about which one we're on, what was before, etc.)
 # this is a convenient reference to some of the data from @intervals
 my $interval_data_ref;
-
-# command or interval to execute (first cmd line arg)
-my $cmd;
 
 # global flags that change the outcome of the program,
 # and are configurable by both cmd line and config flags
@@ -126,7 +126,8 @@ $SIG{'TERM'}	= sub { bail('rsnapshot was sent TERM signal... cleaning up'); };
 # what follows is a linear sequence of events.
 # all of these subroutines will either succeed or terminate the program safely.
 
-# figure out the path to the default config file
+# figure out the path to the default config file (with autoconf we have to check)
+# this sets $config_file to the full config file path
 find_config_file();
 
 # get command line options
@@ -175,7 +176,7 @@ if (1 == $do_configtest)	{
 }
 
 # if we're just using "du" to check the disk space, do it now
-# this is orphaned down here because it needs to know the contents of the config file
+# this is down here because it needs to know the contents of the config file
 if ($cmd eq 'du')	{
 	# this will exit the program with an appropriate exit code either way
 	show_disk_usage();
