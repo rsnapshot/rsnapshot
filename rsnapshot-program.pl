@@ -2020,6 +2020,8 @@ B<backup>  rsync://example.com/path2/  example.com/path2/
 
 B<backup>  /local/path2/               localhost/path2/      one_fs=1
 
+B<backup_script>    /usr/local/bin/backup_database.sh    db_backup/
+
 =over 4
 
 Examples:
@@ -2050,7 +2052,7 @@ using an anonymous rsync server
 
 =back
 
-B<backup   /local/path2/       localhost/path2/         one_fs=1>
+B<backup   /local/path2/    localhost/path2/    one_fs=1>
 
 =over 4
 
@@ -2060,6 +2062,29 @@ has been set, this will override it locally.
 
 =back
 
+B<backup_script      /usr/local/bin/backup_database.sh   db_backup/>
+
+=over 4
+
+In this example, we specify a script or program to run. This script should simply
+create files and/or directories in it's current working directory. rsnapshot will
+then take that output and move it into the directory specified in the third column.
+So in this example, say the backup_database.sh script simply runs a command like:
+
+=over 4
+
+#!/bin/sh
+
+mysqldump -uusername mydatabase > mydatabase.sql
+
+=back
+
+rsnapshot will take that file and move it into the db_backup/ directory inside
+the snapshot interval, just the same as if it had been sitting on the filesystem.
+If the backup script generates the same output on the next run, no additional
+disk space will be taken up.
+
+=back
 
 =back
 
@@ -2104,6 +2129,8 @@ B<backup>  root@foo.com:/home/          foo.com/home/
 B<backup>  root@mail.foo.com.com:/home/ mail.foo.com/home/
 
 B<backup>  rsync://example.com/pub/     example.com/pub/
+
+B<backup_script>    /usr/local/bin/backup_database.sh    db_backup/
 
 =back
 

@@ -129,7 +129,7 @@
 .\" ========================================================================
 .\"
 .IX Title "RSNAPSHOT-PROGRAM 1"
-.TH RSNAPSHOT-PROGRAM 1 "2003-12-16" "perl v5.8.0" "User Contributed Perl Documentation"
+.TH RSNAPSHOT-PROGRAM 1 "2003-12-25" "perl v5.8.0" "User Contributed Perl Documentation"
 .SH "NAME"
 rsnapshot \- remote filesystem snapshot utility
 .SH "SYNOPSIS"
@@ -329,6 +329,8 @@ The default is off.
 .Sp
 \&\fBbackup\fR  /local/path2/               localhost/path2/      one_fs=1
 .Sp
+\&\fBbackup_script\fR    /usr/local/bin/backup_database.sh    db_backup/
+.Sp
 .RS 4
 Examples:
 .Sp
@@ -358,12 +360,36 @@ using an anonymous rsync server
 .RE
 .RS 4
 .Sp
-\&\fBbackup   /local/path2/       localhost/path2/         one_fs=1\fR
+\&\fBbackup   /local/path2/    localhost/path2/    one_fs=1\fR
 .Sp
 .RS 4
 This is the same as the first example, but notice how the fourth parameter is passed.
 This sets this backup point to not span filesystem partitions. If the global one_fs
 has been set, this will override it locally.
+.RE
+.RE
+.RS 4
+.Sp
+\&\fBbackup_script      /usr/local/bin/backup_database.sh   db_backup/\fR
+.Sp
+.RS 4
+In this example, we specify a script or program to run. This script should simply
+create files and/or directories in it's current working directory. rsnapshot will
+then take that output and move it into the directory specified in the third column.
+So in this example, say the backup_database.sh script simply runs a command like:
+.Sp
+.RS 4
+#!/bin/sh
+.Sp
+mysqldump \-uusername mydatabase > mydatabase.sql
+.RE
+.RE
+.RS 4
+.Sp
+rsnapshot will take that file and move it into the db_backup/ directory inside
+the snapshot interval, just the same as if it had been sitting on the filesystem.
+If the backup script generates the same output on the next run, no additional
+disk space will be taken up.
 .RE
 .RE
 .RS 4
@@ -410,6 +436,8 @@ Putting it all together (an example file):
 \&\fBbackup\fR  root@mail.foo.com.com:/home/ mail.foo.com/home/
 .Sp
 \&\fBbackup\fR  rsync://example.com/pub/     example.com/pub/
+.Sp
+\&\fBbackup_script\fR    /usr/local/bin/backup_database.sh    db_backup/
 .RE
 .SH "USAGE"
 .IX Header "USAGE"
