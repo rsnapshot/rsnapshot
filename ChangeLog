@@ -5,7 +5,7 @@ http://www.rsnapshot.org/
 
 VERSION 1.1.4 (??? ?? ??:?? 2004)
 ------------------------------------------------------------------------------
-- Set LC_ALL variable to C in an attempt to fix rmtree() locale issue
+- Set LC_ALL locale variable to C in an attempt to fix rmtree() locale issue
 - Added utils/make_cvs_snapshot.sh utility script
 - Added utils/sign_packages.sh utility script
 - Added utils/rsnapshot_if_mounted.sh utility script
