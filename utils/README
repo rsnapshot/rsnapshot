@@ -7,6 +7,12 @@ rsnaptar
     an e-mail when it's done. You may need to edit some of the variables by
     hand.
 
+backup_dpkg.sh
+------------------------------------------------------------------------------
+    An example script to backup package info on a Debian system, to be invoked
+    from rsnapshot using the "backup_script" parameter. If you have a Debian
+    system, this will most likely work without changes.
+
 backup_mysql.sh
 ------------------------------------------------------------------------------
     An example script to backup a MySQL database, to be invoked from rsnapshot
@@ -32,11 +38,23 @@ backup_smb_share.sh
     rsnapshot using the "backup_script" parameter. This requires the Samba
     program. You will definitely need to modify this for your system.
 
+debug_moving_files.sh
+------------------------------------------------------------------------------
+    Debug script for rsync. Moves files around, so you can try backing them
+    up to see what rsnapshot does. Only useful if you're having problems
+    with vanishing files and want to have a known source of them.
+
 make_cvs_snapshot.sh
 ------------------------------------------------------------------------------
     Quick and dirty shell script to find/replace "real" version numbers with
     a CVS-date version.
 
+rsnapshot_if_mounted.sh
+------------------------------------------------------------------------------
+    Deprecated. A work-around for using removable drives as the snapshot
+    root. Superceded by the "no_create_root" option in rsnapshot proper.
+
 sign_packages.sh
 ------------------------------------------------------------------------------
     The shell script used to automate package signing for releases.
+
