@@ -60,7 +60,7 @@ interval	weekly	4
 #rsync_short_args	-a
 #rsync_long_args	--delete --numeric-ids
 
-# SSH has no args passed by default, but you can specify some here.
+# ssh has no args passed by default, but you can specify some here.
 #
 #ssh_args		-p 22
 
