@@ -13,7 +13,7 @@
 # http://www.rsnapshot.org/
 ##############################################################################
 
-# $Id: rsnapshot-diff,v 1.4 2005/03/05 12:06:38 drhyde Exp $
+# $Id: rsnapshot-diff,v 1.5 2005/04/02 23:33:28 scubaninja Exp $
 
 use warnings;
 use strict;
@@ -51,7 +51,7 @@ if(!exists($ARGV[1]) || !-d $ARGV[0] || !-d $ARGV[1]) {
 
 my($dirold, $dirnew) = @ARGV;
 ($dirold, $dirnew) = ($dirnew, $dirold) if(-M $dirold < -M $dirnew);
-print "comparing $dirold to $dirnew\n";
+print "Comparing $dirold to $dirnew\n";
 
 my($addedfiles, $addedspace, $deletedfiles, $deletedspace) = (0, 0, 0, 0);
 
