@@ -1492,7 +1492,7 @@ sub syslog_msg	{
 	if (!defined($level))		{ $level	= 'notice'; }
 	
 	if (defined($config_vars{'cmd_logger'}))	{
-		# extra verbose to display messages, verbose to display errors
+		# print out our call to syslog
 		print_cmd("$config_vars{'cmd_logger'} -i -p $facility.$level -t rsnapshot $msg");
 		
 		# log to syslog
