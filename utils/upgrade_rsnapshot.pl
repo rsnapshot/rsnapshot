@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 
 ##############################################################################
-# upgrade_to_120.pl
+# upgrade_rsnapshot.pl
 #
 # by Nathan Rosenquist <nathan@rsnapshot.org>
 # http://www.rsnapshot.org/
@@ -29,7 +29,7 @@ my $real_file	= $ARGV[0];				# config file rsnapshot will use
 my $backup_file	= "$real_file.backup";	# file to back up original config file to
 
 if (!defined($real_file) or ('' eq $real_file)) {
-	print STDERR "Usage: upgrade_to_120.pl /path/to/etc/rsnapshot.conf\n";
+	print STDERR "Usage: upgrade_rsnapshot.pl /path/to/etc/rsnapshot.conf\n";
 	exit(1);
 }
 
