@@ -5,7 +5,8 @@ http://rsnapshot.scubaninja.com/
 
 VERSION 1.0.5
 ------------------------------------------------------------------------------
-
+- Added lockfile feature
+- Fixed '..' pattern matching bug that would exclude valid files
 
 VERSION 1.0.4 (Nov 6 23:18)
 ------------------------------------------------------------------------------
