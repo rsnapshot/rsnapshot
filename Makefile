@@ -44,10 +44,9 @@ debian:
 	pod2man ${DPKG_BUILD_DIR}/usr/bin/rsnapshot | gzip -9c > ${DPKG_BUILD_DIR}/usr/share/man/man1/rsnapshot.1.gz
 	chmod 644 ${DPKG_BUILD_DIR}/usr/share/man/man1/rsnapshot.1.gz
 	
-	/bin/cp rsnapshot.conf ${DPKG_BUILD_DIR}/etc/rsnapshot.conf
-	/bin/cp rsnapshot.conf ${DPKG_BUILD_DIR}/etc/rsnapshot.conf.default
-	chmod 600 ${DPKG_BUILD_DIR}/etc/rsnapshot.conf
-	chmod 600 ${DPKG_BUILD_DIR}/etc/rsnapshot.conf.default
+	cat rsnapshot.conf | sed s/#cmd_cp/cmd_cp/ > ${DPKG_BUILD_DIR}/etc/rsnapshot.conf
+	/bin/cp ${DPKG_BUILD_DIR}/etc/rsnapshot.conf ${DPKG_BUILD_DIR}/etc/rsnapshot.conf.default
+	chmod 600 ${DPKG_BUILD_DIR}/etc/rsnapshot.conf ${DPKG_BUILD_DIR}/etc/rsnapshot.conf.default
 	
 	chown -R root:root ${DPKG_BUILD_DIR}/
 	dpkg -b ${DPKG_BUILD_DIR}/ rsnapshot-${VERSION}-1.deb
