@@ -1964,7 +1964,7 @@ sub backup_interval	{
 						if (0 == $test)	{
 							$result = cp_al( "$lastdir", "$curdir" );
 							if (! $result)	{
-								bail("Error! cp_al(\"$lastdir\", \"$curdir/\")");
+								print_err("Warning! cp_al(\"$lastdir\", \"$curdir/\")", 2);
 							}
 						}
 					}
@@ -1982,7 +1982,7 @@ sub backup_interval	{
 			if (0 == $test)	{
 				$result = sync_if_different("$tmpdir", "$config_vars{'snapshot_root'}/$interval.0/$$sp_ref{'dest'}");
 				if (!defined($result))	{
-					bail("sync_if_different(\"$tmpdir\", \"$$sp_ref{'dest'}\") returned undef");
+					print_err("Warning! sync_if_different(\"$tmpdir\", \"$$sp_ref{'dest'}\") returned undef", 2);
 				}
 			}
 			
@@ -2179,7 +2179,7 @@ sub native_cp_al	{
 	# LSTAT SRC
 	my $st = lstat("$src");
 	if (!defined($st))	{
-		print_err("Could not lstat(\"$src\")", 2);
+		print_err("Warning! Could not lstat(\"$src\")", 2);
 		return(0);
 	}
 	
@@ -2238,8 +2238,8 @@ sub native_cp_al	{
 			# make sure the node we just got is valid (this is highly unlikely to fail)
 			my $st = lstat("$src/$node");
 			if (!defined($st))	{
-				print_err("Could not lstat(\"$src/$node\")", 2);
-				return(0);
+				print_err("Warning! Could not lstat(\"$src/$node\")", 2);
+				next;
 			}
 			
 			# SYMLINK (must be tested for first, because it will also pass the file and dir tests)
@@ -2257,7 +2257,8 @@ sub native_cp_al	{
 				
 				$result = copy_symlink("$src/$node", "$dest/$node");
 				if (0 == $result)	{
-					bail("Error! copy_symlink(\"$src/$node\", \"$dest/$node\")");
+					print_err("Warning! copy_symlink(\"$src/$node\", \"$dest/$node\")", 2);
+					next;
 				}
 				
 			# FILE
@@ -2277,7 +2278,7 @@ sub native_cp_al	{
 				$result = link("$src/$node", "$dest/$node");
 				if (! $result)	{
 					print_err("Warning! Could not link(\"$src/$node\", \"$dest/$node\")", 2);
-					return (0);
+					next;
 				}
 				
 			# DIRECTORY
@@ -2297,7 +2298,7 @@ sub native_cp_al	{
 				$result = native_cp_al("$src/$node", "$dest/$node");
 				if (! $result)	{
 					print_err("Warning! Recursion error in native_cp_al(\"$src/$node\", \"$dest/$node\")", 2);
-					return (0);
+					next;
 				}
 				
 			# FIFO
@@ -2397,7 +2398,8 @@ sub sync_if_different	{
 	}
 	$result = sync_cp_src_dest("$src", "$dest");
 	if ( ! $result )	{
-		bail("sync_cp_src_dest(\"$src\", \"$dest\")");
+		print_err("Warning! sync_cp_src_dest(\"$src\", \"$dest\")", 2);
+		return (0);
 	}
 	
 	# delete everything from dest that isn't in src
@@ -2413,7 +2415,8 @@ sub sync_if_different	{
 	}
 	$result = sync_rm_dest("$src", "$dest");
 	if ( ! $result )	{
-		bail("sync_rm_dest(\"$src\", \"$dest\")");
+		print_err("Warning! sync_rm_dest(\"$src\", \"$dest\")", 2);
+		return (0);
 	}
 	
 	return (1);
@@ -2499,8 +2502,7 @@ sub sync_cp_src_dest	{
 			} elsif ( -d "$src/$node" )	{
 				$result = sync_cp_src_dest("$src/$node", "$dest/$node");
 				if (! $result)	{
-					print_err("Recursion error in sync_cp_src_dest(\"$src/$node\", \"$dest/$node\")", 2);
-					return (0);
+					print_err("Warning! Recursion error in sync_cp_src_dest(\"$src/$node\", \"$dest/$node\")", 2);
 				}
 				
 			# if it's a file...
@@ -2513,13 +2515,13 @@ sub sync_cp_src_dest	{
 					if (1 == file_diff("$src/$node", "$dest/$node"))	{
 						$result = unlink("$dest/$node");
 						if (0 == $result)	{
-							print_err("unlink(\"$dest/$node\")", 2);
-							return (0);
+							print_err("Warning! unlink(\"$dest/$node\")", 2);
+							next;
 						}
 						$result = link("$src/$node", "$dest/$node");
 						if (0 == $result)	{
-							print_err("link(\"$src/$node\", \"$dest/$node\")", 2);
-							return (0);
+							print_err("Warning! link(\"$src/$node\", \"$dest/$node\")", 2);
+							next;
 						}
 						
 					# if they are the same, just leave dest alone
@@ -2531,8 +2533,7 @@ sub sync_cp_src_dest	{
 				} else	{
 					$result = link("$src/$node", "$dest/$node");
 					if (0 == $result)	{
-						print_err("link(\"$src/$node\", \"$dest/$node\")", 2);
-						return (0);
+						print_err("Warning! link(\"$src/$node\", \"$dest/$node\")", 2);
 					}
 				}
 				
@@ -2605,16 +2606,15 @@ sub sync_rm_dest	{
 			# make sure the node we just got is valid (this is highly unlikely to fail)
 			my $st = lstat("$dest/$node");
 			if (!defined($st))	{
-				print_err("Could not lstat(\"$dest/$node\")", 2);
-				return(0);
+				print_err("Warning! Could not lstat(\"$dest/$node\")", 2);
+				next;
 			}
 			
 			# if this node isn't present in src, delete it
 			if ( ! -e "$src/$node" )	{
 				$result = rmtree("$dest/$node", 0, 0);
 				if (0 == $result)	{
-					print_err("Could not delete \"$dest/$node\"", 2);
-					return (0);
+					print_err("Warning! Could not delete \"$dest/$node\"", 2);
 				}
 				
 			# ok, this also exists in src
@@ -2622,8 +2622,7 @@ sub sync_rm_dest	{
 			} elsif ( -d "$src/$node" )	{
 				$result = sync_rm_dest("$src/$node", "$dest/$node");
 				if ( ! $result )	{
-					print_err("Recursion error in sync_rm_dest(\"$src/$node\", \"$dest/$node\")", 2);
-					return (0);
+					print_err("Warning! Recursion error in sync_rm_dest(\"$src/$node\", \"$dest/$node\")", 2);
 				}
 			}
 		}
