@@ -53,10 +53,6 @@ my %config_vars;
 # and either a source dir or a script to run
 my @backup_points;
 
-# array of backup points to rollback, in the event of failure
-# (when using link_dest)
-my @rollback_points = ();
-
 # "intervals" are user defined time periods (i.e. hourly, daily)
 # this array holds hash_refs containing the name of the interval,
 # and the number of snapshots to keep of it
@@ -2167,12 +2163,6 @@ sub backup_interval	{
 					} else	{
 						print_err ("$config_vars{'cmd_rsync'} returned $retval", 2);
 						syslog_err("$config_vars{'cmd_rsync'} returned $retval");
-						
-						# set this directory to rollback if we're using link_dest
-						# (since $interval.0/ will have been moved to $interval.1/ by now)
-						if (1 == $link_dest)	{
-							push(@rollback_points, $$sp_ref{'dest'});
-						}
 					}
 				}
 			}
@@ -2320,20 +2310,6 @@ sub backup_interval	{
 		} else	{
 			bail("Either src or script must be defined in backup_interval()");
 		}
-	}
-	
-	# rollback failed backups (if we're using link_dest)
-	foreach my $rollback_point (@rollback_points)	{
-		# TODO: flesh this out and do proper error checking
-		#
-		# print STDERR "rolling back $rollback_point\n";
-		#
-		# rm_rf("$config_vars{'snapshot_root'}/$interval.0/$rollback_point");
-		#
-		# cp_al(
-		#	"$config_vars{'snapshot_root'}/$interval.1/$rollback_point",
-		#	"$config_vars{'snapshot_root'}/$interval.0/$rollback_point"
-		# );
 	}
 	
 	# update mtime of $interval.0 to reflect the time this snapshot was taken
