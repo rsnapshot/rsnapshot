@@ -19,7 +19,6 @@ VERSION 1.1.5 (??? ?? ??:?? 2004)
 - Added utils/debug_moving_files.sh abuse script for testing
 - Added 'du' option to show disk usage in snapshot_root
 - moved setlocale() after begin message
-- Fixed bug so --link-dest is applied to single file backup points
 
 VERSION 1.1.4 (May 16 23:44 2004)
 ------------------------------------------------------------------------------
