@@ -40,10 +40,6 @@ use POSIX qw(locale_h);	# setlocale()
 # version of rsnapshot
 my $VERSION = '1.1.6';
 
-# exactly how the program was called, with all arguments
-# this is set before getopt() can destroy it
-my $run_string = "$0 " . join(' ', @ARGV);
-
 # default configuration file
 my $config_file;
 
@@ -97,19 +93,23 @@ my $default_verbose		= 2;
 my $loglevel			= undef;
 my $default_loglevel	= 3;
 
-# global defaults for external programs
-my $global_default_rsync_short_args	= '-a';
-my $global_default_rsync_long_args	= '--delete --numeric-ids';
-my $global_default_ssh_args			= undef;
+# assume the config file is valid
+my $config_perfect = 1;
 
 # exit code for rsnapshot
 my $exit_code = 0;
 
-# assume the config file is valid
-my $config_perfect = 1;
+# global defaults for external programs
+my $default_rsync_short_args	= '-a';
+my $default_rsync_long_args		= '--delete --numeric-ids';
+my $default_ssh_args			= undef;
 
 # display variable for "rm". this gets set to the full path if we have the command
 my $display_rm = 'rm';
+
+# exactly how the program was called, with all arguments
+# this is set before getopt() can destroy it
+my $run_string = "$0 " . join(' ', @ARGV);
 
 # remember what directory we started in
 my $cwd = cwd();
@@ -910,14 +910,14 @@ sub parse_config_file	{
 	# assemble rsync include/exclude args
 	if (defined($rsync_include_args))	{
 		if (!defined($config_vars{'rsync_long_args'}))	{
-			$config_vars{'rsync_long_args'} = $global_default_rsync_long_args;
+			$config_vars{'rsync_long_args'} = $default_rsync_long_args;
 		}
 		$config_vars{'rsync_long_args'} .= " $rsync_include_args";
 	}
 	# assemble rsync include/exclude file args
 	if (defined($rsync_include_file_args))	{
 		if (!defined($config_vars{'rsync_long_args'}))	{
-			$config_vars{'rsync_long_args'} = $global_default_rsync_long_args;
+			$config_vars{'rsync_long_args'} = $default_rsync_long_args;
 		}
 		$config_vars{'rsync_long_args'} .= " $rsync_include_file_args";
 	}
@@ -1142,7 +1142,7 @@ sub parse_backup_opts	{
 		}
 	}
 	
-	# merge rsync_include_args and rsync_file_include_args in with either $global_default_rsync_long_args
+	# merge rsync_include_args and rsync_file_include_args in with either $default_rsync_long_args
 	# or $parsed_opts{'rsync_long_args'}
 	if (defined($rsync_include_args) or defined($rsync_include_file_args))	{
 		# if we never defined rsync_long_args, populate it with the global default
@@ -1150,7 +1150,7 @@ sub parse_backup_opts	{
 			if (defined($config_vars{'rsync_long_args'}))	{
 				$parsed_opts{'rsync_long_args'} = $config_vars{'rsync_long_args'};
 			} else	{
-				$parsed_opts{'rsync_long_args'} = $global_default_rsync_long_args;
+				$parsed_opts{'rsync_long_args'} = $default_rsync_long_args;
 			}
 		}
 		
@@ -2207,9 +2207,9 @@ sub rsync_backup_point	{
 	if (!defined($bp_ref))		{ bail('bp_ref not defined in handle_backup_point()'); }
 	
 	# set up default args for rsync and ssh
-	my $ssh_args			= $global_default_ssh_args;
-	my $rsync_short_args	= $global_default_rsync_short_args;
-	my $rsync_long_args		= $global_default_rsync_long_args;
+	my $ssh_args			= $default_ssh_args;
+	my $rsync_short_args	= $default_rsync_short_args;
+	my $rsync_long_args		= $default_rsync_long_args;
 	
 	# other misc variables
 	my @cmd_stack				= undef;
