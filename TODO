@@ -1,21 +1,7 @@
 rsnapshot TODO list:
 
-1.2.0
+Future versions (in no particular order)
 ------------------------------------------------------------------------------
-Add config_version to:
-	man page
-	HOWTO
-
-Add clarification on --relative with rsync:// servers, and how paths
-are relative to the exported module, not the domain
-
-future versions (in no particular order)
-------------------------------------------------------------------------------
-- Add du_args parameter to override default arguments to du
-
-- Allow additional arguments when using du, to report on a subdirectory of
-  a backup point
-
 - Add "delete" feature, to allow deleting specific directories or files
   from the snapshot_root without having to get your hands dirty. This code
   will be extremely well tested and fault tolerant.

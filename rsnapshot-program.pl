@@ -4406,21 +4406,23 @@ Here is a list of allowed parameters:
 
 =over 4
 
-B<snapshot_root>  Local filesystem path to save all snapshots
+B<config_version>    Config file version (required). Default is 1.2
 
-B<no_create_root> If set to 1, rsnapshot won't create snapshot_root directory
+B<snapshot_root>     Local filesystem path to save all snapshots
 
-B<cmd_rsync>      Full path to rsync (required)
+B<no_create_root>    If set to 1, rsnapshot won't create snapshot_root directory
 
-B<cmd_ssh>        Full path to ssh (optional)
+B<cmd_rsync>         Full path to rsync (required)
 
-B<cmd_cp>         Full path to cp  (optional, but must be GNU version)
+B<cmd_ssh>           Full path to ssh (optional)
 
-B<cmd_rm>         Full path to rm  (optional)
+B<cmd_cp>            Full path to cp  (optional, but must be GNU version)
 
-B<cmd_logger>     Full path to logger (optional, for syslog support)
+B<cmd_rm>            Full path to rm  (optional)
 
-B<cmd_du>         Full path to du (optional, for disk usage reports)
+B<cmd_logger>        Full path to logger (optional, for syslog support)
+
+B<cmd_du>            Full path to du (optional, for disk usage reports)
 
 =over 4
 
@@ -4506,9 +4508,8 @@ B<link_dest           1>
 
 If your version of rsync supports --link-dest (2.5.7 or newer), you can enable
 this to let rsync handle some things that GNU cp or the built-in subroutines would
-otherwise do. The only drawback is that if a host becomes unavailable during
-a backup operation, the last good files will get rotated up, and a full re-sync
-will be required on the next pass.
+otherwise do. Enabling this makes rsnapshot take a slightly more complicated code
+branch, but it's the best way to support special files on non-Linux systems.
 
 =back
 
@@ -4519,15 +4520,11 @@ B<verbose             2>
 The amount of information to print out when the program is run. Allowed values
 are 1 through 5. The default is 2.
 
-1        Quiet            Show fatal errors only
-
-2        Default          Show warnings and errors
-
-3        Verbose          Show equivalent shell commands being executed
-
-4        Extra Verbose    Same as verbose, but with more detail
-
-5        Debug            All kinds of information
+    1        Quiet            Show fatal errors only
+    2        Default          Show warnings and errors
+    3        Verbose          Show equivalent shell commands being executed
+    4        Extra Verbose    Same as verbose, but with more detail
+    5        Debug            All kinds of information
 
 =back
 
@@ -4623,11 +4620,19 @@ source distribution for more information.
 
 =back
 
-B<ssh_args			-p 22>
+B<ssh_args    -p 22>
 
 =over 4
 
 Arguments to be passed to ssh. If not specified, the default is none.
+
+=back
+
+B<du_args     -csh>
+
+=over 4
+
+Arguments to be passed to du. If not specified, the default is -csh.
 
 =back
 
@@ -4642,7 +4647,7 @@ reasons.
 
 =back
 
-B<one_fs  1>
+B<one_fs    1>
 
 =over 4
 
@@ -4712,12 +4717,16 @@ Backs up root@example.com:/usr/local/ to
 
 =back
 
-B<backup   rsync://example.com/pub/      example.com/>
+B<backup   rsync://example.com/pub/      example.com/pub/>
 
 =over 4
 
 Backs up rsync://example.com/pub/ to <snapshot_root>/<interval>.0/example.com/pub/
-using an anonymous rsync server
+using an anonymous rsync server. Please note that unlike backing up local paths
+and using rsync over ssh, rsync servers have "modules", which are top level
+directories that are exported. Therefore, the module should also be specified in
+the destination path, as shown in the example above (the pub/ directory at the
+end).
 
 =back
 
@@ -4776,41 +4785,32 @@ Putting it all together (an example file):
 
 =over 4
 
-# THIS IS A COMMENT, REMEMBER TABS MUST SEPERATE ALL ELEMENTS
+    # THIS IS A COMMENT, REMEMBER TABS MUST SEPERATE ALL ELEMENTS
 
-B<snapshot_root>   /.snapshots/
+    config_version  1.2
 
-B<cmd_rsync>       /usr/bin/rsync
+    snapshot_root   /.snapshots/
 
-B<cmd_ssh>         /usr/bin/ssh
+    cmd_rsync       /usr/bin/rsync
+    cmd_ssh         /usr/bin/ssh
+    #cmd_cp         /bin/cp
+    cmd_rm          /bin/rm
+    cmd_logger      /usr/bin/logger
+    cmd_du          /usr/bin/du
 
-B<#cmd_cp>         /bin/cp
+    interval        hourly  6
+    interval        daily   7
+    interval        weekly  7
+    interval        monthly 3
 
-B<#cmd_rm>         /bin/rm
+    backup          /etc/                     localhost/
+    backup          /home/                    localhost/
+    backup_script   /usr/local/bin/backup_mysql.sh  mysql_backup/
 
-B<cmd_logger>      /usr/bin/logger
-
-B<interval>        hourly  6
-
-B<interval>        daily   7
-
-B<interval>        weekly  7
-
-B<interval>        monthly 3
-
-B<backup>  /etc/                        localhost/
-
-B<backup>  /home/                       localhost/
-
-B<backup>  root@foo.com:/etc/           foo.com/
-
-B<backup>  root@foo.com:/home/          foo.com/
-
-B<backup>  root@mail.foo.com:/home/     mail.foo.com/
-
-B<backup>  rsync://example.com/pub/     example.com/
-
-B<backup_script>    /usr/local/bin/backup_database.sh    db_backup/
+    backup          root@foo.com:/etc/        foo.com/
+    backup          root@foo.com:/home/       foo.com/
+    backup          root@mail.foo.com:/home/  mail.foo.com/
+    backup          rsync://example.com/pub/  example.com/pub/
 
 =back
 
