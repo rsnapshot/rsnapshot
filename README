@@ -97,6 +97,10 @@ new snapshot, rotate the old ones, and retain the most recent six
 For the full documentation, type "man rsnapshot" once it is installed,
 or visit http://www.rsnapshot.org/
 
+If you plan on using the "backup_script" parameter in your backup scheme,
+take a look at the utils/ directory in the source distribution for several
+example scripts.
+
 ------------------------------------------------------------------------------
 CONTRIBUTORS
 ------------------------------------------------------------------------------
