@@ -5,6 +5,9 @@ for version 1.0.x
 - Remove checks before calling print_* subroutines, just call them and let
   the routines decide whether to print or log
 
+- Do --link-dest to the next highest interval if we're only keeping one
+  interval. Double check that we would never delete hourly.0 or equiv.
+
 - Do COMPREHENSIVE test before next release
 
 - Keep track of whether we hit any non-fatal errors during the run, then
