@@ -1,6 +1,5 @@
 VERSION = 1.1.6
 
-DEB_BUILD_DIR = fakeroot
 RPM_BASE_DIR  = /usr/src/redhat
 
 man:
@@ -14,7 +13,6 @@ html:
 
 cleanup:
 	/bin/rm -rf rsnapshot-$(VERSION)/
-	/bin/rm -rf ${DEB_BUILD_DIR}/
 	/bin/rm -rf autom4te.cache
 	/bin/rm -f rsnapshot-$(VERSION).tar.gz
 	/bin/rm -f rsnapshot-$(VERSION)-1.deb
@@ -43,10 +41,6 @@ tar: man
 	@# autoconf files
 	/bin/cp Makefile.am Makefile.in aclocal.m4 configure configure.ac install-sh \
 		missing mkinstalldirs rsnapshot-$(VERSION)/
-	
-	@# debian
-	/bin/mkdir rsnapshot-$(VERSION)/DEBIAN/
-	/bin/cp DEBIAN/{control,conffiles} rsnapshot-$(VERSION)/DEBIAN/
 	
 	@# redhat
 	/bin/mkdir rsnapshot-$(VERSION)/redhat/
