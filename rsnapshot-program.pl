@@ -5398,7 +5398,7 @@ Added cwrsync permanent-share support
 
 =back
 
-Robert Jackson
+Robert Jackson B<RobertJ@promedicalinc.com>
 
 =over 4
 
@@ -5411,7 +5411,8 @@ Added use_lazy_deletes feature
 Copyright (C) 2003-2005 Nathan Rosenquist
 
 Portions Copyright (C) 2002-2005 Mike Rubel, Carl Wilhelm Soderstrom,
-Ted Zlatanov, Carl Boe, Shane Liebling, Bharat Mediratta, Peter Palfrader
+Ted Zlatanov, Carl Boe, Shane Liebling, Bharat Mediratta, Peter Palfrader,
+Nicolas Kaiser, David Cantrell, Chris Petersen, Robert Jackson
 
 This man page is distributed under the same license as rsnapshot:
 the GPL (see below).
