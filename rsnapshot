@@ -474,7 +474,7 @@ sub backup_interval	{
 		if ($test == 0)	{
 			my $result = rmtree( "$config_vars{'snapshot_root'}/$interval.$interval_max/", 0, 1 );
 			if ($result == 0)	{
-				bail("rmtree(\"$config_vars{'snapshot_root'}/$interval.$interval_max/\", 0, 1) failed\n");
+				bail("Error! rmtree(\"$config_vars{'snapshot_root'}/$interval.$interval_max/\", 0, 1)\n");
 			}
 		}
 	}
@@ -764,9 +764,9 @@ sub native_cp_al	{
 		return(0);
 	}
 	# UTIME DEST
-	$result = utime($st->mtime, $st->mtime, "$dest");
+	$result = utime($st->atime, $st->mtime, "$dest");
 	if (! $result)	{
-		print STDERR "Warning! Could not utime(" . $st->mtime . ", " . $st->mtime . ", \"$dest\");\n";
+		print STDERR "Warning! Could not utime(" . $st->atime . ", " . $st->mtime . ", \"$dest\");\n";
 		return(0);
 	}
 	
