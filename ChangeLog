@@ -49,6 +49,8 @@ VERSION 1.2.0 (Jan ?? ??:?? 2005)
 - Added check-config-version feature for use with shell scripts, etc.
 - Changed version_only argument to version-only, for consistency with new
   options
+- Conditionalized configure script to only advise the user to copy the
+  rsnapshot.conf.default file to rsnapshot.conf if it's a new installation
 
 VERSION 1.1.6 (Jul 05 16:35 2004)
 ------------------------------------------------------------------------------

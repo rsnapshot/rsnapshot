@@ -3133,7 +3133,10 @@ fi
 echo ""
 echo "Now type \"make install\" to install the program."
 echo ""
-echo "After rsnapshot is installed, don't forget to copy"
-echo "$RSNAPSHOT_SYSCONFDIR/rsnapshot.conf.default to $RSNAPSHOT_SYSCONFDIR/rsnapshot.conf"
-echo ""
+
+if test ! -e "$RSNAPSHOT_SYSCONFDIR/rsnapshot.conf"; then
+	echo "After rsnapshot is installed, don't forget to copy"
+	echo "$RSNAPSHOT_SYSCONFDIR/rsnapshot.conf.default to $RSNAPSHOT_SYSCONFDIR/rsnapshot.conf"
+	echo ""
+fi
 
