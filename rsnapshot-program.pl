@@ -286,6 +286,7 @@ sub find_config_file	{
 # accepts no args
 # returns no args
 # sets some global flag variables
+# exits the program with an error if we were passed invalid options
 sub parse_cmd_line_opts	{
 	my %opts;
 	my $result;
@@ -293,21 +294,25 @@ sub parse_cmd_line_opts	{
 	# get command line options
 	$result = getopts('vVtqxc:', \%opts);
 	
-	# make sure config file is a file
-	if (defined($opts{'c'}))	{
-		if ( ! -r "$opts{'c'}" )	{
-			print STDERR "File not found: $opts{'c'}\n";
-			$result = undef;
-		}
-	}
+	#
+	# validate command line args
+	#
 	
-	# check for extra bogus ones too
+	# check for extra bogus ones that getopts() didn't catch
 	if (scalar(@ARGV) > 1)	{
 		for (my $i=1; $i<scalar(@ARGV); $i++)	{
 			print STDERR "Unknown option: $ARGV[$i]\n";
 		}
 		
 		$result = undef;
+	}
+	
+	# make sure config file is a file
+	if (defined($opts{'c'}))	{
+		if ( ! -r "$opts{'c'}" )	{
+			print STDERR "File not found: $opts{'c'}\n";
+			$result = undef;
+		}
 	}
 	
 	# die if we don't understand all the flags
