@@ -3,7 +3,7 @@ Version: 1.0.4-1
 Priority: optional
 Section: utils
 Maintainer: Nathan Rosenquist <rsnapshot@scubaninja.com>
-Depends: perl, fileutils, rsync
+Depends: perl, rsync, fileutils | coreutils
 Recommends: ssh
 Architecture: all
 Description: Local and remote filesystem snapshot utility
