@@ -17,7 +17,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.261 2005/04/02 08:06:35 scubaninja Exp $
+# $Id: rsnapshot-program.pl,v 1.262 2005/04/02 23:37:37 scubaninja Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -2395,7 +2395,8 @@ sub handle_interval {
 	
 	if ( -d "$config_vars{'snapshot_root'}/$$id_ref{'interval'}.delete" ) {
 		display_rm_rf("$config_vars{'snapshot_root'}/$$id_ref{'interval'}.delete/");
-		my $result = rm_rf_bg( "$config_vars{'snapshot_root'}/$$id_ref{'interval'}.delete/" );
+		#my $result = rm_rf_bg( "$config_vars{'snapshot_root'}/$$id_ref{'interval'}.delete/" );
+		my $result = rm_rf( "$config_vars{'snapshot_root'}/$$id_ref{'interval'}.delete/" );
 		if (0 == $result) {
 			bail("Error! rm_rf(\"$config_vars{'snapshot_root'}/$$id_ref{'interval'}.delete/\")\n");
 		}		
@@ -3683,6 +3684,7 @@ sub cmd_rm_rf_bg {
 	}
 	
 	# make the system call to /bin/rm
+	# TODO: make this work in the background. the & doesn't do the trick
 	$result = system( $config_vars{'cmd_rm'}, '-rf', "$path", "&" );
 	if ($result != 0) {
 		print_err("Warning! $config_vars{'cmd_rm'} failed.", 2);
@@ -3815,6 +3817,8 @@ sub show_disk_usage {
 sub show_rsnapshot_diff {
 	my $cmd_rsnapshot_diff = 'rsnapshot-diff';
 	
+	my $retval;
+	
 	# this will only hold two entries, no more no less
 	my @paths_in	= ();
 	my @paths_out	= ();
@@ -3834,7 +3838,8 @@ sub show_rsnapshot_diff {
 	$paths_in[0] = $ARGV[1];	# the 1st path is the 2nd cmd line argument
 	$paths_in[1] = $ARGV[2];	# the 2nd path is the 3rd cmd line argument
 	
-	for (my $i=0; $i<=1; $i++) {
+	# loop through twice
+	for (my $i=0; $i<2; $i++) {
 		# no interval would start with ../
 		if (is_directory_traversal( "$paths_in[$i]" )) {
 			$paths_out[$i] = $paths_in[$i];
@@ -3855,13 +3860,28 @@ sub show_rsnapshot_diff {
 	
 	# double check to make sure it exists and it's a directory
 	if ( (!defined($paths_out[0]) or (!defined($paths_out[1]))) or ((! -d "$paths_out[0]") or (! -d "$paths_out[1]")) ) {
-		print STDERR "ERROR: Arguments must be valid directories\n";
+		print STDERR "ERROR: Arguments must be valid intervals or directories\n";
 		exit(1);
 	}
 	
-	# TODO: make this really do something
-	print "rsnapshot-diff $paths_out[0] $paths_out[1]\n";
-	exit(0);
+	# check for rsnapshot-diff program
+	if (defined($config_vars{'cmd_rsnapshot_diff'})) {
+		$cmd_rsnapshot_diff = $config_vars{'cmd_rsnapshot_diff'};
+	}
+	
+	if (defined($verbose) && ($verbose >= 3)) {
+		print wrap_cmd(("$cmd_rsnapshot_diff " . join(' ', @paths_out)), 76, 4), "\n\n";
+	}
+	if (0 == $test) {
+		$retval = system($cmd_rsnapshot_diff, @paths_out);
+		if (0 == $retval) {
+			exit(0);
+		} else {
+			# exit showing error
+			print STDERR "Error while calling $cmd_rsnapshot_diff\n";
+			exit(1);
+		}
+	}
 }
 
 # This subroutine works the way I hoped rsync would under certain conditions.
