@@ -772,7 +772,7 @@ sub log_msg	{
 	if (!defined($level))		{ $level	= 'notice'; }
 	
 	if (defined($config_vars{'cmd_logger'}))	{
-		# verbose to display messages, extra verbose to display errors
+		# extra verbose to display messages, verbose to display errors
 		if ( ($verbose > 3) or (($verbose > 2) && ($level ne 'err')) )	{
 			print "$config_vars{'cmd_logger'} -i -p $facility.$level -t rsnapshot $msg\n";
 		}
@@ -1250,7 +1250,16 @@ sub backup_interval	{
 			# RUN THE RSYNC COMMAND FOR THIS BACKUP POINT
 			# BASED ON THE @cmd_stack VARS
 			if ($verbose > 2)	{ print join(' ', @cmd_stack, "\n"); }
-			if (0 == $test)		{ system(@cmd_stack); }
+			if (0 == $test)	{
+				$result = system(@cmd_stack);
+				if ($result != 0)	{
+					if (1 == $link_dest)	{
+						log_err("Error! rsync returned $result. Does this version of rsync support --link-dest?");
+					} else	{
+						log_err("Error! rsync returned $result.");
+					}
+				}
+			}
 			
 		# OR, IF WE HAVE A BACKUP SCRIPT, RUN IT, THEN SYNC IT TO DEST
 		} elsif (defined($$sp_ref{'script'}))	{
@@ -1388,21 +1397,36 @@ sub rotate_interval	{
 		}
 	}
 	
-	# hard link (except for directories) previous interval's oldest dir over to .0
+	# .0 and .1 require more attention:
 	if ( -d "$config_vars{'snapshot_root'}/$prev_interval.$prev_interval_max" )	{
-		if ($verbose > 2)	{
-			if (1 == $have_gnu_cp)	{
-				print "$config_vars{'cmd_cp'} -al $config_vars{'snapshot_root'}/$prev_interval.$prev_interval_max/ ";
-				print "$config_vars{'snapshot_root'}/$interval.0/\n";
-			} else	{
-				print "native_cp_al(\"$config_vars{'snapshot_root'}/$prev_interval.$prev_interval_max/\", ";
-				print "\"$config_vars{'snapshot_root'}/$interval.0/\")\n";
+		my $result;
+		
+		##################################################################
+		# TODO: fix --link-dest operations so things are always hard links
+		##################################################################
+		
+		# if we're using rsync --link-dest, we need to mv .0 to .1 now
+		# then we'll use rsync with --link-dest
+		if (0)	{
+		# otherwise, we hard link (except for directories, symlinks, and special files) .0 over to .1
+		# using GNU cp (or equivalent)
+		} else	{
+			# decide which verbose message to show, if at all
+			if ($verbose > 2)	{
+				if (1 == $have_gnu_cp)	{
+					print "$config_vars{'cmd_cp'} -al $config_vars{'snapshot_root'}/$prev_interval.$prev_interval_max/ ";
+					print "$config_vars{'snapshot_root'}/$interval.0/\n";
+				} else	{
+					print "native_cp_al(\"$config_vars{'snapshot_root'}/$prev_interval.$prev_interval_max/\", ";
+					print "\"$config_vars{'snapshot_root'}/$interval.0/\")\n";
+				}
 			}
-		}
-		if (0 == $test)	{
-			my $result = cp_al( "$config_vars{'snapshot_root'}/$prev_interval.$prev_interval_max/", "$config_vars{'snapshot_root'}/$interval.0/" );
-			if (! $result)	{
-				bail("Error! cp_al(\"$config_vars{'snapshot_root'}/$prev_interval.$prev_interval_max/\", \"$config_vars{'snapshot_root'}/$interval.0/\") failed");
+			# call generic cp_al() subroutine
+			if (0 == $test)	{
+				$result = cp_al( "$config_vars{'snapshot_root'}/$prev_interval.$prev_interval_max/", "$config_vars{'snapshot_root'}/$interval.0/" );
+				if (! $result)	{
+					bail("Error! cp_al(\"$config_vars{'snapshot_root'}/$prev_interval.$prev_interval_max/\", \"$config_vars{'snapshot_root'}/$interval.0/\")");
+				}
 			}
 		}
 	}
