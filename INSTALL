@@ -258,7 +258,7 @@ If you are upgrading from a previous installation:
 
                     cd /.snapshots/hourly.0/localhost/
                     mkdir var/
-                    mv email/ var/
+                    mv email/ var/qmail/
 
                 If we map all the directories over in this way, we maintain
                 all the hard links. The only real drawback is that users will

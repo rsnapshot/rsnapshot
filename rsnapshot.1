@@ -129,7 +129,7 @@
 .\" ========================================================================
 .\"
 .IX Title "rsnapshot 1"
-.TH rsnapshot 1 "2005-01-30" "" ""
+.TH rsnapshot 1 "2005-02-01" "" ""
 .SH "NAME"
 rsnapshot \- remote filesystem snapshot utility
 .SH "SYNOPSIS"
@@ -202,40 +202,26 @@ Here is a list of allowed parameters:
 .Sp
 \&\fBcmd_cp\fR            Full path to cp  (optional, but must be \s-1GNU\s0 version)
 .Sp
+.RS 4
+If you are using Linux, you should uncomment cmd_cp. If you are using a
+different platform, you should leave cmd_cp commented out.
+.Sp
+With \s-1GNU\s0 cp, rsnapshot can take care of both normal files and special
+files (such as FIFOs, sockets, and block/character devices) in one pass.
+.Sp
+If cmd_cp is disabled, rsnapshot will use its own built-in function,
+\&\fInative_cp_al()\fR to backup up regular files and directories. This will
+then be followed up by a seperate call to rsync, to move the special
+files over (assuming there are any).
+.RE
+.RE
+.RS 4
+.Sp
 \&\fBcmd_rm\fR            Full path to rm  (optional)
 .Sp
 \&\fBcmd_logger\fR        Full path to logger (optional, for syslog support)
 .Sp
 \&\fBcmd_du\fR            Full path to du (optional, for disk usage reports)
-.Sp
-.RS 4
-If you have \s-1GNU\s0 cp, you should uncomment cmd_cp, since you will get extra
-functionality. If you don't have \s-1GNU\s0 cp, leave it commented out, and
-rsnapshot will work almost as well. If you are using Linux, you have \s-1GNU\s0
-cp. If you're on \s-1BSD\s0, Solaris, \s-1IRIX\s0, etc., then there's a good chance you
-don't have the right version. Never fear, you still have options. You can
-get \s-1GNU\s0 cp set up on your system (possibly in an alternate path so as to
-not conflict with your existing version). Or, if you only need support
-for normal files, directories, and symlinks, you can just leave cmd_cp
-commented out and rsnapshot will use a built-in perl substitute. This
-will run about 40% slower, and will not let you back up the following
-types of files:
-.Sp
-.RS 4
-\&\s-1FIFO\s0
-.Sp
-Socket
-.Sp
-Block / Character devices
-.RE
-.RE
-.RS 4
-.Sp
-Furthermore, hard links to symlinks are not portable, so new symlinks
-will be created when they need to be copied.
-.RE
-.RE
-.RS 4
 .Sp
 \&\fBinterval\fR      [name] [number]
 .Sp
@@ -672,10 +658,12 @@ For example:
 .PP
 This will show you exactly how much disk space is taken up in the snapshot root. This
 feature requires the \s-1UNIX\s0 \fBdu\fR command to be installed on your system, for it to
-support the \*(L"\-csh\*(R" command line arguments, and to be in your path.
+support the \*(L"\-csh\*(R" command line arguments, and to be in your path. You can also
+override your path settings and the flags passed to du using the cmd_du and du_args
+parameters.
 .PP
-You can also pass a relative file path as a second argument, to get a report on a
-particular file or subdirectory.
+It is also possible to pass a relative file path as a second argument, to get a report
+on a particular file or subdirectory.
 .Sp
 .RS 4
 \&\fBrsnapshot du localhost/home/\fR

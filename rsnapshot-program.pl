@@ -4514,40 +4514,26 @@ B<cmd_ssh>           Full path to ssh (optional)
 
 B<cmd_cp>            Full path to cp  (optional, but must be GNU version)
 
+=over 4
+
+If you are using Linux, you should uncomment cmd_cp. If you are using a
+different platform, you should leave cmd_cp commented out.
+
+With GNU cp, rsnapshot can take care of both normal files and special
+files (such as FIFOs, sockets, and block/character devices) in one pass.
+
+If cmd_cp is disabled, rsnapshot will use its own built-in function,
+native_cp_al() to backup up regular files and directories. This will
+then be followed up by a seperate call to rsync, to move the special
+files over (assuming there are any).
+
+=back
+
 B<cmd_rm>            Full path to rm  (optional)
 
 B<cmd_logger>        Full path to logger (optional, for syslog support)
 
 B<cmd_du>            Full path to du (optional, for disk usage reports)
-
-=over 4
-
-If you have GNU cp, you should uncomment cmd_cp, since you will get extra
-functionality. If you don't have GNU cp, leave it commented out, and
-rsnapshot will work almost as well. If you are using Linux, you have GNU
-cp. If you're on BSD, Solaris, IRIX, etc., then there's a good chance you
-don't have the right version. Never fear, you still have options. You can
-get GNU cp set up on your system (possibly in an alternate path so as to
-not conflict with your existing version). Or, if you only need support
-for normal files, directories, and symlinks, you can just leave cmd_cp
-commented out and rsnapshot will use a built-in perl substitute. This
-will run about 40% slower, and will not let you back up the following
-types of files:
-
-=over 4
-
-FIFO
-
-Socket
-
-Block / Character devices
-
-=back
-
-Furthermore, hard links to symlinks are not portable, so new symlinks
-will be created when they need to be copied.
-
-=back
 
 B<interval>      [name] [number]
 
@@ -4976,10 +4962,12 @@ B<rsnapshot du>
 
 This will show you exactly how much disk space is taken up in the snapshot root. This
 feature requires the UNIX B<du> command to be installed on your system, for it to
-support the "-csh" command line arguments, and to be in your path.
+support the "-csh" command line arguments, and to be in your path. You can also
+override your path settings and the flags passed to du using the cmd_du and du_args
+parameters.
 
-You can also pass a relative file path as a second argument, to get a report on a
-particular file or subdirectory.
+It is also possible to pass a relative file path as a second argument, to get a report
+on a particular file or subdirectory.
 
 =over 4
 
