@@ -339,12 +339,19 @@ cleanup:
 	/bin/rm -f Makefile config.log config.status configure.lineno rsnapshot
 
 debian:
+	@# build package
 	./configure --prefix=/usr --sysconfdir=/etc --mandir=/usr/share/man --bindir=/usr/bin --with-rsync=/usr/bin/rsync --with-ssh=/usr/bin/ssh --with-logger=/usr/bin/logger
 	make DESTDIR=${DEB_BUILD_DIR} install
 
+	@# copy core documentation
 	/bin/mkdir -p ${DEB_BUILD_DIR}/{DEBIAN,usr/bin,etc,usr/share/man/man1,usr/share/doc/rsnapshot}
 	/bin/cp DEBIAN/{control,conffiles,copyright} ${DEB_BUILD_DIR}/DEBIAN/
-	/bin/cp AUTHORS COPYING ChangeLog README INSTALL TODO ${DEB_BUILD_DIR}/usr/share/doc/rsnapshot/
+	@# intentionally omit the "COPYING" file since "copyright" refers to the /usr/share/common-licenses/GPL
+	/bin/cp AUTHORS ChangeLog README INSTALL TODO ${DEB_BUILD_DIR}/usr/share/doc/rsnapshot/
+	@# copy util scripts into /usr/share/doc/rsnapshot/utils, and remove the execute bit
+	/bin/mkdir ${DEB_BUILD_DIR}/usr/share/doc/rsnapshot/utils/
+	/bin/cp utils/{rsnaptar,*.sh,README} ${DEB_BUILD_DIR}/usr/share/doc/rsnapshot/utils/
+	/bin/chmod 644 ${DEB_BUILD_DIR}/usr/share/doc/rsnapshot/utils/*
 
 	gzip -9 ${DEB_BUILD_DIR}/usr/share/man/man1/rsnapshot.1
 
