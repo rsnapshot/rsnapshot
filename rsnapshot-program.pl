@@ -2061,7 +2061,7 @@ sub backup_lowest_interval	{
 	foreach my $bp_ref (@backup_points)	{
 		
 		# actually rsync the given backup point into the snapshot root
-		rsync_backup_point(
+		handle_backup_point(
 			$interval,
 			$bp_ref,
 			{
@@ -2183,7 +2183,7 @@ sub rotate_lowest_snapshots	{
 # accepts interval, backup_point_ref, ssh_rsync_args_ref
 # returns no args
 # runs rsync on the given backup point
-sub rsync_backup_point	{
+sub handle_backup_point	{
 	my $interval				= shift(@_);
 	my $bp_ref					= shift(@_);
 	my $default_args_ref		= shift(@_);
@@ -2197,9 +2197,9 @@ sub rsync_backup_point	{
 	my @rsync_long_args_stack	= ( split(/\s/, $$default_args_ref{'rsync_long_args'}) );
 	
 	# validate subroutine args
-	if (!defined($interval))			{ bail('interval not defined in rsync_backup_point()'); }
-	if (!defined($bp_ref))				{ bail('bp_ref not defined in rsync_backup_point()'); }
-	if (!defined($default_args_ref))	{ bail('default_args_ref not defined in rsync_backup_point()'); }
+	if (!defined($interval))			{ bail('interval not defined in handle_backup_point()'); }
+	if (!defined($bp_ref))				{ bail('bp_ref not defined in handle_backup_point()'); }
+	if (!defined($default_args_ref))	{ bail('default_args_ref not defined in handle_backup_point()'); }
 	
 	# append a trailing slash if src is a directory
 	if (defined($$bp_ref{'src'}))	{
@@ -2222,6 +2222,7 @@ sub rsync_backup_point	{
 		$destpath .= '/';
 	}
 	
+	# create the directory if it doesn't exist
 	if ( ! -e "$destpath" )	{
 		print_cmd("mkdir -m 0755 -p $destpath");
 		
