@@ -17,7 +17,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.263 2005/04/02 23:42:16 scubaninja Exp $
+# $Id: rsnapshot-program.pl,v 1.264 2005/04/02 23:53:36 scubaninja Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -593,6 +593,50 @@ sub parse_config_file {
 			}
 		}
 		
+		# CHECK FOR cmd_preexec
+		if ($var eq 'cmd_preexec') {
+			my $full_script	= $value;	# backup script to run (including args)
+			my $script;					# script file (no args)
+			my @script_argv;			# all script arguments
+			
+			# get the base name of the script, not counting any arguments to it
+			@script_argv = split(/\s+/, $full_script);
+			$script = $script_argv[0];
+			
+			# make sure script exists and is executable
+			if (((! -f "$script") or (! -x "$script")) && is_real_local_abs_path($script)) {
+				config_err($file_line_num, "$line - cmd_preexec \"$script\" is not executable or does not exist");
+				next;
+			}
+			
+			$config_vars{'cmd_preexec'} = $full_script;
+			
+			$line_syntax_ok = 1;
+			next;
+		}
+		
+		# CHECK FOR cmd_postexec
+		if ($var eq 'cmd_postexec') {
+			my $full_script	= $value;	# backup script to run (including args)
+			my $script;					# script file (no args)
+			my @script_argv;			# all script arguments
+			
+			# get the base name of the script, not counting any arguments to it
+			@script_argv = split(/\s+/, $full_script);
+			$script = $script_argv[0];
+			
+			# make sure script exists and is executable
+			if (((! -f "$script") or (! -x "$script")) && is_real_local_abs_path($script)) {
+				config_err($file_line_num, "$line - cmd_postexec \"$script\" is not executable or does not exist");
+				next;
+			}
+			
+			$config_vars{'cmd_postexec'} = $full_script;
+			
+			$line_syntax_ok = 1;
+			next;
+		}
+		
 		# CHECK FOR rsnapshot-diff (optional)
 		if ($var eq 'cmd_rsnapshot_diff') {
 			if ((-f "$value") && (-x "$value") && (1 == is_real_local_abs_path($value))) {
@@ -846,7 +890,7 @@ sub parse_config_file {
 			my $dest		= $value2;	# dest directory
 			my %hash;					# tmp hash to stick in the backup points array
 			my $script;					# script file (no args)
-			my @script_argv;			# tmp spot to help us separate the script from the args
+			my @script_argv;			# tmp array to help us separate the script from the args
 			
 			if ( !defined($config_vars{'snapshot_root'}) ) {
 				config_err($file_line_num, "$line - snapshot_root needs to be defined before backup scripts");
@@ -857,7 +901,7 @@ sub parse_config_file {
 			@script_argv = split(/\s+/, $full_script);
 			$script = $script_argv[0];
 			
-			# make sure the script is a full path
+			# make sure the destination is a full path
 			if (1 == is_valid_local_abs_path($dest)) {
 				config_err($file_line_num, "$line - Backup destination $dest must be a local, relative path");
 				next;
@@ -869,14 +913,8 @@ sub parse_config_file {
 				next;
 			}
 			
-			# validate destination path
-			if ( is_valid_local_abs_path($dest) ) {
-				config_err($file_line_num, "$line - Full paths not allowed for backup destinations");
-				next;
-			}
-			
 			# make sure script exists and is executable
-			if ((! -f "$script") or (! -x "$script") && is_real_local_abs_path($script)) {
+			if (((! -f "$script") or (! -x "$script")) && is_real_local_abs_path($script)) {
 				config_err($file_line_num, "$line - Backup script \"$script\" is not executable or does not exist");
 				next;
 			}
