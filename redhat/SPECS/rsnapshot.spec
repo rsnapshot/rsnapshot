@@ -12,7 +12,7 @@ Requires: perl, rsync
 AutoReqProv: no
 
 %description
-This is a remote backup program that uses rsync to take backup snapshots of filesystems. 
+This is a remote backup program that uses rsync to take backup snapshots of filesystems.
 It uses hard links to save space on disk.
 
 %prep
@@ -22,8 +22,16 @@ It uses hard links to save space on disk.
 %patch
 
 %build
-./configure --prefix=/usr --sysconfdir=/etc --mandir=/usr/share/man --with-perl=/usr/bin/perl \
-	--with-rsync=/usr/bin/rsync --with-ssh=/usr/bin/ssh --with-logger=/usr/bin/logger
+./configure \
+	--prefix=/usr \
+	--bindir=/usr/bin \
+	--mandir=/usr/share/man \
+	--sysconfdir=/etc \
+	--with-perl=/usr/bin/perl \
+	--with-rsync=/usr/bin/rsync \
+	--with-ssh=/usr/bin/ssh \
+	--with-logger=/usr/bin/logger \
+	--with-du=/usr/bin/du
 
 %install
 install -d $RPM_BUILD_ROOT/%{_bindir}
@@ -51,6 +59,9 @@ rm -rf $RPM_BUILD_DIR/%{name}-%{version}/
 %verify(user group mode md5 size mtime) %{_mandir}/man1/rsnapshot.1*
 
 %changelog
+* Sat Jan 22 2005 Nathan Rosenquist <nathan@rsnapshot.org>
+- Added --with-du option
+
 * Thu Jan 15 2004 Nathan Rosenquist <nathan@rsnapshot.org>
 - Added "AutoReqProv: no" for SuSE compatibility
 
