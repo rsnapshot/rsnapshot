@@ -1,5 +1,10 @@
 rsnapshot TODO list:
 
+Handle platforms other than Linux and GNU. Specifically, cp -al seems to be unique
+to the GNU fileutils package, and thus not compatible with BSD, etc. Probably the
+best thing to do would be to use Perl's built in functions (link(), unlink()) to
+handle this with a recursive subroutine or two.
+
 Handle additional protocols, using a web style prefix (i.e. http://path/to/http/server).
 rsync is already included. http, ftp, cvs, and more would be nice.
 Make sure that if the file downloaded is the same as the one yesterday,
