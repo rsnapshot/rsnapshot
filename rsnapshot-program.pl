@@ -490,7 +490,6 @@ sub parse_config_file	{
 			if ((-f "$value") && (-x "$value") && (1 == is_real_local_abs_path($value)))	{
 				$config_vars{'cmd_rm'} = $value;
 				$display_rm = $value;
-				$have_rm = 1;
 				$line_syntax_ok = 1;
 				next;
 			} else	{
