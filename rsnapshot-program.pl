@@ -3961,9 +3961,13 @@ sub get_config_version {
 	while (my $line = <CONFIG>) {
 		chomp($line);
 		
-		if ($line =~ m/^config_version\s+([\d\.\-\w]+)$/o) {
-			$version = $1;
-			last;
+		if ($line =~ m/^config_version/o) {
+			if ($line =~ m/^config_version\s+([\d\.\-\w]+)$/o) {
+				$version = $1;
+				last;
+			} else {
+				$version = 'undefined';
+			}
 		}
 	}
 	

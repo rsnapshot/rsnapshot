@@ -4,7 +4,7 @@ RPM_BASE_DIR = /usr/src/redhat
 
 upgrade:
 	@echo ""
-	${PERL} utils/upgrade_rsnapshot.pl ${sysconfdir}/rsnapshot.conf
+	${PERL} rsnapshot-program.pl -c ${sysconfdir}/rsnapshot.conf upgrade-config-file
 	@echo ""
 
 man:
