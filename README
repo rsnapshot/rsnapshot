@@ -1,4 +1,4 @@
-rsnapshot 0.9.1
+rsnapshot 0.9.2
 
 rsnapshot is a filesystem snapshot utility. It can take incremental
 snapshots of local and remote filesystems for any number of machines.
@@ -16,8 +16,8 @@ When /etc/rsnapshot.conf contains your chosen settings, the final
 step is to setup a cron job to automate your backups. Here is a
 quick example if you just can't wait:
 	
-	0 */4 * * *     /usr/bin/rsnapshot hourly
-	50 23 * * *     /usr/bin/rsnapshot daily
+	0 */4 * * *     /usr/local/bin/rsnapshot hourly
+	50 23 * * *     /usr/local/bin/rsnapshot daily
 	
 In the previous example, there will be six "hourly" snapshots
 taken each day (at 0,4,8,12,16, and 20 hours). There will also
@@ -33,6 +33,5 @@ Means that every time "rsnaphsot hourly" is run, it will make a
 new snapshot, rotate the old ones, and retain the most recent six
 (hourly.0 - hourly.5).
 
-For the full documentation, type "man rsnapshot" once it is installed.
-If you want to read the documentation before you install it, you may
-be able to type "man ./rsnapshot.1"
+For the full documentation, type "man rsnapshot" once it is installed,
+or visit http://rsnapshot.sourceforge.net/
