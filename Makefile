@@ -28,7 +28,7 @@ tar:
 	
 dpkg:
 	mkdir -p rsnapshot_dpkg/{DEBIAN,usr/bin,etc,usr/share/man/man1}
-	cp DEBIAN/* rsnapshot_dpkg/DEBIAN/
+	cp DEBIAN/{control,conffiles} rsnapshot_dpkg/DEBIAN/
 	cat rsnapshot | sed 's/\/usr\/local\/bin/\/usr\/bin/g' > rsnapshot_dpkg/usr/bin/rsnapshot
 	pod2man rsnapshot_dpkg/usr/bin/rsnapshot | gzip -9c > rsnapshot_dpkg/usr/share/man/man1/rsnapshot.1.gz
 	cp rsnapshot.conf rsnapshot_dpkg/etc/
