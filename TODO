@@ -22,6 +22,7 @@ for version 1.0.x
 - Support for SSH tunnelling (this may work with the ssh_args param(?))
 
 - Add syslog support. Make sure it's compatible with Perl 5.004 cross platform.
+  Sys::Syslog is installed but doesn't seem to work on Perl 5.005 / Solaris 8.
 
 for version 2.0.x
 ------------------------------------------------------------------------------
