@@ -8,7 +8,7 @@ believe Solaris as well. Probably any non-GNU system will have this issue.
 I believe the best replacement will be native Perl functions:
 	
 	mkdir -p  -> File::Path -> mkpath('foo/bar', 0, 0755);
-	touch     -> utime()
+	touch     -> utime(time(), time(), 'foo');
 	cp -al    -> custom subroutine: link(), stat(), etc. (recursive)
 	mv        -> File::Copy -> move('old', 'new');
 	rm -rf    -> File::Path -> rmtree('foo', 0, 1);
