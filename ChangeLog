@@ -25,14 +25,19 @@ VERSION 1.2.0 (Jan ?? ??:?? 2005)
 - Clarified error message about local/relative paths in config file parsing
 - Added check for leading/trailing spaces in remote (ssh) paths
 - Added du(1) and crontab(1) to man page references
-- Added config.guess and config.sub for automake/autoconf build process
+- Added config.guess and config.sub for automake
 - Changed default destination paths for backup points in example config file
   for compatibility with --relative rsync flag
 - Added formatting fix to show one slash only when invoking backup_script
   with link_dest option enabled
 - Broke backwards compatibility for the benefit of fixing several outstanding
-  issues.
-- Added utils/upgrade_to_120.pl / "make upgrade" util for easy upgrade.
+  issues. The default value for rsync_long_args is now different.
+- Added utils/upgrade_rsnapshot.pl / "make upgrade" target for easy upgrade.
+- Changed add_lockfile() verbose message to "echo $$ > /path/to/lockfile.pid"
+  which is actually what the code is doing
+- Added check to make sure backup_scripts can't share destination path with
+  backup points
+- Split error reports from print_err() to two lines
 
 VERSION 1.1.6 (Jul 05 16:35 2004)
 ------------------------------------------------------------------------------
