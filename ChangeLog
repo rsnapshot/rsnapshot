@@ -27,6 +27,7 @@ VERSION 1.1.6 (??? ?? ??:?? 2004)
 - Added a check in parse_cmd_line_opts() for the config file if specified
 - Changed link_dest rsync error message to description instead of number
 - Changed description of test mode in the help cmd
+- Changed description of -V mode
 
 VERSION 1.1.5 (Jun 20 20:56 2004)
 ------------------------------------------------------------------------------

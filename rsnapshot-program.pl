@@ -242,7 +242,7 @@ Options:
     -c [file]        - specify alternate config file (-c /path/to/file)
     -x one_fs        - don't cross filesystems (same as -x option to rsync)
     -q quiet         - supress non-fatal warnings
-    -V extra verbose - same as -v, but show rsync output as well
+    -V extra verbose - same as -v, but with more detail
     -D debug         - a firehose of diagnostic information
 HERE
 }
@@ -3670,7 +3670,7 @@ B<-x> one filesystem, don't cross partitions within each backup point
 
 B<-q> quiet, supress non-fatal warnings
 
-B<-V> same as -v, but show rsync output as well
+B<-V> same as -v, but with more detail
 
 B<-D> a firehose of diagnostic information
 
@@ -3805,7 +3805,7 @@ are 1 through 5. The default is 2.
 
 3        Verbose          Show equivalent shell commands being executed
 
-4        Extra Verbose    Same as verbose, but with still more output
+4        Extra Verbose    Same as verbose, but with more detail
 
 5        Debug            All kinds of information
 
