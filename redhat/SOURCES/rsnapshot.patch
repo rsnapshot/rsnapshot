@@ -1,9 +1,9 @@
---- rsnapshot.conf.default	Tue Dec 16 19:55:05 2003
-+++ rsnapshot.conf.default.RPM	Thu Dec 18 19:10:00 2003
+--- rsnapshot.conf.default.in	2003-12-19 18:56:53.000000000 -0800
++++ rsnapshot.conf.default.in.RPM	2003-12-19 19:06:38.000000000 -0800
 @@ -24,7 +24,7 @@
  #
- cmd_rsync	/usr/bin/rsync
- cmd_ssh		/usr/bin/ssh
+ @CMD_RSYNC@
+ #@CMD_SSH@
 -#cmd_cp		/bin/cp
 +cmd_cp		/bin/cp
  

@@ -20,8 +20,8 @@ It uses hard links to save space on disk.
 
 %patch
 
-# it's just perl, so no need to compile
 %build
+./configure --prefix=/usr --sysconfdir=/etc --mandir=/usr/share --with-perl=/usr/bin/perl --with-rsync=/usr/bin/rsync --with-ssh=/usr/bin/ssh
 
 %install
 install -d $RPM_BUILD_ROOT/%{_bindir}
@@ -49,16 +49,19 @@ rm -rf $RPM_BUILD_DIR/%{name}-%{version}/
 %verify(user group mode md5 size mtime) %{_mandir}/man1/rsnapshot.1*
 
 %changelog
+* Fri Dec 19 2003 Nathan Rosenquist <nathan@rsnapshot.org>
+- now fully support autoconf
+
 * Tue Dec 16 2003 Nathan Rosenquist <nathan@rsnapshot.org>
 - changed rsnapshot.conf to rsnapshot.conf.default from the source tree
 
 * Wed Nov 05 2003 Nathan Rosenquist <nathan@rsnapshot.org>
 - Removed fileutils dependency, added verification info
 
-* Tue Nov 04 2003 Nathan Rosenquist <rsnapshot@scubaninja.com>
+* Tue Nov 04 2003 Nathan Rosenquist <nathan@rsnapshot.org>
 - fixed anonymous rsync error
 
-* Thu Oct 30 2003 Nathan Rosenquist <rsnapshot@scubaninja.com>
+* Thu Oct 30 2003 Nathan Rosenquist <nathan@rsnapshot.org>
 - update to 1.0.3
 
 * Tue Oct 28 2003 Carl Wilhelm Soderstrom <chrome@real-time.com>
