@@ -38,8 +38,8 @@
 require 5;
 use strict;
 use Getopt::Std;
-use File::Copy;
 use File::Path;
+use File::stat;
 
 #########################
 ### DECLARE VARIABLES ###
@@ -448,10 +448,13 @@ sub backup_interval	{
 	for (my $i=($interval_max-1); $i>0; $i--)	{
 		if ( -d "$config_vars{'snapshot_root'}/$interval.$i" )	{
 			if ($verbose)	{
-				print "move(\"$config_vars{'snapshot_root'}/$interval.$i/\", \"$config_vars{'snapshot_root'}/$interval." . ($i+1) . "/\");\n";
+				print "rename(\"$config_vars{'snapshot_root'}/$interval.$i/\", \"$config_vars{'snapshot_root'}/$interval." . ($i+1) . "/\");\n";
 			}
 			if ($test == 0)	{
-				move( "$config_vars{'snapshot_root'}/$interval.$i/", ("$config_vars{'snapshot_root'}/$interval." . ($i+1) . '/') );
+				my $result = rename( "$config_vars{'snapshot_root'}/$interval.$i/", ("$config_vars{'snapshot_root'}/$interval." . ($i+1) . '/') );
+				if ($result == 0)	{
+					bail("Error on rename(\"$config_vars{'snapshot_root'}/$interval.$i/\", \"" . ("$config_vars{'snapshot_root'}/$interval." . ($i+1) . '/') . "\")");
+				}
 			}
 		}
 	}
@@ -565,13 +568,9 @@ sub rotate_interval	{
 	for (my $i=($interval_max-1); $i>=0; $i--)	{
 		if ( -d "$config_vars{'snapshot_root'}/$interval.$i" )	{
 			
-			if ($verbose)	{ print "move(\"$config_vars{'snapshot_root'}/$interval.$i/\", \"$config_vars{'snapshot_root'}/$interval." . ($i+1) . "/\");\n"; }
+			if ($verbose)	{ print "rename(\"$config_vars{'snapshot_root'}/$interval.$i/\", \"$config_vars{'snapshot_root'}/$interval." . ($i+1) . "/\");\n"; }
 			if ($test == 0)	{
-				my $result = 0;
-				
-				eval	{
-					$result = move( "$config_vars{'snapshot_root'}/$interval.$i/", ("$config_vars{'snapshot_root'}/$interval." . ($i+1) . '/') );
-				};
+				my $result = rename( "$config_vars{'snapshot_root'}/$interval.$i/", ("$config_vars{'snapshot_root'}/$interval." . ($i+1) . '/') );
 				if ($result == 0)	{
 					bail("error during move(\"$config_vars{'snapshot_root'}/$interval.$i/)\", \"" . ("$config_vars{'snapshot_root'}/$interval." . ($i+1) . '/') . "\");");
 				}
