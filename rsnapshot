@@ -35,7 +35,7 @@ use File::stat;
 my $VERSION = '1.0.2';
 
 # default configuration file
-my $config_file	= '/etc/rsnapshot.conf'; 
+my $config_file	= '/etc/rsnapshot.conf';
 
 # assume the config file syntax is OK unless we encounter problems
 my $file_syntax_ok = 1;
@@ -77,7 +77,7 @@ my $prev_interval_max;
 my $use_gnu_cp = 0;
 
 # command line flags
-my %opts; 
+my %opts;
 
 # command or interval to execute
 my $cmd;
@@ -88,19 +88,22 @@ my $do_configtest = 0;
 # show the shell commands being executed
 my $verbose = 0;
 
+# show verbose messages from rsync
+my $extra_verbose = 0;
+
 # turn verbose on, but don't execute the commands
 my $test = 0;
- 
+
 # don't display warnings about FIFOs and special files if enabled
 my $quiet = 0;
- 
+
 ##############################
 ### CORE PROGRAM STRUCTURE ###
 ##############################
 
-# GET COMMAND LINE OPTIONS 
+# GET COMMAND LINE OPTIONS
 getopt('c', \%opts);
-getopts('vtq', \%opts);
+getopts('vVtq', \%opts);
 $cmd = $ARGV[0];
 
 # ALTERNATE CONFIG FILE
@@ -108,9 +111,13 @@ if (defined($opts{'c'}) && ( -f $opts{'c'} ))	{
 	$config_file = $opts{'c'};
 }
 
-# VERBOSE?
+# VERBOSE (OR EXTRA VERBOSE)?
 if (defined($opts{'v'}))	{
 	$verbose = 1;
+}
+if (defined($opts{'V'}))	{
+	$verbose = 1;
+	$extra_verbose = 1;
 }
 
 # TEST?
@@ -124,7 +131,7 @@ if (defined($opts{'q'}))	{
 	$quiet = 1;
 }
 
-# COMMAND LINE ARGS 
+# COMMAND LINE ARGS
 if ( ! $cmd )	{
 	show_usage();
 	exit(0);
@@ -134,7 +141,7 @@ if ($cmd eq 'help')	{
 }
 if ($cmd eq 'configtest')	{
 	$do_configtest = 1;
-} 
+}
 if ($cmd eq 'version')	{
 	print "rsnapshot $VERSION\n";
 	exit(0);
@@ -143,8 +150,8 @@ if ($cmd eq 'version_only')	{
 	print $VERSION;
 	exit(0);
 }
- 
-# PARSE CONFIG FILE 
+
+# PARSE CONFIG FILE
 if ( -f $config_file )	{
 	open(CONFIG, $config_file) or bail("Could not open config file \"$config_file\"");
 	while (my $line = <CONFIG>)	{
@@ -341,7 +348,7 @@ if (0 == $file_syntax_ok)	{
 	print STDERR "spaces where only tabs should be.\n";
 	exit(-1);
 }
- 
+
 # CREATE THE SNAPSHOT ROOT IF IT DOESN'T EXIST, WITH THE FILE PERMISSIONS 0700
 if ( ! -d "$config_vars{'snapshot_root'}" )	{
 	if ($verbose)	{ print "mkdir -m 0700 -p $config_vars{'snapshot_root'}\n"; }
@@ -354,8 +361,8 @@ if ( ! -d "$config_vars{'snapshot_root'}" )	{
 		}
 	}
 }
- 
-# FIGURE OUT WHICH INTERVAL WE'RE RUNNING, AND HOW IT RELATES TO THE OTHERS 
+
+# FIGURE OUT WHICH INTERVAL WE'RE RUNNING, AND HOW IT RELATES TO THE OTHERS
 # THEN RUN THE ACTION FOR THE CHOSEN INTERVAL
 # remember, in each hashref in this loop:
 #   interval is something like "daily", "weekly", etc.
@@ -414,6 +421,11 @@ sub backup_interval	{
 	
 	# this should never happen
 	if (!defined($interval))	{ bail('backup_interval() expects an argument'); }
+	
+	my $rsync_args = '-al';
+	
+	# if -V was passed as a flag, show verbose messages for rsync
+	if ($extra_verbose)	{ $rsync_args .= 'v'; }
 	
 	# ROTATE DIRECTORIES
 	#
@@ -493,23 +505,25 @@ sub backup_interval	{
 		
 		# if this is a user@host:/path, use ssh
 		if ($src =~ /^.*?\@.*?:\/.*$/)	{
-			if ($verbose)	{ print "$config_vars{'cmd_rsync'} -al --delete --numeric-ids --devices --rsh=$config_vars{'cmd_ssh'} $src $config_vars{'snapshot_root'}/$interval.0/$$sp_ref{'dest'}\n"; }
+			if ($verbose)	{ print "$config_vars{'cmd_rsync'} $rsync_args --delete --numeric-ids --devices --rsh=$config_vars{'cmd_ssh'} $src $config_vars{'snapshot_root'}/$interval.0/$$sp_ref{'dest'}\n"; }
 			if (0 == $test)	{
-				system( $config_vars{'cmd_rsync'}, '-al', '--delete', '--numeric-ids', '--devices', "--rsh=$config_vars{'cmd_ssh'}", $src, "$config_vars{'snapshot_root'}/$interval.0/$$sp_ref{'dest'}" );
+				system( $config_vars{'cmd_rsync'}, $rsync_args, '--delete', '--numeric-ids', '--devices', "--rsh=$config_vars{'cmd_ssh'}", $src, "$config_vars{'snapshot_root'}/$interval.0/$$sp_ref{'dest'}" );
 			}
 			
 		# anonymous rsync
 		} elsif ($src =~ /^rsync:\/\/.*$/)	{
-			if ($verbose)	{ print "$config_vars{'cmd_rsync'} -alq --delete --numeric-ids --devices $src $config_vars{'snapshot_root'}/$interval.0/$$sp_ref{'dest'}\n"; }
+			$rsync_args .= 'q';
+			
+			if ($verbose)	{ print "$config_vars{'cmd_rsync'} $rsync_args --delete --numeric-ids --devices $src $config_vars{'snapshot_root'}/$interval.0/$$sp_ref{'dest'}\n"; }
 			if (0 == $test)	{
-				system( $config_vars{'cmd_rsync'}, '-alq', '--delete', '--numeric-ids', '--devices', $src, "$config_vars{'snapshot_root'}/$interval.0/$$sp_ref{'dest'}" );
+				system( $config_vars{'cmd_rsync'}, $rsync_args, '--delete', '--numeric-ids', '--devices', $src, "$config_vars{'snapshot_root'}/$interval.0/$$sp_ref{'dest'}" );
 			}
 			
 		# local filesystem
 		} else	{
-			if ($verbose)	{ print "$config_vars{'cmd_rsync'} -al --delete --numeric-ids --devices $src $config_vars{'snapshot_root'}/$interval.0/$$sp_ref{'dest'}\n"; }
+			if ($verbose)	{ print "$config_vars{'cmd_rsync'} $rsync_args --delete --numeric-ids --devices $src $config_vars{'snapshot_root'}/$interval.0/$$sp_ref{'dest'}\n"; }
 			if (0 == $test)	{
-				system( $config_vars{'cmd_rsync'}, '-al', '--delete', '--numeric-ids', '--devices', $src, "$config_vars{'snapshot_root'}/$interval.0/$$sp_ref{'dest'}" );
+				system( $config_vars{'cmd_rsync'}, $rsync_args, '--delete', '--numeric-ids', '--devices', $src, "$config_vars{'snapshot_root'}/$interval.0/$$sp_ref{'dest'}" );
 			}
 		}
 	}
@@ -583,8 +597,8 @@ sub bail	{
 	my $str = shift(@_);
 	print STDERR $str . "\n";
 	exit(-1);
-} 
- 
+}
+
 sub show_help	{
 	show_usage();
 	
@@ -598,10 +612,11 @@ and you are welcome to redistribute it under certain conditions.
 See the GNU General Public Licence for details.
 
 Options:
-    -v verbose - show equivalent shell commands being executed
-    -t test    - show equivalent shell commands that would have been executed
-    -t quiet   - supress non-fatal warnings
-    -c [file]  - specify alternate config file (-c /path/to/file)
+    -v verbose       - show equivalent shell commands being executed
+    -V extra verbose - same as -v, but show rsync output as well
+    -t test          - show equivalent shell commands that would be executed
+    -t quiet         - supress non-fatal warnings
+    -c [file]        - specify alternate config file (-c /path/to/file)
 HERE
 	
 	exit(0);
@@ -609,10 +624,10 @@ HERE
 
 sub show_usage	{
 	print "rsnapshot $VERSION\n";
-	print "Usage: rsnapshot [-v] [-t] [-q] [-c /alt/config/file] <interval>|configtest|help|version\n";
+	print "Usage: rsnapshot [-vVtq] [-c /alt/config/file] <interval>|configtest|help|version\n";
 	print "Type \"man rsnapshot\" for full details.\n";
-} 
- 
+}
+
 sub cp_al	{
 	my $src  = shift(@_);
 	my $dest = shift(@_);
@@ -626,8 +641,8 @@ sub cp_al	{
 	
 	return ($result);
 }
- 
-# this is a wrapper to call the GNU version of "cp" 
+
+# this is a wrapper to call the GNU version of "cp"
 # it might fail in mysterious ways if you have a different version of "cp"
 #
 sub gnu_cp_al	{
@@ -653,8 +668,8 @@ sub gnu_cp_al	{
 	}
 	
 	return (1);
-} 
- 
+}
+
 # this is the purpose built, native perl replacement for "cp -al".
 # it does not copy "special" files: block, char, fifo, or sockets.
 # never the less, it does do regular files, directories, and symlinks
@@ -810,16 +825,16 @@ sub native_cp_al	{
 #####################
 ### PERLDOC / POD ###
 #####################
- 
-=pod 
- 
+
+=pod
+
 =head1 NAME
 
 rsnapshot - remote filesystem snapshot utility
 
 =head1 SYNOPSIS
 
-B<rsnapshot> [B<-v>] [B<-t>] [B<-q>] [B<-c> /alt/config/file] [command]
+B<rsnapshot> [B<-vVtq>] [B<-c> /alt/config/file] [command]
 
 =head1 DESCRIPTION
 
@@ -851,6 +866,8 @@ The command line options are as follows:
 =over 4
 
 B<-v> verbose, show shell commands being executed
+
+B<-V> same as -v, but show rsync output as well
 
 B<-t> test, show shell commands that would be executed
 
