@@ -26,6 +26,8 @@ clean:
 	/bin/rm -f Makefile config.log config.status rsnapshot
 	
 debian:
+	./configure --prefix=/usr --sysconfdir=/etc --mandir=/usr/share/man
+	
 	/bin/mkdir -p ${DEB_BUILD_DIR}/{DEBIAN,usr/bin,etc,usr/share/man/man1}
 	/bin/cp DEBIAN/{control,conffiles} ${DEB_BUILD_DIR}/DEBIAN/
 	
