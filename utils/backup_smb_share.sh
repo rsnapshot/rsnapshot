@@ -34,5 +34,5 @@ SHARE=home
 AUTHFILE=/path/to/authfile
 
 # connect to the SMB share using the authfile
-/usr/local/samba/bin/smbclient -A ${AUTHFILE} //${SERVER}/${SHARE} -Tc - 2>/dev/null | tar xf -
+/usr/local/samba/bin/smbclient //${SERVER}/${SHARE} -A ${AUTHFILE} -Tc - 2>/dev/null | tar xf -
 

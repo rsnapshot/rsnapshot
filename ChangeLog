@@ -9,6 +9,7 @@ VERSION 1.1.7 (??? ?? ??:?? 2004)
 - Changed default lockfile to /var/run/rsnapshot.pid, for FHS compliance
 - Clarified man page licensing (GPL)
 - Fixed is_real_local_abs_path() to handle dangling symlinks
+- Changed utils/backup_smb_share.sh to re-order the smbtar arguments
 
 VERSION 1.1.6 (Jul 05 16:35 2004)
 ------------------------------------------------------------------------------

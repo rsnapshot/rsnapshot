@@ -1978,6 +1978,7 @@ sub is_real_local_abs_path	{
 	
 	if (!defined($path))	{ return (undef); }
 	if (1 == is_valid_local_abs_path($path))	{
+		# check for symlinks first, since they might not link to a real file
 		if ((-l "$path") or (-e "$path"))	{
 			return (1);
 		}
