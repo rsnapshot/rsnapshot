@@ -3101,6 +3101,8 @@ sub rm_rf	{
 		
 	# fall back on rmtree()
 	} else	{
+		# remove trailing slash just in case
+		$path =~ s/\/$//;
 		$result = rmtree("$path", 0, 0);
 	}
 	

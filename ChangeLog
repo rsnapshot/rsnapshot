@@ -32,6 +32,7 @@ VERSION 1.1.6 (??? ?? ??:?? 2004)
 - Clarified crontab entry timing in man page
 - Removed trailing slashes on calls to mkpath() to fix bug with NetBSD
 - Removed trailing slashes on calls to rename() to fix bug with NetBSD
+- Removed trailing slashes on calls to rmtree() just in case
 
 VERSION 1.1.5 (Jun 20 20:56 2004)
 ------------------------------------------------------------------------------
