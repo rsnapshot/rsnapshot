@@ -3,6 +3,10 @@ rsnapshot changelog
 http://www.rsnapshot.org/
 ------------------------------------------------------------------------------
 
+VERSION 1.1.3 (??? ?? ??:?? 2004)
+------------------------------------------------------------------------------
+- Changed system call to rsync so a string is passed instead of an array
+
 VERSION 1.1.2 (Mar 17 02:12 2004)
 ------------------------------------------------------------------------------
 - Fixed slash formatting issue with non-ssh rsync protocol calls
