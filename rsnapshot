@@ -269,8 +269,14 @@ if ( -f $config_file )	{
 			
 			if ( !defined($config_vars{'snapshot_root'}) )	{	bail("snapshot_root needs to be defined before backup points"); }
 			
-			# make sure we have a full path for the source
-			if ($src  !~ /^\//)	{ bail("Backup source $src must be a full path"); }
+			# make sure we have a full path for the source:
+			# not a valid local path
+			if ($src !~ /^\//)	{
+				# not a valid ssh path
+				if ($src !~ /^.*?\@.*?:\/.*$/)	{
+					bail("Backup source $src must be a full path");
+				}
+			}
 			
 			# make sure we have a local path for the destination
 			if ($dest =~ /^\//)	{ bail("Backup destination $dest must be a local path"); }
