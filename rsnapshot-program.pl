@@ -163,11 +163,13 @@ $config_file = find_config_file();
 # (this can override $config_file, if the -c flag is used on the command line)
 get_cmd_line_opts();
 
-# if we need to run a command that doesn't require the config file, do it now
-if ( ! $cmd )	{
+# if we were called with no arguments, show the usage information
+if (!defined($cmd) or ((! $cmd) && ('0' ne $cmd)) )	{
 	show_usage();
 	exit(1);
 }
+
+# if we need to run a command that doesn't require the config file, do it now (and exit)
 if ($cmd eq 'help')	{
 	show_help();
 	exit(0);
@@ -180,6 +182,8 @@ if ($cmd eq 'version_only')	{
 	print $VERSION;
 	exit(0);
 }
+
+# if we're just doing a configtest, set that flag
 if ($cmd eq 'configtest')	{
 	$do_configtest = 1;
 }
@@ -207,14 +211,13 @@ if ( -f "$config_file" )	{
 	exit(1);
 }
 
-# CONFIG TEST ONLY?
-# if so, pronounce success and quit right here
+# if we're just doing a configtest, exit here with the results
 if (1 == $do_configtest)	{
 	if (1 == $config_perfect)	{
 		print "Syntax OK\n";
 		exit(0);
 		
-	# this should never happen, because any errors should have killed the program before this
+	# this should never happen, because any errors should have killed the program before now
 	} else	{
 		print "Syntax Error\n";
 		exit(1);
