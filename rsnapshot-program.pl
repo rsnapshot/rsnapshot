@@ -27,11 +27,11 @@
 require 5.004;
 use strict;
 use DirHandle;
-use Cwd;					# cwd()
-use Getopt::Std;			# getopt(), getopts()
-use File::Path;				# mkpath(), rmtree()
-use File::stat;				# lstat()
-use POSIX qw(locale_h);		# setlocale()
+use Cwd;				# cwd()
+use Getopt::Std;		# getopt(), getopts()
+use File::Path;			# mkpath(), rmtree()
+use File::stat;			# lstat()
+use POSIX qw(locale_h);	# setlocale()
 
 #########################
 ### DECLARE VARIABLES ###
@@ -174,15 +174,6 @@ $SIG{'QUIT'}	= sub { bail('rsnapshot was sent QUIT signal... cleaning up'); };
 $SIG{'ABRT'}	= sub { bail('rsnapshot was sent ABRT signal... cleaning up'); };
 $SIG{'TERM'}	= sub { bail('rsnapshot was sent TERM signal... cleaning up'); };
 
-########################
-### SET POSIX LOCALE ###
-########################
-
-# this fixes some reported problems with rmtree()
-# or at least, we hope it will after testing
-
-setlocale(LC_ALL, 'C');
-
 ##############################
 ### GET COMMAND LINE INPUT ###
 ##############################
@@ -247,6 +238,16 @@ if ($cmd eq 'configtest')	{
 	$do_configtest = 1;
 }
 # if we made it here, we didn't exit
+
+########################
+### SET POSIX LOCALE ###
+########################
+
+# this fixes some reported problems with rmtree()
+# or at least, we hope it will after testing
+
+print_msg("Setting locale to POSIX \"C\"", 4);
+setlocale(POSIX::LC_ALL, 'C');
 
 #########################
 ### PARSE CONFIG FILE ###
