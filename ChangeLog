@@ -3,7 +3,7 @@ rsnapshot changelog
 http://www.rsnapshot.org/
 ------------------------------------------------------------------------------
 
-VERSION 1.1.4 (??? ?? ??:?? 2004)
+VERSION 1.1.4 (Apr 30 22:43 2004)
 ------------------------------------------------------------------------------
 - Set LC_ALL locale variable to C in an attempt to fix rmtree() locale issue
 - Added utils/make_cvs_snapshot.sh utility script
