@@ -9,43 +9,44 @@ and you are welcome to redistribute it under certain conditions.
 See the GNU General Public Licence for details.
 
 INSTALLATION
-	
-	IF YOU ARE UPGRADING FROM A PREVIOUS INSTALLATION:
-		
-		./configure --sysconfdir=/etc
-		su
-		make install
-		
-	IF YOU ARE INSTALLING FOR THE FIRST TIME (and just want the defaults):
-		
-		./configure
-		su
-		make install
-		cp /usr/local/etc/rsnapshot.conf.default /usr/local/etc/rsnapshot.conf
-		# Modify /usr/local/etc/rsnapshot.conf to suit your system.
-		
-	Please note that rsnapshot now uses GNU autoconf for the installation
-	procedure. You can use the following options to configure for more control
-	over where various parts of rsnapshot are installed. The example values
-	shown also happen to be the defaults.
-		
-		--prefix=/usr/local
-			This will install everything under /usr/local
-			
-		--sysconfdir=/usr/local/etc
-			This will install the example config file under /usr/local/etc.
-			It is recommended that you copy this and use it as a basis for
-			the actual config file.
-			
-		--bindir=/usr/local/bin
-			This will install the rsnapshot script under /usr/local/bin
-			
-		--mandir=/usr/local/man
-			This will install the man page under /usr/local/man
-			
+
+    IF YOU ARE UPGRADING FROM A PREVIOUS INSTALLATION:
+
+        ./configure --sysconfdir=/etc
+        su
+        make install
+
+    IF YOU ARE INSTALLING FOR THE FIRST TIME (and just want the defaults):
+
+        ./configure
+        su
+        make install
+        cp /usr/local/etc/rsnapshot.conf.default /usr/local/etc/rsnapshot.conf
+        # Modify /usr/local/etc/rsnapshot.conf to suit your system.
+
+    IF YOU REQUIRE MORE PRECISE CONTROL:
+
+        You can pass the following options to ./configure for more control
+        over where various parts of rsnapshot are installed. The example
+        values shown also happen to be the defaults.
+
+            --prefix=/usr/local
+                This will install everything under /usr/local
+
+            --sysconfdir=/usr/local/etc
+                This will install the example config file under /usr/local/etc.
+                It is recommended that you copy this and use it as a basis for
+                the actual config file.
+
+            --bindir=/usr/local/bin
+                This will install the rsnapshot script under /usr/local/bin
+
+            --mandir=/usr/local/man
+                This will install the man page under /usr/local/man
+
 CONFIGURATION
-	Edit /etc/rsnapshot.conf to suit your tastes. The exact location of this
-	file depends on how you installed rsnapshot.
-	
-	Type "man rsnapshot" for the full documentation.
-	
+    Edit /etc/rsnapshot.conf to suit your tastes. The exact location of this
+    file depends on how you installed rsnapshot.
+
+    Type "man rsnapshot" for the full documentation.
+
