@@ -8,6 +8,7 @@ VERSION 1.1.3 (??? ?? ??:?? 2004)
 - Validating rsync_short_args, must be in format '-an', not '-a -n'
 - Assembling @cmd_stack list one at a time, rather than using join()
 - Added "don't panic" message in rotate_interval() at verbose >= 4
+  when no filesystem actions get performed
 - Fixed latent display bug in print_msg() (now that it's getting used)
 
 VERSION 1.1.2 (Mar 17 02:12 2004)
