@@ -36,7 +36,7 @@ snapshot_root	/.snapshots/
 # Uncomment this to enable remote ssh backups over rsync.
 #@CMD_SSH@
 
-# Uncomment this to enable syslog logging.
+# Uncomment this to enable syslog support.
 #@CMD_LOGGER@
 
 #########################################
