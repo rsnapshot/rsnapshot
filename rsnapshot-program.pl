@@ -4084,6 +4084,11 @@ This example will do the following:
 
 =back
 
+It is usually a good idea to schedule the larger intervals to run a bit before the
+lower ones. For example, in the crontab above, notice that "daily" runs 10 minutes
+before "hourly". This helps prevent race conditions where the "daily" would try to
+run before the "hourly" job had finished.
+
 Remember that these are just the times that the program runs.
 To set the number of backups stored, set the interval numbers in B</etc/rsnapshot.conf>
 

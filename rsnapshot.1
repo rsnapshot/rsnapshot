@@ -129,7 +129,7 @@
 .\" ========================================================================
 .\"
 .IX Title "rsnapshot 1"
-.TH rsnapshot 1 "2004-06-25" "" ""
+.TH rsnapshot 1 "2004-07-02" "" ""
 .SH "NAME"
 rsnapshot \- remote filesystem snapshot utility
 .SH "SYNOPSIS"
@@ -569,6 +569,11 @@ This example will do the following:
 .Sp
 1 monthly backup every month, at 11:30PM on the 1st day of the month
 .RE
+.PP
+It is usually a good idea to schedule the larger intervals to run a bit before the
+lower ones. For example, in the crontab above, notice that \*(L"daily\*(R" runs 10 minutes
+before \*(L"hourly\*(R". This helps prevent race conditions where the \*(L"daily\*(R" would try to
+run before the \*(L"hourly\*(R" job had finished.
 .PP
 Remember that these are just the times that the program runs.
 To set the number of backups stored, set the interval numbers in \fB/etc/rsnapshot.conf\fR
