@@ -3,7 +3,7 @@ rsnapshot changelog
 http://www.rsnapshot.org/
 ------------------------------------------------------------------------------
 
-VERSION 1.1.1 (Feb ? ??:?? 2004)
+VERSION 1.1.1 (Feb 11 23:24 2004)
 ------------------------------------------------------------------------------
 - Changed some fatal errors to warnings in some recursive subroutines
 - Added optional GPG support to the rsnaptar utility shell script
