@@ -569,6 +569,7 @@ sub parse_config_file	{
 			my $dest		= $value2;	# dest directory
 			my $opt_str		= $value3;	# option string from this backup point
 			my $opts_ref	= undef;	# array_ref to hold parsed opts
+			my %hash;					# data to stick in @backup_points
 			
 			if ( !defined($config_vars{'snapshot_root'}) )	{
 				config_err($file_line_num, "$line - snapshot_root needs to be defined before backup points");
@@ -635,47 +636,19 @@ sub parse_config_file	{
 				}
 			}
 			
-			# remember src/dest
-			# also, first check to see that we're not backing up the snapshot directory
+			# make sure we're not backing up the snapshot directory
+			# if so, set a flag for rsync_backup_point() to add --exclude rules later
 			if ((is_real_local_abs_path("$src")) && ($config_vars{'snapshot_root'} =~ m/^$src/))	{
-				
-				# remove trailing slashes from source and dest, since we will be using our own
-				$src	= remove_trailing_slash($src);
-				$dest	= remove_trailing_slash($dest);
-				
-				opendir(SRC, "$src") or bail("Could not open $src");
-				
-				while (my $node = readdir(SRC))	{
-					next if ($node =~ m/^\.\.?$/o);	# skip '.' and '..'
-					
-					if ("$src/$node" ne "$config_vars{'snapshot_root'}")	{
-						my %hash;
-						
-						# avoid double slashes from root filesystem
-						if ($src eq '/')	{
-							$hash{'src'}	= "/$node";
-						} else	{
-							$hash{'src'}	= "$src/$node";
-						}
-						
-						$hash{'dest'}	= "$dest/$node";
-						
-						if (defined($opts_ref))	{
-							$hash{'opts'} = $opts_ref;
-						}
-						push(@backup_points, \%hash);
-					}
-				}
-				closedir(SRC);
-			} else	{
-				my %hash;
-				$hash{'src'}	= $src;
-				$hash{'dest'}	= $dest;
-				if (defined($opts_ref))	{
-					$hash{'opts'} = $opts_ref;
-				}
-				push(@backup_points, \%hash);
+				$hash{'exclude_snapshot_root'} = 1;
 			}
+			
+			# remember src/dest
+			$hash{'src'}	= $src;
+			$hash{'dest'}	= $dest;
+			if (defined($opts_ref))	{
+				$hash{'opts'} = $opts_ref;
+			}
+			push(@backup_points, \%hash);
 			
 			next;
 		}
@@ -2316,7 +2289,11 @@ sub rsync_backup_point	{
 	#
 	# local filesystem
 	if ( is_real_local_abs_path($$bp_ref{'src'}) )	{
-		# no change
+		# make sure we're not backing up the snapshot_root!
+		if ( defined($$bp_ref{'exclude_snapshot_root'}) )	{
+			# TODO: figure out exclude rules here
+			push( @rsync_long_args_stack, "--exclude=$config_vars{'snapshot_root'}/**" );
+		}
 		
 	# if this is a user@host:/path, use ssh
 	} elsif ( is_ssh_path($$bp_ref{'src'}) )	{
