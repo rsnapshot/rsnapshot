@@ -29,7 +29,7 @@ use Getopt::Std;
 ### DECLARE VARIABLES ###
 #########################
 
-my $VERSION = '0.9.4';
+my $VERSION = '0.9.5';
 
 # default configuration file
 my $config_file	= '/etc/rsnapshot.conf'; 
