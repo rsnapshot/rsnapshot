@@ -1,9 +1,5 @@
 #!/usr/bin/perl -w
 
-# TODO: make backup_lowest_interval() and rotate_higher_interval()
-# check to see that they're operating on the correct interval
-# since they both get an $id_ref they can do this now
-
 ########################################################################
 #                                                                      #
 # rsnapshot                                                            #
@@ -2060,6 +2056,11 @@ sub backup_lowest_interval	{
 	# this should never happen
 	if (!defined($id_ref))	{ bail('backup_lowest_interval() expects an argument'); }
 	
+	# this also should never happen
+	if (!defined($$id_ref{'interval_num'}) or (0 != $$id_ref{'interval_num'}))	{
+		bail('backup_lowest_interval() can only operate on the lowest interval');
+	}
+	
 	# rotate the higher directories in this interval
 	#
 	rotate_lowest_snapshots( $$id_ref{'interval'} );
@@ -2660,6 +2661,11 @@ sub rotate_higher_interval	{
 	
 	# this should never happen
 	if (!defined($id_ref))	{ bail('rotate_higher_interval() expects an interval_data_ref'); }
+	
+	# this also should never happen
+	if (!defined($$id_ref{'interval_num'}) or (0 == $$id_ref{'interval_num'}))	{
+		bail('backup_lowest_interval() can only operate on the higher intervals');
+	}
 	
 	# set up variables for convenience since we refer to them extensively
 	my $interval			= $$id_ref{'interval'};
