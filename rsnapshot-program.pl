@@ -2358,7 +2358,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 =head1 SEE ALSO
 
-rsync(1), ssh(1), sshd(1), ssh-keygen(1), perl(1), cp(1)
+rsync(1), ssh(1), logger(1), sshd(1), ssh-keygen(1), perl(1), cp(1)
 
 =head1 DIAGNOSTICS
 
