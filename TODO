@@ -2,6 +2,9 @@ rsnapshot TODO list:
 
 for version 1.0.x
 ------------------------------------------------------------------------------
+- Add include/exclude and include_file/exclude_file feature to local args,
+  currently it's just on the global level
+
 - Figure out a way to do transfers the other way: from clients to the server
   instead of just from the server to the clients. Of course it will have to
   be very secure. Ideally we could support chroot environments for the
