@@ -4,9 +4,12 @@ http://www.rsnapshot.org/
 ------------------------------------------------------------------------------
 
 VERSION 1.0.9
-
+------------------------------------------------------------------------------
+- Added backup_mysql.sh example script in utils/ to backup a MySQL database
+- Added backup_smb_share.sh example script in utils/ to backup an SMB share
 
 VERSION 1.0.8
+------------------------------------------------------------------------------
 - Added backup_script option to have rsnapshot invoke backup scripts directly
 - Added two example backup scripts in the utils/ directory, one for Postgres,
   and one for downloading the CVS root for rsnapshot
@@ -17,6 +20,7 @@ VERSION 1.0.8
 - Moved add_lockfile() call so it runs later in the program
 
 VERSION 1.0.7
+------------------------------------------------------------------------------
 - Added ssh_args parameter to pass arbitrary args to ssh
 - Fully integrated Autoconf build support for the program and config file
 - Provided more helpful error messages when the config file is not found
@@ -24,6 +28,7 @@ VERSION 1.0.7
   but is referenced later in backup points
 
 VERSION 1.0.6
+------------------------------------------------------------------------------
 - added \n to utime() debug message
 - moved all rsync calls into dynamically populated arrays
 - added rsync_short_args and rsync_long_args to config file
