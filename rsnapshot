@@ -309,10 +309,10 @@ if ( -f $config_file )	{
 			# also, first check to see that we're not backing up the snapshot directory
 			if ((-e "$src") && ($config_vars{'snapshot_root'} =~ $src))	{
 				opendir(SRC, $src) or bail("Could not open $src");
-				readdir(SRC);	# .
-				readdir(SRC);	# ..
 				
 				while (my $node = readdir(SRC))	{
+					next if ($node =~ m/^\.\.?$/);	# skip '.' and '..'
+					
 					if ("$src/$node" ne "$config_vars{'snapshot_root'}")	{
 						my %hash;
 						$hash{'src'}	= "$src/$node";
@@ -625,7 +625,8 @@ Options:
     -v verbose       - show equivalent shell commands being executed
     -V extra verbose - same as -v, but show rsync output as well
     -t test          - show equivalent shell commands that would be executed
-    -t quiet         - supress non-fatal warnings
+    -q quiet         - supress non-fatal warnings
+    -x one_fs        - don't cross filesystems (-x option to rsync)
     -c [file]        - specify alternate config file (-c /path/to/file)
 HERE
 	
@@ -1109,7 +1110,7 @@ Rewritten and expanded in Perl by Nathan Rosenquist B<http://rsnapshot.sourcefor
 
 Carl Wilhelm Soderstrom B<(chrome@real-time.com)> created the RPM .spec file which allowed the RPM package to be built
 
-Ted Zlatanov wrote the one_fs patch (-x, keeps rsync from spanning partitions)
+Ted Zlatanov (B<tzz@lifelogs.com>) wrote the one_fs patch (-x, keeps rsync from spanning partitions)
 
 =head1 COPYRIGHT
 
