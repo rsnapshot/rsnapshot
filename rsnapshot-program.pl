@@ -3535,24 +3535,29 @@ sub show_disk_usage {
 	my $dest_path = '';
 	my $retval;
 	
-	if (defined($ARGV[1])) {
-		$dest_path = $ARGV[1];
-	}
-	
-	if (is_directory_traversal($dest_path)) {
-		print STDERR "ERROR: Directory traversal is not allowed\n";
-		exit(1);
-	}
-	if (is_valid_local_abs_path($dest_path)) {
-		print STDERR "ERROR: Full paths are not allowed\n";
-		exit(1);
-	}
-	
-	# make sure we have permission first
+	# first, make sure we have permission to see the snapshot root
 	if ( ! -r "$config_vars{'snapshot_root'}" ) {
 		print STDERR ("ERROR: Permission denied\n");
 		exit(1);
 	}
+	
+	# are we looking in subdirectories or at files?
+	if (defined($ARGV[1])) {
+		$dest_path = $ARGV[1];
+		
+		# consolidate multiple slashes
+		$dest_path =~ s/\/+/\//o;
+		
+		if (is_directory_traversal($dest_path)) {
+			print STDERR "ERROR: Directory traversal is not allowed\n";
+			exit(1);
+		}
+		if (is_valid_local_abs_path($dest_path)) {
+			print STDERR "ERROR: Full paths are not allowed\n";
+			exit(1);
+		}
+	}
+	
 	
 	# find the intervals that apply here
 	if (-r "$config_vars{'snapshot_root'}/") {
