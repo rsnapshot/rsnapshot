@@ -79,16 +79,16 @@ my $prev_interval_max;
 # by default, we use native perl
 my $use_gnu_cp = 0;
 
-# make sure we have rsync
+# make sure we have rsync, since this program depends on it
 my $have_rsync = 0;
 
-# command line flags
+# command line flags from getopt
 my %opts;
 
-# command or interval to execute
+# command or interval to execute (first cmd line arg)
 my $cmd;
 
-# parse config file and exit
+# parse config file and exit?
 my $do_configtest = 0;
 
 # show the shell commands being executed
@@ -162,9 +162,7 @@ if ( ! $cmd )	{
 }
 if ($cmd eq 'help')	{
 	show_help();
-}
-if ($cmd eq 'configtest')	{
-	$do_configtest = 1;
+	exit(0);
 }
 if ($cmd eq 'version')	{
 	print "rsnapshot $VERSION\n";
@@ -174,6 +172,10 @@ if ($cmd eq 'version_only')	{
 	print $VERSION;
 	exit(0);
 }
+if ($cmd eq 'configtest')	{
+	$do_configtest = 1;
+}
+# if we made it here, we didn't exit
 
 # PARSE CONFIG FILE
 if ( -f $config_file )	{
@@ -727,8 +729,6 @@ Options:
     -x one_fs        - don't cross filesystems (-x option to rsync)
     -c [file]        - specify alternate config file (-c /path/to/file)
 HERE
-	
-	exit(0);
 }
 
 sub show_usage	{
