@@ -91,6 +91,9 @@ my $verbose = 0;
 # show verbose messages from rsync
 my $extra_verbose = 0;
 
+# super verbose debugging messages
+my $debug = 0;
+
 # turn verbose on, but don't execute the commands
 my $test = 0;
 
@@ -121,6 +124,13 @@ if (defined($opts{'v'}))	{
 if (defined($opts{'V'}))	{
 	$verbose = 1;
 	$extra_verbose = 1;
+}
+
+# DEBUG
+if (defined($opts{'D'}))	{
+	$verbose = 1;
+	$extra_verbose = 1;
+	$debug = 1;
 }
 
 # TEST?
@@ -468,7 +478,7 @@ sub backup_interval	{
 			if ($use_gnu_cp)	{
 				print "$config_vars{'cmd_cp'} -al $config_vars{'snapshot_root'}/$interval.0/ $config_vars{'snapshot_root'}/$interval.1/\n";
 			} else	{
-				print "# native_cp_al(\"$config_vars{'snapshot_root'}/$interval.0/\", \"$config_vars{'snapshot_root'}/$interval.1/\");\n";
+				print "native_cp_al(\"$config_vars{'snapshot_root'}/$interval.0/\", \"$config_vars{'snapshot_root'}/$interval.1/\");\n";
 			}
 		}
 		if (0 == $test)	{
@@ -585,7 +595,7 @@ sub rotate_interval	{
 				print "$config_vars{'cmd_cp'} -al $config_vars{'snapshot_root'}/$prev_interval.$prev_interval_max/ ";
 				print "$config_vars{'snapshot_root'}/$interval.0/\n";
 			} else	{
-				print "# native_cp_al(\"$config_vars{'snapshot_root'}/$prev_interval.$prev_interval_max/\", ";
+				print "native_cp_al(\"$config_vars{'snapshot_root'}/$prev_interval.$prev_interval_max/\", ";
 				print "\"$config_vars{'snapshot_root'}/$interval.0/\");\n";
 			}
 		}
@@ -718,6 +728,7 @@ sub native_cp_al	{
 			print STDERR "Warning! Could not mkdir(\"$dest\", $st->mode);\n";
 			return(0);
 		}
+		if ($debug)	{ print "mkdir(\"$dest\", " . $st->mode . ");\n"; }
 	}
 	# CHOWN DEST
 	$result = chown($st->uid, $st->gid, "$dest");
@@ -725,6 +736,7 @@ sub native_cp_al	{
 		print STDERR "Warning! Could not chown(" . $st->uid . ", " . $st->gid . ", \"$dest\");\n";
 		return(0);
 	}
+	if ($debug)	{ print "chown(" . $st->uid . ", " . $st->gid . ", \"$dest\");\n"; }
 	
 	# READ DIR CONTENTS
 	$dh = new DirHandle( "$src" );
@@ -752,6 +764,7 @@ sub native_cp_al	{
 					print STDERR "Warning! Could not symlink(readlink(\"$src/$node\"), \"$dest/$node\")\n";
 					return (0);
 				}
+				if ($debug)	{ print "symlink(\"" . readlink("$src/$node") . "\", \"$dest/$node\");\n"; }
 				# CHOWN
 				if ( -e "$dest/$node" )	{
 					$result = chown($st->uid, $st->gid, "$dest/$node");
@@ -760,6 +773,7 @@ sub native_cp_al	{
 						return (0);
 					}
 				}
+				if ($debug)	{ print "chown(" . $st->uid . ", " . $st->gid . ", \"$dest/$node\");\n"; }
 				
 			# FIFO
 			} elsif ( -p "$src/$node" )	{
@@ -794,9 +808,12 @@ sub native_cp_al	{
 					print STDERR "Warning! Could not link(\"$src/$node\", \"$dest/$node\")\n";
 					return (0);
 				}
+				if ($debug)	{ print "link(\"$src/$node\", \"$dest/$node\");\n"; }
 				
 			# DIRECTORY
 			} elsif ( -d "$src/$node" )	{
+				
+				if ($debug)	{ print "native_cp_al(\"$src/$node\", \"$dest/$node\");\n"; }
 				
 				# call this subroutine recursively, to create the directory
 				$result = native_cp_al("$src/$node", "$dest/$node");
@@ -822,6 +839,7 @@ sub native_cp_al	{
 		print STDERR "Warning! Could not utime(" . $st->atime . ", " . $st->mtime . ", \"$dest\");\n";
 		return(0);
 	}
+	if ($debug)	{ print "utime(" . $st->atime . ", " . $st->mtime . ", \"$dest\");"; }
 	
 	return (1);
 }
