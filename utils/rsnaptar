@@ -40,10 +40,10 @@ cd ${SNAPSHOT_DIR}
 for BACKUP_POINT in `${LS} ${SNAPSHOT_DIR}`; do
 	${TAR} czf ${TAR_DIR}/${DATE}/${BACKUP_POINT}.tar.gz ${BACKUP_POINT}/
 done
+cd -
 
 # there are probably sensitive files here, so use the strictest permissions
 ${CHMOD} -R 0700 ${TAR_DIR}/
-cd -
 
 ${CAT} <<EOF | ${SENDMAIL}
 To: ${TO_EMAIL}
