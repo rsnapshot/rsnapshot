@@ -71,6 +71,10 @@ my $prev_interval;
 # i.e. cp -al hourly.$prev_interval_max/ daily.0/
 my $prev_interval_max;
 
+# protocol handlers
+# example: $handlers{'http'} = '/usr/bin/wget';
+my %handlers;
+
 # command line flags from getopt
 my %opts;
 
@@ -292,6 +296,20 @@ if ( -f "$config_file" )	{
 			}
 		}
 		
+		# CHECK FOR PROTOCOL HANDLERS
+		if ($var =~ /(\w*?)_handler$/)	{
+			my $protocol	= $1;
+			my $program		= $value;
+			
+			# if the handler program is executable, assign it to this protocol
+			if ( -x "$value" )	{
+				$handlers{$protocol} = $program;
+				$line_syntax_ok = 1;
+			} else	{
+				print STDERR "$value is not executable, so it can't handle the $protocol protocol\n";
+			}
+		}
+		
 		# INTERVALS
 		if ($var eq 'interval')	{
 			if (!defined($value))		{ bail("Interval can not be blank"); }
@@ -341,6 +359,10 @@ if ( -f "$config_file" )	{
 				
 			# if it's anonymous rsync, we're ok
 			} elsif ( is_anon_rsync_path($src) )	{
+				$line_syntax_ok = 1;
+				
+			# check for known protocol handlers
+			} elsif ( is_handler_path($src) )	{
 				$line_syntax_ok = 1;
 				
 			# fear the unknown
@@ -400,7 +422,7 @@ if ( -f "$config_file" )	{
 			my $dest		= $value2;	# dest directory
 			my %hash;
 			
-			if ( !defined($config_vars{'snapshot_root'}) )	{	bail("snapshot_root needs to be defined before backup points"); }
+			if ( !defined($config_vars{'snapshot_root'}) )	{ bail("snapshot_root needs to be defined before backup points"); }
 			
 			# make sure the script is a full path
 			if (1 == is_valid_local_abs_path($dest))	{
@@ -737,8 +759,14 @@ sub backup_interval	{
 				$rsync_short_args .= 'x';
 			}
 			
+			# SEE WHAT KIND OF SOURCE WE'RE DEALING WITH
+			#
+			# local filesystem
+			if ( is_real_local_abs_path($src) )	{
+				# no change
+				
 			# if this is a user@host:/path, use ssh
-			if ( is_ssh_path($src) )	{
+			} elsif ( is_ssh_path($src) )	{
 				
 				# if we have custom args to SSH, add them
 				if ( defined($config_vars{'ssh_args'}) && $config_vars{'ssh_args'} )	{
@@ -753,9 +781,17 @@ sub backup_interval	{
 			} elsif ( is_anon_rsync_path($src) )	{
 				if (0 == $extra_verbose)	{ $rsync_short_args .= 'q'; }
 				
-			# local filesystem
-			} elsif ( is_real_local_abs_path($src) )	{
-				# no change
+			# custom protocol handler
+			} elsif ( is_handler_path($src) )	{
+				# TODO:
+				# cd to tmp dir
+				# use the handler program to dump files into the cwd (tmp)
+				# set src = tmp
+				# run sync_if_different(tmp, dest)
+				#
+				# also, more than this little block should be changed
+				# the tmp dir handling code is already in the backup_script section below, we should leverage that
+				# furthermore, we'll use sync_if_different for handler content, not rsync
 				
 			# this should have already been validated once, but better safe than sorry
 			} else	{
@@ -854,7 +890,6 @@ sub backup_interval	{
 		} else	{
 			bail("Either src or script must be defined in backup_interval()");
 		}
-		
 	}
 	
 	# update mtime of $interval.0 to reflect the time this snapshot was taken
