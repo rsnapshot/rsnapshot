@@ -24,6 +24,7 @@ VERSION 1.2.0 (Jan ?? ??:?? 2005)
 - Clarified error message about local/relative paths in config file parsing
 - Added check for leading/trailing spaces in remote (ssh) paths
 - Added du(1) and crontab(1) to man page references
+- Added config.guess and config.sub for automake/autoconf build process
 
 VERSION 1.1.6 (Jul 05 16:35 2004)
 ------------------------------------------------------------------------------
