@@ -1,0 +1,20 @@
+The scripts in this folder are quick and dirty examples of things that you may
+or may not find useful in conjunction with rsnapshot.
+
+rsnaptar
+------------------------------------------------------------------------------
+    A script that can automatically tar up your latest snapshots and send you
+    an e-mail when it's done. You may need to edit some of the variables by
+    hand.
+
+backup_pgsql.sh
+------------------------------------------------------------------------------
+    An example script to backup a PostgreSQL database, to be invoked from
+    rsnapshot using the "backup_script" parameter.
+
+backup_rsnapshot_cvsroot.sh
+------------------------------------------------------------------------------
+    An example script to backup the CVS repository for the rsnapshot project,
+    which is hosted on SourceForge. This script is a good example of using
+    wget to archive web content in your backups. This script is designed to
+    be invoked from rsnapshot using the "backup_script" parameter.
