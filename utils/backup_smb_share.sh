@@ -8,6 +8,12 @@
 #
 # This script simply needs to dump the contents of the SMB share into the
 # current working directory. rsnapshot handles everything else.
+#
+# Please note that because of cross-platform issues, the files archived will
+# be owned by the user running rsnapshot to make the backup, not by the
+# original owner of the files. Also, any ACL permissions that may have been
+# on the Windows machine will be lost. However, the data in the files will
+# be archived safely.
 
 # IP or hostname to backup over SMB
 SERVER=192.168.1.10
