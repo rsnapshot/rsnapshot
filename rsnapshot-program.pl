@@ -855,10 +855,10 @@ if ((1 == $do_configtest) && (1 == $config_perfect))	{
 # this is orphaned down here because it needs to know the contents of the config file
 if ($cmd eq 'du')	{
 	my $retval = show_disk_usage();
-	if (1 == $retval)	{
-		exit (0);
+	if (!defined($retval))	{
+		exit (1);
 	} else	{
-		exit(1);
+		exit(0);
 	}
 }
 
