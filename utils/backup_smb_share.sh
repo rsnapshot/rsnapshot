@@ -1,5 +1,11 @@
 #!/bin/sh
 
+##############################################################################
+# backup_smb_share.sh
+#
+# by Nathan Rosenquist <nathan@rsnapshot.org>
+# http://www.rsnapshot.org/
+#
 # This is a simple shell script to backup an SMB share with rsnapshot.
 #
 # The assumption is that this will be invoked from rsnapshot. Also, for
@@ -14,6 +20,7 @@
 # original owner of the files. Also, any ACL permissions that may have been
 # on the Windows machine will be lost. However, the data in the files will
 # be archived safely.
+##############################################################################
 
 # IP or hostname to backup over SMB
 SERVER=192.168.1.10

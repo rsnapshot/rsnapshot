@@ -32,3 +32,11 @@ backup_smb_share.sh
     rsnapshot using the "backup_script" parameter. This requires the Samba
     program. You will definitely need to modify this for your system.
 
+make_cvs_snapshot.sh
+------------------------------------------------------------------------------
+    Quick and dirty shell script to find/replace "real" version numbers with
+    a CVS-date version.
+
+sign_packages.sh
+------------------------------------------------------------------------------
+    The shell script used to automate package signing for releases.

@@ -1,5 +1,11 @@
 #!/bin/sh
 
+##############################################################################
+# backup_mysql.sh
+#
+# by Nathan Rosenquist <nathan@rsnapshot.org>
+# http://www.rsnapshot.org/
+#
 # This is a simple shell script to backup a MySQL database with rsnapshot.
 #
 # The assumption is that this will be invoked from rsnapshot. Also, since it
@@ -9,6 +15,7 @@
 #
 # This script simply needs to dump a file into the current working directory.
 # rsnapshot handles everything else.
+##############################################################################
 
 # backup the database
 /usr/bin/mysqldump --all-databases > mysqldump_all_databases.sql

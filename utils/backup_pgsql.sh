@@ -1,5 +1,11 @@
 #!/bin/sh
 
+##############################################################################
+# backup_pgsql.sh
+#
+# by Nathan Rosenquist <nathan@rsnapshot.org>
+# http://www.rsnapshot.org/
+#
 # This is a simple shell script to backup a PostgreSQL database with rsnapshot.
 #
 # The assumption is that this will be invoked from rsnapshot. Also, since it
@@ -9,6 +15,7 @@
 #
 # This script simply needs to dump a file into the current working directory.
 # rsnapshot handles everything else.
+##############################################################################
 
 # backup the database
 /usr/local/pgsql/bin/pg_dumpall -Upostgres > pg_dumpall.sql

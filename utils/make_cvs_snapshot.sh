@@ -1,11 +1,16 @@
 #!/bin/sh
 
+##############################################################################
 # make_cvs_snapshot.sh
+#
+# by Nathan Rosenquist <nathan@rsnapshot.org>
+# http://www.rsnapshot.org/
 #
 # this script just does a find/replace in the source tree to change
 # the version number to CVS-$DATE
 #
 # this was done before manually, now it's automatic
+##############################################################################
 
 if [ $PWD = "$HOME/rsnapshot" ]; then
 	echo "This is not where you want to be. cp -r to a different directory first!"
