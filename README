@@ -132,3 +132,6 @@ Ralf van Dooren <r.vdooren@snow.nl>
 SlapAyoda
     - Provided access to his computer museum for software testing
 
+Carl Boe <boe@demog.berkeley.edu>
+	- Found several subtle bugs and provided fixes for them
+

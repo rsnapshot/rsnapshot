@@ -3359,6 +3359,9 @@ and many good ideas.
 Ralf van Dooren (B<r.vdooren@snow.nl>) added and maintains the
 rsnapshot entry in the FreeBSD ports tree.
 
+Carl Boe (B<boe@demog.berkeley.edu>) Found several subtle bugs and
+provided fixes for them.
+
 =head1 COPYRIGHT
 
 Copyright (C) 2003-2004 Nathan Rosenquist
