@@ -763,12 +763,6 @@ sub native_cp_al	{
 		print STDERR "Warning! Could not chmod(" . $st->mode . ", \"$dest\");\n";
 		return(0);
 	}
-	# UTIME DEST
-	$result = utime($st->atime, $st->mtime, "$dest");
-	if (! $result)	{
-		print STDERR "Warning! Could not utime(" . $st->atime . ", " . $st->mtime . ", \"$dest\");\n";
-		return(0);
-	}
 	
 	# READ DIR CONTENTS
 	$dh = new DirHandle( "$src" );
@@ -859,6 +853,13 @@ sub native_cp_al	{
 	# close open dir handle
 	if (defined($dh))	{ $dh->close(); }
 	undef( $dh );
+	
+	# UTIME DEST
+	$result = utime($st->atime, $st->mtime, "$dest");
+	if (! $result)	{
+		print STDERR "Warning! Could not utime(" . $st->atime . ", " . $st->mtime . ", \"$dest\");\n";
+		return(0);
+	}
 	
 	return (1);
 }
