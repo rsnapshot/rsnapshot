@@ -22,6 +22,7 @@ VERSION 1.1.6 (??? ?? ??:?? 2004)
 - Removed redundant $done flag from file_diff() while loop
 - Downgraded close() file errors to warnings
 - Added utils/backup_dpkg.sh to backup Debian package information
+- Simplified the utils/ section of the Makefile under "make tar"
 
 VERSION 1.1.5 (Jun 20 20:56 2004)
 ------------------------------------------------------------------------------
