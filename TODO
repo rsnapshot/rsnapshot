@@ -29,7 +29,10 @@ for version 1.1.x
 
 - Update string manipulations and comparisons of paths to use File::Spec and
   File::Basename functions where possible. Double check they're fully
-  compatible with Perl 5.004
+  compatible with Perl 5.004.
+
+- Add an option to prevent rsnapshot from creating the snapshot_root directory
+  if it doesn't exist.
 
 for version 2.0.x
 ------------------------------------------------------------------------------
