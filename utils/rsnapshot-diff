@@ -3,34 +3,106 @@
 use warnings;
 use strict;
 
-eval {
-	require File::Find::Rule;
+use constant DEBUG => 1;
+use Data::Dumper;
+my $verbose = 0;
+
+if(@ARGV && $ARGV[0] eq '-h') {
+    print qq{
+    $0 [-v] dir1 dir2
+
+    $0 shows the differences between two 'rsnapshot' backups.
+
+    -h    show this help
+    -v    be verbose
+    dir1  the first directory to look at
+    dir2  the second directory to look at
+
+    if you want to look at directories called '-h' or '-v' pass a
+    first parameter of '--'.
+
+    $0 always show the changes made starting from the older
+    of the two directories.
 };
-if ($@) {
-	print STDERR "Could not load File::Find::Rule\n";
-	print STDERR "Please install this module from CPAN, and try again\n";
-	exit(1);
+    exit;
+} elsif(@ARGV && $ARGV[0] eq '-v') {
+    $verbose = 1;
+    shift;
+} elsif(@ARGV && $ARGV[0] eq '--') { shift; }
+
+if(!exists($ARGV[1]) || !-d $ARGV[0] || !-d $ARGV[1]) {
+    die("Dodgy command line arguments\n");
 }
 
-my($dir1, $dir2) = @ARGV;
+my($dirold, $dirnew) = @ARGV;
+($dirold, $dirnew) = ($dirnew, $dirold) if(-M $dirold < -M $dirnew);
+print "comparing $dirold to $dirnew\n";
 
-die("Need to give me two directories\n")
-    unless($dir1 && $dir2 && -d $dir1 && -d $dir2);
+my($addedfiles, $addedspace, $deletedfiles, $deletedspace) = (0, 0, 0, 0);
 
-my %files1 = map {
-    $_ = substr($_, length($dir1)); ($_, 1)
-} File::Find::Rule->file()->in($dir1);
-my %files2 = map {
-    $_ = substr($_, length($dir2)); ($_, 1)
-} File::Find::Rule->file()->in($dir2);
-my @added_files = grep { !exists($files1{$_}) } keys(%files2);
-my @deleted_files = grep { !exists($files2{$_}) } keys(%files1);
+compare_dirs($dirold, $dirnew);
 
-my($added_space, $saved_space) = (0, 0);
-$added_space += (stat("$dir2/$_"))[7] foreach (@added_files);
-$saved_space += (stat("$dir1/$_"))[7] foreach (@deleted_files);
+print "Between $dirold and $dirnew:\n";
+print "  $addedfiles were added, taking $addedspace bytes;\n";
+print "  $deletedfiles were removed, saving $deletedspace bytes;\n";
 
-print "Added ".scalar(@added_files)." files\n";
-print "  which take up $added_space bytes\n";
-print "Deleted ".scalar(@deleted_files)." files\n";
-print "  which saved $saved_space bytes\n"; 
+sub compare_dirs {
+    my($old, $new) = @_;
+
+    opendir(OLD, $old) || die("Can't open dir $old\n");
+    opendir(NEW, $new) || die("Can't open dir $new\n");
+    my %old = map {
+        my $fn = $old.'/'.$_;
+        ($_, (mystat($fn))[1])
+    } grep { $_ ne '.' && $_ ne '..' } readdir(OLD);
+    my %new = map {
+        my $fn = $new.'/'.$_;
+        ($_, (mystat($fn))[1])
+    } grep { $_ ne '.' && $_ ne '..' } readdir(NEW);
+    closedir(OLD);
+    closedir(NEW);
+
+    my @added = grep { !exists($old{$_}) } keys %new;
+    my @deleted = grep { !exists($new{$_}) } keys %old;
+    my @changed = grep { !-d $new.'/'.$_ && exists($old{$_}) && $old{$_} != $new{$_} } keys %new;
+
+    # print "Adding ".join(', ', @added, @changed)."\n" if(DEBUG);
+    add(map { $new.'/'.$_ } @added, @changed);
+    # print "Removing ".join(', ', @deleted, @changed)."\n" if(DEBUG);
+    remove(map { $old.'/'.$_ } @deleted, @changed);
+    
+    foreach (grep { !-l $new.'/'.$_ && !-l $old.'/'.$_ && -d $new.'/'.$_ && -d $old.'/'.$_ } keys %new) {
+        print "Comparing subdirs $new/$_ and $old/$_ ...\n" if(DEBUG);
+        compare_dirs($old.'/'.$_, $new.'/'.$_);
+    }
+}
+
+sub add {
+    my @added = @_;
+    foreach(grep { !-d } @added) {
+        $addedfiles++;
+        $addedspace += (mystat($_))[7];
+    }
+    foreach my $dir (grep { -d } @added) {
+        opendir(DIR, $dir) || die("Can't open dir $dir\n");
+        add(map { $dir.'/'.$_ } grep { $_ ne '.' && $_ ne '..' } readdir(DIR))
+    }
+}
+
+sub remove {
+    my @removed = @_;
+    foreach(grep { !-d } @removed) {
+        $deletedfiles++;
+        $deletedspace += (mystat($_))[7];
+    }
+    foreach my $dir (grep { -d } @removed) {
+        opendir(DIR, $dir) || die("Can't open dir $dir\n");
+        remove(map { $dir.'/'.$_ } grep { $_ ne '.' && $_ ne '..' } readdir(DIR))
+    }
+}
+
+sub mystat {
+    local $_ = shift;
+    (-l) ? lstat() : stat();
+}
+
