@@ -16,6 +16,8 @@ VERSION 1.1.6 (??? ?? ??:?? 2004)
   parse_config_file()
 - Removed the $have_{cmd} global variables entirely
 - Took %opts out of the global namespace and into get_cmd_line_opts()
+- Changed a failed syslog call from an error to a warning
+- Removed $cwd from global namespace
 
 VERSION 1.1.5 (Jun 20 20:56 2004)
 ------------------------------------------------------------------------------

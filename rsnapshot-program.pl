@@ -111,9 +111,6 @@ my $display_rm = 'rm';
 # this is set before getopt() can destroy it
 my $run_string = "$0 " . join(' ', @ARGV);
 
-# remember what directory we started in
-my $cwd = cwd();
-
 ###############
 ### SIGNALS ###
 ###############
@@ -2437,6 +2434,9 @@ sub exec_backup_script	{
 	my $script					= undef;
 	my $tmpdir					= undef;
 	my $result					= undef;
+	
+	# remember what directory we started in
+	my $cwd = cwd();
 	
 	# create $interval.0/$$bp_ref{'dest'} directory if it doesn't exist
 	#
