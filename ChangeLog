@@ -11,6 +11,7 @@ VERSION 1.1.5 (??? ?? ??:?? 2004)
 - Print PID in lockfile
 - Added a few more comments, clarified some existing comments
 - Made some minor updates to the man page
+- Fix display formatting double-slash bug when '/' is a backup point
 
 VERSION 1.1.4 (May 16 23:44 2004)
 ------------------------------------------------------------------------------

@@ -487,14 +487,11 @@ if ( -f "$config_file" )	{
 			
 			# remember src/dest
 			# also, first check to see that we're not backing up the snapshot directory
-			if ((is_real_local_abs_path("$src")) && ($config_vars{'snapshot_root'} =~ $src))	{
+			if ((is_real_local_abs_path("$src")) && ($config_vars{'snapshot_root'} =~ m/^$src/))	{
 				
-				# remove trailing slash from source, since we will be using our own,
-				# unless the user is trying to backup the root filesystem itself...
-				# and if they are they'd better be using one_fs!
-				if ($src ne '/')	{
-					$src = remove_trailing_slash($src);
-				}
+				# remove trailing slashes from source and dest, since we will be using our own
+				$src	= remove_trailing_slash($src);
+				$dest	= remove_trailing_slash($dest);
 				
 				opendir(SRC, "$src") or bail("Could not open $src");
 				
@@ -503,8 +500,16 @@ if ( -f "$config_file" )	{
 					
 					if ("$src/$node" ne "$config_vars{'snapshot_root'}")	{
 						my %hash;
-						$hash{'src'}	= "$src/$node";
+						
+						# avoid double slashes from root filesystem
+						if ($src eq '/')	{
+							$hash{'src'}	= "/$node";
+						} else	{
+							$hash{'src'}	= "$src/$node";
+						}
+						
 						$hash{'dest'}	= "$dest/$node";
+						
 						if (defined($opts_ref))	{
 							$hash{'opts'} = $opts_ref;
 						}
@@ -1705,6 +1710,9 @@ sub is_directory_traversal	{
 sub remove_trailing_slash	{
 	my $str = shift(@_);
 	
+	# it's not a trailing slash if it's the root filesystem
+	if ($str eq '/')	{ return ($str); }
+	
 	$str =~ s/\/+$//;
 	
 	return ($str);
@@ -1968,14 +1976,19 @@ sub backup_interval	{
 			
 			if (0 == $test)	{
 				$result = system(@cmd_stack);
+				
+				# now we see if rsync ran successfully, and what to do about it
 				if ($result != 0)	{
 					# bitmask return value
 					my $retval = get_retval($result);
-						
-					# 0 signifies success
-					# 1 is the return code for "syntax or usage error"
+					
+					# a partial list of rsync exit values (from the rsync 2.6.0 man page)
 					#
-					# if we got this error and we were attempting --link-dest, there's
+					# 0		Success
+					# 1		Syntax or usage error
+					# 24	Partial transfer due to vanished source files
+					#
+					# if we got error 1 and we were attempting --link-dest, there's
 					# a very good chance that this version of rsync is too old.
 					#
 					if ((1 == $link_dest) && (1 == $retval))	{
