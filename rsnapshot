@@ -743,9 +743,9 @@ sub native_cp_al	{
 		return(0);
 	}
 	
-	# MKDIR DEST
+	# MKDIR DEST (AND SET MODE)
 	if ( ! -d "$dest" )	{
-		$result = mkdir("$dest");
+		$result = mkdir("$dest", $st->mode);
 		if ( ! $result )	{
 			print STDERR "Warning! Could not mkdir(\"$dest\");\n";
 			return(0);
@@ -755,12 +755,6 @@ sub native_cp_al	{
 	$result = chown($st->uid, $st->gid, "$dest");
 	if (! $result)	{
 		print STDERR "Warning! Could not chown(" . $st->uid . ", " . $st->gid . ", \"$dest\");\n";
-		return(0);
-	}
-	# CHMOD DEST
-	$result = chmod($st->mode, "$dest");
-	if (! $result)	{
-		print STDERR "Warning! Could not chmod(" . $st->mode . ", \"$dest\");\n";
 		return(0);
 	}
 	
