@@ -2,6 +2,13 @@ rsnapshot TODO list:
 
 for version 1.0.x
 ------------------------------------------------------------------------------
+- Finish work on getting the "backup_script" feature to work more efficiently
+  with disk space
+
+- Add support for arbitrary programs to handle certain types of connections;
+  i.e. http_handler could be set to wget, to handle http downloads, which are
+  then rsynced into main snapshot_root tree
+
 - Update string manipulations and comparisons of paths to use File::Spec and
   File::Basename functions where possible. Double check they're fully
   compatible with Perl 5.004
@@ -12,10 +19,6 @@ for version 1.0.x
 - Add support for rsh using this syntax: rsh://[user@]domain:/foo/bar/
 
 - Also support ssh:// syntax in the same fashion
-
-- Add support for arbitrary programs to handle certain types of connections;
-  i.e. http_handler could be set to wget, to handle http downloads, which are
-  then rsynced into main snapshot_root tree
 
 - Support for SSH tunnelling (this may work with the ssh_args param(?))
 
