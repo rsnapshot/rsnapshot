@@ -2034,7 +2034,7 @@ sub backup_interval	{
 			
 			# if we're using --link-dest, we'll need to specify .1 as the link-dest directory
 			if (1 == $link_dest)	{
-				if ( -d "$config_vars{'snapshot_root'}/$interval.1/$$sp_ref{'dest'}" )	{
+				if ( -e "$config_vars{'snapshot_root'}/$interval.1/$$sp_ref{'dest'}" )	{
 					push(@rsync_long_args_stack, "--link-dest=$config_vars{'snapshot_root'}/$interval.1/$$sp_ref{'dest'}");
 				}
 			}
