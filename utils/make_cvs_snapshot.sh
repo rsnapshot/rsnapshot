@@ -12,7 +12,7 @@
 # this was done before manually, now it's automatic
 ##############################################################################
 
-if [ $PWD = "$HOME/rsnapshot" ]; then
+if [ $PWD = "$HOME/projects/rsnapshot" ]; then
 	echo "This is not where you want to be. cp -r to a different directory first!"
 	echo "Quitting now!"
 	exit 1
