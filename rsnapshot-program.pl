@@ -100,7 +100,7 @@ my $link_dest		= 0; # use the --link-dest option to rsync
 #	0	Absolutely quiet (reserved, but not implemented)
 #	1	Don't display warnings about FIFOs and special files
 #	2	Default (errors only)
-#	3	Verbose (show shell commands)
+#	3	Verbose (show shell commands and equivalents)
 #	4	Extra verbose messages (individual actions inside some subroutines, output from rsync)
 #	5	Debug
 #
