@@ -312,7 +312,7 @@ sub parse_cmd_line_opts	{
 	# validate command line args
 	#
 	
-	# check for extra bogus ones that getopts() didn't catch
+	# check for extra bogus arguments that getopts() didn't catch
 	if (scalar(@ARGV) > 1)	{
 		for (my $i=1; $i<scalar(@ARGV); $i++)	{
 			print STDERR "Unknown option: $ARGV[$i]\n";
