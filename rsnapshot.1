@@ -139,14 +139,17 @@ rsnapshot \- remote filesystem snapshot utility
 .IX Header "DESCRIPTION"
 \&\fBrsnapshot\fR is a filesystem snapshot utility. It can take incremental
 snapshots of local and remote filesystems for any number of machines.
-Remote connections are handled with \fB\f(BIssh\fB\|(1)\fR. Both remote and local
-transfers also make heavy use of \fB\f(BIrsync\fB\|(1)\fR.
+Secure remote connections are handled with \fB\f(BIrsync\fB\|(1)\fR over \fB\f(BIssh\fB\|(1)\fR,
+while anonymous rsync connections simply use an rsync server. Both
+remote and local transfers depend on rsync.
 .PP
 \&\fBrsnapshot\fR will typically be invoked as root by a cron job, or series
-of cron jobs.
+of cron jobs. It is possible, however, to run as any arbitrary user
+with an alternate configuration file.
 .PP
 All important options are specified in a configuration file, which is
-located by default at \fB/etc/rsnapshot.conf\fR. There are also additional
+located by default at \fB/etc/rsnapshot.conf\fR, although an alternate
+one can be specified on the command line. There are also additional
 options which can be passed on the command line.
 .PP
 The command line options are as follows:
@@ -198,11 +201,24 @@ Example: \fBinterval hourly 6\fR
 .Sp
 For this example, every time this is run, the following will happen:
 .Sp
+<snapshot_root>/hourly.{1,2,3,4} will all be rotated +1, if they exist.
+.Sp
+<snapshot_root>/hourly.0/ will be copied to <snapshot_root>/hourly.1/
+using hard links
+.Sp
+<snapshot_root>/hourly.0/<backup_points> will be rsynced with the
+backup points specified in this config file later.
+.Sp
+If we already have a full rotation in place, this optimization will
+kick in to save time and strain on the disk:
+.Sp
 <snapshot_root>/hourly.5/ will be moved to <snapshot_root>/hourly.tmp/
 .Sp
-<snapshot_root>/hourly.{1,2,3,4} will all be rotated +1
+<snapshot_root>/hourly.{0,1,2,3,4} will all be rotated +1
 .Sp
 <snapshot_root>/hourly.tmp/ will be moved to <snapshot_root>/hourly.0/
+.Sp
+<snapshot_root>/hourly.1/ will be rsynced back to <snapshot_root>/hourly.0/
 .Sp
 <snapshot_root>/hourly.0/<backup_points> will be rsynced with the
 backup points specified in this config file later.
@@ -235,9 +251,11 @@ taken up is basically one full snapshot, plus each changed file.
 .RE
 .RS 4
 .Sp
-\&\fBbackup\fR  /local/path/             relative/path/
+\&\fBbackup\fR  /local/path/                localhost/path/
 .Sp
-\&\fBbackup\fR  root@example.com:/path/  relative/path/
+\&\fBbackup\fR  root@example.com:/path/     example.com/path/
+.Sp
+\&\fBbackup\fR  rsync://example.com/path2/ example.com/path2/
 .Sp
 .RS 4
 Examples:
@@ -245,7 +263,7 @@ Examples:
 \&\fBbackup /etc/     etc/\fR
 .Sp
 .RS 4
-Backs up /etc/ to <snapshot_root>/<interval>.0/etc/
+Backs up /etc/ to <snapshot_root>/<interval>.0/etc/ using rsync on the local filesystem
 .RE
 .RE
 .RS 4
@@ -253,7 +271,17 @@ Backs up /etc/ to <snapshot_root>/<interval>.0/etc/
 \&\fBbackup root@example.com:/home/ example.com/home/\fR
 .Sp
 .RS 4
-Backs up /etc/ to <snapshot_root>/<interval>.0/example.com/home/
+Backs up root@example.com:/home/ to <snapshot_root>/<interval>.0/example.com/home/
+using rsync over ssh
+.RE
+.RE
+.RS 4
+.Sp
+\&\fBbackup rsync://example.com/pub/  example.com/pub/\fR
+.Sp
+.RS 4
+Backs up rsync://example.com/pub/ to <snapshot_root>/<interval>.0/example.com/pub/
+using an anonymous rsync server
 .RE
 .RE
 .RS 4
@@ -262,10 +290,16 @@ Backs up /etc/ to <snapshot_root>/<interval>.0/example.com/home/
 .RS 4
 .RE
 .PP
+Remember that tabs must seperate all elements, and that
+there must be a trailing slash on the end of every directory.
+.PP
+A hash mark (#) on the beginning of a line is treated
+as a comment.
+.PP
 Putting it all together (an example file):
 .Sp
 .RS 4
-# comments are allowed
+# \s-1THIS\s0 \s-1IS\s0 A \s-1COMMENT\s0, \s-1TO\s0 \s-1REMIND\s0 \s-1YOU\s0 \s-1THAT\s0 \s-1TABS\s0 \s-1MUST\s0 \s-1SEPERATE\s0 \s-1ALL\s0 \s-1ELEMENTS\s0
 .Sp
 \&\fBsnapshot_root\fR   /.snapshots/
 .Sp
@@ -300,6 +334,8 @@ Putting it all together (an example file):
 \&\fBbackup\fR  root@foo.com:/home/          example.com/home/
 .Sp
 \&\fBbackup\fR  root@mail.foo.com.com:/home/ mail.foo.com/home/
+.Sp
+\&\fBbackup\fR  rsync://example.com/pub/     example.com/pub/
 .RE
 .SH "USAGE"
 .IX Header "USAGE"
@@ -359,6 +395,9 @@ permissions and ssh authentication issues.
 Swat them, or report them to rsnapshot@scubaninja.com
 .SH "NOTES"
 .IX Header "NOTES"
+Make sure your /etc/rsnapshot.conf file has all elements seperated by tabs.
+See /etc/rsnapshot.conf.default for a working example file.
+.PP
 Make sure you put a trailing slash on the end of all directory references.
 If you don't, you may have extra directories created in your snapshots.
 For more information on how the trailing slash is handled, see the
@@ -368,14 +407,18 @@ Make sure your snapshot directory is only readable by root. If you would
 like regular users to be able to restore their own backups, there are a
 number of ways this can be accomplished. One such scenario would be:
 .PP
-snapshot_root  /.private/.snapshots
+Set \fBsnapshot_root\fR to \fB/.private/.snapshots\fR in \fB/etc/rsnapshot.conf\fR
 .PP
+Set the file permissions on these directories as follows:
+.Sp
+.RS 4
 drwx\-\-\-\-\-\-    /.private
-.PP
+.Sp
 drwxr-xr-x    /.private/.snapshots
+.RE
 .PP
 Mount the /.private/.snapshots directory over read-only \s-1NFS\s0, a read-only
-samba share, etc.
+Samba share, etc.
 .PP
 If you do not plan on making the backups readable by regular users, be
 sure to make the snapshot directory chmod 700 root. If the snapshot

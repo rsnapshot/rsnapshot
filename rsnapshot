@@ -154,11 +154,17 @@ if ( -f $config_file )	{
 			
 			# validate path
 			if ( ! -d "$src" )	{
+				
 				# if it's an ssh path, make sure we have ssh
-				if ( $src =~ /^.*?\@.*?:\/.*$/)	{
+				if ( $src =~ /^.*?\@.*?:\/.*$/ )	{
 					if (!defined($config_vars{'cmd_ssh'}))	{
 						bail("cannot handle $src ... ssh not found in $config_file");
 					}
+				
+				# if it's anonymous rsync, we're ok
+				} elsif ( $src =~ /^rsync:\/\/.*$/ )	{
+					# nothing to see here
+					
 				} else	{
 					# if it's not an ssh path, make sure it's a valid local directory
 					bail("source directory \"$src\" doesn't exist");
@@ -258,7 +264,7 @@ sub backup_interval	{
 	
 	# ROTATE DIRECTORIES
 	#
-	# move oldest directory to .tmp (to be recycled as .0)
+	# move oldest directory to .tmp
 	if ( -d "$config_vars{'snapshot_root'}/$interval.$interval_max" )	{
 		
 		if ($verbose)	{ print "$config_vars{'cmd_mv'} $config_vars{'snapshot_root'}/$interval.$interval_max $config_vars{'snapshot_root'}/$interval.tmp\n"; }
@@ -280,22 +286,30 @@ sub backup_interval	{
 		}
 	}
 	
-	# if we have a .tmp directory, move .0 to .1, and .tmp to .0
-	if ( -d "$config_vars{'snapshot_root'}/$interval.tmp" or ((-d "$config_vars{'snapshot_root'}/$interval.$interval_max") && ($test == 1)) )	{
+	# if we have a .tmp directory (or if we would if we weren't testing)
+	if ((-d "$config_vars{'snapshot_root'}/$interval.tmp") or ((-d "$config_vars{'snapshot_root'}/$interval.$interval_max") && ($test == 1)))	{
+		
 		# move .0 to .1
 		if ($verbose)	{ print "$config_vars{'cmd_mv'} $config_vars{'snapshot_root'}/$interval.0/ $config_vars{'snapshot_root'}/$interval.1\n"; }
 		if ($test == 0)	{
 			system( $config_vars{'cmd_mv'}, "$config_vars{'snapshot_root'}/$interval.0/", "$config_vars{'snapshot_root'}/$interval.1" );
 		}
 		
-		# move .tmp to .0
+		# move .tmp/ to .0/
 		if ($verbose)	{ print "$config_vars{'cmd_mv'} $config_vars{'snapshot_root'}/$interval.tmp/ $config_vars{'snapshot_root'}/$interval.0\n"; }
 		if ($test == 0)	{
 			system( $config_vars{'cmd_mv'}, "$config_vars{'snapshot_root'}/$interval.tmp/", "$config_vars{'snapshot_root'}/$interval.0" );
 		}
 		
-	# we don't have a .tmp directory, but we have a .0 directory, cp -al .0 to .1
+		# rsync .1/ to .0/
+		if ($verbose)	{ print "$config_vars{'cmd_rsync'} -al --delete --numeric-ids --devices $config_vars{'snapshot_root'}/$interval.1/ $config_vars{'snapshot_root'}/$interval.0/\n"; }
+		if ($test == 0)	{
+			system( $config_vars{'cmd_rsync'}, '-al', '--delete', '--numeric-ids', '--devices', "$config_vars{'snapshot_root'}/$interval.1/", "$config_vars{'snapshot_root'}/$interval.0/" );
+		}
+		
+	# we don't have a .tmp directory
 	} elsif ( -d "$config_vars{'snapshot_root'}/$interval.0" )	{
+		
 		# hard link (except for directories) .0 over to .1
 		if ($verbose)	{ print "$config_vars{'cmd_cp'} -al $config_vars{'snapshot_root'}/$interval.0/ $config_vars{'snapshot_root'}/$interval.1\n"; }
 		if ($test == 0)	{
@@ -334,6 +348,14 @@ sub backup_interval	{
 			if ($test == 0)	{
 				system( $config_vars{'cmd_rsync'}, '-al', '--delete', '--numeric-ids', '--devices', "--rsh=$config_vars{'cmd_ssh'}", $src, "$config_vars{'snapshot_root'}/$interval.0/$$sp_ref{'dest'}" );
 			}
+			
+		# anonymous rsync
+		} elsif ($src =~ /^rsync:\/\/.*$/)	{
+			if ($verbose)	{ print "$config_vars{'cmd_rsync'} -alq --delete --numeric-ids --devices $src $config_vars{'snapshot_root'}/$interval.0/$$sp_ref{'dest'}\n"; }
+			if ($test == 0)	{
+				system( $config_vars{'cmd_rsync'}, '-alq', '--delete', '--numeric-ids', '--devices', $src, "$config_vars{'snapshot_root'}/$interval.0/$$sp_ref{'dest'}" );
+			}
+			
 		# local filesystem
 		} else	{
 			if ($verbose)	{ print "$config_vars{'cmd_rsync'} -al --delete --numeric-ids --devices $src $config_vars{'snapshot_root'}/$interval.0/$$sp_ref{'dest'}\n"; }
@@ -406,9 +428,9 @@ and you are welcome to redistribute it under certain conditions.
 See the GNU General Public Licence for details.
 
 Options:
-    -v verbose
-    -t test
-    -c specify alternate config file (-c /path/to/file)
+    -v verbose - show shell commands being executed
+    -t test    - show shell commands that would have been executed
+    -c [file]  - specify alternate config file (-c /path/to/file)
 HERE
 	
 	exit(0);
@@ -438,14 +460,17 @@ B<rsnapshot> [B<-v>] [B<-t>] [B<-c> /alt/config/file] [command]
 
 B<rsnapshot> is a filesystem snapshot utility. It can take incremental
 snapshots of local and remote filesystems for any number of machines.
-Remote connections are handled with B<ssh(1)>. Both remote and local
-transfers also make heavy use of B<rsync(1)>.
+Secure remote connections are handled with B<rsync(1)> over B<ssh(1)>,
+while anonymous rsync connections simply use an rsync server. Both
+remote and local transfers depend on rsync.
 
 B<rsnapshot> will typically be invoked as root by a cron job, or series
-of cron jobs.
+of cron jobs. It is possible, however, to run as any arbitrary user
+with an alternate configuration file.
 
 All important options are specified in a configuration file, which is
-located by default at B</etc/rsnapshot.conf>. There are also additional
+located by default at B</etc/rsnapshot.conf>, although an alternate
+one can be specified on the command line. There are also additional
 options which can be passed on the command line.
 
 The command line options are as follows:
@@ -502,11 +527,24 @@ Example: B<interval hourly 6>
 
 For this example, every time this is run, the following will happen:
 
+<snapshot_root>/hourly.{1,2,3,4} will all be rotated +1, if they exist.
+
+<snapshot_root>/hourly.0/ will be copied to <snapshot_root>/hourly.1/
+using hard links
+
+<snapshot_root>/hourly.0/<backup_points> will be rsynced with the
+backup points specified in this config file later.
+
+If we already have a full rotation in place, this optimization will
+kick in to save time and strain on the disk:
+
 <snapshot_root>/hourly.5/ will be moved to <snapshot_root>/hourly.tmp/
 
-<snapshot_root>/hourly.{1,2,3,4} will all be rotated +1
+<snapshot_root>/hourly.{0,1,2,3,4} will all be rotated +1
 
 <snapshot_root>/hourly.tmp/ will be moved to <snapshot_root>/hourly.0/
+
+<snapshot_root>/hourly.1/ will be rsynced back to <snapshot_root>/hourly.0/
 
 <snapshot_root>/hourly.0/<backup_points> will be rsynced with the
 backup points specified in this config file later.
@@ -538,9 +576,11 @@ taken up is basically one full snapshot, plus each changed file.
 
 =back
 
-B<backup>  /local/path/             relative/path/
+B<backup>  /local/path/                localhost/path/
 
-B<backup>  root@example.com:/path/  relative/path/
+B<backup>  root@example.com:/path/     example.com/path/
+
+B<backup>  rsync://example.com/path2/ example.com/path2/
 
 =over 4
 
@@ -550,7 +590,7 @@ B<backup /etc/     etc/>
 
 =over 4
 
-Backs up /etc/ to <snapshot_root>/<interval>.0/etc/
+Backs up /etc/ to <snapshot_root>/<interval>.0/etc/ using rsync on the local filesystem
 
 =back
 
@@ -558,19 +598,35 @@ B<backup root@example.com:/home/ example.com/home/>
 
 =over 4
 
-Backs up /etc/ to <snapshot_root>/<interval>.0/example.com/home/
+Backs up root@example.com:/home/ to <snapshot_root>/<interval>.0/example.com/home/
+using rsync over ssh
+
+=back
+
+B<backup rsync://example.com/pub/  example.com/pub/>
+
+=over 4
+
+Backs up rsync://example.com/pub/ to <snapshot_root>/<interval>.0/example.com/pub/
+using an anonymous rsync server
 
 =back
 
 =back
 
 =back
+
+Remember that tabs must seperate all elements, and that
+there must be a trailing slash on the end of every directory.
+
+A hash mark (#) on the beginning of a line is treated
+as a comment.
 
 Putting it all together (an example file):
 
 =over 4
 
-# comments are allowed
+# THIS IS A COMMENT, TO REMIND YOU THAT TABS MUST SEPERATE ALL ELEMENTS
 
 B<snapshot_root>   /.snapshots/
 
@@ -605,6 +661,8 @@ B<backup>  root@foo.com:/etc/           example.com/etc/
 B<backup>  root@foo.com:/home/          example.com/home/
 
 B<backup>  root@mail.foo.com.com:/home/ mail.foo.com/home/
+
+B<backup>  rsync://example.com/pub/     example.com/pub/
 
 =back
 
@@ -674,6 +732,9 @@ Swat them, or report them to rsnapshot@scubaninja.com
 
 =head1 NOTES
 
+Make sure your /etc/rsnapshot.conf file has all elements seperated by tabs.
+See /etc/rsnapshot.conf.default for a working example file.
+
 Make sure you put a trailing slash on the end of all directory references.
 If you don't, you may have extra directories created in your snapshots.
 For more information on how the trailing slash is handled, see the
@@ -683,14 +744,20 @@ Make sure your snapshot directory is only readable by root. If you would
 like regular users to be able to restore their own backups, there are a
 number of ways this can be accomplished. One such scenario would be:
 
-snapshot_root  /.private/.snapshots
+Set B<snapshot_root> to B</.private/.snapshots> in B</etc/rsnapshot.conf>
+
+Set the file permissions on these directories as follows:
+
+=over 4
 
 drwx------    /.private
 
 drwxr-xr-x    /.private/.snapshots
 
+=back
+
 Mount the /.private/.snapshots directory over read-only NFS, a read-only
-samba share, etc.
+Samba share, etc.
 
 If you do not plan on making the backups readable by regular users, be
 sure to make the snapshot directory chmod 700 root. If the snapshot
