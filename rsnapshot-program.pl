@@ -815,7 +815,7 @@ sub backup_interval	{
 			# rsync would. that way if a database backup doesn't change for 3 days in a row,
 			# we won't have 3 redundant copies with only different timestamps.
 			
-			
+			# sync_if_different();
 			
 			# remove the tmp directory if we created one
 			if (defined($tmpdir))	{
@@ -907,6 +907,146 @@ sub rotate_interval	{
 			}
 		}
 	}
+}
+
+# this subroutine works the way i hoped rsync would under certain conditions.
+# this is no fault of rsync, i just had something slightly different in mind :)
+#
+# this subroutine accepts two arguments, a source path and a destination path
+# it traverses both recursively.
+#   if a file is in the source, but not the destination, it is copied using File::Copy
+#   if a file is in the destination, but not the source, it is deleted with rmtree()
+#   if a file is in both locations and is different, dest is unlinked and src is copied
+#   if a file is in both locations and is the same, nothing happens
+#
+# what makes this different than rsync is that it looks only at the file contents to
+# see if the files are different, not at the metadata such as timestamps.
+# i was unable to make rsync work recursively on identical files without unlinking
+# at the destination and using another inode for a new file with the exact same content.
+#
+# if anyone knows of a better way (that doesn't add dependencies) i'd love to hear it!
+sub sync_if_different	{
+	my $src		= shift(@_);
+	my $dest	= shift(@_);
+	my $dh		= undef;
+	my $result	= 0;
+	
+	# make sure we were passed two arguments
+	if (!defined($src))  { return(0); }
+	if (!defined($dest)) { return(0); }
+	
+	# make sure we have a source directory
+	if ( ! -d "$src" )	{
+		print STDERR "sync_if_different() needs a valid directory as an argument\n";
+		return (0);
+	}
+	
+	# strip trailing slashes off the directories,
+	# since we'll add them back on later
+	$src  = remove_trailing_slash($src);
+	$dest = remove_trailing_slash($dest);
+	
+	# LSTAT SRC
+	my $st = lstat("$src");
+	if (!defined($st))	{
+		print STDERR "Could not lstat(\"$src\")\n";
+		return(0);
+	}
+	
+	# MKDIR DEST (AND SET MODE)
+	if ( ! -d "$dest" )	{
+		$result = mkdir("$dest", $st->mode);
+		if ( ! $result )	{
+			print STDERR "Warning! Could not mkdir(\"$dest\", $st->mode);\n";
+			return(0);
+		}
+		if (1 == $debug)	{ print "mkdir(\"$dest\", " . get_perms($st->mode) . ");\n"; }
+	}
+	# CHOWN DEST
+	$result = chown($st->uid, $st->gid, "$dest");
+	if (! $result)	{
+		print STDERR "Warning! Could not chown(" . $st->uid . ", " . $st->gid . ", \"$dest\");\n";
+		return(0);
+	}
+	if (1 == $debug)	{ print "chown(" . $st->uid . ", " . $st->gid . ", \"$dest\");\n"; }
+	
+	# READ DIR CONTENTS
+	# we do this in two passes:
+	#   first, we loop through src, copying anything necessary into dest
+	#   then, we loop through dest, deleting anything that's not in src
+	
+	# SOURCE FIRST
+	$dh = new DirHandle( "$src" );
+	if (defined($dh))	{
+		my @nodes = $dh->read();
+		
+		# loop through all nodes in this dir
+		foreach my $node (@nodes)	{
+			
+			# skip '.' and '..'
+			next if ($node =~ m/^\.\.?$/o);
+			
+			# make sure the node we just got is valid (this is highly unlikely to fail)
+			my $st = lstat("$src/$node");
+			if (!defined($st))	{
+				print STDERR "Could not lstat(\"$src/$node\")\n";
+				return(0);
+			}
+			
+			# TODO
+			# fill in these blocks
+			
+			# if this isn't present in dest, copy it
+			if ( ! -e "$dest/$node" )	{
+				
+				
+			# if this is present in dest, see if they're different
+			} elsif ( -e "$dest/$node" )	{
+				# if they are different, unlink in dest and copy from src
+				if (1 == file_diff("$src/$node", "$dest/$node"))	{
+					
+				}
+				# if they're the same, do nothing
+			}
+			
+		}
+	}
+	# close open dir handle
+	if (defined($dh))	{ $dh->close(); }
+	undef( $dh );
+	
+	# DESTINATION SECOND
+	$dh = new DirHandle( "$dest" );
+	if (defined($dh))	{
+		my @nodes = $dh->read();
+		
+		# loop through all nodes in this dir
+		foreach my $node (@nodes)	{
+			
+			# skip '.' and '..'
+			next if ($node =~ m/^\.\.?$/o);
+			
+			# make sure the node we just got is valid (this is highly unlikely to fail)
+			my $st = lstat("$src/$node");
+			if (!defined($st))	{
+				print STDERR "Could not lstat(\"$src/$node\")\n";
+				return(0);
+			}
+			
+			# TODO
+			# if this isn't present in src, delete it
+			if ( ! -e "$src/$node" )	{
+				
+			}
+			
+		}
+		
+	}
+	# close open dir handle
+	if (defined($dh))	{ $dh->close(); }
+	undef( $dh );
+	
+	return (1);
 }
 
 # accepts an error string
