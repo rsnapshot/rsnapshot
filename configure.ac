@@ -189,10 +189,43 @@ if test "$LOGGER" != "no"; then
 fi
 dnl if we couldn't find it, provide an example
 if test "$LOGGER" = "no"; then
-	SSH=/path/to/logger
+	LOGGER=/path/to/logger
 fi
 dnl either way, set the cmd_ssh var
 AC_SUBST(CMD_LOGGER, "cmd_logger	$LOGGER")
+
+
+
+dnl
+dnl DU CHECK (optional program)
+dnl
+dnl if the user specified a path, try that first
+AC_ARG_WITH(du,
+	[  --with-du=PATH          Specify the path to du ],
+	[
+		if test "x$withval" != "xno"; then
+			if test -x "$withval"; then
+				DU=$withval
+			else
+				AC_MSG_ERROR(du not found)
+			fi
+		else
+			DU=no
+		fi
+	]
+)
+dnl if the user didn't specify a path, hunt for it
+if test "$DU" != "no"; then
+	if test "$DU" = ""; then
+		AC_PATH_PROG(DU, du, no)
+	fi
+fi
+dnl if we couldn't find it, provide an example
+if test "$DU" = "no"; then
+	DU=/path/to/du
+fi
+dnl either way, set the cmd_ssh var
+AC_SUBST(CMD_DU, "cmd_du		$DU")
 
 
 
