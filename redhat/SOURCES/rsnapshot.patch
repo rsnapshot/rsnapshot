@@ -1,5 +1,14 @@
---- rsnapshot.conf.default.in	2005-01-29 22:56:58.000000000 -0800
-+++ rsnapshot.conf.default.in.redhat	2005-01-29 22:57:44.000000000 -0800
+--- rsnapshot.conf.default.in	2005-04-03 06:58:02.000000000 -0700
++++ rsnapshot.conf.default.in.redhat	2005-04-03 06:58:11.000000000 -0700
+@@ -40,7 +40,7 @@
+ #
+ # See the README file or the man page for more details.
+ #
+-#@CMD_CP@
++@CMD_CP@
+ 
+ # uncomment this to use the rm program instead of the built-in perl routine.
+ @CMD_RM@
 @@ -55,7 +55,7 @@
  @CMD_LOGGER@
  
@@ -25,5 +34,5 @@
 -#lockfile	/var/run/rsnapshot.pid
 +lockfile	/var/run/rsnapshot.pid
  
- ###############################
- ### BACKUP POINTS / SCRIPTS ###
+ # If enabled, rsnapshot will move the oldest directory for each interval
+ # to [interval_name].delete, then it will delete that directory as a 
