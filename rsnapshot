@@ -37,9 +37,10 @@
 
 require 5.004;
 use strict;
+use DirHandle;
 use Getopt::Std;
-use File::Path;
 use File::stat;
+use File::Path;
 
 #########################
 ### DECLARE VARIABLES ###
