@@ -190,11 +190,13 @@ your needs. What follows here is a list of allowed parameters:
 .RS 4
 \&\fBsnapshot_root\fR local filesystem path to save all snapshots
 .Sp
-\&\fBcmd_rsync\fR     full path to rsync (required)
+\&\fBcmd_rsync\fR     Full path to rsync (required)
 .Sp
-\&\fBcmd_ssh\fR       full path to ssh (optional)
+\&\fBcmd_ssh\fR       Full path to ssh (optional)
 .Sp
-\&\fBcmd_cp\fR        full path to cp  (optional, but must be \s-1GNU\s0 version)
+\&\fBcmd_cp\fR        Full path to cp  (optional, but must be \s-1GNU\s0 version)
+.Sp
+\&\fBcmd_logger\fR    Full path to logger (optional, for syslog support)
 .Sp
 .RS 4
 If you have \s-1GNU\s0 cp, you should uncomment cmd_cp, since you will get extra
@@ -416,6 +418,8 @@ Putting it all together (an example file):
 \&\fBcmd_ssh\fR         /usr/bin/ssh
 .Sp
 \&\fB#cmd_cp\fR         /bin/cp
+.Sp
+\&\fBcmd_logger\fR      /usr/bin/logger
 .Sp
 \&\fBinterval\fR        hourly  6
 .Sp

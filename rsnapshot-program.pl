@@ -1989,11 +1989,13 @@ your needs. What follows here is a list of allowed parameters:
 
 B<snapshot_root> local filesystem path to save all snapshots
 
-B<cmd_rsync>     full path to rsync (required)
+B<cmd_rsync>     Full path to rsync (required)
 
-B<cmd_ssh>       full path to ssh (optional)
+B<cmd_ssh>       Full path to ssh (optional)
 
-B<cmd_cp>        full path to cp  (optional, but must be GNU version)
+B<cmd_cp>        Full path to cp  (optional, but must be GNU version)
+
+B<cmd_logger>    Full path to logger (optional, for syslog support)
 
 =over 4
 
@@ -2217,6 +2219,8 @@ B<cmd_rsync>       /usr/bin/rsync
 B<cmd_ssh>         /usr/bin/ssh
 
 B<#cmd_cp>         /bin/cp
+
+B<cmd_logger>      /usr/bin/logger
 
 B<interval>        hourly  6
 
