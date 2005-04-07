@@ -17,7 +17,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.266 2005/04/03 06:43:20 scubaninja Exp $
+# $Id: rsnapshot-program.pl,v 1.267 2005/04/07 01:58:52 scubaninja Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -5675,7 +5675,7 @@ Peter Palfrader (B<weasel@debian.org>)
 
 =back
 
-Nicolas Kaiser <nikai@nikai.net>
+Nicolas Kaiser (B<nikai@nikai.net>)
 
 =over 4
 
@@ -5683,7 +5683,7 @@ Nicolas Kaiser <nikai@nikai.net>
 
 =back
 
-David Cantrell <david@cantrell.org.uk>
+David Cantrell (B<david@cantrell.org.uk>)
 
 =over 4
 
@@ -5691,7 +5691,7 @@ Wrote the rsnapshot-diff utility
 
 =back
 
-Chris Petersen - B<http://www.forevermore.net/>
+Chris Petersen - (B<http://www.forevermore.net/>)
 
 =over 4
 
@@ -5699,7 +5699,7 @@ Added cwrsync permanent-share support
 
 =back
 
-Robert Jackson B<RobertJ@promedicalinc.com>
+Robert Jackson (B<RobertJ@promedicalinc.com>)
 
 =over 4
 

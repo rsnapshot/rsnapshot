@@ -18,6 +18,7 @@ VERSION 1.2.1 (??? ?? ??:?? 2005)
 - Added cmd_preexec
 - Added cmd_postexec
 - Added db prefs examples to utils/backup_mysql.sh and utils/backup_pgsql.sh
+- Fixed formatting with email addresses under AUTHORS section of man page
 
 VERSION 1.2.0 (Jan 31 21:43 2005)
 ------------------------------------------------------------------------------
