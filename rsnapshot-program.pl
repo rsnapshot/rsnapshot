@@ -17,7 +17,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.267 2005/04/07 01:58:52 scubaninja Exp $
+# $Id: rsnapshot-program.pl,v 1.268 2005/04/10 22:33:15 scubaninja Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -36,6 +36,16 @@ use File::stat;			# stat(), lstat()
 use POSIX qw(locale_h);	# setlocale()
 
 ########################################
+###           CPAN MODULES           ###
+########################################
+
+# keep track of whether we have access to the Lchown module
+my $have_lchown = 0;
+
+# attempt to load the Lchown module: http://search.cpan.org/dist/Lchown/
+use_lchown();
+
+########################################
 ###     DECLARE GLOBAL VARIABLES     ###
 ########################################
 
@@ -43,7 +53,7 @@ use POSIX qw(locale_h);	# setlocale()
 $| = 1;
 
 # version of rsnapshot
-my $VERSION = '1.2.1';
+my $VERSION = '1.2.2';
 
 # command or interval to execute (first cmd line arg)
 my $cmd;
@@ -1125,7 +1135,7 @@ sub parse_config_file {
 				next;
 			}
 		}
-		# LAZY_DELETES
+		# USE LAZY DELETES
 		if ($var eq 'use_lazy_deletes') {
 			if (!defined($value)) {
 				config_err($file_line_num, "$line - use_lazy_deletes can not be blank");
@@ -3559,21 +3569,24 @@ sub native_cp_al {
 	
 	# CHOWN DEST (if root)
 	if (0 == $<) {
-		# print and/or log this if necessary
-		if (($verbose > 4) or ($loglevel > 4)) {
-			my $cmd_string = "chown(" . $st->uid . ", " . $st->gid . ", \"$dest\")";
-		
-			if ($verbose > 4) {
-				print_cmd($cmd_string);
-			} elsif ($loglevel > 4) {
-				log_msg($cmd_string, 4);
+		# make sure destination is not a symlink
+		if ( ! -l "$dest" ) {
+			# print and/or log this if necessary
+			if (($verbose > 4) or ($loglevel > 4)) {
+				my $cmd_string = "chown(" . $st->uid . ", " . $st->gid . ", \"$dest\")";
+			
+				if ($verbose > 4) {
+					print_cmd($cmd_string);
+				} elsif ($loglevel > 4) {
+					log_msg($cmd_string, 4);
+				}
 			}
-		}
-		
-		$result = chown($st->uid, $st->gid, "$dest");
-		if (! $result) {
-			print_err("Warning! Could not chown(" . $st->uid . ", " . $st->gid . ", \"$dest\");", 2);
-			return(0);
+			
+			$result = chown($st->uid, $st->gid, "$dest");
+			if (! $result) {
+				print_err("Warning! Could not chown(" . $st->uid . ", " . $st->gid . ", \"$dest\");", 2);
+				return(0);
+			}
 		}
 	}
 	
@@ -4184,6 +4197,16 @@ sub sync_cp_src_dest {
 	
 	# MKDIR DEST (AND SET MODE)
 	if ( ! -d "$dest" ) {
+		# check to make sure we don't have something here that's not a directory
+		if ( -e "$dest" ) {
+			$result = unlink("$dest");
+			if (0 == $result) {
+				print_err("Warning! Could not unlink(\"$dest\")", 2);
+				return(0);
+			}
+		}
+		
+		# create the directory
 		$result = mkdir("$dest", $st->mode);
 		if ( ! $result ) {
 			print_err("Warning! Could not mkdir(\"$dest\", $st->mode);", 2);
@@ -4193,10 +4216,13 @@ sub sync_cp_src_dest {
 	
 	# CHOWN DEST (if root)
 	if (0 == $<) {
-		$result = chown($st->uid, $st->gid, "$dest");
-		if (! $result) {
-			print_err("Warning! Could not chown(" . $st->uid . ", " . $st->gid . ", \"$dest\");", 2);
-			return(0);
+		# make sure destination is not a symlink (should never happen because of unlink() above)
+		if ( ! -l "$dest" ) {
+			$result = chown($st->uid, $st->gid, "$dest");
+			if (! $result) {
+				print_err("Warning! Could not chown(" . $st->uid . ", " . $st->gid . ", \"$dest\");", 2);
+				return(0);
+			}
 		}
 	}
 	
@@ -4222,13 +4248,47 @@ sub sync_cp_src_dest {
 			# this check must be done before dir and file because it will
 			# pretend to be a file or a directory as well as a symlink
 			if ( -l "$src/$node" ) {
+				# nuke whatever is in the destination, since we'd have to recreate the symlink anyway
+				# and a real file or directory will be in our way
+				if ( -e "$dest/$node" ) {
+					if ((-l "$dest/$node") or (! -d "$dest/$node")) {
+						$result = unlink("$dest/$node");
+						if (0 == $result) {
+							print_err("Warning! Could not unlink(\"$dest/$node\")", 2);
+							return(0);
+						}
+						
+					# nuke the destination directory
+					} else {
+						$result = rm_rf("$dest/$node");
+						if (0 == $result) {
+							print_err("Could not rm_rf(\"$dest/$node\")", 2);
+							return(0);
+						}
+					}
+				}
+				
 				$result = copy_symlink("$src/$node", "$dest/$node");
 				if (0 == $result) {
-					print_err("Warning! copy_symlink(\"$src/$node\", \"$dest/$node\")", 2);
+					print_err("Warning! copy_symlink(\"$src/$node\", \"$dest/$node\") failed", 2);
+					return(0);
 				}
 				
 			# if it's a directory, recurse!
 			} elsif ( -d "$src/$node" ) {
+				# if the destination exists but isn't a directory, delete it
+				if (-e "$dest/$node") {
+					# a symlink might claim to be a directory, so check for that first
+					if ((-l "$dest/$node") or (! -d "$dest/$node")) {
+						$result = unlink("$dest/$node");
+						if (0 == $result) {
+							print_err("Warning! unlink(\"$dest/$node\") failed", 2);
+							return(0);
+						}
+					}
+				}
+				
+				# ok, dest is a real directory or it isn't there yet, go recurse
 				$result = sync_cp_src_dest("$src/$node", "$dest/$node");
 				if (! $result) {
 					print_err("Warning! Recursion error in sync_cp_src_dest(\"$src/$node\", \"$dest/$node\")", 2);
@@ -4236,6 +4296,7 @@ sub sync_cp_src_dest {
 				
 			# if it's a file...
 			} elsif ( -f "$src/$node" ) {
+				# TODO: make sure it's really a file in dest
 				
 				# if dest exists, check for differences
 				if ( -e "$dest/$node" ) {
@@ -4312,7 +4373,7 @@ sub sync_rm_dest {
 	
 	# make sure we have a destination directory
 	if ( ! -d "$dest" ) {
-		print_err("sync_rm_dest() needs a valid destination directory as its first argument", 2);
+		print_err("sync_rm_dest() needs a valid destination directory as its second argument", 2);
 		return (0);
 	}
 	
@@ -4345,10 +4406,23 @@ sub sync_rm_dest {
 				if (0 == $result) {
 					print_err("Warning! Could not delete \"$dest/$node\"", 2);
 				}
-				
-			# ok, this also exists in src
+				next;
+			}
+			
+			# ok, this also exists in src...
+			
+			# if this is a directory in src, but something else in dest, delete dest first
+			# theoretically, sync_cp_src_dest() should have caught this already, but better safe than sorry
+			if ((-d "$src/$node") && (! -d "$dest/$node")) {
+				$result = unlink("$dest/$node");
+				if (0 == $result) {
+					print_err("Warning! Could not delete \"$dest/$node\"", 2);
+					next;
+				}
+			}
+			
 			# if it's a directory, let's recurse into it and compare files there
-			} elsif ( -d "$src/$node" ) {
+			if ( -d "$src/$node" ) {
 				$result = sync_rm_dest("$src/$node", "$dest/$node");
 				if ( ! $result ) {
 					print_err("Warning! Recursion error in sync_rm_dest(\"$src/$node\", \"$dest/$node\")", 2);
@@ -4373,6 +4447,8 @@ sub copy_symlink {
 	my $st		= undef;
 	my $result	= undef;
 	
+	my $link_deref_path	= undef;
+	
 	# make sure it's actually a symlink
 	if ( ! -l "$src" ) {
 		print_err("Warning! \"$src\" not a symlink in copy_symlink()", 2);
@@ -4382,51 +4458,87 @@ sub copy_symlink {
 	# make sure we aren't clobbering the destination
 	if ( -e "$dest" ) {
 		print_err("Warning! \"$dest\" exists!", 2);
+		return (0);
 	}
 	
 	# LSTAT
 	$st = lstat("$src");
 	if (!defined($st)) {
-		print_err("Warning! lstat(\"$src\")", 2);
+		print_err("Warning! lstat(\"$src\") failed", 2);
 		return (0);
 	}
 	
 	# CREATE THE SYMLINK
-	# print and/or log this if necessary
+	# This is done in two steps:
+	# Reading/dereferencing the link, and creating a new one
+	#
+	# Step 1: READ THE LINK
 	if (($verbose > 4) or ($loglevel > 4)) {
-		my $cmd_string = "symlink(\"" . readlink("$src") . "\", \"$dest\");";
-	
+		my $cmd_string = "readlink(\"$src\")\n";
+		
 		if ($verbose > 4) {
 			print_cmd($cmd_string);
 		} elsif ($loglevel > 4) {
 			log_msg($cmd_string, 4);
 		}
 	}
-	$result = symlink(readlink("$src"), "$dest");
-	if (! $result) {
-		print_err("Warning! Could not symlink(readlink(\"$src\"), \"$dest\")", 2);
+	$link_deref_path = readlink("$src");
+	if (!defined($link_deref_path)) {
+		print_err("Warning! Could not readlink(\"$src\")", 2);
+		return (0);
+	}
+	#
+	# Step 2: RECREATE THE LINK
+	if (($verbose > 4) or ($loglevel > 4)) {
+		my $cmd_string = "symlink(\"$link_deref_path\", \"$dest\")\n";
+		
+		if ($verbose > 4) {
+			print_cmd($cmd_string);
+		} elsif ($loglevel > 4) {
+			log_msg($cmd_string, 4);
+		}
+	}
+	$result = symlink("$link_deref_path", "$dest");
+	if (0 == $result) {
+		print_err("Warning! Could not symlink(\"$link_deref_path\"), \"$dest\")", 2);
 		return (0);
 	}
 	
 	# CHOWN DEST (if root)
 	if (0 == $<) {
+		# make sure the symlink even exists
 		if ( -e "$dest" ) {
-			# print and/or log this if necessary
-			if (($verbose > 4) or ($loglevel > 4)) {
-				my $cmd_string = "chown(" . $st->uid . ", " . $st->gid . ", \"$dest\");";
 			
-				if ($verbose > 4) {
-					print_cmd($cmd_string);
-				} elsif ($loglevel > 4) {
-					log_msg($cmd_string, 4);
+			# make sure we have the Lchown module
+			if (1 == $have_lchown) {
+				
+				# print and/or log this if necessary
+				if (($verbose > 4) or ($loglevel > 4)) {
+					my $cmd_string = "safe_lchown(" . $st->uid . ", " . $st->gid . ", \"$dest\");";
+				
+					if ($verbose > 4) {
+						print_cmd($cmd_string);
+					} elsif ($loglevel > 4) {
+						log_msg($cmd_string, 4);
+					}
 				}
-			}
-			
-			$result = chown($st->uid, $st->gid, "$dest");
-			
-			if (! $result) {
-				print_err("Warning! Could not chown(" . $st->uid . ", " . $st->gid . ", \"$dest\")", 2);
-				return (0);
+				
+				$result = safe_lchown($st->uid, $st->gid, "$dest");
+				
+				if (0 == $result) {
+					print_err("Warning! Could not safe_lchown(" . $st->uid . ", " . $st->gid . ", \"$dest\")", 2);
+					return (0);
+				}
+				
+			# raise warning because we couldn't lchown symlink
+			} else {
+				raise_warning();
+				
+				if ($verbose > 2) {
+					print_warn("Could not lchown() symlink \"$dest\"", 2);
+				} elsif ($loglevel > 2) {
+					log_warn("Could not lchown() symlink \"$dest\"", 2);
+				}
 			}
 		}
 	}
@@ -4813,11 +4925,11 @@ sub write_upgraded_config_file {
 	$upgrade_notice .= "#\n";
 	
 	if (defined($add_rsync_long_args) && (1 == $add_rsync_long_args)) {
-		$upgrade_notice .= "# In this file, \"rsync_long_args\" was already enabled before the upgrade,\n";
-		$upgrade_notice .= "# so it was not changed.\n";
-	} else {
 		$upgrade_notice .= "# In this file, \"rsync_long_args\" was not enabled before the upgrade,\n";
 		$upgrade_notice .= "# so it has been set to the old default value.\n";
+	} else {
+		$upgrade_notice .= "# In this file, \"rsync_long_args\" was already enabled before the upgrade,\n";
+		$upgrade_notice .= "# so it was not changed.\n";
 	}
 	
 	$upgrade_notice .= "#\n";
@@ -4862,6 +4974,60 @@ sub write_upgraded_config_file {
 		print STDERR "ERROR: Could not close \"$config_file\" after writing\n.";
 		exit(1);
 	}
+}
+
+# accepts no arguments
+# dynamically loads the CPAN Lchown module, if available
+# sets the global variable $have_lchown
+sub use_lchown {
+	eval {
+		require Lchown;
+	};
+	if ($@) {
+		$have_lchown = 0;
+		return(0);
+	}
+	
+	# if it loaded, see if this OS supports the lchown() system call
+	{
+		no strict 'subs';
+		if (1 == Lchown::LCHOWN_AVAILABLE) {
+			$have_lchown = 1;
+			return(1);
+		}
+	}
+	
+	return(0);
+}
+
+# accepts uid, gid, filepath
+# uses lchown() to change ownership of the file, if possible
+# returns 1 upon success (or if lchown() not present)
+# returns 0 on failure
+sub safe_lchown {
+	my $uid			= shift(@_);
+	my $gid			= shift(@_);
+	my $filepath	= shift(@_);
+	
+	my $result = undef;
+	
+	if (!defined($uid) or !defined($gid) or !defined($filepath)) {
+		print_err("safe_lchown() needs uid, gid, and filepath", 2);
+		return(0);
+	}
+	if ( ! -e "$filepath" ) {
+		print_err("safe_lchown() needs a valid filepath (not \"$filepath\")", 2);
+		return(0);
+	}
+	
+	if (1 == $have_lchown) {
+		$result = Lchown::lchown($uid, $gid, "$filepath");
+		if (!defined($result)) {
+			return (0);
+		}
+	}
+	
+	return (1);
 }
 
 ########################################

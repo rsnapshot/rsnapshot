@@ -3,7 +3,7 @@ rsnapshot changelog
 http://www.rsnapshot.org/
 ------------------------------------------------------------------------------
 
-VERSION 1.2.1 (??? ?? ??:?? 2005)
+VERSION 1.2.2 (??? ?? ??:?? 2005)
 ------------------------------------------------------------------------------
 - David Cantrell <david@cantrell.org.uk> wrote the rsnapshot-diff utility
 - Chris Petersen added cwrsync permanent-share support
@@ -19,6 +19,21 @@ VERSION 1.2.1 (??? ?? ??:?? 2005)
 - Added cmd_postexec
 - Added db prefs examples to utils/backup_mysql.sh and utils/backup_pgsql.sh
 - Fixed formatting with email addresses under AUTHORS section of man page
+- Added an extra safety check in copy_symlink()
+- Fixed swapped config comments about rsync_long_args in
+  write_upgrade_config_file()
+- Added optional use of the CPAN Lchown module
+- Added safe_lchown() wrapper to use Lchown if possible
+- Added warning message if we can't properly lchown a symlink
+- Added fixes in sync_cp_src_dest() and sync_rm_dest() to properly delete a
+  file that is being replaced with a directory
+- Fixed error message for dest not being specified in sync_rm_dest()
+
+VERSION 1.2.1 (Apr 09 15:10 2005)
+------------------------------------------------------------------------------
+- Fixed security bug when neither cmd_cp or link_dest are enabled
+- Disabled chown() call in copy_symlink()
+- Check for symlink before all chown() calls
 
 VERSION 1.2.0 (Jan 31 21:43 2005)
 ------------------------------------------------------------------------------

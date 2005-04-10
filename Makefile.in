@@ -10,7 +10,7 @@
 # even the implied warranty of MERCHANTABILITY or FITNESS FOR A
 # PARTICULAR PURPOSE.
 
-# $Id: Makefile.in,v 1.69 2005/04/02 23:42:00 scubaninja Exp $ #
+# $Id: Makefile.in,v 1.70 2005/04/10 22:33:15 scubaninja Exp $ #
 
 
 SHELL = @SHELL@
@@ -81,7 +81,7 @@ RM = @RM@
 RSYNC = @RSYNC@
 SSH = @SSH@
 
-VERSION = 1.2.1
+VERSION = 1.2.2
 
 RPM_BASE_DIR = /usr/src/redhat
 

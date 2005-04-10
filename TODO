@@ -2,6 +2,11 @@ rsnapshot TODO list:
 
 Future versions (in no particular order)
 ------------------------------------------------------------------------------
+- Test sync_cp_src_dest() and sync_rm_dest() and make sure they can convert
+  files and folders back and forth on subsequent runs
+
+- Add visible return values for error messages on commands like rm, cp, etc
+
 - Add global and per-backup "bwlimit" parameter, and pass it along to rsync
 
 - Revamp config file to allow better representation of hierarchial data
