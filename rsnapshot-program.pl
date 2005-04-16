@@ -17,7 +17,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.271 2005/04/16 22:50:12 scubaninja Exp $
+# $Id: rsnapshot-program.pl,v 1.272 2005/04/16 23:01:50 scubaninja Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -4991,9 +4991,14 @@ sub use_lchown {
 	# if it loaded, see if this OS supports the lchown() system call
 	{
 		no strict 'subs';
-		if (1 == Lchown::LCHOWN_AVAILABLE) {
-			$have_lchown = 1;
-			return(1);
+		if (defined(Lchown) && defined(Lchown::LCHOWN_AVAILABLE)) {
+			# string comparison on a number to get around this error:
+			#   Argument "Lchown::LCHOWN_AVAILABLE" isn't numeric in numeric eq (==)
+			
+			if ('1' eq Lchown::LCHOWN_AVAILABLE) {
+				$have_lchown = 1;
+				return(1);
+			}
 		}
 	}
 	
