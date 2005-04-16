@@ -17,7 +17,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.270 2005/04/16 22:49:49 scubaninja Exp $
+# $Id: rsnapshot-program.pl,v 1.271 2005/04/16 22:50:12 scubaninja Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -2928,7 +2928,7 @@ sub rsync_backup_point {
 
 # accepts rsync exit code, backup_point_ref
 # prints out an appropriate error message (and logs it)
-# also adds destination path to the rollback queue
+# also adds destination path to the rollback queue if link_dest is enabled
 sub handle_rsync_error {
 	my $retval	= shift(@_);
 	my $bp_ref	= shift(@_);
