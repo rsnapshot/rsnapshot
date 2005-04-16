@@ -17,7 +17,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.269 2005/04/16 22:42:10 scubaninja Exp $
+# $Id: rsnapshot-program.pl,v 1.270 2005/04/16 22:49:49 scubaninja Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -2760,7 +2760,7 @@ sub rsync_backup_point {
 	if ($verbose > 3) { $rsync_short_args .= 'v'; }
 	
 	# split up rsync long args into an array
-	@rsync_long_args_stack	= ( split(/\s+/, $rsync_long_args) );
+	@rsync_long_args_stack = ( split(/\s+/, $rsync_long_args) );
 	
 	# append a trailing slash if src is a directory
 	if (defined($$bp_ref{'src'})) {
@@ -2928,7 +2928,7 @@ sub rsync_backup_point {
 
 # accepts rsync exit code, backup_point_ref
 # prints out an appropriate error message (and logs it)
-# if we're using link_dest, we might set this up for rollback later
+# also adds destination path to the rollback queue
 sub handle_rsync_error {
 	my $retval	= shift(@_);
 	my $bp_ref	= shift(@_);
