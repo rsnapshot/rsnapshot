@@ -17,7 +17,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.268 2005/04/10 22:33:15 scubaninja Exp $
+# $Id: rsnapshot-program.pl,v 1.269 2005/04/16 22:42:10 scubaninja Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -2738,7 +2738,7 @@ sub rsync_backup_point {
 			$tmp_rollback_point	=~ s/\/+$//o;
 			
 			if ("$tmp_dest" eq "$tmp_rollback_point") {
-				print_warn ("$$bp_ref{'src'} skipped due to rollback plan", 3);
+				print_warn ("$$bp_ref{'src'} skipped due to rollback plan", 2);
 				syslog_warn("$$bp_ref{'src'} skipped due to rollback plan");
 				return (undef);
 			}
