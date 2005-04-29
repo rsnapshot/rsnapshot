@@ -2,6 +2,10 @@ rsnapshot TODO list:
 
 Future versions (in no particular order)
 ------------------------------------------------------------------------------
+- Finish sync_root feature set
+
+- Decide _exactly_ when preexec and postexec scripts should run
+
 - Double check all actions to make sure they only run when not in test mode
 
 - Test sync_cp_src_dest() and sync_rm_dest() and make sure they can convert

@@ -17,7 +17,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.272 2005/04/16 23:01:50 scubaninja Exp $
+# $Id: rsnapshot-program.pl,v 1.273 2005/04/29 07:51:57 scubaninja Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -511,6 +511,14 @@ sub parse_config_file {
 			$config_vars{'snapshot_root'} = $value;
 			$line_syntax_ok = 1;
 			next;
+		}
+		
+		# SYNC_ROOT
+		if ($var eq 'sync_root') {
+			# TODO: write this code
+			# sync_root is the directory that, if specified, rsnapshot syncs data to with the "rsnapshot sync" command.
+			# when a sync occurs, no directories are rotated. sync_root is kind of like a staging area for data transfers.
+			# it also needs to be on the same filesystem as the snapshot_root, since it's making use of hard links.
 		}
 		
 		# NO_CREATE_ROOT
@@ -2508,7 +2516,19 @@ sub handle_interval {
 		}
 	}
 	
-	if (0 == $$id_ref{'interval_num'}) {
+	# TODO: check for sync parameter here
+	# sync content from local and remote locations, but don't rotate any directories
+	if (0) {
+		# if we have a preexec script, run it now
+		exec_cmd_preexec();
+		
+		# TODO: sync here
+		
+		# if we have a postexec script, run it now
+		exec_cmd_postexec();
+		
+	# backup the lowest interval
+	} elsif (0 == $$id_ref{'interval_num'}) {
 		# if we have a preexec script, run it now
 		exec_cmd_preexec();
 		
@@ -2517,7 +2537,8 @@ sub handle_interval {
 		
 		# if we have a postexec script, run it now
 		exec_cmd_postexec();
-
+		
+	# just rotate the higher intervals
 	} else {
 		# this is not the most frequent unit, just rotate
 		rotate_higher_interval( $id_ref );
@@ -2532,6 +2553,15 @@ sub handle_interval {
 			bail("Error! rm_rf(\"$config_vars{'snapshot_root'}/$$id_ref{'interval'}.delete/\")\n");
 		}		
 	}
+}
+
+# TODO: write this subroutine
+# it should sync all backup points and backup scripts to a special directory under snapshot_root
+# it should not rotate any files whatsoever
+sub sync_without_rotate {
+	# loop through backup points and backup scripts, syncing them into place
+	# if there's a problem, rollback with newest snapshot data, from lowest_interval.0
+	
 }
 
 # accepts an interval_data_ref
@@ -2557,23 +2587,30 @@ sub backup_lowest_interval {
 	#
 	rotate_lowest_snapshots( $$id_ref{'interval'} );
 	
-	# sync live filesystem data to $interval.0
-	# loop through each backup point and backup script
-	foreach my $bp_ref (@backup_points) {
+	# TODO: sync from the sync directory into interval.0 if sync is enabled
+	if (0) {
+		# TODO: write this code
 		
-		# rsync the given backup point into the snapshot root
-		if ($$bp_ref{'src'}) {
-			rsync_backup_point( $$id_ref{'interval'}, $bp_ref );
+	# sync directly from the backup points and backup scripts
+	} else {
+		# sync live filesystem data to $interval.0
+		# loop through each backup point and backup script
+		foreach my $bp_ref (@backup_points) {
 			
-		# run the backup script
-		} elsif ($$bp_ref{'script'}) {
-			exec_backup_script( $$id_ref{'interval'}, $bp_ref );
+			# rsync the given backup point into the snapshot root
+			if ($$bp_ref{'src'}) {
+				rsync_backup_point( $$id_ref{'interval'}, $bp_ref );
+				
+			# run the backup script
+			} elsif ($$bp_ref{'script'}) {
+				exec_backup_script( $$id_ref{'interval'}, $bp_ref );
+				
+			# this should never happen
+			} else {
+				bail('invalid backup point data in backup_lowest_interval()');
+			}
 			
-		# this should never happen
-		} else {
-			bail('invalid backup point data in backup_lowest_interval()');
 		}
-		
 	}
 	
 	# rollback failed backups
@@ -2609,7 +2646,7 @@ sub rotate_lowest_snapshots {
 		if (0 == $test) {
 			
 			# if use_lazy_deletes is set move the oldest directory to interval.delete
-			# otherwise preform the default behavior
+			# otherwise preform the default behavior of deleting the oldest directory for this interval
 			if (1 == $use_lazy_deletes) {
 				print_cmd("mv",
 					"$config_vars{'snapshot_root'}/$interval.$interval_max/",
