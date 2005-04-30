@@ -2,7 +2,7 @@ rsnapshot TODO list:
 
 Future versions (in no particular order)
 ------------------------------------------------------------------------------
-- Finish sync_root feature set
+- Write sync_first(?) feature set
 
 - Decide _exactly_ when preexec and postexec scripts should run
 

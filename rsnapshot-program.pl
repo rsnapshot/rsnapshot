@@ -17,7 +17,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.273 2005/04/29 07:51:57 scubaninja Exp $
+# $Id: rsnapshot-program.pl,v 1.274 2005/04/30 09:06:59 scubaninja Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -95,6 +95,7 @@ my @reserved_words = qw(
 	list
 	restore
 	rollback
+	sync
 	upgrade-config-file
 	version
 	version-only
@@ -513,12 +514,15 @@ sub parse_config_file {
 			next;
 		}
 		
-		# SYNC_ROOT
-		if ($var eq 'sync_root') {
+		# SYNC PARAMETER (name TBD: sync_first? enable_sync?)
+		if ($var eq 'sync_first') {
 			# TODO: write this code
-			# sync_root is the directory that, if specified, rsnapshot syncs data to with the "rsnapshot sync" command.
+			# if this is enabled, rsnapshot syncs data to a staging directory with the "rsnapshot sync" command.
 			# when a sync occurs, no directories are rotated. sync_root is kind of like a staging area for data transfers.
-			# it also needs to be on the same filesystem as the snapshot_root, since it's making use of hard links.
+			# the files in the sync directory will be hard linked with the others in the other snapshot directories.
+			# a good place to put the directory?: /.snapshots/sync/
+			
+			
 		}
 		
 		# NO_CREATE_ROOT
@@ -3203,9 +3207,12 @@ sub exec_cmd {
 	return ($retval);
 }
 
+# accepts no arguments
+# returns the exit code of the defined preexec script, or undef if the command is not found
 sub exec_cmd_preexec {
 	my $retval = 0;
 	
+	# exec_cmd will only run if we're not in test mode
 	if (defined($config_vars{'cmd_preexec'})) {
 		$retval = exec_cmd( $config_vars{'cmd_preexec'} );
 	}
@@ -3221,9 +3228,12 @@ sub exec_cmd_preexec {
 	return ($retval);
 }
 
+# accepts no arguments
+# returns the exit code of the defined preexec script, or undef if the command is not found
 sub exec_cmd_postexec {
 	my $retval = 0;
 	
+	# exec_cmd will only run if we're not in test mode
 	if (defined($config_vars{'cmd_postexec'})) {
 		$retval = exec_cmd( $config_vars{'cmd_postexec'} );
 	}
