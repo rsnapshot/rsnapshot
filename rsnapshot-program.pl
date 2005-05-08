@@ -17,7 +17,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.274 2005/04/30 09:06:59 scubaninja Exp $
+# $Id: rsnapshot-program.pl,v 1.275 2005/05/08 06:34:10 scubaninja Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -4214,11 +4214,13 @@ sub sync_if_different {
 # accepts src, dest
 # "copies" everything from src to dest, mainly using hard links
 # called only from sync_if_different()
+# returns 1 on success, 0 if any failures occur
 sub sync_cp_src_dest {
 	my $src		= shift(@_);
 	my $dest	= shift(@_);
 	my $dh		= undef;
 	my $result	= 0;
+	my $retval	= 1;	# return code for this subroutine
 	
 	# make sure we were passed two arguments
 	if (!defined($src))  { return(0); }
@@ -4284,13 +4286,6 @@ sub sync_cp_src_dest {
 			# skip '.' and '..'
 			next if ($node =~ m/^\.\.?$/o);
 			
-			# make sure the node we just got is valid (this is highly unlikely to fail)
-			my $st = lstat("$src/$node");
-			if (!defined($st)) {
-				print_err("Could not lstat(\"$src/$node\")", 2);
-				return(0);
-			}
-			
 			# if it's a symlink, create the link
 			# this check must be done before dir and file because it will
 			# pretend to be a file or a directory as well as a symlink
@@ -4302,7 +4297,7 @@ sub sync_cp_src_dest {
 						$result = unlink("$dest/$node");
 						if (0 == $result) {
 							print_err("Warning! Could not unlink(\"$dest/$node\")", 2);
-							return(0);
+							next;
 						}
 						
 					# nuke the destination directory
@@ -4310,7 +4305,7 @@ sub sync_cp_src_dest {
 						$result = rm_rf("$dest/$node");
 						if (0 == $result) {
 							print_err("Could not rm_rf(\"$dest/$node\")", 2);
-							return(0);
+							next;
 						}
 					}
 				}
@@ -4330,7 +4325,7 @@ sub sync_cp_src_dest {
 						$result = unlink("$dest/$node");
 						if (0 == $result) {
 							print_err("Warning! unlink(\"$dest/$node\") failed", 2);
-							return(0);
+							next;
 						}
 					}
 				}
@@ -4343,21 +4338,37 @@ sub sync_cp_src_dest {
 				
 			# if it's a file...
 			} elsif ( -f "$src/$node" ) {
-				# TODO: make sure it's really a file in dest
+				# if dest is a symlink, we need to remove it first
+				if ( -l "$dest/$node" ) {
+					$result = unlink("$dest/$node");
+					if (0 == $result) {
+						print_err("Warning! unlink(\"$dest/$node\") failed", 2);
+						next;
+					}
+				}
 				
-				# if dest exists, check for differences
+				# if dest is a directory, we need to wipe it out first
+				if ( -d "$dest/$node" ) {
+					$result = rm_rf("$dest/$node");
+					if (0 == $result) {
+						print_err("Could not rm_rf(\"$dest/$node\")", 2);
+						return(0);
+					}
+				}
+				
+				# if dest (still) exists, check for differences
 				if ( -e "$dest/$node" ) {
 					
 					# if they are different, unlink dest and link src to dest
 					if (1 == file_diff("$src/$node", "$dest/$node")) {
 						$result = unlink("$dest/$node");
 						if (0 == $result) {
-							print_err("Warning! unlink(\"$dest/$node\")", 2);
+							print_err("Warning! unlink(\"$dest/$node\") failed", 2);
 							next;
 						}
 						$result = link("$src/$node", "$dest/$node");
 						if (0 == $result) {
-							print_err("Warning! link(\"$src/$node\", \"$dest/$node\")", 2);
+							print_err("Warning! link(\"$src/$node\", \"$dest/$node\") failed", 2);
 							next;
 						}
 						
@@ -4370,7 +4381,7 @@ sub sync_cp_src_dest {
 				} else {
 					$result = link("$src/$node", "$dest/$node");
 					if (0 == $result) {
-						print_err("Warning! link(\"$src/$node\", \"$dest/$node\")", 2);
+						print_err("Warning! link(\"$src/$node\", \"$dest/$node\") failed", 2);
 					}
 				}
 				
@@ -4439,13 +4450,6 @@ sub sync_rm_dest {
 			
 			# skip '.' and '..'
 			next if ($node =~ m/^\.\.?$/o);
-			
-			# make sure the node we just got is valid (this is highly unlikely to fail)
-			my $st = lstat("$dest/$node");
-			if (!defined($st)) {
-				print_err("Warning! Could not lstat(\"$dest/$node\")", 2);
-				next;
-			}
 			
 			# if this node isn't present in src, delete it
 			if ( ! -e "$src/$node" ) {
@@ -4609,7 +4613,7 @@ sub get_perms {
 }
 
 # accepts return value from the system() command
-# bitmasks it, and returns the same thing "echo $?" would
+# bitmasks it, and returns the same thing "echo $?" would from the shell
 sub get_retval {
 	my $retval = shift(@_);
 	
@@ -4737,7 +4741,7 @@ sub safe_rename {
 		return (0);
 	}
 	
-	# return whatever we got
+	# if we made it this far, it must have worked
 	return (1);
 }
 

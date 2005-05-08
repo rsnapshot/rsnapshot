@@ -29,6 +29,8 @@ VERSION 1.2.2 (??? ?? ??:?? 2005)
   file that is being replaced with a directory
 - Fixed error message for dest not being specified in sync_rm_dest()
 - Changed skip message level to 2 in rsync_backup_point() 
+- Added better file type checking in sync_cp_src_dest()
+- Removed redundant stat() calls in sync_cp_src_dest() and sync_rm_dest()
 
 VERSION 1.2.1 (Apr 09 15:10 2005)
 ------------------------------------------------------------------------------
