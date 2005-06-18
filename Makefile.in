@@ -10,7 +10,7 @@
 # even the implied warranty of MERCHANTABILITY or FITNESS FOR A
 # PARTICULAR PURPOSE.
 
-# $Id: Makefile.in,v 1.70 2005/04/10 22:33:15 scubaninja Exp $ #
+# $Id: Makefile.in,v 1.71 2005/06/18 02:32:46 scubaninja Exp $ #
 
 
 SHELL = @SHELL@
@@ -350,7 +350,6 @@ clean:
 	/bin/rm -rf rsnapshot-$(VERSION)/
 	/bin/rm -rf autom4te.cache
 	/bin/rm -f rsnapshot-$(VERSION).tar.gz
-	/bin/rm -f rsnapshot-$(VERSION)-1.deb
 	/bin/rm -f rsnapshot-$(VERSION)-1.noarch.rpm
 	/bin/rm -f rsnapshot.conf.default
 	/bin/rm -f rsnapshot.html

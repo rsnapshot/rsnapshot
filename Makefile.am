@@ -1,4 +1,4 @@
-# $Id: Makefile.am,v 1.58 2005/04/10 22:33:15 scubaninja Exp $ #
+# $Id: Makefile.am,v 1.59 2005/06/18 02:32:31 scubaninja Exp $ #
 
 VERSION = 1.2.2
 
@@ -22,7 +22,6 @@ clean:
 	/bin/rm -rf rsnapshot-$(VERSION)/
 	/bin/rm -rf autom4te.cache
 	/bin/rm -f rsnapshot-$(VERSION).tar.gz
-	/bin/rm -f rsnapshot-$(VERSION)-1.deb
 	/bin/rm -f rsnapshot-$(VERSION)-1.noarch.rpm
 	/bin/rm -f rsnapshot.conf.default
 	/bin/rm -f rsnapshot.html
