@@ -17,7 +17,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.275 2005/05/08 06:34:10 scubaninja Exp $
+# $Id: rsnapshot-program.pl,v 1.276 2005/06/18 04:25:22 scubaninja Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -615,7 +615,7 @@ sub parse_config_file {
 			}
 		}
 		
-		# CHECK FOR cmd_preexec
+		# CHECK FOR cmd_preexec (optional)
 		if ($var eq 'cmd_preexec') {
 			my $full_script	= $value;	# backup script to run (including args)
 			my $script;					# script file (no args)
@@ -637,7 +637,7 @@ sub parse_config_file {
 			next;
 		}
 		
-		# CHECK FOR cmd_postexec
+		# CHECK FOR cmd_postexec (optional)
 		if ($var eq 'cmd_postexec') {
 			my $full_script	= $value;	# backup script to run (including args)
 			my $script;					# script file (no args)
