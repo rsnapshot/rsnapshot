@@ -17,7 +17,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.276 2005/06/18 04:25:22 scubaninja Exp $
+# $Id: rsnapshot-program.pl,v 1.277 2005/06/27 08:04:35 scubaninja Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -3004,8 +3004,8 @@ sub handle_rsync_error {
 		
 	# other error
 	} else {
-		print_err ("$config_vars{'cmd_rsync'} returned $retval", 2);
-		syslog_err("$config_vars{'cmd_rsync'} returned $retval");
+		print_err ("$config_vars{'cmd_rsync'} returned $retval while processing $$bp_ref{'src'}", 2);
+		syslog_err("$config_vars{'cmd_rsync'} returned $retval while processing $$bp_ref{'src'}");
 		
 		# set this directory to rollback if we're using link_dest
 		# (since $interval.0/ will have been moved to $interval.1/ by now)
@@ -5929,13 +5929,21 @@ Added use_lazy_deletes feature
 
 =back
 
+Justin Grote (B<justin@grote.name>)
+
+=over 4
+
+Improved rsync error reporting code
+
+=back
+
 =head1 COPYRIGHT
 
 Copyright (C) 2003-2005 Nathan Rosenquist
 
 Portions Copyright (C) 2002-2005 Mike Rubel, Carl Wilhelm Soderstrom,
 Ted Zlatanov, Carl Boe, Shane Liebling, Bharat Mediratta, Peter Palfrader,
-Nicolas Kaiser, David Cantrell, Chris Petersen, Robert Jackson
+Nicolas Kaiser, David Cantrell, Chris Petersen, Robert Jackson, Justin Grote
 
 This man page is distributed under the same license as rsnapshot:
 the GPL (see below).

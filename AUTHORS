@@ -44,3 +44,6 @@ Chris Petersen - http://www.forevermore.net/
 
 Robert Jackson <RobertJ@promedicalinc.com>
     - Added use_lazy_deletes option
+
+Justin Grote <justin@grote.name>
+    - Improved rsync error reporting code
