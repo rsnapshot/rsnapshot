@@ -48,5 +48,5 @@ Robert Jackson <RobertJ@promedicalinc.com>
 Justin Grote <justin@grote.name>
     - Improved rsync error reporting code
 
-David Keegel
+David Keegel <djk@cybersource.com.au>
     - Fixed race condition in lock file creation, improved error reporting

@@ -31,8 +31,10 @@ VERSION 1.2.2 (??? ?? ??:?? 2005)
 - Changed skip message level to 2 in rsync_backup_point() 
 - Added better file type checking in sync_cp_src_dest()
 - Removed redundant stat() calls in sync_cp_src_dest() and sync_rm_dest()
-- David Keegel fixed a race condition in add_lockfile()
-- David Keegel improved error reporting when config file isn't present
+- David Keegel <djk@cybersource.com.au> fixed a race condition in
+  add_lockfile()
+- David Keegel <djk@cybersource.com.au> improved error reporting when config
+  file isn't present
 
 VERSION 1.2.1 (Apr 09 15:10 2005)
 ------------------------------------------------------------------------------

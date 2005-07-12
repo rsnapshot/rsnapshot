@@ -17,7 +17,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.278 2005/07/12 04:18:16 scubaninja Exp $
+# $Id: rsnapshot-program.pl,v 1.279 2005/07/12 04:39:02 scubaninja Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -5938,7 +5938,7 @@ Improved rsync error reporting code
 
 =back
 
-David Keegel
+David Keegel (B<djk@cybersource.com.au>)
 
 =over 4
 
