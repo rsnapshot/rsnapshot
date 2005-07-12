@@ -129,7 +129,7 @@
 .\" ========================================================================
 .\"
 .IX Title "rsnapshot 1"
-.TH rsnapshot 1 "2005-06-27" "" ""
+.TH rsnapshot 1 "2005-07-11" "" ""
 .SH "NAME"
 rsnapshot \- remote filesystem snapshot utility
 .SH "SYNOPSIS"
@@ -926,13 +926,20 @@ Justin Grote (\fBjustin@grote.name\fR)
 .RS 4
 Improved rsync error reporting code
 .RE
+.PP
+David Keegel
+.Sp
+.RS 4
+Fixed race condition in lock file creation, improved error reporting
+.RE
 .SH "COPYRIGHT"
 .IX Header "COPYRIGHT"
 Copyright (C) 2003\-2005 Nathan Rosenquist
 .PP
 Portions Copyright (C) 2002\-2005 Mike Rubel, Carl Wilhelm Soderstrom,
 Ted Zlatanov, Carl Boe, Shane Liebling, Bharat Mediratta, Peter Palfrader,
-Nicolas Kaiser, David Cantrell, Chris Petersen, Robert Jackson, Justin Grote
+Nicolas Kaiser, David Cantrell, Chris Petersen, Robert Jackson, Justin Grote,
+David Keegel
 .PP
 This man page is distributed under the same license as rsnapshot:
 the \s-1GPL\s0 (see below).

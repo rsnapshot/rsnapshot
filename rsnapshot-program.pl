@@ -17,7 +17,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.277 2005/06/27 08:04:35 scubaninja Exp $
+# $Id: rsnapshot-program.pl,v 1.278 2005/07/12 04:18:16 scubaninja Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -34,6 +34,7 @@ use Getopt::Std;		# getopts()
 use File::Path;			# mkpath(), rmtree()
 use File::stat;			# stat(), lstat()
 use POSIX qw(locale_h);	# setlocale()
+use Fcntl;				# sysopen()
 
 ########################################
 ###           CPAN MODULES           ###
@@ -2006,7 +2007,7 @@ sub add_lockfile {
 	print_cmd("echo $$ > $lockfile");
 	
 	if (0 == $test) {
-		my $result = open(LOCKFILE, "> $lockfile");
+		my $result = sysopen(LOCKFILE, $lockfile, O_WRONLY | O_EXCL | O_CREAT);
 		if (!defined($result)) {
 			print_err ("Could not write lockfile $lockfile", 1);
 			syslog_err("Could not write lockfile $lockfile");
@@ -2240,7 +2241,7 @@ sub exit_no_config_file {
 	}
 	
 	# if we have the default config from the install, remind the user to create the real config
-	if (-e "$config_file.default") {
+	if ((-e "$config_file.default") && (! -e "$config_file")) {
 		print STDERR "Did you copy $config_file.default to $config_file yet?\n";
 	}
 	
@@ -5937,13 +5938,22 @@ Improved rsync error reporting code
 
 =back
 
+David Keegel
+
+=over 4
+
+Fixed race condition in lock file creation, improved error reporting
+
+=back
+
 =head1 COPYRIGHT
 
 Copyright (C) 2003-2005 Nathan Rosenquist
 
 Portions Copyright (C) 2002-2005 Mike Rubel, Carl Wilhelm Soderstrom,
 Ted Zlatanov, Carl Boe, Shane Liebling, Bharat Mediratta, Peter Palfrader,
-Nicolas Kaiser, David Cantrell, Chris Petersen, Robert Jackson, Justin Grote
+Nicolas Kaiser, David Cantrell, Chris Petersen, Robert Jackson, Justin Grote,
+David Keegel
 
 This man page is distributed under the same license as rsnapshot:
 the GPL (see below).
