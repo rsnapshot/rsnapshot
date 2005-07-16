@@ -17,7 +17,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.279 2005/07/12 04:39:02 scubaninja Exp $
+# $Id: rsnapshot-program.pl,v 1.280 2005/07/16 23:26:46 scubaninja Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -2726,7 +2726,7 @@ sub rotate_lowest_snapshots {
 		# otherwise, we hard link (except for directories, symlinks, and special files) .0 over to .1
 		} else {
 			# call generic cp_al() subroutine
-			display_cp_al( "$config_vars{'snapshot_root'}/$interval.0/", "$config_vars{'snapshot_root'}/$interval.1/" );
+			display_cp_al( "$config_vars{'snapshot_root'}/$interval.0", "$config_vars{'snapshot_root'}/$interval.1" );
 			
 			if (0 == $test) {
 				$result = cp_al(
@@ -3492,6 +3492,10 @@ sub display_cp_al {
 	my $src		= shift(@_);
 	my $dest	= shift(@_);
 	
+	# remove trailing slashes (for newer versions of GNU cp)
+	$src  = remove_trailing_slash($src);
+	$dest = remove_trailing_slash($dest);
+	
 	if (!defined($src))		{ bail('src not defined in display_cp_al()'); }
 	if (!defined($dest))	{ bail('dest not defined in display_cp_al()'); }
 	
@@ -3541,6 +3545,10 @@ sub gnu_cp_al {
 	# make sure we were passed two arguments
 	if (!defined($src))  { return(0); }
 	if (!defined($dest)) { return(0); }
+	
+	# remove trailing slashes (for newer versions of GNU cp)
+	$src  = remove_trailing_slash($src);
+	$dest = remove_trailing_slash($dest);
 	
 	if ( ! -d "$src" ) {
 		print_err("gnu_cp_al() needs a valid directory as an argument", 2);

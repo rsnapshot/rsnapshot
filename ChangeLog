@@ -35,6 +35,7 @@ VERSION 1.2.2 (??? ?? ??:?? 2005)
   add_lockfile()
 - David Keegel <djk@cybersource.com.au> improved error reporting when config
   file isn't present
+- Removed trailing slashes from file paths when calling cp -al subroutines
 
 VERSION 1.2.1 (Apr 09 15:10 2005)
 ------------------------------------------------------------------------------
