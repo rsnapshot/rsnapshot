@@ -17,7 +17,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.280 2005/07/16 23:26:46 scubaninja Exp $
+# $Id: rsnapshot-program.pl,v 1.281 2005/07/16 23:37:15 scubaninja Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -28,7 +28,7 @@
 
 require 5.004;
 use strict;
-use DirHandle;
+use DirHandle;			# DirHandle()
 use Cwd;				# cwd()
 use Getopt::Std;		# getopts()
 use File::Path;			# mkpath(), rmtree()
