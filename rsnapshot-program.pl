@@ -17,7 +17,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.287 2005/07/17 01:21:32 scubaninja Exp $
+# $Id: rsnapshot-program.pl,v 1.288 2005/07/17 02:16:16 scubaninja Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -517,13 +517,27 @@ sub parse_config_file {
 		}
 		
 		# SYNC_FIRST
+		# if this is enabled, rsnapshot syncs data to a staging directory with the "rsnapshot sync" command,
+		# and all "interval" runs will simply rotate files. this changes the behaviour of the lowest interval.
+		# when a sync occurs, no directories are rotated. sync_root is kind of like a staging area for data transfers.
+		# the files in the sync directory will be hard linked with the others in the other snapshot directories.
+		# a good place to put the directory?: /.snapshots/sync/
+		#
 		if ($var eq 'sync_first') {
-			# TODO: write this code
-			# if this is enabled, rsnapshot syncs data to a staging directory with the "rsnapshot sync" command.
-			# when a sync occurs, no directories are rotated. sync_root is kind of like a staging area for data transfers.
-			# the files in the sync directory will be hard linked with the others in the other snapshot directories.
-			# a good place to put the directory?: /.snapshots/sync/
-			
+			if (defined($value)) {
+				if ('1' eq $value) {
+					$config_vars{'sync_first'} = 1;
+					$line_syntax_ok = 1;
+					next;
+				} elsif ('0' eq $value) {
+					$config_vars{'sync_first'} = 0;
+					$line_syntax_ok = 1;
+					next;
+				} else {
+					config_err($file_line_num, "$line - sync_first must be set to either 1 or 0");
+					next;
+				}
+			}
 			
 		}
 		
