@@ -17,7 +17,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.286 2005/07/17 01:17:52 scubaninja Exp $
+# $Id: rsnapshot-program.pl,v 1.287 2005/07/17 01:21:32 scubaninja Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -4892,7 +4892,7 @@ sub upgrade_config_file {
 
 # accepts array_ref of config file lines
 # exits 1 on errors
-# attempts to backup rsnapshot.conf to rsnapshot.conf.backup(.#)
+# attempts to backup rsnapshot.conf to rsnapshot.conf.backup.(#)
 sub backup_config_file {
 	my $lines_ref = shift(@_);
 	
