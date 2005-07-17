@@ -17,7 +17,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.284 2005/07/17 00:51:47 scubaninja Exp $
+# $Id: rsnapshot-program.pl,v 1.285 2005/07/17 01:09:24 scubaninja Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -3198,9 +3198,9 @@ sub exec_cmd {
 		return (undef);
 	}
 	
-	print_cmd($cmd);
+	print_cmd("$cmd");
 	if (0 == $test) {
-		$return = system($cmd);
+		$return = system("$cmd");
 		if (!defined($return)) {
 			print_err("Warning! exec_cmd(\"$cmd\") returned undef", 2);
 		}
@@ -3219,7 +3219,7 @@ sub exec_cmd_preexec {
 	
 	# exec_cmd will only run if we're not in test mode
 	if (defined($config_vars{'cmd_preexec'})) {
-		$retval = exec_cmd( $config_vars{'cmd_preexec'} );
+		$retval = exec_cmd( "$config_vars{'cmd_preexec'}" );
 	}
 	
 	if (!defined($retval)) {
@@ -3240,7 +3240,7 @@ sub exec_cmd_postexec {
 	
 	# exec_cmd will only run if we're not in test mode
 	if (defined($config_vars{'cmd_postexec'})) {
-		$retval = exec_cmd( $config_vars{'cmd_postexec'} );
+		$retval = exec_cmd( "$config_vars{'cmd_postexec'}" );
 	}
 	
 	if (!defined($retval)) {
