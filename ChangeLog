@@ -23,7 +23,7 @@ VERSION 1.2.2 (??? ?? ??:?? 2005)
 - Fixed swapped config comments about rsync_long_args in
   write_upgrade_config_file()
 - Added optional use of the CPAN Lchown module
-- Added safe_lchown() wrapper to use Lchown if possible
+- Added safe_chown() wrapper to handle chown() calls safely
 - Added warning message if we can't properly lchown a symlink
 - Added fixes in sync_cp_src_dest() and sync_rm_dest() to properly delete a
   file that is being replaced with a directory

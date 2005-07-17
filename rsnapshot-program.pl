@@ -17,7 +17,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.281 2005/07/16 23:37:15 scubaninja Exp $
+# $Id: rsnapshot-program.pl,v 1.282 2005/07/17 00:00:16 scubaninja Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -3629,7 +3629,7 @@ sub native_cp_al {
 		if ( ! -l "$dest" ) {
 			# print and/or log this if necessary
 			if (($verbose > 4) or ($loglevel > 4)) {
-				my $cmd_string = "chown(" . $st->uid . ", " . $st->gid . ", \"$dest\")";
+				my $cmd_string = "safe_chown(" . $st->uid . ", " . $st->gid . ", \"$dest\")";
 			
 				if ($verbose > 4) {
 					print_cmd($cmd_string);
@@ -3638,9 +3638,9 @@ sub native_cp_al {
 				}
 			}
 			
-			$result = chown($st->uid, $st->gid, "$dest");
+			$result = safe_chown($st->uid, $st->gid, "$dest");
 			if (! $result) {
-				print_err("Warning! Could not chown(" . $st->uid . ", " . $st->gid . ", \"$dest\");", 2);
+				print_err("Warning! Could not safe_chown(" . $st->uid . ", " . $st->gid . ", \"$dest\");", 2);
 				return(0);
 			}
 		}
@@ -4276,9 +4276,9 @@ sub sync_cp_src_dest {
 	if (0 == $<) {
 		# make sure destination is not a symlink (should never happen because of unlink() above)
 		if ( ! -l "$dest" ) {
-			$result = chown($st->uid, $st->gid, "$dest");
+			$result = safe_chown($st->uid, $st->gid, "$dest");
 			if (! $result) {
-				print_err("Warning! Could not chown(" . $st->uid . ", " . $st->gid . ", \"$dest\");", 2);
+				print_err("Warning! Could not safe_chown(" . $st->uid . ", " . $st->gid . ", \"$dest\");", 2);
 				return(0);
 			}
 		}
@@ -4569,36 +4569,22 @@ sub copy_symlink {
 		# make sure the symlink even exists
 		if ( -e "$dest" ) {
 			
-			# make sure we have the Lchown module
-			if (1 == $have_lchown) {
-				
-				# print and/or log this if necessary
-				if (($verbose > 4) or ($loglevel > 4)) {
-					my $cmd_string = "safe_lchown(" . $st->uid . ", " . $st->gid . ", \"$dest\");";
-				
-					if ($verbose > 4) {
-						print_cmd($cmd_string);
-					} elsif ($loglevel > 4) {
-						log_msg($cmd_string, 4);
-					}
+			# print and/or log this if necessary
+			if (($verbose > 4) or ($loglevel > 4)) {
+				my $cmd_string = "safe_chown(" . $st->uid . ", " . $st->gid . ", \"$dest\");";
+			
+				if ($verbose > 4) {
+					print_cmd($cmd_string);
+				} elsif ($loglevel > 4) {
+					log_msg($cmd_string, 4);
 				}
-				
-				$result = safe_lchown($st->uid, $st->gid, "$dest");
-				
-				if (0 == $result) {
-					print_err("Warning! Could not safe_lchown(" . $st->uid . ", " . $st->gid . ", \"$dest\")", 2);
-					return (0);
-				}
-				
-			# raise warning because we couldn't lchown symlink
-			} else {
-				raise_warning();
-				
-				if ($verbose > 2) {
-					print_warn("Could not lchown() symlink \"$dest\"", 2);
-				} elsif ($loglevel > 2) {
-					log_warn("Could not lchown() symlink \"$dest\"", 2);
-				}
+			}
+			
+			$result = safe_chown($st->uid, $st->gid, "$dest");
+			
+			if (0 == $result) {
+				print_err("Warning! Could not safe_chown(" . $st->uid . ", " . $st->gid . ", \"$dest\")", 2);
+				return (0);
 			}
 		}
 	}
@@ -5069,7 +5055,7 @@ sub use_lchown {
 # uses lchown() to change ownership of the file, if possible
 # returns 1 upon success (or if lchown() not present)
 # returns 0 on failure
-sub safe_lchown {
+sub safe_chown {
 	my $uid			= shift(@_);
 	my $gid			= shift(@_);
 	my $filepath	= shift(@_);
@@ -5077,17 +5063,41 @@ sub safe_lchown {
 	my $result = undef;
 	
 	if (!defined($uid) or !defined($gid) or !defined($filepath)) {
-		print_err("safe_lchown() needs uid, gid, and filepath", 2);
+		print_err("safe_chown() needs uid, gid, and filepath", 2);
 		return(0);
 	}
 	if ( ! -e "$filepath" ) {
-		print_err("safe_lchown() needs a valid filepath (not \"$filepath\")", 2);
+		print_err("safe_chown() needs a valid filepath (not \"$filepath\")", 2);
 		return(0);
 	}
 	
-	if (1 == $have_lchown) {
-		$result = Lchown::lchown($uid, $gid, "$filepath");
-		if (!defined($result)) {
+	# if it's a symlink, use lchown() or skip it
+	if (-l "$filepath") {
+		# use Lchown
+		if (1 == $have_lchown) {
+			$result = Lchown::lchown($uid, $gid, "$filepath");
+			if (!defined($result)) {
+				return (0);
+			}
+			
+		# we can't safely do anything here, skip it
+		} else {
+			raise_warning();
+			
+			if ($verbose > 2) {
+				print_warn("Could not lchown() symlink \"$filepath\"", 2);
+			} elsif ($loglevel > 2) {
+				log_warn("Could not lchown() symlink \"$filepath\"", 2);
+			}
+			
+			# we'll still return 1 at the bottom, because we did as well as we could
+			# the warning raised will tell the user what happened
+		}
+		
+	# if it's not a symlink, use chown()
+	} else {
+		$result = chown($uid, $gid, "$filepath");
+		if (! $result) {
 			return (0);
 		}
 	}
