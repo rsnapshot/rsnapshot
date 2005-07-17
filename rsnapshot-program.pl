@@ -17,7 +17,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.285 2005/07/17 01:09:24 scubaninja Exp $
+# $Id: rsnapshot-program.pl,v 1.286 2005/07/17 01:17:52 scubaninja Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -4826,14 +4826,16 @@ sub upgrade_config_file {
 		print STDERR "ERROR: Could not read config file during version check.\n";
 		exit(1);
 	}
+	# right now 1.2 is the only valid version
 	if ('1.2' eq $config_version) {
 		print "$config_file file is already up to date.\n";
 		exit(0);
-	}
+		
 	# config_version is set, but not to anything we know about
-	if ('unknown' eq $config_version) {
+	} elsif ('unknown' eq $config_version) {
 		# this is good, it means the config_version was not already set to anything
 		# and is a good candidate for the upgrade
+		
 	} else {
 		print STDERR "ERROR: config_version is set to unknown version: $config_version.\n";
 		exit(1);
