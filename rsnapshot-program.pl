@@ -17,7 +17,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.288 2005/07/17 02:16:16 scubaninja Exp $
+# $Id: rsnapshot-program.pl,v 1.289 2005/07/17 04:03:36 scubaninja Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -225,10 +225,6 @@ if ($cmd eq 'du') {
 # IF WE GOT THIS FAR, PREPARE TO RUN A BACKUP
 #
 
-# figure out which interval we're working on
-# $cmd should store the name of the interval we'll run against
-$interval_data_ref = get_interval_data( $cmd );
-
 # log the beginning of this run
 log_startup();
 
@@ -242,7 +238,8 @@ add_lockfile();
 create_snapshot_root();
 
 # actually run the backup job
-handle_interval( $interval_data_ref );
+# $cmd should store the name of the interval we'll run against
+handle_interval( $cmd );
 
 # if we have a lockfile, remove it
 remove_lockfile();
@@ -538,7 +535,6 @@ sub parse_config_file {
 					next;
 				}
 			}
-			
 		}
 		
 		# NO_CREATE_ROOT
@@ -1300,6 +1296,12 @@ sub parse_config_file {
 				exit(1);
 			}
 		}
+	}
+	# make sure that the user didn't call "sync" if sync_first isn't enabled
+	if (($cmd eq 'sync') && (! $config_vars{'sync_first'})) {
+		print_err ("\"sync_first\" must be enabled for \"sync\" to work", 1);
+		syslog_err("\"sync_first\" must be enabled for \"sync\" to work");
+		exit(1);
 	}
 	# make sure that the backup_script destination paths don't nuke data copied over for backup points
 	{
@@ -2187,7 +2189,9 @@ sub get_interval_data {
 	}
 	
 	# make sure we got something that makes sense
-	if (!defined($interval_num)) { bail("Interval \"$cur_interval\" unknown, check $config_file"); }
+	if ($cur_interval ne 'sync') {
+		if (!defined($interval_num)) { bail("Interval \"$cur_interval\" unknown, check $config_file"); }
+	}
 	
 	# populate our hash
 	$hash{'interval'}			= $cur_interval;
@@ -2469,17 +2473,19 @@ sub remove_trailing_slash {
 	return ($str);
 }
 
-# accepts an interval_data_ref
+# accepts the interval (cmd) to run against
 # returns nothing
 # calls the appropriate subroutine, depending on whether this is the lowest interval or a higher one
 # also calls preexec/postexec scripts if we're working on the lowest interval
 #
 sub handle_interval {
-	my $id_ref = shift(@_);
+	my $cmd = shift(@_);
+	
+	if (!defined($cmd)) { bail('cmd not defined in handle_interval()'); }
+	
+	my $id_ref = get_interval_data( $cmd );
 	
 	my $result = 0;
-	
-	if (!defined($id_ref)) { bail('id_ref not defined in handle_interval()'); }
 	
 	# make sure we don't have any leftover interval.delete directories
 	# if so, loop through and delete them
@@ -2537,24 +2543,30 @@ sub handle_interval {
 		}
 	}
 	
-	# TODO: check for sync parameter here
-	# sync content from local and remote locations, but don't rotate any directories
-	if (0) {
+	# TODO:
+	# handle toggling between sync_first being enabled and disabled
+	#   if sync_first just got enabled, we should first "cp -al hourly.0 sync".
+	#   if sync_first just got disabled, we should "rm -rf sync".
+	
+	
+	# backup the lowest interval (or sync content to staging area)
+	if ((0 == $$id_ref{'interval_num'}) or ($cmd eq 'sync')) {
 		# if we have a preexec script, run it now
 		exec_cmd_preexec();
 		
-		# TODO: sync here
-		
-		# if we have a postexec script, run it now
-		exec_cmd_postexec();
-		
-	# backup the lowest interval
-	} elsif (0 == $$id_ref{'interval_num'}) {
-		# if we have a preexec script, run it now
-		exec_cmd_preexec();
-		
-		# if this is the most frequent interval, actually do the backups here
-		backup_lowest_interval( $id_ref );
+		if ($cmd eq 'sync') {
+			# actually do the backups here
+			# this grabs data from the live filesystems and backup scripts
+			backup_lowest_interval( $id_ref );
+			
+		} else {
+			# rotate the higher directories in this interval
+			rotate_lowest_snapshots( $$id_ref{'interval'} );
+			
+			# actually do the backups here
+			# this grabs data from the live filesystems and backup scripts
+			backup_lowest_interval( $id_ref );
+		}
 		
 		# if we have a postexec script, run it now
 		exec_cmd_postexec();
@@ -2578,9 +2590,10 @@ sub handle_interval {
 }
 
 # TODO: write this subroutine
+#
 # it should sync all backup points and backup scripts to a special directory under snapshot_root
 # it should not rotate any files whatsoever
-sub sync_without_rotate {
+sub sync_data_only {
 	# loop through backup points and backup scripts, syncing them into place
 	# if there's a problem, rollback with newest snapshot data, from lowest_interval.0
 	
@@ -2605,33 +2618,21 @@ sub backup_lowest_interval {
 		bail('backup_lowest_interval() can only operate on the lowest interval');
 	}
 	
-	# rotate the higher directories in this interval
-	#
-	rotate_lowest_snapshots( $$id_ref{'interval'} );
-	
-	# TODO: sync from the sync directory into interval.0 if sync is enabled
-	if (0) {
-		# TODO: write this code
+	# sync live filesystem data and backup script output to $interval.0
+	# loop through each backup point and backup script
+	foreach my $bp_ref (@backup_points) {
 		
-	# sync directly from the backup points and backup scripts
-	} else {
-		# sync live filesystem data to $interval.0
-		# loop through each backup point and backup script
-		foreach my $bp_ref (@backup_points) {
+		# rsync the given backup point into the snapshot root
+		if ($$bp_ref{'src'}) {
+			rsync_backup_point( $$id_ref{'interval'}, $bp_ref );
 			
-			# rsync the given backup point into the snapshot root
-			if ($$bp_ref{'src'}) {
-				rsync_backup_point( $$id_ref{'interval'}, $bp_ref );
-				
-			# run the backup script
-			} elsif ($$bp_ref{'script'}) {
-				exec_backup_script( $$id_ref{'interval'}, $bp_ref );
-				
-			# this should never happen
-			} else {
-				bail('invalid backup point data in backup_lowest_interval()');
-			}
+		# run the backup script
+		} elsif ($$bp_ref{'script'}) {
+			exec_backup_script( $$id_ref{'interval'}, $bp_ref );
 			
+		# this should never happen
+		} else {
+			bail('invalid backup point data in backup_lowest_interval()');
 		}
 	}
 	
@@ -2639,7 +2640,7 @@ sub backup_lowest_interval {
 	rollback_failed_backups( $$id_ref{'interval'} );
 	
 	# update mtime on $interval.0/ to show when the snapshot completed
-	touch_interval_0( $$id_ref{'interval'} );
+	touch_interval_dir( $$id_ref{'interval'} );
 }
 
 # accepts $interval
@@ -2695,7 +2696,7 @@ sub rotate_lowest_snapshots {
 			}
 		}
 	}
-
+	
 	# rotate the middle ones
 	if ($interval_max > 0) {
 		for (my $i=($interval_max-1); $i>0; $i--) {
@@ -2731,8 +2732,8 @@ sub rotate_lowest_snapshots {
 			# move .0 to .1
 			if (0 == $test) {
 				my $result = safe_rename(
-								"$config_vars{'snapshot_root'}/$interval.0",
-								"$config_vars{'snapshot_root'}/$interval.1"
+					"$config_vars{'snapshot_root'}/$interval.0",
+					"$config_vars{'snapshot_root'}/$interval.1"
 				);
 				if (0 == $result) {
 					my $errstr = '';
@@ -2786,6 +2787,16 @@ sub rsync_backup_point {
 	my $src						= undef;
 	my $result					= undef;
 	
+	# if we're using link-dest later, that target depends on whether we're doing a 'sync' or a regular interval
+	# if we're doing a "sync", then look at [lowest-interval].0 instead of [cur-interval].1
+	my $interval_link_dest		= $interval;
+	my $interval_num_link_dest	= 1;
+	
+	if ($interval eq 'sync') {
+		$interval_link_dest		= $intervals[0]->{'interval'};
+		$interval_num_link_dest = 0;
+	}
+	
 	# check to see if this destination path has already failed
 	# if it's set to be rolled back, skip out now
 	foreach my $rollback_point (@rollback_points) {
@@ -2829,7 +2840,7 @@ sub rsync_backup_point {
 		}
 	}
 	
-	# create $interval.0/$$bp_ref{'dest'} directory if it doesn't exist
+	# create $interval.0/$$bp_ref{'dest'} or sync/$$bp_ref{'dest'} directory if it doesn't exist
 	#
 	create_backup_point_dir($interval, $bp_ref);
 	
@@ -2906,10 +2917,11 @@ sub rsync_backup_point {
 		bail("Could not understand source \"$$bp_ref{'src'}\" in backup_lowest_interval()");
 	}
 	
-	# if we're using --link-dest, we'll need to specify .1 as the link-dest directory
+	# if we're using --link-dest, we'll need to specify the link-dest directory target
+	# this varies depending on whether we're operating on the lowest interval or doing a 'sync'
 	if (1 == $link_dest) {
-		if ( -d "$config_vars{'snapshot_root'}/$interval.1/$$bp_ref{'dest'}" ) {
-			push(@rsync_long_args_stack, "--link-dest=$config_vars{'snapshot_root'}/$interval.1/$$bp_ref{'dest'}");
+		if ( -d "$config_vars{'snapshot_root'}/$interval_link_dest.$interval_num_link_dest/$$bp_ref{'dest'}" ) {
+			push(@rsync_long_args_stack, "--link-dest=$config_vars{'snapshot_root'}/$interval_link_dest.$interval_num_link_dest/$$bp_ref{'dest'}");
 		}
 	}
 	
@@ -2919,10 +2931,23 @@ sub rsync_backup_point {
 	#
 	#   This is necessary because --link-dest only works on directories
 	#
-	if ((1 == $link_dest) && (is_file($$bp_ref{'src'})) && (-f "$config_vars{'snapshot_root'}/$interval.1/$$bp_ref{'dest'}")) {
+	if (
+		(1 == $link_dest) &&
+		(is_file($$bp_ref{'src'})) &&
+		(-f "$config_vars{'snapshot_root'}/$interval_link_dest.$interval_num_link_dest/$$bp_ref{'dest'}")
+	) {
+		
 		# these are both "destination" paths, but we're moving from .1 to .0
-		my $srcpath		= "$config_vars{'snapshot_root'}/$interval.1/$$bp_ref{'dest'}";
-		my $destpath	= "$config_vars{'snapshot_root'}/$interval.0/$$bp_ref{'dest'}";
+		my $srcpath;
+		my $destpath;
+		
+		$srcpath = "$config_vars{'snapshot_root'}/$interval_link_dest.$interval_num_link_dest/$$bp_ref{'dest'}";
+		
+		if ($interval eq 'sync') {
+			$destpath = "$config_vars{'snapshot_root'}/$interval/$$bp_ref{'dest'}";
+		} else {
+			$destpath = "$config_vars{'snapshot_root'}/$interval.0/$$bp_ref{'dest'}";
+		}
 		
 		print_cmd("ln $srcpath $destpath");
 		
@@ -2963,7 +2988,11 @@ sub rsync_backup_point {
 	push(@cmd_stack, $$bp_ref{'src'});
 	#
 	# dest
-	push(@cmd_stack, "$config_vars{'snapshot_root'}/$interval.0/$$bp_ref{'dest'}");
+	if ($interval eq 'sync') {
+		push(@cmd_stack, "$config_vars{'snapshot_root'}/$interval/$$bp_ref{'dest'}");
+	} else {
+		push(@cmd_stack, "$config_vars{'snapshot_root'}/$interval.0/$$bp_ref{'dest'}");
+	}
 	#
 	# END RSYNC COMMAND ASSEMBLY
 	
@@ -3142,8 +3171,16 @@ sub exec_backup_script {
 	# from .1 back to .0 if possible. these will be used as a baseline for diff comparisons by
 	# sync_if_different() down below.
 	if (1 == $link_dest) {
-		my $lastdir	= "$config_vars{'snapshot_root'}/$interval.1/$$bp_ref{'dest'}";
-		my $curdir	= "$config_vars{'snapshot_root'}/$interval.0/$$bp_ref{'dest'}";
+		my $lastdir;
+		my $curdir;
+		
+		if ($interval eq 'sync') {
+			$lastdir	= "$config_vars{'snapshot_root'}/" . $intervals[0]->{'interval'} . ".0/$$bp_ref{'dest'}";
+			$curdir		= "$config_vars{'snapshot_root'}/$interval/$$bp_ref{'dest'}";
+		} else {
+			$lastdir	= "$config_vars{'snapshot_root'}/$interval.1/$$bp_ref{'dest'}";
+			$curdir		= "$config_vars{'snapshot_root'}/$interval.0/$$bp_ref{'dest'}";
+		}
 		
 		# make sure we have a slash at the end
 		if ($lastdir !~ m/\/$/) {
@@ -3177,10 +3214,18 @@ sub exec_backup_script {
 	# rsync doesn't work here because it sees that the timestamps are different, and
 	# insists on changing things even if the files are bit for bit identical on content.
 	#
-	print_cmd("sync_if_different(\"$tmpdir\", \"$config_vars{'snapshot_root'}/$interval.0/$$bp_ref{'dest'}\")");
+	# check to see where we're syncing to
+	my $target_dir;
+	if ($interval eq 'sync') {
+		$target_dir = "$config_vars{'snapshot_root'}/$interval/$$bp_ref{'dest'}";
+	} else {
+		$target_dir = "$config_vars{'snapshot_root'}/$interval.0/$$bp_ref{'dest'}";
+	}
+	
+	print_cmd("sync_if_different(\"$tmpdir\", \"$target_dir\")");
 	
 	if (0 == $test) {
-		$result = sync_if_different("$tmpdir", "$config_vars{'snapshot_root'}/$interval.0/$$bp_ref{'dest'}");
+		$result = sync_if_different("$tmpdir", "$target_dir");
 		if (!defined($result)) {
 			print_err("Warning! sync_if_different(\"$tmpdir\", \"$$bp_ref{'dest'}\") returned undef", 2);
 		}
@@ -3212,9 +3257,9 @@ sub exec_cmd {
 		return (undef);
 	}
 	
-	print_cmd("$cmd");
+	print_cmd($cmd);
 	if (0 == $test) {
-		$return = system("$cmd");
+		$return = system($cmd);
 		if (!defined($return)) {
 			print_err("Warning! exec_cmd(\"$cmd\") returned undef", 2);
 		}
@@ -3284,11 +3329,16 @@ sub create_backup_point_dir {
 	pop(@dirs);
 	
 	# don't mkdir for dest unless we have to
-	my $destpath = "$config_vars{'snapshot_root'}/$interval.0/" . join('/', @dirs);
+	my $destpath;
+	if ($interval eq 'sync') {
+		$destpath = "$config_vars{'snapshot_root'}/$interval/" . join('/', @dirs);
+	} else {
+		$destpath = "$config_vars{'snapshot_root'}/$interval.0/" . join('/', @dirs);
+	}
 	
 	# make sure we DON'T have a trailing slash (for mkpath)
 	if ($destpath =~ m/\/$/) {
-		$destpath =~ s/\/$//;
+		$destpath = remove_trailing_slash($destpath);
 	}
 	
 	# create the directory if it doesn't exist
@@ -3315,10 +3365,22 @@ sub create_backup_point_dir {
 sub rollback_failed_backups {
 	my $interval = shift(@_);
 	
+	if (!defined($interval)) { bail('interval not defined in rollback_failed_backups()'); }
+	
 	my $result;
 	my $rsync_short_args	= $default_rsync_short_args;
 	
-	if (!defined($interval)) { bail('interval not defined in rollback_failed_backups()'); }
+	# handle 'sync' case
+	my $interval_src;
+	my $interval_dest;
+	
+	if ($interval eq 'sync') {
+		$interval_src	= $intervals[0]->{'interval'} . '.0';
+		$interval_dest	= $interval;
+	} else {
+		$interval_src	= "$interval.1";
+		$interval_dest	= "$interval.0";
+	}
 	
 	# extra verbose?
 	if ($verbose > 3) { $rsync_short_args .= 'v'; }
@@ -3334,32 +3396,34 @@ sub rollback_failed_backups {
 		syslog_warn("Rolling back \"$rollback_point\"");
 		
 		# using link_dest, this probably won't happen
-		# just in case, we may have to delete the old backup point from interval.0/
-		if ( -e "$config_vars{'snapshot_root'}/$interval.0/$rollback_point" ) {
-			display_rm_rf("$config_vars{'snapshot_root'}/$interval.0/$rollback_point");
+		# just in case, we may have to delete the old backup point from interval.0 / sync
+		if ( -e "$config_vars{'snapshot_root'}/$interval_dest/$rollback_point" ) {
+			display_rm_rf("$config_vars{'snapshot_root'}/$interval_dest/$rollback_point");
 			if (0 == $test) {
-				$result = rm_rf( "$config_vars{'snapshot_root'}/$interval.0/$rollback_point" );
+				$result = rm_rf( "$config_vars{'snapshot_root'}/$interval_dest/$rollback_point" );
 				if (0 == $result) {
-					bail("Error! rm_rf(\"$config_vars{'snapshot_root'}/$interval.0/$rollback_point\")\n");
+					bail("Error! rm_rf(\"$config_vars{'snapshot_root'}/$interval_dest/$rollback_point\")\n");
 				}
 			}
 		}
 		
 		# copy hard links back from .1 to .0
 		# this will re-populate the .0 directory without taking up (much) additional space
+		#
+		# if we're doing a 'sync', then instead of .1 and .0, it's lowest.0 and sync
 		display_cp_al(
-			"$config_vars{'snapshot_root'}/$interval.1/$rollback_point",
-			"$config_vars{'snapshot_root'}/$interval.0/$rollback_point"
+			"$config_vars{'snapshot_root'}/$interval_src/$rollback_point",
+			"$config_vars{'snapshot_root'}/$interval_dest/$rollback_point"
 		);
 		if (0 == $test) {
 			$result = cp_al(
-				"$config_vars{'snapshot_root'}/$interval.1/$rollback_point",
-				"$config_vars{'snapshot_root'}/$interval.0/$rollback_point"
+				"$config_vars{'snapshot_root'}/$interval_src/$rollback_point",
+				"$config_vars{'snapshot_root'}/$interval_dest/$rollback_point"
 			);
 			if (! $result) {
 				my $errstr = '';
-				$errstr .= "Error! cp_al(\"$config_vars{'snapshot_root'}/$interval.1/$rollback_point\", ";
-				$errstr .= "\"$config_vars{'snapshot_root'}/$interval.0/$rollback_point\")";
+				$errstr .= "Error! cp_al(\"$config_vars{'snapshot_root'}/$interval_src/$rollback_point\", ";
+				$errstr .= "\"$config_vars{'snapshot_root'}/$interval_dest/$rollback_point\")";
 				bail($errstr);
 			}
 		}
@@ -3369,18 +3433,26 @@ sub rollback_failed_backups {
 # accepts interval
 # returns nothing
 # updates mtime on $interval.0
-sub touch_interval_0 {
+sub touch_interval_dir {
 	my $interval = shift(@_);
 	
 	if (!defined($interval)) { bail('interval not defined in touch_interval()'); }
 	
+	my $interval_dir;
+	
+	if ($interval eq 'sync') {
+		$interval_dir = $interval;
+	} else {
+		$interval_dir = $interval . '.0';
+	}
+	
 	# update mtime of $interval.0 to reflect the time this snapshot was taken
-	print_cmd("touch $config_vars{'snapshot_root'}/$interval.0/");
+	print_cmd("touch $config_vars{'snapshot_root'}/$interval_dir/");
 	
 	if (0 == $test) {
-		my $result = utime(time(), time(), "$config_vars{'snapshot_root'}/$interval.0/");
+		my $result = utime(time(), time(), "$config_vars{'snapshot_root'}/$interval_dir/");
 		if (0 == $result) {
-			bail("Could not utime(time(), time(), \"$config_vars{'snapshot_root'}/$interval.0/\");");
+			bail("Could not utime(time(), time(), \"$config_vars{'snapshot_root'}/$interval_dir/\");");
 		}
 	}
 }
@@ -3402,7 +3474,7 @@ sub rotate_higher_interval {
 	
 	# this also should never happen
 	if (!defined($$id_ref{'interval_num'}) or (0 == $$id_ref{'interval_num'})) {
-		bail('backup_lowest_interval() can only operate on the higher intervals');
+		bail('rotate_higher_interval() can only operate on the higher intervals');
 	}
 	
 	# set up variables for convenience since we refer to them extensively
