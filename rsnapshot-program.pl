@@ -17,7 +17,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.283 2005/07/17 00:46:25 scubaninja Exp $
+# $Id: rsnapshot-program.pl,v 1.284 2005/07/17 00:51:47 scubaninja Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -2654,7 +2654,6 @@ sub rotate_lowest_snapshots {
 		if (0 == $test) {
 			
 			# if use_lazy_deletes is set move the oldest directory to interval.delete
-			# otherwise preform the default behavior of deleting the oldest directory for this interval
 			if (1 == $use_lazy_deletes) {
 				print_cmd("mv",
 					"$config_vars{'snapshot_root'}/$interval.$interval_max/",
@@ -2671,6 +2670,8 @@ sub rotate_lowest_snapshots {
 					$errstr .= "$config_vars{'snapshot_root'}/$interval.delete/\")";
 					bail($errstr);
 				}				
+				
+			# otherwise the default is to delete the oldest directory for this interval
 			} else {
 				display_rm_rf("$config_vars{'snapshot_root'}/$interval.$interval_max/");
 				my $result = rm_rf( "$config_vars{'snapshot_root'}/$interval.$interval_max/" );
@@ -2779,8 +2780,8 @@ sub rsync_backup_point {
 			my $tmp_rollback_point	= $rollback_point;
 			
 			# don't compare the slashes at the end
-			$tmp_dest			=~ s/\/+$//o;
-			$tmp_rollback_point	=~ s/\/+$//o;
+			$tmp_dest			= remove_trailing_slash($tmp_dest);
+			$tmp_rollback_point	= remove_trailing_slash($tmp_rollback_point);
 			
 			if ("$tmp_dest" eq "$tmp_rollback_point") {
 				print_warn ("$$bp_ref{'src'} skipped due to rollback plan", 2);

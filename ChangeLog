@@ -37,6 +37,8 @@ VERSION 1.2.2 (??? ?? ??:?? 2005)
   file isn't present
 - Removed trailing slashes from file paths when calling cp -al subroutines
 - Changed show_usage() to use here printing
+- Changed strip trailing slash operation in rsync_backup_point() to use
+  strip_trailing_slash()
 
 VERSION 1.2.1 (Apr 09 15:10 2005)
 ------------------------------------------------------------------------------
