@@ -36,6 +36,7 @@ VERSION 1.2.2 (??? ?? ??:?? 2005)
 - David Keegel <djk@cybersource.com.au> improved error reporting when config
   file isn't present
 - Removed trailing slashes from file paths when calling cp -al subroutines
+- Changed show_usage() to use here printing
 
 VERSION 1.2.1 (Apr 09 15:10 2005)
 ------------------------------------------------------------------------------

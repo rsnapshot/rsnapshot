@@ -17,7 +17,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.282 2005/07/17 00:00:16 scubaninja Exp $
+# $Id: rsnapshot-program.pl,v 1.283 2005/07/17 00:46:25 scubaninja Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -70,7 +70,6 @@ my %config_vars;
 my @backup_points;
 
 # array of backup points to rollback, in the event of failure
-# (when using link_dest)
 my @rollback_points;
 
 # "intervals" are user defined time periods (i.e. hourly, daily)
@@ -130,7 +129,7 @@ my $loglevel	= undef;
 my $default_verbose		= 2;
 my $default_loglevel	= 3;
 
-# assume the config file is valid
+# assume the config file is valid until we find an error
 my $config_perfect = 1;
 
 # exit code for rsnapshot
@@ -261,9 +260,11 @@ exit_with_status();
 # runs when rsnapshot is called with no arguments
 # exits with an error condition
 sub show_usage {
-	print "rsnapshot $VERSION\n";
-	print "Usage: rsnapshot [-vtxqVD] [-c cfgfile] <interval>|configtest|du|help|version\n";
-	print "Type \"rsnapshot help\" or \"man rsnapshot\" for more information.\n";
+	print<<HERE;
+rsnapshot $VERSION
+Usage: rsnapshot [-vtxqVD] [-c cfgfile] <interval>|configtest|du|help|version
+Type \"rsnapshot help\" or \"man rsnapshot\" for more information.
+HERE
 	
 	exit(1);
 }
@@ -515,7 +516,7 @@ sub parse_config_file {
 			next;
 		}
 		
-		# SYNC PARAMETER (name TBD: sync_first? enable_sync?)
+		# SYNC_FIRST
 		if ($var eq 'sync_first') {
 			# TODO: write this code
 			# if this is enabled, rsnapshot syncs data to a staging directory with the "rsnapshot sync" command.
@@ -2007,6 +2008,7 @@ sub add_lockfile {
 	print_cmd("echo $$ > $lockfile");
 	
 	if (0 == $test) {
+		# sysopen() is atomic, whereas open() is not
 		my $result = sysopen(LOCKFILE, $lockfile, O_WRONLY | O_EXCL | O_CREAT);
 		if (!defined($result)) {
 			print_err ("Could not write lockfile $lockfile", 1);
@@ -2306,7 +2308,7 @@ sub is_blank {
 # returns 1 if it's a valid ssh absolute path
 # returns 0 otherwise
 sub is_ssh_path {
-	my $path	= shift(@_);
+	my $path = shift(@_);
 	
 	if (!defined($path))				{ return (undef); }
 	
@@ -2324,7 +2326,7 @@ sub is_ssh_path {
 # returns 1 if it's a valid cwrsync server path
 # return 0 otherwise
 sub is_cwrsync_path {
-	my $path	= shift(@_);
+	my $path = shift(@_);
 	if (!defined($path))		{ return (undef); }
 	if ($path =~ m/^[^\/]+::/)	{ return (1); }
 	
@@ -2335,7 +2337,7 @@ sub is_cwrsync_path {
 # returns 1 if it's a syntactically valid anonymous rsync path
 # returns 0 otherwise
 sub is_anon_rsync_path {
-	my $path	= shift(@_);
+	my $path = shift(@_);
 	
 	if (!defined($path))			{ return (undef); }
 	if ($path =~ m/^rsync:\/\/.*$/)	{ return (1); }
@@ -2550,6 +2552,7 @@ sub handle_interval {
 	}
 	
 	# if use_lazy_delete is on, delete the interval.delete directory
+	# we just check for the directory, it will have been created or not depending on the value of use_lazy_delete
 	if ( -d "$config_vars{'snapshot_root'}/$$id_ref{'interval'}.delete" ) {
 		display_rm_rf("$config_vars{'snapshot_root'}/$$id_ref{'interval'}.delete/");
 		#my $result = rm_rf_bg( "$config_vars{'snapshot_root'}/$$id_ref{'interval'}.delete/" );
