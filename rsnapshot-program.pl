@@ -17,7 +17,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.299 2005/07/18 08:23:14 scubaninja Exp $
+# $Id: rsnapshot-program.pl,v 1.300 2005/07/18 08:31:02 scubaninja Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -2766,15 +2766,14 @@ sub rotate_lowest_snapshots {
 	
 	# remove oldest directory
 	if ( (-d "$config_vars{'snapshot_root'}/$interval.$interval_max") && ($interval_max > 0) ) {
-		if (0 == $test) {
+		# if use_lazy_deletes is set move the oldest directory to interval.delete
+		if (1 == $use_lazy_deletes) {
+			print_cmd("mv",
+				"$config_vars{'snapshot_root'}/$interval.$interval_max/",
+				"$config_vars{'snapshot_root'}/$interval.delete/"
+			);
 			
-			# if use_lazy_deletes is set move the oldest directory to interval.delete
-			if (1 == $use_lazy_deletes) {
-				print_cmd("mv",
-					"$config_vars{'snapshot_root'}/$interval.$interval_max/",
-					"$config_vars{'snapshot_root'}/$interval.delete/"
-				);
-				
+			if (0 == $test) {
 				my $result = safe_rename(
 					"$config_vars{'snapshot_root'}/$interval.$interval_max",
 					"$config_vars{'snapshot_root'}/$interval.delete"
@@ -2785,10 +2784,13 @@ sub rotate_lowest_snapshots {
 					$errstr .= "$config_vars{'snapshot_root'}/$interval.delete/\")";
 					bail($errstr);
 				}				
-				
-			# otherwise the default is to delete the oldest directory for this interval
-			} else {
-				display_rm_rf("$config_vars{'snapshot_root'}/$interval.$interval_max/");
+			}				
+			
+		# otherwise the default is to delete the oldest directory for this interval
+		} else {
+			display_rm_rf("$config_vars{'snapshot_root'}/$interval.$interval_max/");
+			
+			if (0 == $test) {
 				my $result = rm_rf( "$config_vars{'snapshot_root'}/$interval.$interval_max/" );
 				if (0 == $result) {
 					bail("Error! rm_rf(\"$config_vars{'snapshot_root'}/$interval.$interval_max/\")\n");
@@ -2803,7 +2805,8 @@ sub rotate_lowest_snapshots {
 			if ( -d "$config_vars{'snapshot_root'}/$interval.$i" ) {
 				print_cmd("mv",
 					"$config_vars{'snapshot_root'}/$interval.$i/ ",
-					"$config_vars{'snapshot_root'}/$interval." . ($i+1) . "/");
+					"$config_vars{'snapshot_root'}/$interval." . ($i+1) . "/"
+				);
 				
 				if (0 == $test) {
 					my $result = safe_rename(
@@ -2833,15 +2836,17 @@ sub rotate_lowest_snapshots {
 				"$config_vars{'snapshot_root'}/$interval.1/"
 			);
 			
-			my $result = safe_rename(
-				"$config_vars{'snapshot_root'}/$interval.0",
-				"$config_vars{'snapshot_root'}/$interval.1"
-			);
-			if (0 == $result) {
-				my $errstr = '';
-				$errstr .= "Error! safe_rename(\"$config_vars{'snapshot_root'}/$interval.0/\", \"";
-				$errstr .= "$config_vars{'snapshot_root'}/$interval.1/\")";
-				bail($errstr);
+			if (0 == $test) {
+				my $result = safe_rename(
+					"$config_vars{'snapshot_root'}/$interval.0",
+					"$config_vars{'snapshot_root'}/$interval.1"
+				);
+				if (0 == $result) {
+					my $errstr = '';
+					$errstr .= "Error! safe_rename(\"$config_vars{'snapshot_root'}/$interval.0/\", \"";
+					$errstr .= "$config_vars{'snapshot_root'}/$interval.1/\")";
+					bail($errstr);
+				}				
 			}				
 		}				
 			
@@ -2855,15 +2860,17 @@ sub rotate_lowest_snapshots {
 					"$config_vars{'snapshot_root'}/$interval.0/"
 				);
 				
-				my $result = safe_rename(
-					"$config_vars{'snapshot_root'}/.sync",
-					"$config_vars{'snapshot_root'}/$interval.0"
-				);
-				if (0 == $result) {
-					my $errstr = '';
-					$errstr .= "Error! safe_rename(\"$config_vars{'snapshot_root'}/.sync/\", \"";
-					$errstr .= "$config_vars{'snapshot_root'}/$interval.0/\")";
-					bail($errstr);
+				if (0 == $test) {
+					my $result = safe_rename(
+						"$config_vars{'snapshot_root'}/.sync",
+						"$config_vars{'snapshot_root'}/$interval.0"
+					);
+					if (0 == $result) {
+						my $errstr = '';
+						$errstr .= "Error! safe_rename(\"$config_vars{'snapshot_root'}/.sync/\", \"";
+						$errstr .= "$config_vars{'snapshot_root'}/$interval.0/\")";
+						bail($errstr);
+					}				
 				}				
 			}	
 			
@@ -2891,6 +2898,7 @@ sub rotate_lowest_snapshots {
 			
 			if ( -d "$config_vars{'snapshot_root'}/$interval.0/" ) {
 				print_cmd("mv $config_vars{'snapshot_root'}/$interval.0/ $config_vars{'snapshot_root'}/$interval.1/");
+				
 				if (0 == $test) {
 					my $result = safe_rename(
 						"$config_vars{'snapshot_root'}/$interval.0",
@@ -3686,15 +3694,15 @@ sub rotate_higher_interval {
 	#
 	# delete the oldest one (if we're keeping more than one)
 	if ( -d "$config_vars{'snapshot_root'}/$interval.$interval_max" ) {
-		if (0 == $test) {
+		# if use_lazy_deletes is set move the oldest directory to interval.delete
+		# otherwise preform the default behavior
+		if (1 == $use_lazy_deletes) {
+			print_cmd("mv ",
+				"$config_vars{'snapshot_root'}/$interval.$interval_max/ ",
+				"$config_vars{'snapshot_root'}/$interval.delete/"
+			);
 			
-			# if use_lazy_deletes is set move the oldest directory to interval.delete
-			# otherwise preform the default behavior
-			if (1 == $use_lazy_deletes) {
-				print_cmd("mv ",
-					"$config_vars{'snapshot_root'}/$interval.$interval_max/ ",
-					"$config_vars{'snapshot_root'}/$interval.delete/");
-				
+			if (0 == $test) {
 				my $result = safe_rename(
 					"$config_vars{'snapshot_root'}/$interval.$interval_max",
 					("$config_vars{'snapshot_root'}/$interval.delete")
@@ -3705,8 +3713,11 @@ sub rotate_higher_interval {
 					$errstr .= "$config_vars{'snapshot_root'}/$interval.delete/\")";
 					bail($errstr);
 				}				
-			} else {
-				display_rm_rf("$config_vars{'snapshot_root'}/$interval.$interval_max/");
+			}				
+		} else {
+			display_rm_rf("$config_vars{'snapshot_root'}/$interval.$interval_max/");
+			
+			if (0 == $test) {
 				my $result = rm_rf( "$config_vars{'snapshot_root'}/$interval.$interval_max/" );
 				if (0 == $result) {
 					bail("Could not rm_rf(\"$config_vars{'snapshot_root'}/$interval.$interval_max/\");");
@@ -3721,13 +3732,15 @@ sub rotate_higher_interval {
 	# rotate the middle ones
 	for (my $i=($interval_max-1); $i>=0; $i--) {
 		if ( -d "$config_vars{'snapshot_root'}/$interval.$i" ) {
-			print_cmd("mv $config_vars{'snapshot_root'}/$interval.$i/ ",
-						"$config_vars{'snapshot_root'}/$interval." . ($i+1) . "/");
+			print_cmd(
+				"mv $config_vars{'snapshot_root'}/$interval.$i/ ",
+				"$config_vars{'snapshot_root'}/$interval." . ($i+1) . "/"
+			);
 			
 			if (0 == $test) {
 				my $result = safe_rename(
-								"$config_vars{'snapshot_root'}/$interval.$i",
-								("$config_vars{'snapshot_root'}/$interval." . ($i+1))
+					"$config_vars{'snapshot_root'}/$interval.$i",
+					("$config_vars{'snapshot_root'}/$interval." . ($i+1))
 				);
 				if (0 == $result) {
 					my $errstr = '';
@@ -3755,8 +3768,8 @@ sub rotate_higher_interval {
 			
 			if (0 == $test) {
 				$result = safe_rename(
-								"$config_vars{'snapshot_root'}/$prev_interval.$prev_interval_max",
-								"$config_vars{'snapshot_root'}/$interval.0"
+					"$config_vars{'snapshot_root'}/$prev_interval.$prev_interval_max",
+					"$config_vars{'snapshot_root'}/$interval.0"
 				);
 				if (0 == $result) {
 					my $errstr = '';
