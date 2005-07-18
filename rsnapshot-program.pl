@@ -17,7 +17,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.300 2005/07/18 08:31:02 scubaninja Exp $
+# $Id: rsnapshot-program.pl,v 1.301 2005/07/18 16:09:55 scubaninja Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -4355,7 +4355,7 @@ sub show_rsnapshot_diff {
 	}
 	
 	# make this automatically pick the two lowest intervals (or .sync dir) for comparison, as the default
-	if (!defined($paths_in[0]) && !defined($paths_in[1])) {
+	if (!defined($ARGV[1]) && !defined($ARGV[2])) {
 		# sync_first is enabled
 		if ($config_vars{'sync_first'}) {
 			# sync
