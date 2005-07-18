@@ -40,6 +40,8 @@ VERSION 1.2.2 (??? ?? ??:?? 2005)
 - Changed strip trailing slash operation in rsync_backup_point() to use
   strip_trailing_slash()
 - Fixed incorrect call to cmd_rm_rf() in handle_interval()
+- Fixed trailing slash on call to bail() in handle_interval()
+- Added sync_first feature (touches a lot of code)
 
 VERSION 1.2.1 (Apr 09 15:10 2005)
 ------------------------------------------------------------------------------

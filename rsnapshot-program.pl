@@ -17,7 +17,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.290 2005/07/18 02:34:23 scubaninja Exp $
+# $Id: rsnapshot-program.pl,v 1.291 2005/07/18 02:56:40 scubaninja Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -4205,6 +4205,18 @@ sub show_disk_usage {
 		exit(1);
 	}
 	
+	# check for 'du' program
+	if ( defined($config_vars{'cmd_du'}) ) {
+		# it was specified in the config file, use that version
+		$cmd_du = $config_vars{'cmd_du'};
+	}
+	
+	# check for du args
+	if ( defined($config_vars{'du_args'}) ) {
+		# it this was specified in the config file, use that version
+		$du_args = $config_vars{'du_args'};
+	}
+	
 	# are we looking in subdirectories or at files?
 	if (defined($ARGV[1])) {
 		$dest_path = $ARGV[1];
@@ -4222,9 +4234,17 @@ sub show_disk_usage {
 		}
 	}
 	
-	
-	# find the intervals that apply here
+	# find the directories to look through, in order
+	# only add them to the list if we have read permissions
 	if (-r "$config_vars{'snapshot_root'}/") {
+		# if we have a sync directory, that will have the most recent files, and should be first
+		if (-d "$config_vars{'snapshot_root'}/sync") {
+			if (-r "$config_vars{'snapshot_root'}/sync") {
+				$intervals_str .= "$config_vars{'snapshot_root'}/sync ";
+			}
+		}
+		
+		# loop through the intervals, most recent to oldest
 		foreach my $interval_ref (@intervals) {
 			my $interval			= $$interval_ref{'interval'};
 			my $max_interval_num	= $$interval_ref{'number'};
@@ -4238,19 +4258,8 @@ sub show_disk_usage {
 	}
 	chop($intervals_str);
 	
-	# check for 'du' program
-	if ( defined($config_vars{'cmd_du'}) ) {
-		# it was specified in the config file, use that version
-		$cmd_du = $config_vars{'cmd_du'};
-	}
-	
-	# check for du args
-	if ( defined($config_vars{'du_args'}) ) {
-		# it this was specified in the config file, use that version
-		$du_args = $config_vars{'du_args'};
-	}
-	
 	# if we can see any of the intervals, find out how much space they're taking up
+	# most likely we can either see all of them or none at all
 	if ('' ne $intervals_str) {
 		if (defined($verbose) && ($verbose >= 3)) {
 			print wrap_cmd("$cmd_du $du_args $intervals_str", 76, 4), "\n\n";
@@ -4290,6 +4299,9 @@ sub show_rsnapshot_diff {
 	my $retval;
 	
 	# this will only hold two entries, no more no less
+	# paths_in holds the incoming arguments
+	# paths_out will be assigned the arguments that rsnapshot-diff will use
+	#
 	my @paths_in	= ();
 	my @paths_out	= ();
 	
@@ -4299,46 +4311,74 @@ sub show_rsnapshot_diff {
 		exit(1);
 	}
 	
-	# see if we even got the right number of arguments
-	if (!defined($ARGV[1]) or !defined($ARGV[2])) {
+	# check for rsnapshot-diff program (falling back on $PATH)
+	if (defined($config_vars{'cmd_rsnapshot_diff'})) {
+		$cmd_rsnapshot_diff = $config_vars{'cmd_rsnapshot_diff'};
+	}
+	
+	# see if we even got the right number of arguments (none is OK, but 1 isn't. 2 is also OK)
+	if (defined($ARGV[1]) && !defined($ARGV[2])) {
 		print STDERR "Usage: rsnapshot diff [interval|dir] [interval|dir]\n";
 		exit(1);
 	}
 	
-	$paths_in[0] = $ARGV[1];	# the 1st path is the 2nd cmd line argument
-	$paths_in[1] = $ARGV[2];	# the 2nd path is the 3rd cmd line argument
+	# make this automatically pick the two lowest intervals (or sync dir) for comparison, as the default
+	if (!defined($paths_in[0]) && !defined($paths_in[1])) {
+		# sync_first is enabled
+		if ($config_vars{'sync_first'}) {
+			# sync
+			if ( -d "$config_vars{'snapshot_root'}/sync/" ) {
+				$paths_out[0] = "$config_vars{'snapshot_root'}/sync/";
+			}
+			# interval.0
+			if ( -d ("$config_vars{'snapshot_root'}/" . $intervals[0]->{'interval'} . ".0/" ) ) {
+				$paths_out[1] = "$config_vars{'snapshot_root'}/" . $intervals[0]->{'interval'} . ".0/";
+			}
+			
+		# sync_first is not enabled
+		} else {
+			# interval.0
+			if ( -d ("$config_vars{'snapshot_root'}/" . $intervals[0]->{'interval'} . ".0/" ) ) {
+				$paths_out[0] = "$config_vars{'snapshot_root'}/" . $intervals[0]->{'interval'} . ".0/";
+			}
+			# interval.1
+			if ( -d ("$config_vars{'snapshot_root'}/" . $intervals[0]->{'interval'} . ".1/" ) ) {
+				$paths_out[1] = "$config_vars{'snapshot_root'}/" . $intervals[0]->{'interval'} . ".1/";
+			}
+		}
+		
+	# if we got some command line arguments, loop through twice and figure out what they mean
+	} else {
+		$paths_in[0] = $ARGV[1];	# the 1st path is the 2nd cmd line argument
+		$paths_in[1] = $ARGV[2];	# the 2nd path is the 3rd cmd line argument
 	
-	# loop through twice
-	for (my $i=0; $i<2; $i++) {
-		# no interval would start with ../
-		if (is_directory_traversal( "$paths_in[$i]" )) {
-			$paths_out[$i] = $paths_in[$i];
-			
-		# if this directory exists locally, it must be local
-		} elsif ( -e "$paths_in[$i]" ) {
-			$paths_out[$i] = $paths_in[$i];
-			
-		# absolute path
-		} elsif (is_valid_local_abs_path( "$paths_in[$i]" )) {
-			$paths_out[$i] = $paths_in[$i];
-			
-		# we didn't find it locally, but it's in the snapshot root
-		} elsif ( -e "$config_vars{'snapshot_root'}/$paths_in[$i]" ) {
-			$paths_out[$i] = "$config_vars{'snapshot_root'}/$paths_in[$i]";
+		for (my $i=0; $i<2; $i++) {
+			# no interval would start with ../
+			if (is_directory_traversal( "$paths_in[$i]" )) {
+				$paths_out[$i] = $paths_in[$i];
+				
+			# if this directory exists locally, it must be local
+			} elsif ( -e "$paths_in[$i]" ) {
+				$paths_out[$i] = $paths_in[$i];
+				
+			# absolute path
+			} elsif (is_valid_local_abs_path( "$paths_in[$i]" )) {
+				$paths_out[$i] = $paths_in[$i];
+				
+			# we didn't find it locally, but it's in the snapshot root
+			} elsif ( -e "$config_vars{'snapshot_root'}/$paths_in[$i]" ) {
+				$paths_out[$i] = "$config_vars{'snapshot_root'}/$paths_in[$i]";
+			}
 		}
 	}
 	
-	# double check to make sure it exists and it's a directory
+	# double check to make sure the directories exists (and are directories)
 	if ( (!defined($paths_out[0]) or (!defined($paths_out[1]))) or ((! -d "$paths_out[0]") or (! -d "$paths_out[1]")) ) {
 		print STDERR "ERROR: Arguments must be valid intervals or directories\n";
 		exit(1);
 	}
 	
-	# check for rsnapshot-diff program
-	if (defined($config_vars{'cmd_rsnapshot_diff'})) {
-		$cmd_rsnapshot_diff = $config_vars{'cmd_rsnapshot_diff'};
-	}
-	
+	# run rsnapshot-diff
 	if (defined($verbose) && ($verbose >= 3)) {
 		print wrap_cmd(("$cmd_rsnapshot_diff " . join(' ', @paths_out)), 76, 4), "\n\n";
 	}
