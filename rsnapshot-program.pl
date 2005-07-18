@@ -17,7 +17,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.291 2005/07/18 02:56:40 scubaninja Exp $
+# $Id: rsnapshot-program.pl,v 1.292 2005/07/18 03:11:57 scubaninja Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -2546,7 +2546,7 @@ sub handle_interval {
 	# handle toggling between sync_first being enabled and disabled
 	
 	# link_dest is enabled
-	if ($config_vars{'link_dest'}) {
+	if (1 == $link_dest) {
 		
 		# sync_first is enabled
 		if ($config_vars{'sync_first'}) {
@@ -2639,12 +2639,12 @@ sub handle_interval {
 		# (depending on whether sync_first is enabled
 		} else {
 			if ($config_vars{'sync_first'}) {
+				rotate_lowest_snapshots( $$id_ref{'interval'} );
+			} else {
 				exec_cmd_preexec();
 				rotate_lowest_snapshots( $$id_ref{'interval'} );
 				backup_lowest_interval( $id_ref );
 				exec_cmd_postexec();
-			} else {
-				rotate_lowest_snapshots( $$id_ref{'interval'} );
 			}
 		}
 		
