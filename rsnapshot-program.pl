@@ -17,7 +17,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.298 2005/07/18 08:19:15 scubaninja Exp $
+# $Id: rsnapshot-program.pl,v 1.299 2005/07/18 08:23:14 scubaninja Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -5575,7 +5575,7 @@ B<sync_first          1>
 sync_first changes the behaviour of rsnapshot. When this is enabled, all calls
 to rsnapshot with various intervals simply rotate files. All backups are handled
 by calling rsnapshot with the "sync" argument. The synced files are stored in
-a "sync" directory under the snapshot_root.
+a ".sync" directory under the snapshot_root.
 
 This allows better recovery in the event that rsnapshot is interrupted in the
 middle of a sync operation, since the sync step and rotation steps are

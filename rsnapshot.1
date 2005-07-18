@@ -129,7 +129,7 @@
 .\" ========================================================================
 .\"
 .IX Title "rsnapshot 1"
-.TH rsnapshot 1 "2005-07-11" "" ""
+.TH rsnapshot 1 "2005-07-18" "" ""
 .SH "NAME"
 rsnapshot \- remote filesystem snapshot utility
 .SH "SYNOPSIS"
@@ -225,9 +225,25 @@ files over (assuming there are any).
 .Sp
 \&\fBcmd_rsnapshot_diff\fR Full path to rsnapshot-diff (optional)
 .Sp
-\&\fBcmd_preexec\fR        Full path (plus any arguments) to preexec script (optional)
+\&\fBcmd_preexec\fR
 .Sp
-\&\fBcmd_postexec\fR       Full path (plus any arguments) to postexec script (optional)
+.RS 4
+Full path (plus any arguments) to preexec script (optional).
+This script will run immediately before a backup operation (but not any
+rotations).
+.RE
+.RE
+.RS 4
+.Sp
+\&\fBcmd_postexec\fR
+.Sp
+.RS 4
+Full path (plus any arguments) to preexec script (optional).
+This script will run immediately after a backup operation (but not any
+rotations).
+.RE
+.RE
+.RS 4
 .Sp
 \&\fBinterval\fR           [name]   [number]
 .Sp
@@ -285,6 +301,24 @@ If your version of rsync supports \-\-link\-dest (2.5.7 or newer), you can enabl
 this to let rsync handle some things that \s-1GNU\s0 cp or the built-in subroutines would
 otherwise do. Enabling this makes rsnapshot take a slightly more complicated code
 branch, but it's the best way to support special files on non-Linux systems.
+.RE
+.RE
+.RS 4
+.Sp
+\&\fBsync_first          1\fR
+.Sp
+.RS 4
+sync_first changes the behaviour of rsnapshot. When this is enabled, all calls
+to rsnapshot with various intervals simply rotate files. All backups are handled
+by calling rsnapshot with the \*(L"sync\*(R" argument. The synced files are stored in
+a \*(L".sync\*(R" directory under the snapshot_root.
+.Sp
+This allows better recovery in the event that rsnapshot is interrupted in the
+middle of a sync operation, since the sync step and rotation steps are
+seperated. This also means that you can easily run \*(L"rsnapshot sync\*(R" on the
+command line without fear of forcing all the other directories to rotate up.
+This benefit comes at the cost of one more snapshot worth of disk space.
+The default is 0 (off).
 .RE
 .RE
 .RS 4
@@ -437,7 +471,7 @@ reasons.
 .RS 4
 Prevents rsync from crossing filesystem partitions. Setting this to a value
 of 1 enables this feature. 0 turns it off. This parameter is optional.
-The default is off.
+The default is 0 (off).
 .RE
 .RE
 .RS 4
@@ -446,12 +480,14 @@ The default is off.
 .Sp
 .RS 4
 Changes default behavior of rsnapshot and does not initially remove the 
-oldest snapshot.  Instead it move that directory to \*(L"interval\*(R".delete, and 
-continues as normal.  Once the backup has been completed a background job
-will be created to remove the \*(L"interval\*(R".delete directory, and rsnapshot will
-return immediately.  This has been reported to significantly speed up the 
-backup process since it does not wait for the directory to be deleted prior
-to starting.
+oldest snapshot. Instead it moves that directory to \*(L"interval\*(R".delete, and 
+continues as normal. Once the backup has been completed, the lockfile will
+be removed before rsnapshot starts deleting the directory.
+.Sp
+Enabling this means that snapshots get taken sooner (since the delete doesn't
+come first), and any other rsnapshot processes are allowed to start while the
+final delete is happening. This benefit comes at the cost of one more
+snapshot worth of disk space. The default is 0 (off).
 .RE
 .RE
 .RS 4
