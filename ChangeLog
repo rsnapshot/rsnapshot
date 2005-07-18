@@ -39,6 +39,7 @@ VERSION 1.2.2 (??? ?? ??:?? 2005)
 - Changed show_usage() to use here printing
 - Changed strip trailing slash operation in rsync_backup_point() to use
   strip_trailing_slash()
+- Fixed incorrect call to cmd_rm_rf() in handle_interval()
 
 VERSION 1.2.1 (Apr 09 15:10 2005)
 ------------------------------------------------------------------------------
