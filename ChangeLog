@@ -44,6 +44,8 @@ VERSION 1.2.2 (??? ?? ??:?? 2005)
 - Added sync_first feature (touches a lot of code)
 - When link_dest is enabled, rsnapshot will now hunt for the newest available
   directory to use as a link_dest target (up to the oldest directory)
+- When use_lazy_deletes is enabled, remove the lockfile before the final
+  delete
 
 VERSION 1.2.1 (Apr 09 15:10 2005)
 ------------------------------------------------------------------------------

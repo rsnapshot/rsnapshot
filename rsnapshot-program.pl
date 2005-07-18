@@ -17,7 +17,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.294 2005/07/18 04:20:29 scubaninja Exp $
+# $Id: rsnapshot-program.pl,v 1.295 2005/07/18 06:56:47 scubaninja Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -2663,8 +2663,12 @@ sub handle_interval {
 	# if use_lazy_delete is on, delete the interval.delete directory
 	# we just check for the directory, it will have been created or not depending on the value of use_lazy_delete
 	if ( -d "$config_vars{'snapshot_root'}/$$id_ref{'interval'}.delete" ) {
+		# this is the last thing to do here, and it can take quite a while.
+		# we remove the lockfile here since this delete shouldn't block other rsnapshot jobs from running
+		remove_lockfile();
+		
+		# start the delete
 		display_rm_rf("$config_vars{'snapshot_root'}/$$id_ref{'interval'}.delete/");
-		#my $result = rm_rf_bg( "$config_vars{'snapshot_root'}/$$id_ref{'interval'}.delete/" );
 		my $result = rm_rf( "$config_vars{'snapshot_root'}/$$id_ref{'interval'}.delete/" );
 		if (0 == $result) {
 			bail("Error! rm_rf(\"$config_vars{'snapshot_root'}/$$id_ref{'interval'}.delete/\")\n");
@@ -4180,61 +4184,6 @@ sub cmd_rm_rf {
 	
 	return (1);
 }
-
-# TODO: get this working in the background
-## stub subroutine 
-## calls either cmd_rm_rf_bg() or the native perl rmtree()
-## always returns 1
-#sub rm_rf_bg {
-#	my $path = shift(@_);
-#	my $result = 0;
-#	
-#	# make sure we were passed an argument
-#	if (!defined($path)) { return(0); }
-#	
-#	# extra bonus safety feature!
-#	# confirm that whatever we're deleting must be inside the snapshot_root
-#	if ("$path" !~ m/^$config_vars{'snapshot_root'}/o) {
-#		bail("rm_rf_bg() tried to delete something outside of $config_vars{'snapshot_root'}! Quitting now!\n");
-#	}
-#	
-#	# use the rm command if we have it
-#	if (defined($config_vars{'cmd_rm'})) {
-#		$result = cmd_rm_rf("$path");
-#
-#	# fall back on rmtree()
-#	} else {
-#		# remove trailing slash just in case
-#		$path =~ s/\/$//;
-#		$result = rmtree("$path", 0, 0);
-#	}
-#	
-#	return ($result);
-#}
-#
-## this is a wrapper to the "rm" program, called with the "-rf" flags.
-##sub cmd_rm_rf_bg {
-#	my $path = shift(@_);
-#	my $result = 0;
-#	
-#	# make sure we were passed an argument
-#	if (!defined($path)) { return(0); }
-#	
-#	if ( ! -e "$path" ) {
-#		print_err("cmd_rm_rf_bg() needs a valid file path as an argument", 2);
-#		return (0);
-#	}
-#	
-#	# make the system call to /bin/rm
-#	# TODO: make this work in the background. the & doesn't do the trick
-#	$result = system( $config_vars{'cmd_rm'}, '-rf', "$path", "&" );
-#	if ($result != 0) {
-#		print_err("Warning! $config_vars{'cmd_rm'} failed.", 2);
-#		return (0);
-#	}
-#	
-#	return (1);
-#}
 
 # accepts no arguments
 # calls the 'du' command to show rsnapshot's disk usage

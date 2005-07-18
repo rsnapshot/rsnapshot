@@ -2,11 +2,6 @@ rsnapshot TODO list:
 
 Future versions (in no particular order)
 ------------------------------------------------------------------------------
-- Remove lockfile before rm -rf interval.delete when use_lazy_deletes is
-  enabled. Modify remove_lockfile() code to not fail or warn if the lockfile
-  has already been removed. This will make running rm -rf in the background
-  unnecessary.
-
 - Double check all actions to make sure they only run when not in test mode
 
 - Test sync_cp_src_dest() and sync_rm_dest() and make sure they can convert
