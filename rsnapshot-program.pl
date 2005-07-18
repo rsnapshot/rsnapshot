@@ -17,7 +17,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.296 2005/07/18 07:22:02 scubaninja Exp $
+# $Id: rsnapshot-program.pl,v 1.297 2005/07/18 08:11:25 scubaninja Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -295,6 +295,8 @@ Options:
 
 Commands:
     [interval]       - An interval as defined in rsnapshot.conf.
+    sync             - Sync files, without rotating. "sync_first" must be
+                       enabled for this to work.
     configtest       - Syntax check the config file.
     du               - Show disk usage in the snapshot_root.
                        Accepts an optional destination path for comparison
@@ -532,9 +534,9 @@ sub parse_config_file {
 		# SYNC_FIRST
 		# if this is enabled, rsnapshot syncs data to a staging directory with the "rsnapshot sync" command,
 		# and all "interval" runs will simply rotate files. this changes the behaviour of the lowest interval.
-		# when a sync occurs, no directories are rotated. sync_root is kind of like a staging area for data transfers.
+		# when a sync occurs, no directories are rotated. the sync directory is kind of like a staging area for data transfers.
 		# the files in the sync directory will be hard linked with the others in the other snapshot directories.
-		# a good place to put the directory?: /.snapshots/sync/
+		# the sync directory lives at: /<snapshot_root>/.sync/
 		#
 		if ($var eq 'sync_first') {
 			if (defined($value)) {
