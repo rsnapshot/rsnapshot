@@ -17,7 +17,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.293 2005/07/18 03:47:33 scubaninja Exp $
+# $Id: rsnapshot-program.pl,v 1.294 2005/07/18 04:20:29 scubaninja Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -2628,6 +2628,10 @@ sub handle_interval {
 		}
 	}
 	
+	#
+	# now that the preliminaries are out of the way, the main backups happen here
+	#
+	
 	# backup the lowest interval (or sync content to staging area)
 	# we're not sure yet going in whether we'll be doing an actual backup, or just rotating snapshots for the lowest interval
 	if ((defined($$id_ref{'interval_num'}) && (0 == $$id_ref{'interval_num'})) or ($cmd eq 'sync')) {
@@ -2903,6 +2907,7 @@ sub rotate_lowest_snapshots {
 # accepts interval, backup_point_ref, ssh_rsync_args_ref
 # returns no args
 # runs rsync on the given backup point
+# this is only run on the lowest points, not for rotations
 sub rsync_backup_point {
 	my $interval	= shift(@_);
 	my $bp_ref		= shift(@_);
@@ -2926,12 +2931,39 @@ sub rsync_backup_point {
 	
 	# if we're using link-dest later, that target depends on whether we're doing a 'sync' or a regular interval
 	# if we're doing a "sync", then look at [lowest-interval].0 instead of [cur-interval].1
-	my $interval_link_dest		= $interval;
-	my $interval_num_link_dest	= 1;
+	my $interval_link_dest;
+	my $interval_num_link_dest;
 	
+	# start looking for link_dest targets at interval.$start_num
+	my $start_num = 1;
+	
+	# if we're doing a sync, we'll start looking at [lowest-interval].0 for a link_dest target
 	if ($interval eq 'sync') {
-		$interval_link_dest		= $intervals[0]->{'interval'};
-		$interval_num_link_dest = 0;
+		$start_num = 0;
+	}
+	
+	#$interval_link_dest		= "$config_vars{'snapshot_root'}/" . $intervals[0]->{'interval'};
+	#$interval_num_link_dest	= $start_num;
+	
+	# look for the most recent link_dest target directory
+	# loop through all snapshots until we find the first match
+	foreach my $i_ref (@intervals) {
+		if (defined($$i_ref{'number'})) {
+			for (my $i = $start_num; $i < $$i_ref{'number'}; $i++) {
+				
+				# once we find a valid link_dest target, the search is over
+				if ( -e "$config_vars{'snapshot_root'}/$$i_ref{'interval'}.$i/$$bp_ref{'dest'}" ) {
+					if (!defined($interval_link_dest) && !defined($interval_num_link_dest)) {
+						$interval_link_dest		= $$i_ref{'interval'};
+						$interval_num_link_dest = $i;
+					}
+					
+					# we'll still loop through the outer loop a few more times, but the defined() check above
+					# will make sure the first match wins
+					last;
+				}
+			}
+		}
 	}
 	
 	# check to see if this destination path has already failed
@@ -3057,8 +3089,14 @@ sub rsync_backup_point {
 	# if we're using --link-dest, we'll need to specify the link-dest directory target
 	# this varies depending on whether we're operating on the lowest interval or doing a 'sync'
 	if (1 == $link_dest) {
-		if ( -d "$config_vars{'snapshot_root'}/$interval_link_dest.$interval_num_link_dest/$$bp_ref{'dest'}" ) {
-			push(@rsync_long_args_stack, "--link-dest=$config_vars{'snapshot_root'}/$interval_link_dest.$interval_num_link_dest/$$bp_ref{'dest'}");
+		# bp_ref{'dest'} and snapshot_root have already been validated, but these might be blank
+		if (defined($interval_link_dest) && defined($interval_num_link_dest)) {
+			if ( -d "$config_vars{'snapshot_root'}/$interval_link_dest.$interval_num_link_dest/$$bp_ref{'dest'}" ) {
+				push(
+					@rsync_long_args_stack,
+					"--link-dest=$config_vars{'snapshot_root'}/$interval_link_dest.$interval_num_link_dest/$$bp_ref{'dest'}"
+				);
+			}
 		}
 	}
 	
