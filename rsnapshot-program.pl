@@ -17,7 +17,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.292 2005/07/18 03:11:57 scubaninja Exp $
+# $Id: rsnapshot-program.pl,v 1.293 2005/07/18 03:47:33 scubaninja Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -2551,20 +2551,22 @@ sub handle_interval {
 		# sync_first is enabled
 		if ($config_vars{'sync_first'}) {
 			
-			# create the sync root if it doesn't exist
-			if ( ! -d "$config_vars{'snapshot_root'}/sync" ) {
-				
-				print_cmd("mkdir -m 0755 -p $config_vars{'snapshot_root'}/sync/");
-				if (0 == $test) {
-					eval {
-						mkpath( "$config_vars{'snapshot_root'}/sync/", 0, 0755 );
-					};
-					if ($@) {
-						bail("Could not mkpath(\"$config_vars{'snapshot_root'}/sync/\");");
+			# create the sync root if it doesn't exist (and we need it right now)
+			if ($cmd eq 'sync') {
+				if ( ! -d "$config_vars{'snapshot_root'}/sync" ) {
+					
+					print_cmd("mkdir -m 0755 -p $config_vars{'snapshot_root'}/sync/");
+					if (0 == $test) {
+						eval {
+							mkpath( "$config_vars{'snapshot_root'}/sync/", 0, 0755 );
+						};
+						if ($@) {
+							bail("Could not mkpath(\"$config_vars{'snapshot_root'}/sync/\");");
+						}
 					}
 				}
 			}
-			
+				
 		# sync_first is disabled
 		} else {
 			# if the sync directory is still here after sync_first is disabled, delete it
@@ -2628,7 +2630,7 @@ sub handle_interval {
 	
 	# backup the lowest interval (or sync content to staging area)
 	# we're not sure yet going in whether we'll be doing an actual backup, or just rotating snapshots for the lowest interval
-	if ((0 == $$id_ref{'interval_num'}) or ($cmd eq 'sync')) {
+	if ((defined($$id_ref{'interval_num'}) && (0 == $$id_ref{'interval_num'})) or ($cmd eq 'sync')) {
 		# if we're doing a sync, run the pre/post exec scripts, and do the backup
 		if ($cmd eq 'sync') {
 			exec_cmd_preexec();
@@ -2678,11 +2680,14 @@ sub backup_lowest_interval {
 	my $id_ref = shift(@_);
 	
 	# this should never happen
-	if (!defined($id_ref)) { bail('backup_lowest_interval() expects an argument'); }
+	if (!defined($id_ref))				{ bail('backup_lowest_interval() expects an argument'); }
+	if (!defined($$id_ref{'interval'}))	{ bail('backup_lowest_interval() expects an interval'); }
 	
 	# this also should never happen
-	if (!defined($$id_ref{'interval_num'}) or (0 != $$id_ref{'interval_num'})) {
-		bail('backup_lowest_interval() can only operate on the lowest interval');
+	if ($$id_ref{'interval'} ne 'sync') {
+		if (!defined($$id_ref{'interval_num'}) or (0 != $$id_ref{'interval_num'})) {
+			bail('backup_lowest_interval() can only operate on the lowest interval');
+		}
 	}
 	
 	# sync live filesystem data and backup script output to $interval.0
@@ -2730,6 +2735,8 @@ sub rotate_lowest_snapshots {
 	my $interval_max = $$id_ref{'interval_max'};
 	my $prev_interval = $$id_ref{'prev_interval'};
 	my $prev_interval_max = $$id_ref{'prev_interval_max'};
+	
+	my $result;
 	
 	# remove oldest directory
 	if ( (-d "$config_vars{'snapshot_root'}/$interval.$interval_max") && ($interval_max > 0) ) {
@@ -2790,13 +2797,11 @@ sub rotate_lowest_snapshots {
 	
 	# .0 and .1 require more attention, especially now with link_dest and sync_first
 	
-	if ( (-d "$config_vars{'snapshot_root'}/$interval.0") && ($interval_max > 0) ) {
-		my $result;
+	# sync_first enabled
+	if ($config_vars{'sync_first'}) {
+		# we move .0 to .1 no matter what (assuming it exists)
 		
-		# sync_first enabled
-		if ($config_vars{'sync_first'}) {
-			# we move .0 to .1 no matter what
-			
+		if ( -d "$config_vars{'snapshot_root'}/$interval.0/" ) {
 			print_cmd("mv",
 				"$config_vars{'snapshot_root'}/$interval.0/",
 				"$config_vars{'snapshot_root'}/$interval.1/"
@@ -2812,11 +2817,13 @@ sub rotate_lowest_snapshots {
 				$errstr .= "$config_vars{'snapshot_root'}/$interval.1/\")";
 				bail($errstr);
 			}				
+		}				
 			
-			# if we're using rsync --link-dest, we need to mv sync to .0 now
-			if (1 == $link_dest) {
-				# mv sync .0
-				
+		# if we're using rsync --link-dest, we need to mv sync to .0 now
+		if (1 == $link_dest) {
+			# mv sync .0
+			
+			if ( -d "$config_vars{'snapshot_root'}/sync" ) {
 				print_cmd("mv",
 					"$config_vars{'snapshot_root'}/sync/",
 					"$config_vars{'snapshot_root'}/$interval.0/"
@@ -2832,11 +2839,13 @@ sub rotate_lowest_snapshots {
 					$errstr .= "$config_vars{'snapshot_root'}/$interval.0/\")";
 					bail($errstr);
 				}				
-				
-			# otherwise, we hard link (except for directories, symlinks, and special files) sync to .0
-			} else {
-				# cp -al sync .0
-				
+			}	
+			
+		# otherwise, we hard link (except for directories, symlinks, and special files) sync to .0
+		} else {
+			# cp -al sync .0
+			
+			if ( -d "$config_vars{'snapshot_root'}/sync/" ) {
 				display_cp_al( "$config_vars{'snapshot_root'}/sync/", "$config_vars{'snapshot_root'}/$interval.0/" );
 				if (0 == $test) {
 					$result = cp_al( "$config_vars{'snapshot_root'}/sync", "$config_vars{'snapshot_root'}/$interval.0" );
@@ -2845,14 +2854,17 @@ sub rotate_lowest_snapshots {
 					}
 				}
 			}
+		}
+		
+	# sync_first disabled (make sure we have a .0 directory and someplace to put it)
+	} elsif ( (-d "$config_vars{'snapshot_root'}/$interval.0") && ($interval_max > 0) ) {
+		
+		# if we're using rsync --link-dest, we need to mv .0 to .1 now
+		if (1 == $link_dest) {
+			# move .0 to .1
 			
-		# sync_first disabled
-		} else {
-			# if we're using rsync --link-dest, we need to mv .0 to .1 now
-			if (1 == $link_dest) {
+			if ( -d "$config_vars{'snapshot_root'}/$interval.0/" ) {
 				print_cmd("mv $config_vars{'snapshot_root'}/$interval.0/ $config_vars{'snapshot_root'}/$interval.1/");
-				
-				# move .0 to .1
 				if (0 == $test) {
 					my $result = safe_rename(
 						"$config_vars{'snapshot_root'}/$interval.0",
@@ -2865,11 +2877,12 @@ sub rotate_lowest_snapshots {
 						bail($errstr);
 					}
 				}
-			# otherwise, we hard link (except for directories, symlinks, and special files) .0 over to .1
-			} else {
-				# call generic cp_al() subroutine
+			}
+		# otherwise, we hard link (except for directories, symlinks, and special files) .0 over to .1
+		} else {
+			# call generic cp_al() subroutine
+			if ( -d "$config_vars{'snapshot_root'}/$interval.0/" ) {
 				display_cp_al( "$config_vars{'snapshot_root'}/$interval.0", "$config_vars{'snapshot_root'}/$interval.1" );
-				
 				if (0 == $test) {
 					$result = cp_al(
 						"$config_vars{'snapshot_root'}/$interval.0/",
