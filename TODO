@@ -2,12 +2,6 @@ rsnapshot TODO list:
 
 Future versions (in no particular order)
 ------------------------------------------------------------------------------
-- Write sync_first feature set
-    - rsnapshot must detect on each run whether sync_first is enabled, and
-      change sync and hourly.0 between being the master:
-        if sync_first just got enabled, we should first cp -al hourly.0 sync.
-        if sync_first just got disabled, we should rm -rf sync.
-
 - Double check all actions to make sure they only run when not in test mode
 
 - Test sync_cp_src_dest() and sync_rm_dest() and make sure they can convert
