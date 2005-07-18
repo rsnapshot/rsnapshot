@@ -17,7 +17,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.295 2005/07/18 06:56:47 scubaninja Exp $
+# $Id: rsnapshot-program.pl,v 1.296 2005/07/18 07:22:02 scubaninja Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -259,7 +259,7 @@ exit_with_status();
 sub show_usage {
 	print<<HERE;
 rsnapshot $VERSION
-Usage: rsnapshot [-vtxqVD] [-c cfgfile] <interval>|configtest|du|help|version
+Usage: rsnapshot [-vtxqVD] [-c cfgfile] [command]
 Type \"rsnapshot help\" or \"man rsnapshot\" for more information.
 HERE
 	
@@ -272,7 +272,7 @@ HERE
 sub show_help {
 	print<<HERE;
 rsnapshot $VERSION
-Usage: rsnapshot [-vtxqVD] [-c cfgfile] <interval>|configtest|du|help|version
+Usage: rsnapshot [-vtxqVD] [-c cfgfile] [command]
 Type "man rsnapshot" for more information.
 
 rsnapshot is a filesystem snapshot utility. It can take incremental
@@ -283,13 +283,29 @@ and you are welcome to redistribute it under certain conditions.
 See the GNU General Public License for details.
 
 Options:
-    -v verbose       - show equivalent shell commands being executed
-    -t test          - show verbose output, but don't touch anything
-    -c [file]        - specify alternate config file (-c /path/to/file)
-    -x one_fs        - don't cross filesystems (same as -x option to rsync)
-    -q quiet         - suppress non-fatal warnings
-    -V extra verbose - same as -v, but with more detail
-    -D debug         - a firehose of diagnostic information
+    -v verbose       - Show equivalent shell commands being executed.
+    -t test          - Show verbose output, but don't touch anything.
+                       This will be similar, but not always exactly the same
+                       as the real output from a live run.
+    -c [file]        - Specify alternate config file (-c /path/to/file)
+    -x one_fs        - Don't cross filesystems (same as -x option to rsync).
+    -q quiet         - Suppress non-fatal warnings.
+    -V extra verbose - The same as -v, but with more detail.
+    -D debug         - A firehose of diagnostic information.
+
+Commands:
+    [interval]       - An interval as defined in rsnapshot.conf.
+    configtest       - Syntax check the config file.
+    du               - Show disk usage in the snapshot_root.
+                       Accepts an optional destination path for comparison
+                       across snapshots (i.e. localhost/home/user/foo).
+    help             - Show this help message.
+    version          - Show the version number for rsnapshot.
+    diff             - Front-end interface to the rsnapshot-diff program.
+                       Accepts two optional arguments which can be either
+                       filesystem paths or interval directories within the
+                       snapshot_root (i.e. /etc/ daily.0/etc/). The default
+                       is to compare the two most recent snapshots.
 HERE
 	
 	exit(0);
@@ -5469,9 +5485,25 @@ B<cmd_du>             Full path to du (optional, for disk usage reports)
 
 B<cmd_rsnapshot_diff> Full path to rsnapshot-diff (optional)
 
-B<cmd_preexec>        Full path (plus any arguments) to preexec script (optional)
+B<cmd_preexec>
 
-B<cmd_postexec>       Full path (plus any arguments) to postexec script (optional)
+=over 4
+
+Full path (plus any arguments) to preexec script (optional).
+This script will run immediately before a backup operation (but not any
+rotations).
+
+=back
+
+B<cmd_postexec>
+
+=over 4
+
+Full path (plus any arguments) to preexec script (optional).
+This script will run immediately after a backup operation (but not any
+rotations).
+
+=back
 
 B<interval>           [name]   [number]
 
@@ -5530,6 +5562,24 @@ If your version of rsync supports --link-dest (2.5.7 or newer), you can enable
 this to let rsync handle some things that GNU cp or the built-in subroutines would
 otherwise do. Enabling this makes rsnapshot take a slightly more complicated code
 branch, but it's the best way to support special files on non-Linux systems.
+
+=back
+
+B<sync_first          1>
+
+=over 4
+
+sync_first changes the behaviour of rsnapshot. When this is enabled, all calls
+to rsnapshot with various intervals simply rotate files. All backups are handled
+by calling rsnapshot with the "sync" argument. The synced files are stored in
+a "sync" directory under the snapshot_root.
+
+This allows better recovery in the event that rsnapshot is interrupted in the
+middle of a sync operation, since the sync step and rotation steps are
+seperated. This also means that you can easily run "rsnapshot sync" on the
+command line without fear of forcing all the other directories to rotate up.
+This benefit comes at the cost of one more snapshot worth of disk space.
+The default is 0 (off).
 
 =back
 
@@ -5676,7 +5726,7 @@ B<one_fs    1>
 
 Prevents rsync from crossing filesystem partitions. Setting this to a value
 of 1 enables this feature. 0 turns it off. This parameter is optional.
-The default is off.
+The default is 0 (off).
 
 =back
 
@@ -5685,12 +5735,14 @@ B<use_lazy_deletes    1>
 =over 4
 
 Changes default behavior of rsnapshot and does not initially remove the 
-oldest snapshot.  Instead it move that directory to "interval".delete, and 
-continues as normal.  Once the backup has been completed a background job
-will be created to remove the "interval".delete directory, and rsnapshot will
-return immediately.  This has been reported to significantly speed up the 
-backup process since it does not wait for the directory to be deleted prior
-to starting.
+oldest snapshot. Instead it moves that directory to "interval".delete, and 
+continues as normal. Once the backup has been completed, the lockfile will
+be removed before rsnapshot starts deleting the directory.
+
+Enabling this means that snapshots get taken sooner (since the delete doesn't
+come first), and any other rsnapshot processes are allowed to start while the
+final delete is happening. This benefit comes at the cost of one more
+snapshot worth of disk space. The default is 0 (off).
 
 =back
 
