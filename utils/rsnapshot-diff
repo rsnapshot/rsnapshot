@@ -13,7 +13,7 @@
 # http://www.rsnapshot.org/
 ##############################################################################
 
-# $Id: rsnapshot-diff,v 1.5 2005/04/02 23:33:28 scubaninja Exp $
+# $Id: rsnapshot-diff,v 1.6 2005/07/22 22:24:04 drhyde Exp $
 
 use warnings;
 use strict;
@@ -127,7 +127,8 @@ sub remove {
 
         # on first stat, memorise device
         $device = $stat[0] unless(defined($device));
-        die("Can't compare across devices.\n") unless($device == $stat[0]);
+        die("Can't compare across devices.\n")
+            unless($device == $stat[0] || -p $_);
 
         return @stat;
     }
