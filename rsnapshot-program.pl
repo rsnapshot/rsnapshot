@@ -17,7 +17,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.301 2005/07/18 16:09:55 scubaninja Exp $
+# $Id: rsnapshot-program.pl,v 1.302 2005/07/22 03:24:09 scubaninja Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -90,6 +90,7 @@ my @reserved_words = qw(
 	diff
 	delete
 	du
+	get-latest-snapshot
 	help
 	history
 	list
@@ -219,6 +220,8 @@ if ($cmd eq 'du') {
 	show_disk_usage();
 } elsif ($cmd eq 'diff') {
 	show_rsnapshot_diff();
+} elsif ($cmd eq 'get-latest-snapshot') {
+	show_latest_snapshot();
 }
 
 #
@@ -2220,6 +2223,23 @@ sub get_interval_data {
 	
 	# and return the values
 	return (\%hash);
+}
+
+# accepts no arguments
+# prints the most recent snapshot directory and exits
+# this is for use with the get-latest-snapshot command line argument
+sub show_latest_snapshot {
+	# this should only be called after parse_config_file(), but just in case...
+	if (! @intervals)	{ bail("Error! intervals not defined in show_latest_snapshot()"); }
+	if (! %config_vars) { bail("Error! config_vars not defined in show_latest_snapshot()"); }
+	
+	if ($config_vars{'sync_first'}) {
+		print $config_vars{'snapshot_root'} . '/.sync/' . "\n";
+	} else {
+		print $config_vars{'snapshot_root'} . '/' . $intervals[0]->{'interval'} . '.0/' . "\n";
+	}
+	
+	exit(0);
 }
 
 # accepts no args

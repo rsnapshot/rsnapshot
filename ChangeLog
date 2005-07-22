@@ -47,6 +47,7 @@ VERSION 1.2.2 (??? ?? ??:?? 2005)
 - When use_lazy_deletes is enabled, remove the lockfile before the final
   delete
 - Expanded on default (no args) and help messages
+- Added show_latest_snapshot() subroutine for shell scripts
 
 VERSION 1.2.1 (Apr 09 15:10 2005)
 ------------------------------------------------------------------------------
