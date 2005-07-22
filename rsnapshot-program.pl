@@ -17,7 +17,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.303 2005/07/22 07:33:17 scubaninja Exp $
+# $Id: rsnapshot-program.pl,v 1.304 2005/07/22 07:55:16 scubaninja Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -4616,6 +4616,7 @@ sub sync_cp_src_dest {
 			if ( -l "$src/$node" ) {
 				# nuke whatever is in the destination, since we'd have to recreate the symlink anyway
 				# and a real file or directory will be in our way
+				# symlinks pretend to be directories, which is why we check it the way that we do
 				if ( -e "$dest/$node" ) {
 					if ((-l "$dest/$node") or (! -d "$dest/$node")) {
 						$result = unlink("$dest/$node");
@@ -4777,26 +4778,49 @@ sub sync_rm_dest {
 			
 			# if this node isn't present in src, delete it
 			if ( ! -e "$src/$node" ) {
-				$result = rm_rf("$dest/$node");
-				if (0 == $result) {
-					print_err("Warning! Could not delete \"$dest/$node\"", 2);
+				# file or symlink
+				if ((-l "$dest/$node") or (! -d "$dest/$node")) {
+					$result = unlink("$dest/$node");
+					if (0 == $result) {
+						print_err("Warning! Could not delete \"$dest/$node\"", 2);
+						next;
+					}
+					
+				# directory
+				} else {
+					$result = rm_rf("$dest/$node");
+					if (0 == $result) {
+						print_err("Warning! Could not delete \"$dest/$node\"", 2);
+					}
 				}
 				next;
 			}
 			
 			# ok, this also exists in src...
-			
-			# if this is a directory in src, but something else in dest, delete dest first
 			# theoretically, sync_cp_src_dest() should have caught this already, but better safe than sorry
-			if ((-d "$src/$node") && (! -d "$dest/$node")) {
-				$result = unlink("$dest/$node");
-				if (0 == $result) {
-					print_err("Warning! Could not delete \"$dest/$node\"", 2);
-					next;
+			# also, symlinks can pretend to be directories, so we have to check for those too
+			
+			# if src is a file but dest is a directory, we need to recursively remove the dest dir
+			if ((-l "$src/$node") or (! -d "$src/$node")) {
+				if (-d "$dest/$node") {
+					$result = rm_rf("$dest/$node");
+					if (0 == $result) {
+						print_err("Warning! Could not delete \"$dest/$node\"", 2);
+					}
+				}
+				
+			# otherwise, if src is a directory, but dest is a file, remove the file in dest
+			} elsif (-d "$src/$node") {
+				if ((-l "$dest/$node") or (! -d "$dest/$node")) {
+					$result = unlink("$dest/$node");
+					if (0 == $result) {
+						print_err("Warning! Could not delete \"$dest/$node\"", 2);
+						next;
+					}
 				}
 			}
 			
-			# if it's a directory, let's recurse into it and compare files there
+			# if it's a directory in src, let's recurse into it and compare files there
 			if ( -d "$src/$node" ) {
 				$result = sync_rm_dest("$src/$node", "$dest/$node");
 				if ( ! $result ) {
