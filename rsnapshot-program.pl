@@ -17,7 +17,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.308 2005/07/22 08:53:24 scubaninja Exp $
+# $Id: rsnapshot-program.pl,v 1.309 2005/07/22 09:05:02 scubaninja Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -2777,9 +2777,7 @@ sub backup_lowest_interval {
 	
 	if ($$id_ref{'interval'} eq 'sync') {
 		if (defined($sync_dest_dir) && (0 == $sync_dest_matches)) {
-			print_err ("No matches found for \"$sync_dest_dir\"", 1);
-			syslog_err("No matches found for \"$sync_dest_dir\"");
-			exit(1);
+			bail ("No matches found for \"$sync_dest_dir\"");
 		}
 	}
 	
