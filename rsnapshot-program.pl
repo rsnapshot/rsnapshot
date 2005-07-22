@@ -17,7 +17,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.302 2005/07/22 03:24:09 scubaninja Exp $
+# $Id: rsnapshot-program.pl,v 1.303 2005/07/22 07:33:17 scubaninja Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -262,7 +262,7 @@ exit_with_status();
 sub show_usage {
 	print<<HERE;
 rsnapshot $VERSION
-Usage: rsnapshot [-vtxqVD] [-c cfgfile] [command]
+Usage: rsnapshot [-vtxqVD] [-c cfgfile] [command] [args]
 Type \"rsnapshot help\" or \"man rsnapshot\" for more information.
 HERE
 	
@@ -275,7 +275,7 @@ HERE
 sub show_help {
 	print<<HERE;
 rsnapshot $VERSION
-Usage: rsnapshot [-vtxqVD] [-c cfgfile] [command]
+Usage: rsnapshot [-vtxqVD] [-c cfgfile] [command] [args]
 Type "man rsnapshot" for more information.
 
 rsnapshot is a filesystem snapshot utility. It can take incremental
@@ -2707,10 +2707,12 @@ sub handle_interval {
 		
 		# start the delete
 		display_rm_rf("$config_vars{'snapshot_root'}/$$id_ref{'interval'}.delete/");
-		my $result = rm_rf( "$config_vars{'snapshot_root'}/$$id_ref{'interval'}.delete/" );
-		if (0 == $result) {
-			bail("Error! rm_rf(\"$config_vars{'snapshot_root'}/$$id_ref{'interval'}.delete/\")\n");
-		}		
+		if (0 == $test) {
+			my $result = rm_rf( "$config_vars{'snapshot_root'}/$$id_ref{'interval'}.delete/" );
+			if (0 == $result) {
+				bail("Error! rm_rf(\"$config_vars{'snapshot_root'}/$$id_ref{'interval'}.delete/\")\n");
+			}
+		}
 	}
 }
 
@@ -3422,8 +3424,8 @@ sub exec_backup_script {
 			if ( ! -e "$curdir" ) {
 				
 				# call generic cp_al() subroutine
+				display_cp_al( "$lastdir", "$curdir" );
 				if (0 == $test) {
-					display_cp_al( "$lastdir", "$curdir" );
 					$result = cp_al( "$lastdir", "$curdir" );
 					if (! $result) {
 						print_err("Warning! cp_al(\"$lastdir\", \"$curdir/\")", 2);
@@ -3783,8 +3785,10 @@ sub rotate_higher_interval {
 		# move the last one up a level
 		if (($prev_interval_max >= 1) or ($interval_num >= 2)) {
 			# mv hourly.5 to daily.0 (or whatever intervals we're using)
-			print_cmd("mv $config_vars{'snapshot_root'}/$prev_interval.$prev_interval_max/ ",
-						"$config_vars{'snapshot_root'}/$interval.0/");
+			print_cmd(
+				"mv $config_vars{'snapshot_root'}/$prev_interval.$prev_interval_max/ ",
+				"$config_vars{'snapshot_root'}/$interval.0/"
+			);
 			
 			if (0 == $test) {
 				$result = safe_rename(
@@ -3893,6 +3897,10 @@ sub gnu_cp_al {
 # which should be enough for 95% of the normal cases.
 # If you absolutely have to have snapshots of FIFOs, etc, just get GNU
 # cp on your system, and specify it in the config file.
+#
+# Please note that more recently, this subroutine is followed up by
+# an rsync clean-up step. This combination effectively removes most of
+# the limitations of this technique.
 #
 # In the great perl tradition, this returns 1 on success, 0 on failure.
 #
@@ -4043,25 +4051,26 @@ sub native_cp_al {
 					print_err("Warning! Recursion error in native_cp_al(\"$src/$node\", \"$dest/$node\")", 2);
 					next;
 				}
-			
-			# rsync_cleanup_after_native_cp_al() will take care of the files we can't handle here
-			
-			# FIFO
-			} elsif ( -p "$src/$node" ) {
-				# print_err("Warning! Ignoring FIFO $src/$node", 2);
-				
-			# SOCKET
-			} elsif ( -S "$src/$node" ) {
-				# print_err("Warning! Ignoring socket: $src/$node", 2);
-				
-			# BLOCK DEVICE
-			} elsif ( -b "$src/$node" ) {
-				# print_err("Warning! Ignoring special block file: $src/$node", 2);
-				
-			# CHAR DEVICE
-			} elsif ( -c "$src/$node" ) {
-				# print_err("Warning! Ignoring special character file: $src/$node", 2);
 			}
+			
+			## rsync_cleanup_after_native_cp_al() will take care of the files we can't handle here
+			#
+			## FIFO
+			#} elsif ( -p "$src/$node" ) {
+			#	# print_err("Warning! Ignoring FIFO $src/$node", 2);
+			#	
+			## SOCKET
+			#} elsif ( -S "$src/$node" ) {
+			#	# print_err("Warning! Ignoring socket: $src/$node", 2);
+			#	
+			## BLOCK DEVICE
+			#} elsif ( -b "$src/$node" ) {
+			#	# print_err("Warning! Ignoring special block file: $src/$node", 2);
+			#	
+			## CHAR DEVICE
+			#} elsif ( -c "$src/$node" ) {
+			#	# print_err("Warning! Ignoring special character file: $src/$node", 2);
+			#}
 		}
 		
 	} else {
