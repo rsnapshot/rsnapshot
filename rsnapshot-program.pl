@@ -17,7 +17,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.306 2005/07/22 08:43:14 scubaninja Exp $
+# $Id: rsnapshot-program.pl,v 1.307 2005/07/22 08:46:01 scubaninja Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -2593,18 +2593,7 @@ sub handle_interval {
 			
 			# create the sync root if it doesn't exist (and we need it right now)
 			if ($cmd eq 'sync') {
-				if ( ! -d "$config_vars{'snapshot_root'}/.sync" ) {
-					
-					print_cmd("mkdir -m 0755 -p $config_vars{'snapshot_root'}/.sync/");
-					if (0 == $test) {
-						eval {
-							mkpath( "$config_vars{'snapshot_root'}/.sync/", 0, 0755 );
-						};
-						if ($@) {
-							bail("Could not mkpath(\"$config_vars{'snapshot_root'}/.sync/\");");
-						}
-					}
-				}
+				# don't create tye .sync directory, it gets created later on
 			}
 				
 		# sync_first is disabled
@@ -2630,15 +2619,7 @@ sub handle_interval {
 			# create the sync root if it doesn't exist
 			if ( ! -d "$config_vars{'snapshot_root'}/.sync" ) {
 				
-				print_cmd("mkdir -m 0755 -p $config_vars{'snapshot_root'}/.sync/");
-				if (0 == $test) {
-					eval {
-						mkpath( "$config_vars{'snapshot_root'}/.sync/", 0, 0755 );
-					};
-					if ($@) {
-						bail("Could not mkpath(\"$config_vars{'snapshot_root'}/.sync/\");");
-					}
-				}
+				# cp_al() will create the directory for us
 				
 				# call generic cp_al() subroutine
 				my $interval_0	= "$config_vars{'snapshot_root'}/" . $intervals[0]->{'interval'} . ".0";
