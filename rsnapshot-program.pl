@@ -17,7 +17,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.304 2005/07/22 07:55:16 scubaninja Exp $
+# $Id: rsnapshot-program.pl,v 1.305 2005/07/22 08:06:54 scubaninja Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -3298,8 +3298,8 @@ sub exec_backup_script {
 	my $bp_ref		= shift(@_);
 	
 	# validate subroutine args
-	if (!defined($interval))	{ bail('interval not defined in handle_backup_point()'); }
-	if (!defined($bp_ref))		{ bail('bp_ref not defined in handle_backup_point()'); }
+	if (!defined($interval))	{ bail('interval not defined in exec_backup_script()'); }
+	if (!defined($bp_ref))		{ bail('bp_ref not defined in exec_backup_script()'); }
 	
 	# other misc variables
 	my $script	= undef;
