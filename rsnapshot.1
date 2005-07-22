@@ -129,12 +129,12 @@
 .\" ========================================================================
 .\"
 .IX Title "rsnapshot 1"
-.TH rsnapshot 1 "2005-07-18" "" ""
+.TH rsnapshot 1 "2005-07-22" "" ""
 .SH "NAME"
 rsnapshot \- remote filesystem snapshot utility
 .SH "SYNOPSIS"
 .IX Header "SYNOPSIS"
-\&\fBrsnapshot\fR [\fB\-vtxqVD\fR] [\fB\-c\fR cfgfile] [command]
+\&\fBrsnapshot\fR [\fB\-vtxqVD\fR] [\fB\-c\fR cfgfile] [command] [args]
 .SH "DESCRIPTION"
 .IX Header "DESCRIPTION"
 \&\fBrsnapshot\fR is a filesystem snapshot utility. It can take incremental
@@ -744,8 +744,56 @@ For example:
 .PP
 This will call the rsnapshot-diff program, which will scan both directories
 looking for differences (based on hard links).
-.SH "EXIT VALUES"
-.IX Header "EXIT VALUES"
+.PP
+\&\fBrsnapshot sync\fR
+.Sp
+.RS 4
+When \fBsync_first\fR is enabled, rsnapshot must first be called with the \fBsync\fR
+argument, followed by the other usual cron entries. The sync should happen as
+the lowest, most frequent interval, and right before. For example:
+.Sp
+.RS 4
+\&\fB0 */4 * * *         /usr/local/bin/rsnapshot sync && /usr/local/bin/rsnapshot hourly\fR
+.Sp
+\&\fB50 23 * * *         /usr/local/bin/rsnapshot daily\fR
+.Sp
+\&\fB40 23 1,8,15,22 * * /usr/local/bin/rsnapshot weekly\fR
+.Sp
+\&\fB30 23 1 * *         /usr/local/bin/rsnapshot monthly\fR
+.RE
+.RE
+.RS 4
+.Sp
+The sync operation simply runs rsync and all backup scripts. In this scenario, all
+interval calls simply rotate directories, even the lowest interval.
+.RE
+.PP
+\&\fBrsnapshot sync [dest]\fR
+.Sp
+.RS 4
+When \fBsync_first\fR is enabled, all sync behaviour happens during an additional
+sync step (see above). When using the sync argument, it is also possible to specify
+a backup point destination as an optional parameter. If this is done, only backup
+points sharing that destination path will be synced.
+.Sp
+For example, let's say that example.com is a destination path shared by one or more
+of your backup points.
+.Sp
+.RS 4
+rsnapshot sync example.com
+.RE
+.RE
+.RS 4
+.Sp
+This command will only sync the files that normally get backed up into example.com.
+It will \s-1NOT\s0 get any other backup points with slightly different values (like
+example.com/etc/, for example). In order to sync example.com/etc, you would need to
+run rsnapshot again, using example.com/etc as the optional parameter.
+.RE
+.SH ""
+.IX Header ""
+\&\s-1EXIT\s0 \s-1VALUES\s0
+.Sp
 .RS 4
 \&\fB0\fR  All operations completed successfully
 .Sp

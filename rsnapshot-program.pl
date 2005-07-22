@@ -17,7 +17,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.305 2005/07/22 08:06:54 scubaninja Exp $
+# $Id: rsnapshot-program.pl,v 1.306 2005/07/22 08:43:14 scubaninja Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -298,8 +298,10 @@ Options:
 
 Commands:
     [interval]       - An interval as defined in rsnapshot.conf.
-    sync             - Sync files, without rotating. "sync_first" must be
-                       enabled for this to work.
+    sync [dest]      - Sync files, without rotating. "sync_first" must be
+                       enabled for this to work. If a full backup point
+                       destination is given as an optional argument, only
+                       those files will be synced.
     configtest       - Syntax check the config file.
     du               - Show disk usage in the snapshot_root.
                        Accepts an optional destination path for comparison
@@ -403,7 +405,7 @@ sub parse_cmd_line_opts {
 	$cmd = $ARGV[0];
 	
 	# check for extra bogus arguments that getopts() didn't catch
-	if (defined($cmd) && ('du' ne $cmd) && ('diff' ne $cmd)) {
+	if (defined($cmd) && ('du' ne $cmd) && ('diff' ne $cmd) && ('sync' ne $cmd)) {
 		if (scalar(@ARGV) > 1) {
 			for (my $i=1; $i<scalar(@ARGV); $i++) {
 				print STDERR "Unknown option: $ARGV[$i]\n";
@@ -2743,12 +2745,37 @@ sub backup_lowest_interval {
 	foreach my $bp_ref (@backup_points) {
 		
 		# rsync the given backup point into the snapshot root
-		if ($$bp_ref{'src'}) {
-			rsync_backup_point( $$id_ref{'interval'}, $bp_ref );
+		if ( defined($$bp_ref{'dest'}) && (defined($$bp_ref{'src'}) or defined($$bp_ref{'script'})) ) {
 			
-		# run the backup script
-		} elsif ($$bp_ref{'script'}) {
-			exec_backup_script( $$id_ref{'interval'}, $bp_ref );
+			# if we're doing a sync and we specified an parameter on the command line (for the destination path),
+			# only sync directories matching the destination path
+			if (($$id_ref{'interval'} eq 'sync') && (defined($ARGV[1]))) {
+				my $avail_path	= remove_trailing_slash( $$bp_ref{'dest'});
+				my $req_path	= remove_trailing_slash( $ARGV[1] );
+				
+				# if we have a match, sync this entry
+				if ($avail_path eq $req_path) {
+					# rsync
+					if ($$bp_ref{'src'}) {
+						rsync_backup_point( $$id_ref{'interval'}, $bp_ref );
+						
+					# backup_script
+					} elsif ($$bp_ref{'script'}) {
+						exec_backup_script( $$id_ref{'interval'}, $bp_ref );
+					}
+				}
+				
+			# this is a normal operation, either a sync or a lowest interval sync/rotate
+			} else {
+				# rsync
+				if ($$bp_ref{'src'}) {
+					rsync_backup_point( $$id_ref{'interval'}, $bp_ref );
+					
+				# backup_script
+				} elsif ($$bp_ref{'script'}) {
+					exec_backup_script( $$id_ref{'interval'}, $bp_ref );
+				}
+			}
 			
 		# this should never happen
 		} else {
@@ -5458,7 +5485,7 @@ rsnapshot - remote filesystem snapshot utility
 
 =head1 SYNOPSIS
 
-B<rsnapshot> [B<-vtxqVD>] [B<-c> cfgfile] [command]
+B<rsnapshot> [B<-vtxqVD>] [B<-c> cfgfile] [command] [args]
 
 =head1 DESCRIPTION
 
@@ -6070,7 +6097,59 @@ B<rsnapshot diff /.snapshots/daily.0 /.snapshots/daily.1>
 This will call the rsnapshot-diff program, which will scan both directories
 looking for differences (based on hard links).
 
-=head1 EXIT VALUES
+B<rsnapshot sync>
+
+=over 4
+
+When B<sync_first> is enabled, rsnapshot must first be called with the B<sync>
+argument, followed by the other usual cron entries. The sync should happen as
+the lowest, most frequent interval, and right before. For example:
+
+=over 4
+
+B<0 */4 * * *         /usr/local/bin/rsnapshot sync && /usr/local/bin/rsnapshot hourly>
+
+B<50 23 * * *         /usr/local/bin/rsnapshot daily>
+
+B<40 23 1,8,15,22 * * /usr/local/bin/rsnapshot weekly>
+
+B<30 23 1 * *         /usr/local/bin/rsnapshot monthly>
+
+=back
+
+The sync operation simply runs rsync and all backup scripts. In this scenario, all
+interval calls simply rotate directories, even the lowest interval.
+
+=back
+
+B<rsnapshot sync [dest]>
+
+=over 4
+
+When B<sync_first> is enabled, all sync behaviour happens during an additional
+sync step (see above). When using the sync argument, it is also possible to specify
+a backup point destination as an optional parameter. If this is done, only backup
+points sharing that destination path will be synced.
+
+For example, let's say that example.com is a destination path shared by one or more
+of your backup points.
+
+=over 4
+
+rsnapshot sync example.com
+
+=back
+
+This command will only sync the files that normally get backed up into example.com.
+It will NOT get any other backup points with slightly different values (like
+example.com/etc/, for example). In order to sync example.com/etc, you would need to
+run rsnapshot again, using example.com/etc as the optional parameter.
+
+=back
+
+=head1
+
+EXIT VALUES
 
 =over 4
 
