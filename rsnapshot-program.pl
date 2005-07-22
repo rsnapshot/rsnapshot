@@ -17,7 +17,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.309 2005/07/22 09:05:02 scubaninja Exp $
+# $Id: rsnapshot-program.pl,v 1.310 2005/07/22 09:06:48 scubaninja Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -2235,11 +2235,8 @@ sub show_latest_snapshot {
 	if (! @intervals)	{ bail("Error! intervals not defined in show_latest_snapshot()"); }
 	if (! %config_vars) { bail("Error! config_vars not defined in show_latest_snapshot()"); }
 	
-	if ($config_vars{'sync_first'}) {
-		print $config_vars{'snapshot_root'} . '/.sync/' . "\n";
-	} else {
-		print $config_vars{'snapshot_root'} . '/' . $intervals[0]->{'interval'} . '.0/' . "\n";
-	}
+	# regardless of .sync, this is the latest "real" snapshot
+	print $config_vars{'snapshot_root'} . '/' . $intervals[0]->{'interval'} . '.0/' . "\n";
 	
 	exit(0);
 }
