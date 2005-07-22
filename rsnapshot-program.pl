@@ -17,7 +17,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.307 2005/07/22 08:46:01 scubaninja Exp $
+# $Id: rsnapshot-program.pl,v 1.308 2005/07/22 08:53:24 scubaninja Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -2721,6 +2721,14 @@ sub backup_lowest_interval {
 		}
 	}
 	
+	my $sync_dest_matches	= 0;
+	my $sync_dest_dir		= undef;
+	
+	# if we're trying to sync only certain directories, remember the path to match
+	if ($ARGV[1]) {
+		$sync_dest_dir = $ARGV[1];
+	}
+	
 	# sync live filesystem data and backup script output to $interval.0
 	# loop through each backup point and backup script
 	foreach my $bp_ref (@backup_points) {
@@ -2730,9 +2738,9 @@ sub backup_lowest_interval {
 			
 			# if we're doing a sync and we specified an parameter on the command line (for the destination path),
 			# only sync directories matching the destination path
-			if (($$id_ref{'interval'} eq 'sync') && (defined($ARGV[1]))) {
-				my $avail_path	= remove_trailing_slash( $$bp_ref{'dest'});
-				my $req_path	= remove_trailing_slash( $ARGV[1] );
+			if (($$id_ref{'interval'} eq 'sync') && (defined($sync_dest_dir))) {
+				my $avail_path	= remove_trailing_slash( $$bp_ref{'dest'} );
+				my $req_path	= remove_trailing_slash( $sync_dest_dir );
 				
 				# if we have a match, sync this entry
 				if ($avail_path eq $req_path) {
@@ -2744,6 +2752,9 @@ sub backup_lowest_interval {
 					} elsif ($$bp_ref{'script'}) {
 						exec_backup_script( $$id_ref{'interval'}, $bp_ref );
 					}
+					
+					# ok, we got at least one dest match
+					$sync_dest_matches++;
 				}
 				
 			# this is a normal operation, either a sync or a lowest interval sync/rotate
@@ -2761,6 +2772,14 @@ sub backup_lowest_interval {
 		# this should never happen
 		} else {
 			bail('invalid backup point data in backup_lowest_interval()');
+		}
+	}
+	
+	if ($$id_ref{'interval'} eq 'sync') {
+		if (defined($sync_dest_dir) && (0 == $sync_dest_matches)) {
+			print_err ("No matches found for \"$sync_dest_dir\"", 1);
+			syslog_err("No matches found for \"$sync_dest_dir\"");
+			exit(1);
 		}
 	}
 	
