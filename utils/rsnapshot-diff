@@ -13,7 +13,7 @@
 # http://www.rsnapshot.org/
 ##############################################################################
 
-# $Id: rsnapshot-diff,v 1.6 2005/07/22 22:24:04 drhyde Exp $
+# $Id: rsnapshot-diff,v 1.7 2005/07/23 19:58:28 drhyde Exp $
 
 use warnings;
 use strict;
@@ -30,6 +30,7 @@ if(@ARGV && $ARGV[0] eq '-h') {
 
     -h    show this help
     -v    be verbose
+    -vv   be more verbose (mutter about unchanged files)
     dir1  the first directory to look at
     dir2  the second directory to look at
 
@@ -42,6 +43,9 @@ if(@ARGV && $ARGV[0] eq '-h') {
     exit;
 } elsif(@ARGV && $ARGV[0] eq '-v') {
     $verbose = 1;
+    shift;
+} elsif(@ARGV && $ARGV[0] eq '-vv') {
+    $verbose = 2;
     shift;
 } elsif(@ARGV && $ARGV[0] eq '--') { shift; }
 
@@ -81,10 +85,13 @@ sub compare_dirs {
     my @deleted = grep { !exists($new{$_}) } keys %old;
     my @changed = grep { !-d $new.'/'.$_ && exists($old{$_}) && $old{$_} != $new{$_} } keys %new;
 
-    # print "Adding ".join(', ', @added, @changed)."\n" if(DEBUG);
     add(map { $new.'/'.$_ } @added, @changed);
-    # print "Removing ".join(', ', @deleted, @changed)."\n" if(DEBUG);
     remove(map { $old.'/'.$_ } @deleted, @changed);
+
+    if($verbose == 2) {
+        my %changed = map { ($_, 1) } @changed, @added, @deleted;
+        print "0 $new/$_\n" foreach(grep { !-d "$new/$_" && !exists($changed{$_}) } keys %new);
+    }
     
     foreach (grep { !-l $new.'/'.$_ && !-l $old.'/'.$_ && -d $new.'/'.$_ && -d $old.'/'.$_ } keys %new) {
         print "Comparing subdirs $new/$_ and $old/$_ ...\n" if(DEBUG);
@@ -94,12 +101,13 @@ sub compare_dirs {
 
 sub add {
     my @added = @_;
+    print "Adding ".join(', ', @added)."\n" if(DEBUG && @added);
     foreach(grep { !-d } @added) {
         $addedfiles++;
         $addedspace += (mystat($_))[7];
         print "+ $_\n" if($verbose);
     }
-    foreach my $dir (grep { -d } @added) {
+    foreach my $dir (grep { !-l && -d } @added) {
         opendir(DIR, $dir) || die("Can't open dir $dir\n");
         add(map { $dir.'/'.$_ } grep { $_ ne '.' && $_ ne '..' } readdir(DIR))
     }
@@ -107,12 +115,13 @@ sub add {
 
 sub remove {
     my @removed = @_;
+    print "Removing ".join(', ', @removed)."\n" if(DEBUG && @removed);
     foreach(grep { !-d } @removed) {
         $deletedfiles++;
         $deletedspace += (mystat($_))[7];
         print "- $_\n" if($verbose);
     }
-    foreach my $dir (grep { -d } @removed) {
+    foreach my $dir (grep { !-l && -d } @removed) {
         opendir(DIR, $dir) || die("Can't open dir $dir\n");
         remove(map { $dir.'/'.$_ } grep { $_ ne '.' && $_ ne '..' } readdir(DIR))
     }
@@ -127,7 +136,7 @@ sub remove {
 
         # on first stat, memorise device
         $device = $stat[0] unless(defined($device));
-        die("Can't compare across devices.\n")
+        die("Can't compare across devices.\n(looking at $_)\n")
             unless($device == $stat[0] || -p $_);
 
         return @stat;
