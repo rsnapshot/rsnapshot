@@ -1,4 +1,4 @@
-dnl $Id: configure.ac,v 1.36 2005/04/10 22:33:15 scubaninja Exp $
+dnl $Id: configure.ac,v 1.37 2005/07/23 22:05:31 scubaninja Exp $
 
 AC_INIT(rsnapshot, 1.2.2, nathan@rsnapshot.org)
 AM_INIT_AUTOMAKE
@@ -235,7 +235,7 @@ dnl Combine the preamble with a normal, working script
 AC_CONFIG_FILES(rsnapshot:rsnapshot-preamble.pl:rsnapshot-program.pl)
 
 dnl Combine the preamble with the rsnapshot-diff script to determine path to perl
-AC_CONFIG_FILES(rsnapshot-diff:rsnapshot-preamble.pl:utils/rsnapshot-diff)
+AC_CONFIG_FILES(rsnapshot-diff:rsnapshot-preamble.pl:rsnapshot-diff.pl)
 
 dnl try to find dependent programs for the config file
 AC_CONFIG_FILES(rsnapshot.conf.default:rsnapshot.conf.default.in)

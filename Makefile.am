@@ -1,4 +1,4 @@
-# $Id: Makefile.am,v 1.59 2005/06/18 02:32:31 scubaninja Exp $ #
+# $Id: Makefile.am,v 1.60 2005/07/23 22:05:31 scubaninja Exp $ #
 
 VERSION = 1.2.2
 
@@ -41,7 +41,7 @@ tar: man
 	
 	@# core files
 	/bin/mkdir rsnapshot-$(VERSION)
-	/bin/cp rsnapshot-preamble.pl rsnapshot-program.pl rsnapshot.conf.default.in \
+	/bin/cp rsnapshot-preamble.pl rsnapshot-program.pl rsnapshot-diff.pl rsnapshot.conf.default.in \
 		rsnapshot.1 AUTHORS COPYING INSTALL README TODO NEWS ChangeLog rsnapshot-$(VERSION)/
 	
 	@# autoconf files
@@ -58,7 +58,7 @@ tar: man
 	
 	@# utils
 	/bin/mkdir rsnapshot-$(VERSION)/utils/
-	/bin/cp utils/{rsnaptar,rsnapshot-diff,*.sh,README} rsnapshot-$(VERSION)/utils/
+	/bin/cp utils/{rsnaptar,*.sh,README} rsnapshot-$(VERSION)/utils/
 	
 	@# change ownership to root, and delete build dir
 	chown -R root:root rsnapshot-$(VERSION)/

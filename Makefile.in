@@ -10,7 +10,7 @@
 # even the implied warranty of MERCHANTABILITY or FITNESS FOR A
 # PARTICULAR PURPOSE.
 
-# $Id: Makefile.in,v 1.72 2005/07/23 02:47:54 scubaninja Exp $ #
+# $Id: Makefile.in,v 1.73 2005/07/23 22:05:31 scubaninja Exp $ #
 
 
 SHELL = @SHELL@
@@ -101,8 +101,8 @@ DATA =  $(sysconf_DATA)
 
 DIST_COMMON =  README AUTHORS COPYING ChangeLog INSTALL Makefile.am \
 Makefile.in NEWS TODO aclocal.m4 config.guess config.sub configure \
-configure.ac install-sh missing mkinstalldirs rsnapshot-preamble.pl \
-rsnapshot-program.pl rsnapshot.conf.default.in utils/rsnapshot-diff
+configure.ac install-sh missing mkinstalldirs rsnapshot-diff.pl \
+rsnapshot-preamble.pl rsnapshot-program.pl rsnapshot.conf.default.in
 
 
 DISTFILES = $(DIST_COMMON) $(SOURCES) $(HEADERS) $(TEXINFOS) $(EXTRA_DIST)
@@ -127,8 +127,8 @@ $(srcdir)/configure: $(srcdir)/configure.ac $(ACLOCAL_M4) $(CONFIGURE_DEPENDENCI
 	cd $(srcdir) && $(AUTOCONF)
 rsnapshot: $(top_builddir)/config.status rsnapshot-preamble.pl rsnapshot-program.pl
 	cd $(top_builddir) && CONFIG_FILES=$@:rsnapshot-preamble.pl:rsnapshot-program.pl CONFIG_HEADERS= $(SHELL) ./config.status
-rsnapshot-diff: $(top_builddir)/config.status rsnapshot-preamble.pl $(top_srcdir)/utils/rsnapshot-diff
-	cd $(top_builddir) && CONFIG_FILES=$@:rsnapshot-preamble.pl:utils/rsnapshot-diff CONFIG_HEADERS= $(SHELL) ./config.status
+rsnapshot-diff: $(top_builddir)/config.status rsnapshot-preamble.pl rsnapshot-diff.pl
+	cd $(top_builddir) && CONFIG_FILES=$@:rsnapshot-preamble.pl:rsnapshot-diff.pl CONFIG_HEADERS= $(SHELL) ./config.status
 rsnapshot.conf.default: $(top_builddir)/config.status rsnapshot.conf.default.in
 	cd $(top_builddir) && CONFIG_FILES=$@:rsnapshot.conf.default.in CONFIG_HEADERS= $(SHELL) ./config.status
 
@@ -369,7 +369,7 @@ tar: man
 
 	@# core files
 	/bin/mkdir rsnapshot-$(VERSION)
-	/bin/cp rsnapshot-preamble.pl rsnapshot-program.pl rsnapshot.conf.default.in \
+	/bin/cp rsnapshot-preamble.pl rsnapshot-program.pl rsnapshot-diff.pl rsnapshot.conf.default.in \
 		rsnapshot.1 AUTHORS COPYING INSTALL README TODO NEWS ChangeLog rsnapshot-$(VERSION)/
 
 	@# autoconf files
@@ -386,7 +386,7 @@ tar: man
 
 	@# utils
 	/bin/mkdir rsnapshot-$(VERSION)/utils/
-	/bin/cp utils/{rsnaptar,rsnapshot-diff,*.sh,README} rsnapshot-$(VERSION)/utils/
+	/bin/cp utils/{rsnaptar,*.sh,README} rsnapshot-$(VERSION)/utils/
 
 	@# change ownership to root, and delete build dir
 	chown -R root:root rsnapshot-$(VERSION)/

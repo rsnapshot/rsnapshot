@@ -1,12 +1,6 @@
 The scripts in this folder are mostly quick and dirty examples of things that
 you may or may not find useful in conjunction with rsnapshot.
 
-rsnapshot-diff
-------------------------------------------------------------------------------
-    Shows differences between two similar directories under the snapshot root.
-    Can also be called using the "rsnapshot diff interval1 interval2" syntax.
-    This is the only program under utils/ that gets installed by default.
-
 rsnaptar
 ------------------------------------------------------------------------------
     A script that can automatically tar up your latest snapshots and send you

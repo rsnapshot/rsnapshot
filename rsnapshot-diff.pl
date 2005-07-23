@@ -13,7 +13,7 @@
 # http://www.rsnapshot.org/
 ##############################################################################
 
-# $Id: rsnapshot-diff,v 1.7 2005/07/23 19:58:28 drhyde Exp $
+# $Id: rsnapshot-diff.pl,v 1.1 2005/07/23 22:05:31 scubaninja Exp $
 
 use warnings;
 use strict;
