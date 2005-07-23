@@ -348,9 +348,10 @@ If you require more precise control over the locations of files:
 
         --sysconfdir=/usr/local/etc
             This will install the example config file
-            (rsnapshot.conf.default) under /usr/local/etc. It is
-            recommended that you copy this and use it as a basis for
-            the actual config file (rsnapshot.conf).
+            (rsnapshot.conf.default) under /usr/local/etc. This will also be
+            the default directory where rsnapshot looks for its config file.
+            It is recommended that you copy rsnapshot.conf.default and use it
+            as a basis for the actual config file (rsnapshot.conf).
 
         --bindir=/usr/local/bin
             This will install the rsnapshot program under /usr/local/bin
