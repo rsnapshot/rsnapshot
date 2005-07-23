@@ -17,7 +17,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.310 2005/07/22 09:06:48 scubaninja Exp $
+# $Id: rsnapshot-program.pl,v 1.311 2005/07/23 02:04:45 scubaninja Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -4407,18 +4407,17 @@ sub show_rsnapshot_diff {
 	
 	# make this automatically pick the two lowest intervals (or .sync dir) for comparison, as the default
 	if (!defined($ARGV[1]) && !defined($ARGV[2])) {
-		# sync_first is enabled
-		if ($config_vars{'sync_first'}) {
-			# sync
-			if ( -d "$config_vars{'snapshot_root'}/.sync/" ) {
-				$paths_out[0] = "$config_vars{'snapshot_root'}/.sync/";
-			}
+		# sync_first is enabled, and .sync exists
+		if ($config_vars{'sync_first'} && (-d "$config_vars{'snapshot_root'}/.sync/")) {
+			# .sync
+			$paths_out[0] = "$config_vars{'snapshot_root'}/.sync/";
+			
 			# interval.0
 			if ( -d ("$config_vars{'snapshot_root'}/" . $intervals[0]->{'interval'} . ".0/" ) ) {
 				$paths_out[1] = "$config_vars{'snapshot_root'}/" . $intervals[0]->{'interval'} . ".0/";
 			}
 			
-		# sync_first is not enabled
+		# sync_first is not enabled, or .sync doesn't exist
 		} else {
 			# interval.0
 			if ( -d ("$config_vars{'snapshot_root'}/" . $intervals[0]->{'interval'} . ".0/" ) ) {
@@ -4429,7 +4428,7 @@ sub show_rsnapshot_diff {
 				$paths_out[1] = "$config_vars{'snapshot_root'}/" . $intervals[0]->{'interval'} . ".1/";
 			}
 		}
-		
+			
 	# if we got some command line arguments, loop through twice and figure out what they mean
 	} else {
 		$paths_in[0] = $ARGV[1];	# the 1st path is the 2nd cmd line argument
