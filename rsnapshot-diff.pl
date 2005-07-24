@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/perl -w
 
 ##############################################################################
 # rsnapshot-diff
@@ -13,44 +13,56 @@
 # http://www.rsnapshot.org/
 ##############################################################################
 
-# $Id: rsnapshot-diff.pl,v 1.1 2005/07/23 22:05:31 scubaninja Exp $
+# $Id: rsnapshot-diff.pl,v 1.2 2005/07/24 18:48:58 scubaninja Exp $
 
-use warnings;
 use strict;
 
 use constant DEBUG => 0;
-use Data::Dumper;
+use Getopt::Std;
+
+my $program_name = 'rsnapshot-diff';
+
+my %opts;
 my $verbose = 0;
+my $ignore = 0;
 
-if(@ARGV && $ARGV[0] eq '-h') {
+my $result = getopts('vVhi', \%opts);
+
+# help
+if ($opts{'h'}) {
     print qq{
-    $0 [-v] dir1 dir2
+    $program_name [-vVhi] dir1 dir2
 
-    $0 shows the differences between two 'rsnapshot' backups.
+    $program_name shows the differences between two 'rsnapshot' backups.
 
     -h    show this help
     -v    be verbose
-    -vv   be more verbose (mutter about unchanged files)
+    -V    be more verbose (mutter about unchanged files)
+    -i    ignore symlinks, directories, and special files in verbose output
     dir1  the first directory to look at
     dir2  the second directory to look at
 
     if you want to look at directories called '-h' or '-v' pass a
     first parameter of '--'.
 
-    $0 always show the changes made starting from the older
+    $program_name always show the changes made starting from the older
     of the two directories.
 };
-    exit;
-} elsif(@ARGV && $ARGV[0] eq '-v') {
-    $verbose = 1;
-    shift;
-} elsif(@ARGV && $ARGV[0] eq '-vv') {
-    $verbose = 2;
-    shift;
-} elsif(@ARGV && $ARGV[0] eq '--') { shift; }
+	exit;
+}
+
+# verbose
+if ($opts{'v'}) { $verbose = 1; }
+
+# extra verbose
+if ($opts{'V'}) { $verbose = 2; }
+
+# ignore
+if ($opts{'i'}) { $ignore = 1; }
+
 
 if(!exists($ARGV[1]) || !-d $ARGV[0] || !-d $ARGV[1]) {
-    die("Dodgy command line arguments\n");
+    die("$program_name\nUsage: $program_name [-vVhi] dir1 dir2\nType $program_name -h for details\n");
 }
 
 my($dirold, $dirnew) = @ARGV;
@@ -105,7 +117,10 @@ sub add {
     foreach(grep { !-d } @added) {
         $addedfiles++;
         $addedspace += (mystat($_))[7];
-        print "+ $_\n" if($verbose);
+        # if ignore is on, only print files
+        unless ($ignore && (-l || !-f)) {
+            print "+ $_\n" if($verbose);
+        }
     }
     foreach my $dir (grep { !-l && -d } @added) {
         opendir(DIR, $dir) || die("Can't open dir $dir\n");
@@ -119,7 +134,10 @@ sub remove {
     foreach(grep { !-d } @removed) {
         $deletedfiles++;
         $deletedspace += (mystat($_))[7];
-        print "- $_\n" if($verbose);
+        # if ignore is on, only print files
+        unless ($ignore && (-l || !-f)) {
+            print "- $_\n" if($verbose);
+        }
     }
     foreach my $dir (grep { !-l && -d } @removed) {
         opendir(DIR, $dir) || die("Can't open dir $dir\n");
