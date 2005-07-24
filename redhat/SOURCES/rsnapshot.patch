@@ -1,6 +1,6 @@
---- rsnapshot.conf.default.in	2005-04-03 06:58:02.000000000 -0700
-+++ rsnapshot.conf.default.in.redhat	2005-04-03 06:58:11.000000000 -0700
-@@ -40,7 +40,7 @@
+--- rsnapshot.conf.default.in	2005-07-24 12:33:16.000000000 -0700
++++ rsnapshot.conf.default.in.redhat	2005-07-24 12:49:19.000000000 -0700
+@@ -41,7 +41,7 @@
  #
  # See the README file or the man page for more details.
  #
@@ -8,31 +8,30 @@
 +@CMD_CP@
  
  # uncomment this to use the rm program instead of the built-in perl routine.
- @CMD_RM@
-@@ -55,7 +55,7 @@
- @CMD_LOGGER@
- 
- # Uncomment this to specify a path to "du" for disk usage checks.
+ #
+@@ -64,7 +64,7 @@
+ # If you have an older version of "du", you may also want to check the
+ # "du_args" parameter below.
+ #
 -#@CMD_DU@
 +@CMD_DU@
  
- #########################################
- #           BACKUP INTERVALS            #
-@@ -94,7 +94,7 @@
- 
+ # Uncomment this to specify the path to rsnapshot-diff.
+ #
+@@ -113,14 +113,14 @@
  # If you enable this, data will be written to the file you specify. The
  # amount of data written is controlled by the "loglevel" parameter.
+ #
 -#logfile	/var/log/rsnapshot
-+logfile		/var/log/rsnapshot
++logfile	/var/log/rsnapshot
  
- # The include and exclude parameters, if enabled, simply get passed directly
- # to rsync. If you have multiple include/exclude patterns, put each one on a
-@@ -138,7 +138,7 @@
+ # If enabled, rsnapshot will write a lockfile to prevent two instances
+ # from running simultaneously (and messing up the snapshot_root).
  # If you enable this, make sure the lockfile directory is not world
  # writable. Otherwise anyone can prevent the program from running.
  #
 -#lockfile	/var/run/rsnapshot.pid
 +lockfile	/var/run/rsnapshot.pid
  
- # If enabled, rsnapshot will move the oldest directory for each interval
- # to [interval_name].delete, then it will delete that directory as a 
+ # Default rsync args. All rsync commands have at least these options set.
+ #

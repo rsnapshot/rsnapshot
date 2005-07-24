@@ -10,7 +10,7 @@
 # even the implied warranty of MERCHANTABILITY or FITNESS FOR A
 # PARTICULAR PURPOSE.
 
-# $Id: Makefile.in,v 1.74 2005/07/24 04:27:38 scubaninja Exp $ #
+# $Id: Makefile.in,v 1.75 2005/07/24 20:00:10 scubaninja Exp $ #
 
 
 SHELL = @SHELL@
@@ -343,55 +343,67 @@ man:
 
 html:
 	pod2html rsnapshot | grep -v 'link rev' > rsnapshot.html
-	/bin/rm -f pod2htmd.*
-	/bin/rm -f pod2htmi.*
+	rm -f pod2htmd.*
+	rm -f pod2htmi.*
 
 clean:
-	/bin/rm -rf rsnapshot-$(VERSION)/
-	/bin/rm -rf autom4te.cache
-	/bin/rm -f rsnapshot-$(VERSION).tar.gz
-	/bin/rm -f rsnapshot-$(VERSION)-1.noarch.rpm
-	/bin/rm -f rsnapshot.conf.default
-	/bin/rm -f rsnapshot.html
-	/bin/rm -f pod2htmd.*
-	/bin/rm -f pod2htmi.*
-	/bin/rm -f Makefile config.log config.status configure.lineno rsnapshot rsnapshot-diff
+	rm -rf rsnapshot-$(VERSION)/
+	rm -rf autom4te.cache
+	rm -f rsnapshot-$(VERSION).tar.gz
+	rm -f rsnapshot-$(VERSION)-1.noarch.rpm
+	rm -f rsnapshot.conf.default
+	rm -f rsnapshot.conf.default.in.redhat
+	rm -f rsnapshot.html
+	rm -f pod2htmd.*
+	rm -f pod2htmi.*
+	rm -f Makefile config.log config.status configure.lineno rsnapshot rsnapshot-diff
+
+rpm-patch:
+	@# redhat config file patch
+	cp rsnapshot.conf.default.in rsnapshot.conf.default.in.redhat
+	perl -pi -e 's/^\#\@CMD_CP\@/\@CMD_CP\@/' rsnapshot.conf.default.in.redhat
+	perl -pi -e 's/^\#\@CMD_DU\@/\@CMD_DU\@/' rsnapshot.conf.default.in.redhat
+	perl -pi -e 's/^\#logfile/logfile/' rsnapshot.conf.default.in.redhat
+	perl -pi -e 's/^\#lockfile/lockfile/' rsnapshot.conf.default.in.redhat
+	@# diff doesn't return 0
+	diff -u rsnapshot.conf.default.in rsnapshot.conf.default.in.redhat > redhat/SOURCES/rsnapshot.patch || /bin/true
+	rm -f rsnapshot.conf.default.in.redhat
 
 rpm: tar
-	/bin/cp rsnapshot-$(VERSION).tar.gz $(RPM_BASE_DIR)/SOURCES/
-	/bin/cp redhat/SOURCES/rsnapshot.patch $(RPM_BASE_DIR)/SOURCES/
-	/bin/cp redhat/SPECS/rsnapshot.spec $(RPM_BASE_DIR)/SPECS/
-	/usr/bin/rpmbuild -bb $(RPM_BASE_DIR)/SPECS/rsnapshot.spec
-	/bin/cp $(RPM_BASE_DIR)/RPMS/noarch/rsnapshot-$(VERSION)-1.noarch.rpm .
+	cp rsnapshot-$(VERSION).tar.gz $(RPM_BASE_DIR)/SOURCES/
+	cp redhat/SOURCES/rsnapshot.patch $(RPM_BASE_DIR)/SOURCES/
+	cp redhat/SPECS/rsnapshot.spec $(RPM_BASE_DIR)/SPECS/
+	rpmbuild -bb $(RPM_BASE_DIR)/SPECS/rsnapshot.spec
+	cp $(RPM_BASE_DIR)/RPMS/noarch/rsnapshot-$(VERSION)-1.noarch.rpm .
 
-tar: man
-	/bin/rm -f rsnapshot-$(VERSION).tar.gz
+tar: man rpm-patch
+	rm -f rsnapshot-$(VERSION).tar.gz
 
 	@# core files
-	/bin/mkdir rsnapshot-$(VERSION)
-	/bin/cp rsnapshot-preamble.pl rsnapshot-program.pl rsnapshot-diff.pl rsnapshot.conf.default.in \
+	mkdir rsnapshot-$(VERSION)
+	cp rsnapshot-preamble.pl rsnapshot-program.pl rsnapshot-diff.pl rsnapshot.conf.default.in \
 		rsnapshot.1 AUTHORS COPYING INSTALL README TODO NEWS ChangeLog rsnapshot-$(VERSION)/
 
 	@# autoconf files
-	/bin/cp Makefile.am Makefile.in aclocal.m4 configure configure.ac config.guess config.sub \
+	cp Makefile.am Makefile.in aclocal.m4 configure configure.ac config.guess config.sub \
 		install-sh missing mkinstalldirs rsnapshot-$(VERSION)/
 
 	@# redhat
-	/bin/mkdir rsnapshot-$(VERSION)/redhat/
-	/bin/mkdir rsnapshot-$(VERSION)/redhat/SOURCES/
-	/bin/mkdir rsnapshot-$(VERSION)/redhat/SPECS/
-	/bin/cp redhat/README rsnapshot-$(VERSION)/redhat/
-	/bin/cp redhat/SOURCES/rsnapshot.patch rsnapshot-$(VERSION)/redhat/SOURCES/
-	/bin/cp redhat/SPECS/rsnapshot.spec rsnapshot-$(VERSION)/redhat/SPECS/
+	mkdir rsnapshot-$(VERSION)/redhat/
+	mkdir rsnapshot-$(VERSION)/redhat/SOURCES/
+	mkdir rsnapshot-$(VERSION)/redhat/SPECS/
+	cp redhat/README rsnapshot-$(VERSION)/redhat/
+	cp redhat/SOURCES/rsnapshot.patch rsnapshot-$(VERSION)/redhat/SOURCES/
+	cp redhat/SPECS/rsnapshot.spec rsnapshot-$(VERSION)/redhat/SPECS/
 
 	@# utils
-	/bin/mkdir rsnapshot-$(VERSION)/utils/
-	/bin/cp utils/{rsnaptar,*.sh,README} rsnapshot-$(VERSION)/utils/
+	mkdir rsnapshot-$(VERSION)/utils/
+	cp utils/{rsnaptar,*.sh,README} rsnapshot-$(VERSION)/utils/
 
 	@# change ownership to root, and delete build dir
 	chown -R root:root rsnapshot-$(VERSION)/
-	/bin/tar czf rsnapshot-$(VERSION).tar.gz rsnapshot-$(VERSION)/
-	/bin/rm -rf rsnapshot-$(VERSION)/
+	tar czf rsnapshot-$(VERSION).tar.gz rsnapshot-$(VERSION)/
+	rm -rf rsnapshot-$(VERSION)/
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
