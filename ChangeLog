@@ -51,6 +51,8 @@ VERSION 1.2.2 (??? ?? ??:?? 2005)
 - Fixed sync_if_different() to allow alternating directories and files to be
   created with the same names between runs
 - Removed redundant line width and indent values in wrap_cmd() calls
+- Anthony Ettinger <apwebdesign@yahoo.com> wrote utils/mysqlbackup.pl
+- Sherman Boyd wrote utils/random_file_verify.sh
 
 VERSION 1.2.1 (Apr 09 15:10 2005)
 ------------------------------------------------------------------------------
