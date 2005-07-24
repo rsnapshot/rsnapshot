@@ -17,7 +17,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.320 2005/07/24 21:51:29 scubaninja Exp $
+# $Id: rsnapshot-program.pl,v 1.321 2005/07/24 22:38:53 scubaninja Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -43,8 +43,7 @@ use Fcntl;				# sysopen()
 # keep track of whether we have access to the Lchown module
 my $have_lchown = 0;
 
-# attempt to load the Lchown module: http://search.cpan.org/dist/Lchown/
-use_lchown();
+# use_lchown() is called later, so we can log the results
 
 ########################################
 ###     DECLARE GLOBAL VARIABLES     ###
@@ -208,6 +207,9 @@ if (defined($config_file) && (-f "$config_file") && (-r "$config_file")) {
 	# warn user and exit the program
 	exit_no_config_file();
 }
+
+# attempt to load the Lchown module: http://search.cpan.org/dist/Lchown/
+use_lchown();
 
 # if we're just doing a configtest, exit here with the results
 if (1 == $do_configtest) {
@@ -5425,11 +5427,19 @@ sub write_upgraded_config_file {
 # dynamically loads the CPAN Lchown module, if available
 # sets the global variable $have_lchown
 sub use_lchown {
+	if ($verbose >= 5) {
+		print_msg('require Lchown', 5);
+	}
 	eval {
 		require Lchown;
 	};
 	if ($@) {
 		$have_lchown = 0;
+		
+		if ($verbose >= 5) {
+			print_msg('Lchown module not found', 5);
+		}
+		
 		return(0);
 	}
 	
@@ -5437,14 +5447,20 @@ sub use_lchown {
 	{
 		no strict 'subs';
 		if (defined(Lchown) && defined(Lchown::LCHOWN_AVAILABLE)) {
-			# string comparison on a number to get around this error:
-			#   Argument "Lchown::LCHOWN_AVAILABLE" isn't numeric in numeric eq (==)
-			
-			if ('1' eq Lchown::LCHOWN_AVAILABLE) {
+			if (1 == Lchown::LCHOWN_AVAILABLE()) {
 				$have_lchown = 1;
+				
+				if ($verbose >= 5) {
+					print_msg('Lchown module loaded successfully', 5);
+				}
+				
 				return(1);
 			}
 		}
+	}
+	
+	if ($verbose >= 5) {
+		print_msg("Lchown module loaded, but operating system doesn't support lchown()", 5);
 	}
 	
 	return(0);
