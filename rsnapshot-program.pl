@@ -17,7 +17,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.315 2005/07/24 04:27:38 scubaninja Exp $
+# $Id: rsnapshot-program.pl,v 1.316 2005/07/24 18:59:47 scubaninja Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -4485,13 +4485,16 @@ sub show_rsnapshot_diff {
 	
 	# increase verbosity (by possibly sticking a verbose flag in as the first argument)
 	#
-	# extra verbose
-	if ($verbose >= 4) {
-		unshift(@cmd_args, '-vv');
+	# debug
+	if ($verbose >= 5) {
+		unshift(@cmd_args, '-V');
+		
+	} elsif ($verbose >= 4) {
+		unshift(@cmd_args, '-v');
 		
 	# verbose
 	} elsif ($verbose >= 3) {
-		unshift(@cmd_args, '-v');
+		unshift(@cmd_args, '-vi');
 	}
 	
 	# run rsnapshot-diff
