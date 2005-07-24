@@ -17,7 +17,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.319 2005/07/24 21:02:26 scubaninja Exp $
+# $Id: rsnapshot-program.pl,v 1.320 2005/07/24 21:51:29 scubaninja Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -2378,7 +2378,7 @@ sub is_ssh_path {
 }
 
 # accepts path
-# returns 1 if it's a valid cwrsync server path
+# returns 1 if it's a valid cwrsync server path (user@host::sharename)
 # return 0 otherwise
 sub is_cwrsync_path {
 	my $path = shift(@_);
