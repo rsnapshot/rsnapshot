@@ -1,6 +1,23 @@
 #!/bin/bash
-# Script created by sherman.boyd AT gmail.com
+
+##############################################################################
+# random_file_verify.sh
+#
+# by Sherman Boyd <sherman.boyd AT gmail.com>
+# http://www.rsnapshot.org/
+#
+# This script generates a random test file to be backed up and
+# then tests it after the backup.  It's a paranoid sanity check, I
+# suppose.  The script then emails the results of the backup and check
+# to the admin.
+#
+# As it is currently implemented, it is a wrapper around an "rsnapshot daily"
+# command. It could probably be broken out into seperate preexec annd
+# postexec commands as well.
+#
 # Feel free to use and improve ...
+#
+##############################################################################
 
 #Initialize 
 
@@ -55,4 +72,3 @@ fi
 mail -s "$msubject" your@email.com < /var/log/localbackup.log
 
 exit 0
-
