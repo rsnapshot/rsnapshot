@@ -17,7 +17,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.316 2005/07/24 18:59:47 scubaninja Exp $
+# $Id: rsnapshot-program.pl,v 1.317 2005/07/24 19:59:31 scubaninja Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -288,31 +288,31 @@ See the GNU General Public License for details.
 Options:
     -v verbose       - Show equivalent shell commands being executed.
     -t test          - Show verbose output, but don't touch anything.
+    -c [file]        - Specify alternate config file (-c /path/to/file)
                        This will be similar, but not always exactly the same
                        as the real output from a live run.
-    -c [file]        - Specify alternate config file (-c /path/to/file)
-    -x one_fs        - Don't cross filesystems (same as -x option to rsync).
     -q quiet         - Suppress non-fatal warnings.
     -V extra verbose - The same as -v, but with more detail.
     -D debug         - A firehose of diagnostic information.
+    -x one_fs        - Don't cross filesystems (same as -x option to rsync).
 
 Commands:
     [interval]       - An interval as defined in rsnapshot.conf.
+    configtest       - Syntax check the config file.
     sync [dest]      - Sync files, without rotating. "sync_first" must be
                        enabled for this to work. If a full backup point
                        destination is given as an optional argument, only
                        those files will be synced.
-    configtest       - Syntax check the config file.
-    du               - Show disk usage in the snapshot_root.
-                       Accepts an optional destination path for comparison
-                       across snapshots (i.e. localhost/home/user/foo).
-    help             - Show this help message.
-    version          - Show the version number for rsnapshot.
     diff             - Front-end interface to the rsnapshot-diff program.
                        Accepts two optional arguments which can be either
                        filesystem paths or interval directories within the
                        snapshot_root (i.e. /etc/ daily.0/etc/). The default
                        is to compare the two most recent snapshots.
+    du               - Show disk usage in the snapshot_root.
+                       Accepts an optional destination path for comparison
+                       across snapshots (i.e. localhost/home/user/foo).
+    version          - Show the version number for rsnapshot.
+    help             - Show this help message.
 HERE
 	
 	exit(0);
