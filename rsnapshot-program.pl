@@ -17,7 +17,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.318 2005/07/24 20:38:58 scubaninja Exp $
+# $Id: rsnapshot-program.pl,v 1.319 2005/07/24 21:02:26 scubaninja Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -6448,6 +6448,14 @@ David Keegel (B<djk@cybersource.com.au>)
 =over 4
 
 Fixed race condition in lock file creation, improved error reporting
+
+=back
+
+Anthony Ettinger (B<apwebdesign@yahoo.com>)
+
+=over 4
+
+Wrote the utils/mysqlbackup.pl script
 
 =back
 

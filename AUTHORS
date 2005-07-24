@@ -51,5 +51,8 @@ Justin Grote <justin@grote.name>
 David Keegel <djk@cybersource.com.au>
     - Fixed race condition in lock file creation, improved error reporting
 
+Anthony Ettinger <apwebdesign@yahoo.com>
+    - Wrote the utils/mysqlbackup.pl script
+
 Sherman Boyd
-    - Wrote utils/random_file_verify.sh script
+    - Wrote the utils/random_file_verify.sh script

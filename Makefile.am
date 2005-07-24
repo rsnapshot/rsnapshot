@@ -1,4 +1,4 @@
-# $Id: Makefile.am,v 1.61 2005/07/24 20:00:10 scubaninja Exp $ #
+# $Id: Makefile.am,v 1.62 2005/07/24 21:02:26 scubaninja Exp $ #
 
 VERSION = 1.2.2
 
@@ -70,7 +70,7 @@ tar: man rpm-patch
 	
 	@# utils
 	mkdir rsnapshot-$(VERSION)/utils/
-	cp utils/{rsnaptar,*.sh,README} rsnapshot-$(VERSION)/utils/
+	cp utils/{rsnaptar,*.sh,*.pl,README} rsnapshot-$(VERSION)/utils/
 	
 	@# change ownership to root, and delete build dir
 	chown -R root:root rsnapshot-$(VERSION)/

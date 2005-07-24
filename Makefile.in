@@ -10,7 +10,7 @@
 # even the implied warranty of MERCHANTABILITY or FITNESS FOR A
 # PARTICULAR PURPOSE.
 
-# $Id: Makefile.in,v 1.75 2005/07/24 20:00:10 scubaninja Exp $ #
+# $Id: Makefile.in,v 1.76 2005/07/24 21:02:26 scubaninja Exp $ #
 
 
 SHELL = @SHELL@
@@ -398,7 +398,7 @@ tar: man rpm-patch
 
 	@# utils
 	mkdir rsnapshot-$(VERSION)/utils/
-	cp utils/{rsnaptar,*.sh,README} rsnapshot-$(VERSION)/utils/
+	cp utils/{rsnaptar,*.sh,*.pl,README} rsnapshot-$(VERSION)/utils/
 
 	@# change ownership to root, and delete build dir
 	chown -R root:root rsnapshot-$(VERSION)/
