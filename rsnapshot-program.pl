@@ -17,7 +17,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.314 2005/07/24 04:12:38 scubaninja Exp $
+# $Id: rsnapshot-program.pl,v 1.315 2005/07/24 04:27:38 scubaninja Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -4399,10 +4399,10 @@ sub show_rsnapshot_diff {
 	
 	# this will only hold two entries, no more no less
 	# paths_in holds the incoming arguments
-	# paths_out will be assigned the arguments that rsnapshot-diff will use
+	# args will be assigned the arguments that rsnapshot-diff will use
 	#
 	my @paths_in	= ();
-	my @paths_out	= ();
+	my @cmd_args	= ();
 	
 	# first, make sure we have permission to see the snapshot root
 	if ( ! -r "$config_vars{'snapshot_root'}" ) {
@@ -4429,22 +4429,22 @@ sub show_rsnapshot_diff {
 		# sync_first is enabled, and .sync exists
 		if ($config_vars{'sync_first'} && (-d "$config_vars{'snapshot_root'}/.sync/")) {
 			# interval.0
-			if ( -d ("$config_vars{'snapshot_root'}/" . $intervals[0]->{'interval'} . ".0/" ) ) {
-				$paths_out[0] = "$config_vars{'snapshot_root'}/" . $intervals[0]->{'interval'} . ".0/";
+			if ( -d ("$config_vars{'snapshot_root'}/" . $intervals[0]->{'interval'} . ".0" ) ) {
+				$cmd_args[0] = "$config_vars{'snapshot_root'}/" . $intervals[0]->{'interval'} . ".0";
 			}
 			
 			# .sync
-			$paths_out[1] = "$config_vars{'snapshot_root'}/.sync/";
+			$cmd_args[1] = "$config_vars{'snapshot_root'}/.sync";
 			
 		# sync_first is not enabled, or .sync doesn't exist
 		} else {
 			# interval.1
-			if ( -d ("$config_vars{'snapshot_root'}/" . $intervals[0]->{'interval'} . ".1/" ) ) {
-				$paths_out[0] = "$config_vars{'snapshot_root'}/" . $intervals[0]->{'interval'} . ".1/";
+			if ( -d ("$config_vars{'snapshot_root'}/" . $intervals[0]->{'interval'} . ".1" ) ) {
+				$cmd_args[0] = "$config_vars{'snapshot_root'}/" . $intervals[0]->{'interval'} . ".1";
 			}
 			# interval.0
-			if ( -d ("$config_vars{'snapshot_root'}/" . $intervals[0]->{'interval'} . ".0/" ) ) {
-				$paths_out[1] = "$config_vars{'snapshot_root'}/" . $intervals[0]->{'interval'} . ".0/";
+			if ( -d ("$config_vars{'snapshot_root'}/" . $intervals[0]->{'interval'} . ".0" ) ) {
+				$cmd_args[1] = "$config_vars{'snapshot_root'}/" . $intervals[0]->{'interval'} . ".0";
 			}
 		}
 			
@@ -4456,35 +4456,50 @@ sub show_rsnapshot_diff {
 		for (my $i=0; $i<2; $i++) {
 			# no interval would start with ../
 			if (is_directory_traversal( "$paths_in[$i]" )) {
-				$paths_out[$i] = $paths_in[$i];
+				$cmd_args[$i] = $paths_in[$i];
 				
 			# if this directory exists locally, it must be local
 			} elsif ( -e "$paths_in[$i]" ) {
-				$paths_out[$i] = $paths_in[$i];
+				$cmd_args[$i] = $paths_in[$i];
 				
 			# absolute path
 			} elsif (is_valid_local_abs_path( "$paths_in[$i]" )) {
-				$paths_out[$i] = $paths_in[$i];
+				$cmd_args[$i] = $paths_in[$i];
 				
 			# we didn't find it locally, but it's in the snapshot root
 			} elsif ( -e "$config_vars{'snapshot_root'}/$paths_in[$i]" ) {
-				$paths_out[$i] = "$config_vars{'snapshot_root'}/$paths_in[$i]";
+				$cmd_args[$i] = "$config_vars{'snapshot_root'}/$paths_in[$i]";
 			}
 		}
 	}
 	
 	# double check to make sure the directories exists (and are directories)
-	if ( (!defined($paths_out[0]) or (!defined($paths_out[1]))) or ((! -d "$paths_out[0]") or (! -d "$paths_out[1]")) ) {
+	if ( (!defined($cmd_args[0]) or (!defined($cmd_args[1]))) or ((! -d "$cmd_args[0]") or (! -d "$cmd_args[1]")) ) {
 		print STDERR "ERROR: Arguments must be valid intervals or directories\n";
 		exit(1);
 	}
 	
+	# remove trailing slashes from directories
+	$cmd_args[0] = remove_trailing_slash($cmd_args[0]);
+	$cmd_args[1] = remove_trailing_slash($cmd_args[1]);
+	
+	# increase verbosity (by possibly sticking a verbose flag in as the first argument)
+	#
+	# extra verbose
+	if ($verbose >= 4) {
+		unshift(@cmd_args, '-vv');
+		
+	# verbose
+	} elsif ($verbose >= 3) {
+		unshift(@cmd_args, '-v');
+	}
+	
 	# run rsnapshot-diff
 	if (defined($verbose) && ($verbose >= 3)) {
-		print wrap_cmd(("$cmd_rsnapshot_diff " . join(' ', @paths_out))), "\n\n";
+		print wrap_cmd(("$cmd_rsnapshot_diff " . join(' ', @cmd_args))), "\n\n";
 	}
 	if (0 == $test) {
-		$retval = system($cmd_rsnapshot_diff, @paths_out);
+		$retval = system($cmd_rsnapshot_diff, @cmd_args);
 		if (0 == $retval) {
 			exit(0);
 		} else {
