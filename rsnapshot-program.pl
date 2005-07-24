@@ -17,7 +17,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.317 2005/07/24 19:59:31 scubaninja Exp $
+# $Id: rsnapshot-program.pl,v 1.318 2005/07/24 20:38:58 scubaninja Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -6448,6 +6448,14 @@ David Keegel (B<djk@cybersource.com.au>)
 =over 4
 
 Fixed race condition in lock file creation, improved error reporting
+
+=back
+
+Sherman Boyd
+
+=over 4
+
+Wrote utils/random_file_verify.sh script
 
 =back
 
