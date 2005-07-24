@@ -17,7 +17,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.313 2005/07/23 06:17:42 scubaninja Exp $
+# $Id: rsnapshot-program.pl,v 1.314 2005/07/24 04:12:38 scubaninja Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -1662,7 +1662,7 @@ sub print_cmd {
 	log_msg($str, 3);
 	
 	if (!defined($verbose) or ($verbose >= 3)) {
-		print wrap_cmd($str, 76, 4), "\n";
+		print wrap_cmd($str), "\n";
 	}
 }
 
@@ -1800,7 +1800,7 @@ sub print_err {
 		if ((!defined($verbose)) or ($level <= $verbose)) {
 			print STDERR "----------------------------------------------------------------------------\n";
 			print STDERR "rsnapshot encountered an error! The program was invoked with these options:\n";
-			print STDERR wrap_cmd($run_string, 76, 4), "\n";
+			print STDERR wrap_cmd($run_string), "\n";
 			print STDERR "----------------------------------------------------------------------------\n";
 		}
 		
@@ -4361,7 +4361,7 @@ sub show_disk_usage {
 	# most likely we can either see all of them or none at all
 	if ('' ne $intervals_str) {
 		if (defined($verbose) && ($verbose >= 3)) {
-			print wrap_cmd("$cmd_du $du_args $intervals_str", 76, 4), "\n\n";
+			print wrap_cmd("$cmd_du $du_args $intervals_str"), "\n\n";
 		}
 		
 		if (0 == $test) {
@@ -4481,7 +4481,7 @@ sub show_rsnapshot_diff {
 	
 	# run rsnapshot-diff
 	if (defined($verbose) && ($verbose >= 3)) {
-		print wrap_cmd(("$cmd_rsnapshot_diff " . join(' ', @paths_out)), 76, 4), "\n\n";
+		print wrap_cmd(("$cmd_rsnapshot_diff " . join(' ', @paths_out))), "\n\n";
 	}
 	if (0 == $test) {
 		$retval = system($cmd_rsnapshot_diff, @paths_out);

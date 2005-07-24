@@ -50,6 +50,7 @@ VERSION 1.2.2 (??? ?? ??:?? 2005)
 - Added show_latest_snapshot() subroutine for shell scripts
 - Fixed sync_if_different() to allow alternating directories and files to be
   created with the same names between runs
+- Removed redundant line width and indent values in wrap_cmd() calls
 
 VERSION 1.2.1 (Apr 09 15:10 2005)
 ------------------------------------------------------------------------------
