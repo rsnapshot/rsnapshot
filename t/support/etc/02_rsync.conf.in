@@ -1,0 +1,6 @@
+config_version	1.2
+snapshot_root	@CWD@/t/support/snapshots/
+cmd_rsync		@RSYNC@
+cmd_cp			@CP@
+interval		hourly	2
+backup			@CWD@/t/support/files/a/	localhost/

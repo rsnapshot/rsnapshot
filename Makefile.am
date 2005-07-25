@@ -1,4 +1,4 @@
-# $Id: Makefile.am,v 1.64 2005/07/25 06:00:42 scubaninja Exp $ #
+# $Id: Makefile.am,v 1.65 2005/07/25 06:49:40 scubaninja Exp $ #
 
 VERSION = 1.2.2
 
@@ -31,6 +31,8 @@ clean:
 	rm -f Makefile config.log config.status configure.lineno rsnapshot rsnapshot-diff
 	rm -f t/*.t
 	rm -f t/support/etc/*.conf
+	rm -f t/support/files/a/{1,2}
+	rm -rf t/support/snapshots/*.*
 	
 rpm-patch:
 	@# redhat config file patch

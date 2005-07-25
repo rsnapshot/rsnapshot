@@ -10,7 +10,7 @@
 # even the implied warranty of MERCHANTABILITY or FITNESS FOR A
 # PARTICULAR PURPOSE.
 
-# $Id: Makefile.in,v 1.79 2005/07/25 06:01:59 scubaninja Exp $ #
+# $Id: Makefile.in,v 1.80 2005/07/25 06:49:40 scubaninja Exp $ #
 
 
 SHELL = @SHELL@
@@ -365,6 +365,8 @@ clean:
 	rm -f Makefile config.log config.status configure.lineno rsnapshot rsnapshot-diff
 	rm -f t/*.t
 	rm -f t/support/etc/*.conf
+	rm -f t/support/files/a/{1,2}
+	rm -rf t/support/snapshots/*.*
 
 rpm-patch:
 	@# redhat config file patch

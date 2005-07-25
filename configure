@@ -2173,8 +2173,12 @@ CMD_DU="cmd_du		$DU"
 
           ac_config_files="$ac_config_files t/support/etc/01_configtest.conf:t/support/etc/01_configtest.conf.in"
 
+          ac_config_files="$ac_config_files t/support/etc/02_rsync.conf:t/support/etc/02_rsync.conf.in"
+
 
           ac_config_files="$ac_config_files t/01_configtest.t:t/01_configtest.t.in"
+
+          ac_config_files="$ac_config_files t/02_rsync.t:t/02_rsync.t.in"
 
 
 
@@ -2734,7 +2738,9 @@ do
   "rsnapshot-diff" ) CONFIG_FILES="$CONFIG_FILES rsnapshot-diff:rsnapshot-preamble.pl:rsnapshot-diff.pl" ;;
   "rsnapshot.conf.default" ) CONFIG_FILES="$CONFIG_FILES rsnapshot.conf.default:rsnapshot.conf.default.in" ;;
   "t/support/etc/01_configtest.conf" ) CONFIG_FILES="$CONFIG_FILES t/support/etc/01_configtest.conf:t/support/etc/01_configtest.conf.in" ;;
+  "t/support/etc/02_rsync.conf" ) CONFIG_FILES="$CONFIG_FILES t/support/etc/02_rsync.conf:t/support/etc/02_rsync.conf.in" ;;
   "t/01_configtest.t" ) CONFIG_FILES="$CONFIG_FILES t/01_configtest.t:t/01_configtest.t.in" ;;
+  "t/02_rsync.t" ) CONFIG_FILES="$CONFIG_FILES t/02_rsync.t:t/02_rsync.t.in" ;;
   *) { { echo "$as_me:$LINENO: error: invalid argument: $ac_config_target" >&5
 echo "$as_me: error: invalid argument: $ac_config_target" >&2;}
    { (exit 1); exit 1; }; };;
