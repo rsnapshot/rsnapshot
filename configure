@@ -2175,10 +2175,14 @@ CMD_DU="cmd_du		$DU"
 
           ac_config_files="$ac_config_files t/support/etc/02_rsync.conf:t/support/etc/02_rsync.conf.in"
 
+          ac_config_files="$ac_config_files t/support/etc/03_gnu_cp.conf:t/support/etc/03_gnu_cp.conf.in"
+
 
           ac_config_files="$ac_config_files t/01_configtest.t:t/01_configtest.t.in"
 
           ac_config_files="$ac_config_files t/02_rsync.t:t/02_rsync.t.in"
+
+          ac_config_files="$ac_config_files t/03_gnu_cp.t:t/03_gnu_cp.t.in"
 
 
 
@@ -2739,8 +2743,10 @@ do
   "rsnapshot.conf.default" ) CONFIG_FILES="$CONFIG_FILES rsnapshot.conf.default:rsnapshot.conf.default.in" ;;
   "t/support/etc/01_configtest.conf" ) CONFIG_FILES="$CONFIG_FILES t/support/etc/01_configtest.conf:t/support/etc/01_configtest.conf.in" ;;
   "t/support/etc/02_rsync.conf" ) CONFIG_FILES="$CONFIG_FILES t/support/etc/02_rsync.conf:t/support/etc/02_rsync.conf.in" ;;
+  "t/support/etc/03_gnu_cp.conf" ) CONFIG_FILES="$CONFIG_FILES t/support/etc/03_gnu_cp.conf:t/support/etc/03_gnu_cp.conf.in" ;;
   "t/01_configtest.t" ) CONFIG_FILES="$CONFIG_FILES t/01_configtest.t:t/01_configtest.t.in" ;;
   "t/02_rsync.t" ) CONFIG_FILES="$CONFIG_FILES t/02_rsync.t:t/02_rsync.t.in" ;;
+  "t/03_gnu_cp.t" ) CONFIG_FILES="$CONFIG_FILES t/03_gnu_cp.t:t/03_gnu_cp.t.in" ;;
   *) { { echo "$as_me:$LINENO: error: invalid argument: $ac_config_target" >&5
 echo "$as_me: error: invalid argument: $ac_config_target" >&2;}
    { (exit 1); exit 1; }; };;
