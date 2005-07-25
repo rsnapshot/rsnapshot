@@ -10,7 +10,7 @@
 # even the implied warranty of MERCHANTABILITY or FITNESS FOR A
 # PARTICULAR PURPOSE.
 
-# $Id: Makefile.in,v 1.76 2005/07/24 21:02:26 scubaninja Exp $ #
+# $Id: Makefile.in,v 1.77 2005/07/25 04:27:51 scubaninja Exp $ #
 
 
 SHELL = @SHELL@
@@ -404,6 +404,9 @@ tar: man rpm-patch
 	chown -R root:root rsnapshot-$(VERSION)/
 	tar czf rsnapshot-$(VERSION).tar.gz rsnapshot-$(VERSION)/
 	rm -rf rsnapshot-$(VERSION)/
+
+test:
+	perl -MTest::Harness -e 'runtests(glob "t/*.t")';
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

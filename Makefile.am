@@ -1,4 +1,4 @@
-# $Id: Makefile.am,v 1.62 2005/07/24 21:02:26 scubaninja Exp $ #
+# $Id: Makefile.am,v 1.63 2005/07/25 04:27:51 scubaninja Exp $ #
 
 VERSION = 1.2.2
 
@@ -76,6 +76,9 @@ tar: man rpm-patch
 	chown -R root:root rsnapshot-$(VERSION)/
 	tar czf rsnapshot-$(VERSION).tar.gz rsnapshot-$(VERSION)/
 	rm -rf rsnapshot-$(VERSION)/
+
+test:
+	perl -MTest::Harness -e 'runtests(glob "t/*.t")';
 
 bin_SCRIPTS = rsnapshot rsnapshot-diff
 man_MANS = rsnapshot.1
