@@ -273,7 +273,7 @@ PACKAGE_VERSION='1.2.2'
 PACKAGE_STRING='rsnapshot 1.2.2'
 PACKAGE_BUGREPORT='nathan@rsnapshot.org'
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA PACKAGE VERSION ACLOCAL AUTOCONF AUTOMAKE AUTOHEADER MAKEINFO SET_MAKE PERL CMD_RSYNC RSYNC CP CMD_CP RM CMD_RM SSH CMD_SSH LOGGER CMD_LOGGER DU CMD_DU LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA PACKAGE VERSION ACLOCAL AUTOCONF AUTOMAKE AUTOHEADER MAKEINFO SET_MAKE CWD PERL CMD_RSYNC RSYNC TEST_CP CP CMD_CP RM TEST_RM CMD_RM SSH TEST_SSH CMD_SSH LOGGER TEST_LOGGER CMD_LOGGER DU TEST_DU CMD_DU LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -1646,6 +1646,10 @@ test -z "$INSTALL_DATA" && INSTALL_DATA='${INSTALL} -m 644'
           ac_config_files="$ac_config_files Makefile"
 
 
+CWD=`eval echo \`pwd\``
+CWD="$CWD"
+
+
 
 # Check whether --with-perl or --without-perl was given.
 if test "${with_perl+set}" = set; then
@@ -1717,7 +1721,6 @@ fi
 
 
 
-
 # Check whether --with-rsync or --without-rsync was given.
 if test "${with_rsync+set}" = set; then
   withval="$with_rsync"
@@ -1781,6 +1784,8 @@ else
 echo "${ECHO_T}no" >&6
 fi
 
+	RSYNC="$RSYNC"
+
 	CMD_RSYNC="cmd_rsync	$RSYNC"
 
 fi
@@ -1811,6 +1816,8 @@ echo "$as_me: error: cp not found" >&2;}
 
 
 fi;
+TEST_CP="$CP"
+
 if test "$CP" != "no"; then
 	if test "$CP" = ""; then
 		# Extract the first word of "cp", so it can be a program name with args.
@@ -1926,6 +1933,8 @@ fi
 
 	fi
 fi
+TEST_RM="$RM"
+
 if test "$RM" = "no"; then
 	RM=/bin/rm
 fi
@@ -1997,6 +2006,8 @@ fi
 
 	fi
 fi
+TEST_SSH="$SSH"
+
 if test "$SSH" = "no"; then
 	SSH=/path/to/ssh
 fi
@@ -2068,6 +2079,8 @@ fi
 
 	fi
 fi
+TEST_LOGGER="$LOGGER"
+
 if test "$LOGGER" = "no"; then
 	LOGGER=/path/to/logger
 fi
@@ -2139,6 +2152,8 @@ fi
 
 	fi
 fi
+TEST_DU="$DU"
+
 if test "$DU" = "no"; then
 	DU=/path/to/du
 fi
@@ -2154,6 +2169,13 @@ CMD_DU="cmd_du		$DU"
 
 
           ac_config_files="$ac_config_files rsnapshot.conf.default:rsnapshot.conf.default.in"
+
+
+          ac_config_files="$ac_config_files t/support/etc/01_configtest.conf:t/support/etc/01_configtest.conf.in"
+
+
+          ac_config_files="$ac_config_files t/01_configtest.t:t/01_configtest.t.in"
+
 
 
 cat >confcache <<\_ACEOF
@@ -2711,6 +2733,8 @@ do
   "rsnapshot" ) CONFIG_FILES="$CONFIG_FILES rsnapshot:rsnapshot-preamble.pl:rsnapshot-program.pl" ;;
   "rsnapshot-diff" ) CONFIG_FILES="$CONFIG_FILES rsnapshot-diff:rsnapshot-preamble.pl:rsnapshot-diff.pl" ;;
   "rsnapshot.conf.default" ) CONFIG_FILES="$CONFIG_FILES rsnapshot.conf.default:rsnapshot.conf.default.in" ;;
+  "t/support/etc/01_configtest.conf" ) CONFIG_FILES="$CONFIG_FILES t/support/etc/01_configtest.conf:t/support/etc/01_configtest.conf.in" ;;
+  "t/01_configtest.t" ) CONFIG_FILES="$CONFIG_FILES t/01_configtest.t:t/01_configtest.t.in" ;;
   *) { { echo "$as_me:$LINENO: error: invalid argument: $ac_config_target" >&5
 echo "$as_me: error: invalid argument: $ac_config_target" >&2;}
    { (exit 1); exit 1; }; };;
@@ -2805,18 +2829,24 @@ s,@AUTOMAKE@,$AUTOMAKE,;t t
 s,@AUTOHEADER@,$AUTOHEADER,;t t
 s,@MAKEINFO@,$MAKEINFO,;t t
 s,@SET_MAKE@,$SET_MAKE,;t t
+s,@CWD@,$CWD,;t t
 s,@PERL@,$PERL,;t t
 s,@CMD_RSYNC@,$CMD_RSYNC,;t t
 s,@RSYNC@,$RSYNC,;t t
+s,@TEST_CP@,$TEST_CP,;t t
 s,@CP@,$CP,;t t
 s,@CMD_CP@,$CMD_CP,;t t
 s,@RM@,$RM,;t t
+s,@TEST_RM@,$TEST_RM,;t t
 s,@CMD_RM@,$CMD_RM,;t t
 s,@SSH@,$SSH,;t t
+s,@TEST_SSH@,$TEST_SSH,;t t
 s,@CMD_SSH@,$CMD_SSH,;t t
 s,@LOGGER@,$LOGGER,;t t
+s,@TEST_LOGGER@,$TEST_LOGGER,;t t
 s,@CMD_LOGGER@,$CMD_LOGGER,;t t
 s,@DU@,$DU,;t t
+s,@TEST_DU@,$TEST_DU,;t t
 s,@CMD_DU@,$CMD_DU,;t t
 s,@LIBOBJS@,$LIBOBJS,;t t
 s,@LTLIBOBJS@,$LTLIBOBJS,;t t

@@ -10,7 +10,7 @@
 # even the implied warranty of MERCHANTABILITY or FITNESS FOR A
 # PARTICULAR PURPOSE.
 
-# $Id: Makefile.in,v 1.77 2005/07/25 04:27:51 scubaninja Exp $ #
+# $Id: Makefile.in,v 1.78 2005/07/25 06:00:42 scubaninja Exp $ #
 
 
 SHELL = @SHELL@
@@ -69,6 +69,7 @@ CMD_RM = @CMD_RM@
 CMD_RSYNC = @CMD_RSYNC@
 CMD_SSH = @CMD_SSH@
 CP = @CP@
+CWD = @CWD@
 DU = @DU@
 HAVE_LIB = @HAVE_LIB@
 LIB = @LIB@
@@ -80,6 +81,11 @@ PERL = @PERL@
 RM = @RM@
 RSYNC = @RSYNC@
 SSH = @SSH@
+TEST_CP = @TEST_CP@
+TEST_DU = @TEST_DU@
+TEST_LOGGER = @TEST_LOGGER@
+TEST_RM = @TEST_RM@
+TEST_SSH = @TEST_SSH@
 
 VERSION = 1.2.2
 
@@ -357,6 +363,8 @@ clean:
 	rm -f pod2htmd.*
 	rm -f pod2htmi.*
 	rm -f Makefile config.log config.status configure.lineno rsnapshot rsnapshot-diff
+	rm -f t/*.t
+	rm -f t/support/etc/*.conf
 
 rpm-patch:
 	@# redhat config file patch
@@ -406,7 +414,7 @@ tar: man rpm-patch
 	rm -rf rsnapshot-$(VERSION)/
 
 test:
-	perl -MTest::Harness -e 'runtests(glob "t/*.t")';
+	@PERL@ -MTest::Harness -e 'runtests(glob "t/*.t")';
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

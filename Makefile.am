@@ -1,4 +1,4 @@
-# $Id: Makefile.am,v 1.63 2005/07/25 04:27:51 scubaninja Exp $ #
+# $Id: Makefile.am,v 1.64 2005/07/25 06:00:42 scubaninja Exp $ #
 
 VERSION = 1.2.2
 
@@ -29,6 +29,8 @@ clean:
 	rm -f pod2htmd.*
 	rm -f pod2htmi.*
 	rm -f Makefile config.log config.status configure.lineno rsnapshot rsnapshot-diff
+	rm -f t/*.t
+	rm -f t/support/etc/*.conf
 	
 rpm-patch:
 	@# redhat config file patch
@@ -78,7 +80,7 @@ tar: man rpm-patch
 	rm -rf rsnapshot-$(VERSION)/
 
 test:
-	perl -MTest::Harness -e 'runtests(glob "t/*.t")';
+	@PERL@ -MTest::Harness -e 'runtests(glob "t/*.t")';
 
 bin_SCRIPTS = rsnapshot rsnapshot-diff
 man_MANS = rsnapshot.1

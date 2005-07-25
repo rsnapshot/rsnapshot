@@ -1,10 +1,16 @@
-dnl $Id: configure.ac,v 1.37 2005/07/23 22:05:31 scubaninja Exp $
+dnl $Id: configure.ac,v 1.38 2005/07/25 06:00:43 scubaninja Exp $
 
 AC_INIT(rsnapshot, 1.2.2, nathan@rsnapshot.org)
 AM_INIT_AUTOMAKE
 AC_PROG_MAKE_SET
 AC_PROG_INSTALL
 AC_CONFIG_FILES(Makefile)
+
+dnl
+dnl get the current working directory for the regression test suite
+dnl
+CWD=`eval echo \`pwd\``
+AC_SUBST(CWD, "$CWD")
 
 dnl
 dnl PERL CHECK (required program)
@@ -34,7 +40,6 @@ if test "$PERL" = "no"; then
 fi
 
 
-
 dnl
 dnl RSYNC CHECK (required program)
 dnl
@@ -57,6 +62,7 @@ AC_ARG_WITH(rsync,
 dnl if the user didn't specify a path, hunt for it
 if test "$RSYNC" = ""; then
 	AC_PATH_PROG(RSYNC, rsync, no)
+	AC_SUBST(RSYNC, "$RSYNC")
 	AC_SUBST(CMD_RSYNC, "cmd_rsync	$RSYNC")
 fi
 dnl bail out if we can't find it
@@ -84,6 +90,8 @@ AC_ARG_WITH(cp,
 		fi
 	]
 )
+dnl save the program for testing
+AC_SUBST(TEST_CP, "$CP")
 dnl if the user didn't specify a path, hunt for it
 if test "$CP" != "no"; then
 	if test "$CP" = ""; then
@@ -94,7 +102,7 @@ dnl if we couldn't find it, provide an example
 if test "$CP" = "no"; then
 	CP=/bin/cp
 fi
-dnl either way, set the cmd_ssh var
+dnl either way, set the cmd_cp var
 AC_SUBST(CMD_CP, "cmd_cp		$CP")
 
 
@@ -123,11 +131,13 @@ if test "$RM" != "no"; then
 		AC_PATH_PROG(RM, rm, no)
 	fi
 fi
+dnl save the program for testing
+AC_SUBST(TEST_RM, "$RM")
 dnl if we couldn't find it, provide an example
 if test "$RM" = "no"; then
 	RM=/bin/rm
 fi
-dnl either way, set the cmd_ssh var
+dnl either way, set the cmd_rm var
 AC_SUBST(CMD_RM, "cmd_rm		$RM")
 
 
@@ -156,6 +166,8 @@ if test "$SSH" != "no"; then
 		AC_PATH_PROG(SSH, ssh, no)
 	fi
 fi
+dnl save the program for testing
+AC_SUBST(TEST_SSH, "$SSH")
 dnl if we couldn't find it, provide an example
 if test "$SSH" = "no"; then
 	SSH=/path/to/ssh
@@ -189,11 +201,13 @@ if test "$LOGGER" != "no"; then
 		AC_PATH_PROG(LOGGER, logger, no)
 	fi
 fi
+dnl save the program for testing
+AC_SUBST(TEST_LOGGER, "$LOGGER")
 dnl if we couldn't find it, provide an example
 if test "$LOGGER" = "no"; then
 	LOGGER=/path/to/logger
 fi
-dnl either way, set the cmd_ssh var
+dnl either way, set the cmd_logger var
 AC_SUBST(CMD_LOGGER, "cmd_logger	$LOGGER")
 
 
@@ -222,6 +236,8 @@ if test "$DU" != "no"; then
 		AC_PATH_PROG(DU, du, no)
 	fi
 fi
+dnl save the program for testing
+AC_SUBST(TEST_DU, "$DU")
 dnl if we couldn't find it, provide an example
 if test "$DU" = "no"; then
 	DU=/path/to/du
@@ -239,6 +255,13 @@ AC_CONFIG_FILES(rsnapshot-diff:rsnapshot-preamble.pl:rsnapshot-diff.pl)
 
 dnl try to find dependent programs for the config file
 AC_CONFIG_FILES(rsnapshot.conf.default:rsnapshot.conf.default.in)
+
+dnl config files for regression test scripts
+AC_CONFIG_FILES(t/support/etc/01_configtest.conf:t/support/etc/01_configtest.conf.in)
+
+dnl regression test scripts
+AC_CONFIG_FILES(t/01_configtest.t:t/01_configtest.t.in)
+
 
 AC_OUTPUT
 
