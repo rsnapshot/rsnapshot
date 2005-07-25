@@ -1,0 +1,13 @@
+#!/usr/bin/perl
+
+use strict;
+use Test::More tests => 1;
+
+# check for GNU cp
+my @lines = `@CP@ --help | grep '\\-\\-link\\-dest'`;
+
+SKIP: {
+	skip('GNU cp not found', 1) if (@lines == 0);
+	
+	ok(! `@PERL@ ../rsnapshot -c support/etc/03_gnu_cp.conf hourly`);
+}
