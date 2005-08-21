@@ -1,4 +1,4 @@
-dnl $Id: configure.ac,v 1.41 2005/08/21 03:20:29 scubaninja Exp $
+dnl $Id: configure.ac,v 1.42 2005/08/21 03:37:21 scubaninja Exp $
 
 AC_INIT(rsnapshot, 1.2.2, nathan@rsnapshot.org)
 AM_INIT_AUTOMAKE
@@ -260,11 +260,13 @@ dnl config files for regression test scripts
 AC_CONFIG_FILES(t/support/etc/configtest.conf:t/support/etc/configtest.conf.in)
 AC_CONFIG_FILES(t/support/etc/rsync.conf:t/support/etc/rsync.conf.in)
 AC_CONFIG_FILES(t/support/etc/gnu_cp.conf:t/support/etc/gnu_cp.conf.in)
+AC_CONFIG_FILES(t/support/etc/relative_delete_bugfix.conf:t/support/etc/relative_delete_bugfix.conf.in)
 
 dnl regression test scripts
 AC_CONFIG_FILES(t/configtest.t:t/configtest.t.in)
 AC_CONFIG_FILES(t/rsync.t:t/rsync.t.in)
 AC_CONFIG_FILES(t/gnu_cp.t:t/gnu_cp.t.in)
+AC_CONFIG_FILES(t/relative_delete_bugfix.t:t/relative_delete_bugfix.t.in)
 
 
 AC_OUTPUT
