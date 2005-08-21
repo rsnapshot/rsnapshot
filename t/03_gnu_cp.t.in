@@ -4,7 +4,7 @@ use strict;
 use Test::More tests => 1;
 
 # check for GNU cp
-my @lines = `@CP@ --help | grep '\\-\\-link\\-dest'`;
+my @lines = `@CP@ --help | grep -i 'gnu'`;
 
 SKIP: {
 	skip('GNU cp not found', 1) if (@lines == 0);
