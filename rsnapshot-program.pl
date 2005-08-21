@@ -17,7 +17,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.321 2005/07/24 22:38:53 scubaninja Exp $
+# $Id: rsnapshot-program.pl,v 1.322 2005/08/21 01:12:10 scubaninja Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -2512,6 +2512,19 @@ sub remove_trailing_slash {
 	return ($str);
 }
 
+# accepts string
+# returns /. if passed /, returns input otherwise
+# this is to work around a bug in some versions of rsync
+sub add_slashdot_if_root {
+	my $str = shift(@_);
+	
+	if ($str eq '/') {
+		return '/.';
+	}
+	
+	return ($str);
+}
+
 # accepts the interval (cmd) to run against
 # returns nothing
 # calls the appropriate subroutine, depending on whether this is the lowest interval or a higher one
@@ -3005,6 +3018,15 @@ sub rsync_backup_point {
 	my $src						= undef;
 	my $result					= undef;
 	
+	# make sure that the source path doesn't have a trailing slash under any circumstances
+	# this is to work around a bug in most versions of rsync that don't properly delete entries
+	# when the --relative flag is set.
+	#
+	if (defined($$bp_ref{'src'})) {
+		$src = remove_trailing_slash( "$$bp_ref{'src'}" );
+		$src = add_slashdot_if_root( "$src" );
+	}
+	
 	# if we're using link-dest later, that target depends on whether we're doing a 'sync' or a regular interval
 	# if we're doing a "sync", then look at [lowest-interval].0 instead of [cur-interval].1
 	my $interval_link_dest;
@@ -3081,13 +3103,6 @@ sub rsync_backup_point {
 	
 	# split up rsync long args into an array
 	@rsync_long_args_stack = ( split(/\s+/, $rsync_long_args) );
-	
-	# append a trailing slash if src is a directory
-	if (defined($$bp_ref{'src'})) {
-		if ((-d "$$bp_ref{'src'}") && ($$bp_ref{'src'} !~ /\/$/)) {
-			$$bp_ref{'src'} .= '/';
-		}
-	}
 	
 	# create $interval.0/$$bp_ref{'dest'} or .sync/$$bp_ref{'dest'} directory if it doesn't exist
 	# (this may create the .sync dir, which is why we had to check for it above)
@@ -3252,7 +3267,7 @@ sub rsync_backup_point {
 	}
 	#
 	# src
-	push(@cmd_stack, $$bp_ref{'src'});
+	push(@cmd_stack, "$src");
 	#
 	# dest
 	if ($interval eq 'sync') {
@@ -4198,6 +4213,10 @@ sub rsync_cleanup_after_native_cp_al {
 	push(@cmd_stack, '--numeric-ids');
 	#
 	# src
+	#   (remove trailing slash and/or add dot to work around a bug in many version of rsync with the interaction between --delete and --relative)
+	#
+	$src = remove_trailing_slash( "$src" );
+	$src = add_slashdot_if_root( "$src" );
 	push(@cmd_stack, "$src");
 	#
 	# dest

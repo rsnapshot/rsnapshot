@@ -3,7 +3,7 @@ rsnapshot changelog
 http://www.rsnapshot.org/
 ------------------------------------------------------------------------------
 
-VERSION 1.2.2 (??? ?? ??:?? 2005)
+VERSION 1.2.3 (??? ?? ??:?? 2005)
 ------------------------------------------------------------------------------
 - David Cantrell <david@cantrell.org.uk> wrote the rsnapshot-diff utility
 - Chris Petersen added cwrsync permanent-share support
@@ -31,10 +31,6 @@ VERSION 1.2.2 (??? ?? ??:?? 2005)
 - Changed skip message level to 2 in rsync_backup_point() 
 - Added better file type checking in sync_cp_src_dest()
 - Removed redundant stat() calls in sync_cp_src_dest() and sync_rm_dest()
-- David Keegel <djk@cybersource.com.au> fixed a race condition in
-  add_lockfile()
-- David Keegel <djk@cybersource.com.au> improved error reporting when config
-  file isn't present
 - Removed trailing slashes from file paths when calling cp -al subroutines
 - Changed show_usage() to use here printing
 - Changed strip trailing slash operation in rsync_backup_point() to use
@@ -53,6 +49,15 @@ VERSION 1.2.2 (??? ?? ??:?? 2005)
 - Removed redundant line width and indent values in wrap_cmd() calls
 - Anthony Ettinger <apwebdesign@yahoo.com> wrote utils/mysqlbackup.pl
 - Sherman Boyd wrote utils/random_file_verify.sh
+
+VERSION 1.2.2 (Aug 20 18:07 2005)
+------------------------------------------------------------------------------
+- David Keegel <djk@cybersource.com.au> fixed a race condition in
+  add_lockfile()
+- David Keegel <djk@cybersource.com.au> improved error reporting when config
+  file isn't present
+- Provided a workaround for a bug in some versions of rsync which caused
+  files to not be deleted properly when the --relative flag was set.
 
 VERSION 1.2.1 (Apr 09 15:10 2005)
 ------------------------------------------------------------------------------
