@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 
 use strict;
-use Test::More tests => 1;
+use Test::More tests => 2;
 
 # copy files into place
 `cp t/support/files/template/a/1 t/support/files/template/a/2 t/support/files/a/`;
@@ -17,7 +17,12 @@ use Test::More tests => 1;
 
 my $pwd = `pwd`;
 chomp($pwd);
-my $path_to_check = $pwd . '/t/support/snapshots/hourly.0/localhost/' . $pwd . '/t/support/files/a/1';
-ok( ! -e "$path_to_check" );
+my $path_to_check = $pwd . '/t/support/snapshots/hourly.0/localhost/' . $pwd . '/t/support/files/a/';
+
+# make sure the file was --deleted
+ok( ! -e "$path_to_check/1" );
+
+# make sure the other one is still there
+ok(   -e "$path_to_check/2" );
 
 `rm -f t/support/files/a/1 t/support/files/a/2`;
