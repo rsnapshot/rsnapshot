@@ -1,4 +1,4 @@
-dnl $Id: configure.ac,v 1.42 2005/08/21 03:37:21 scubaninja Exp $
+dnl $Id: configure.ac,v 1.43 2005/08/21 03:46:20 scubaninja Exp $
 
 AC_INIT(rsnapshot, 1.2.2, nathan@rsnapshot.org)
 AM_INIT_AUTOMAKE
@@ -316,7 +316,8 @@ if test -e "$RSNAPSHOT_SYSCONFDIR/rsnapshot.conf"; then
 fi
 
 echo ""
-echo "Now type \"make install\" to install the program."
+echo "Now type  \"make test\"    to run the regression test suite."
+echo "Then type \"make install\" to install the program."
 echo ""
 
 if test ! -e "$RSNAPSHOT_SYSCONFDIR/rsnapshot.conf"; then

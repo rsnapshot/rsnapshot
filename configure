@@ -3183,7 +3183,8 @@ if test -e "$RSNAPSHOT_SYSCONFDIR/rsnapshot.conf"; then
 fi
 
 echo ""
-echo "Now type \"make install\" to install the program."
+echo "Now type  \"make test\"    to run the regression test suite."
+echo "Then type \"make install\" to install the program."
 echo ""
 
 if test ! -e "$RSNAPSHOT_SYSCONFDIR/rsnapshot.conf"; then
