@@ -1,4 +1,4 @@
-dnl $Id: configure.ac,v 1.40 2005/07/25 07:07:20 scubaninja Exp $
+dnl $Id: configure.ac,v 1.41 2005/08/21 03:20:29 scubaninja Exp $
 
 AC_INIT(rsnapshot, 1.2.2, nathan@rsnapshot.org)
 AM_INIT_AUTOMAKE
@@ -257,14 +257,14 @@ dnl try to find dependent programs for the config file
 AC_CONFIG_FILES(rsnapshot.conf.default:rsnapshot.conf.default.in)
 
 dnl config files for regression test scripts
-AC_CONFIG_FILES(t/support/etc/01_configtest.conf:t/support/etc/01_configtest.conf.in)
-AC_CONFIG_FILES(t/support/etc/02_rsync.conf:t/support/etc/02_rsync.conf.in)
-AC_CONFIG_FILES(t/support/etc/03_gnu_cp.conf:t/support/etc/03_gnu_cp.conf.in)
+AC_CONFIG_FILES(t/support/etc/configtest.conf:t/support/etc/configtest.conf.in)
+AC_CONFIG_FILES(t/support/etc/rsync.conf:t/support/etc/rsync.conf.in)
+AC_CONFIG_FILES(t/support/etc/gnu_cp.conf:t/support/etc/gnu_cp.conf.in)
 
 dnl regression test scripts
-AC_CONFIG_FILES(t/01_configtest.t:t/01_configtest.t.in)
-AC_CONFIG_FILES(t/02_rsync.t:t/02_rsync.t.in)
-AC_CONFIG_FILES(t/03_gnu_cp.t:t/03_gnu_cp.t.in)
+AC_CONFIG_FILES(t/configtest.t:t/configtest.t.in)
+AC_CONFIG_FILES(t/rsync.t:t/rsync.t.in)
+AC_CONFIG_FILES(t/gnu_cp.t:t/gnu_cp.t.in)
 
 
 AC_OUTPUT

@@ -5,6 +5,6 @@ use Test::More tests => 1;
 
 `cp t/support/files/template/a/1 t/support/files/template/a/2 t/support/files/a/`;
 
-ok(! `@PERL@ rsnapshot -c t/support/etc/02_rsync.conf hourly`);
+ok(! `@PERL@ rsnapshot -c t/support/etc/rsync.conf hourly`);
 
 `rm -f t/support/files/a/1 t/support/files/a/2`;

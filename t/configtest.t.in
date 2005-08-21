@@ -4,4 +4,4 @@ use strict;
 use Test::More tests => 1;
 
 # check for basic configtest
-ok(! `@PERL@ ../rsnapshot -c support/etc/01_configtest.conf configtest > /dev/null`);
+ok(! `@PERL@ ../rsnapshot -c support/etc/configtest.conf configtest > /dev/null`);
