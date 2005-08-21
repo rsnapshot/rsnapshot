@@ -1,11 +1,11 @@
-# $Id: rsnapshot.spec,v 1.41 2005/04/10 22:33:16 scubaninja Exp $
+# $Id: rsnapshot.spec,v 1.42 2005/08/21 06:48:31 scubaninja Exp $
 
 Name: rsnapshot
 Summary: Local and remote filesystem snapshot utility
 Version: 1.2.2
 Release: 1
 BuildArch: noarch
-Copyright: GPL
+License: GPL
 Group: Applications/System
 Source: http://www.rsnapshot.org/downloads/rsnapshot-1.2.2.tar.gz
 Patch: rsnapshot.patch
