@@ -3,7 +3,7 @@ rsnapshot changelog
 http://www.rsnapshot.org/
 ------------------------------------------------------------------------------
 
-VERSION 1.2.3 (??? ?? ??:?? 2005)
+VERSION 1.2.4 (??? ?? ??:?? 2005)
 ------------------------------------------------------------------------------
 - David Cantrell <david@cantrell.org.uk> wrote the rsnapshot-diff utility
 - Chris Petersen added cwrsync permanent-share support
@@ -49,6 +49,12 @@ VERSION 1.2.3 (??? ?? ??:?? 2005)
 - Removed redundant line width and indent values in wrap_cmd() calls
 - Anthony Ettinger <apwebdesign@yahoo.com> wrote utils/mysqlbackup.pl
 - Sherman Boyd wrote utils/random_file_verify.sh
+
+VERSION 1.2.3 (Aug ?? ??:?? 2005)
+------------------------------------------------------------------------------
+- Fixed a bug introduced in 1.2.2 when rsync is not using --relative
+- Fixed a bug where the snapshot_root could be included in backups if
+  the root filesystem was being backed up and --relative was not set
 
 VERSION 1.2.2 (Aug 20 18:07 2005)
 ------------------------------------------------------------------------------

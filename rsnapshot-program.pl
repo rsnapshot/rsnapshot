@@ -17,7 +17,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.322 2005/08/21 01:12:10 scubaninja Exp $
+# $Id: rsnapshot-program.pl,v 1.323 2005/08/23 04:44:43 scubaninja Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -875,16 +875,18 @@ sub parse_config_file {
 					while (my $node = readdir(SRC)) {
 						next if ($node =~ m/^\.\.?$/o); # skip '.' and '..'
 						
+						# avoid double slashes from root filesystem
+						if ($src eq '/') {
+							$src = '';
+						}
+						
+						# if this directory is in the snapshot_root, skip it
+						# otherwise, back it up
+						#
 						if ("$config_vars{'snapshot_root'}" !~ m/^$src\/$node/) {
 							my %hash;
 							
-							# avoid double slashes from root filesystem
-							if ($src eq '/')    {
-								$hash{'src'}    = "/$node";
-							} else  {
-								$hash{'src'}    = "$src/$node";
-							}
-							
+							$hash{'src'}    = "$src/$node";
 							$hash{'dest'}   = "$dest/$node";
 							
 							if (defined($opts_ref)) {
@@ -3017,11 +3019,8 @@ sub rsync_backup_point {
 	my @rsync_long_args_stack	= undef;
 	my $src						= undef;
 	my $result					= undef;
+	my $using_relative			= 0;
 	
-	# make sure that the source path doesn't have a trailing slash under any circumstances
-	# this is to work around a bug in most versions of rsync that don't properly delete entries
-	# when the --relative flag is set.
-	#
 	if (defined($$bp_ref{'src'})) {
 		$src = remove_trailing_slash( "$$bp_ref{'src'}" );
 		$src = add_slashdot_if_root( "$src" );
@@ -3216,6 +3215,8 @@ sub rsync_backup_point {
 	if (
 		(1 == $link_dest) &&
 		(is_file($$bp_ref{'src'})) &&
+		defined($interval_link_dest) &&
+		defined($interval_num_link_dest) &&
 		(-f "$config_vars{'snapshot_root'}/$interval_link_dest.$interval_num_link_dest/$$bp_ref{'dest'}")
 	) {
 		
@@ -3239,6 +3240,38 @@ sub rsync_backup_point {
 			if (!defined($result) or (0 == $result)) {
 				print_err ("link(\"$srcpath\", \"$destpath\") failed", 2);
 				syslog_err("link(\"$srcpath\", \"$destpath\") failed");
+			}
+		}
+	}
+	
+	# figure out if we're using the --relative flag to rsync.
+	# this influences how the source paths are constructed below.
+	foreach my $rsync_long_arg (@rsync_long_args_stack) {
+		if (defined($rsync_long_arg)) {
+			if ('--relative' eq $rsync_long_arg) {
+				$using_relative = 1;
+			}
+		}
+	}
+	
+	if (defined($$bp_ref{'src'})) {
+		# make sure that the source path doesn't have a trailing slash if we're using the --relative flag
+		# this is to work around a bug in most versions of rsync that don't properly delete entries
+		# when the --relative flag is set.
+		#
+		if (1 == $using_relative) {
+			$src = remove_trailing_slash( "$$bp_ref{'src'}" );
+			$src = add_slashdot_if_root( "$src" );
+			
+		# no matter what, we need a source path
+		} else {
+			# put a trailing slash on it if we know it's a directory and it doesn't have one
+			if ((-d "$$bp_ref{'src'}") && ($$bp_ref{'src'} !~ /\/$/)) {
+				$src = $$bp_ref{'src'} . '/';
+				
+			# just use it as-is
+			} else {
+				$src = $$bp_ref{'src'};
 			}
 		}
 	}
@@ -4213,10 +4246,6 @@ sub rsync_cleanup_after_native_cp_al {
 	push(@cmd_stack, '--numeric-ids');
 	#
 	# src
-	#   (remove trailing slash and/or add dot to work around a bug in many version of rsync with the interaction between --delete and --relative)
-	#
-	$src = remove_trailing_slash( "$src" );
-	$src = add_slashdot_if_root( "$src" );
 	push(@cmd_stack, "$src");
 	#
 	# dest
