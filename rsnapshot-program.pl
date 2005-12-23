@@ -17,7 +17,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.323 2005/08/23 04:44:43 scubaninja Exp $
+# $Id: rsnapshot-program.pl,v 1.324 2005/12/23 22:33:55 drhyde Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -445,7 +445,8 @@ sub parse_cmd_line_opts {
 	if (defined($opts{'x'}))	{ $one_fs = 1; }
 }
 
-# accepts no arguments
+# accepts an optional argument - no arg means to parse the default file,
+#   if an arg is present parse that file instead
 # returns no value
 # this subroutine parses the config file (rsnapshot.conf)
 #
@@ -458,6 +459,7 @@ sub parse_config_file {
 	my $rsync_include_file_args	= undef;
 	
 	# open the config file
+	my $config_file = shift() || $config_file;
 	open(CONFIG, $config_file)
 		or bail("Could not open config file \"$config_file\"\nAre you sure you have permission?");
 	
@@ -487,6 +489,17 @@ sub parse_config_file {
 			next;
 		}
 		
+		# INCLUDEs
+		if($var eq 'include_conf') {
+			if(defined($value) && -f $value && -r $value) {
+				$line_syntax_ok = 1;
+				parse_config_file($value);
+			} else {
+				config_err($file_line_num, "$line - can't find file '$value'");
+				next;
+			}
+		}
+
 		# CONFIG_VERSION
 		if ($var eq 'config_version') {
 			if (defined($value)) {
@@ -1214,7 +1227,7 @@ sub parse_config_file {
 			}
 		}
 	}
-	close(CONFIG) or print_warn("Could not close $config_file", 2);
+	# close(CONFIG) or print_warn("Could not close $config_file", 2);
 	
 	####################################################################
 	# SET SOME SENSIBLE DEFAULTS FOR VALUES THAT MAY NOT HAVE BEEN SET #
@@ -5645,6 +5658,15 @@ B<config_version>     Config file version (required). Default is 1.2
 
 B<snapshot_root>      Local filesystem path to save all snapshots
 
+B<include_conf>       Include another file in the configuration at this point.
+ 
+=over 4
+
+This is recursive, but you may need to be careful about paths when specifying
+which file to include.  We check to see if the file you have specified is
+readable, and will yell an error if it isn't.  We recommend using a full
+path.
+
 B<no_create_root>     If set to 1, rsnapshot won't create snapshot_root directory
 
 B<cmd_rsync>          Full path to rsync (required)
@@ -6389,7 +6411,16 @@ Nathan Rosenquist (B<nathan@rsnapshot.org>)
 
 =over 4
 
-- Primary author and maintainer of rsnapshot.
+- Primary author and previous maintainer of rsnapshot.
+
+=back
+
+David Cantrell (B<david@cantrell.org.uk>)
+
+=over 4
+
+- Current maintainer of rsnapshot
+- Wrote the rsnapshot-diff utility
 
 =back
 
@@ -6472,14 +6503,6 @@ Nicolas Kaiser (B<nikai@nikai.net>)
 =over 4
 
 - Fixed typos in program and man page
-
-=back
-
-David Cantrell (B<david@cantrell.org.uk>)
-
-=over 4
-
-Wrote the rsnapshot-diff utility
 
 =back
 

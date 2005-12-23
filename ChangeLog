@@ -3,6 +3,10 @@ rsnapshot changelog
 http://www.rsnapshot.org/
 ------------------------------------------------------------------------------
 
+VERSION 1.2.5 (??? ?? ??:?? 2005)
+------------------------------------------------------------------------------
+- Added include_conf directive
+
 VERSION 1.2.4 (??? ?? ??:?? 2005)
 ------------------------------------------------------------------------------
 - David Cantrell <david@cantrell.org.uk> wrote the rsnapshot-diff utility
