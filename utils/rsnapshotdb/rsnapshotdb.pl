@@ -521,6 +521,8 @@ sub dumbDB
 	foreach my $dbName (@{$dbNames})
 	{
 		my $timestamp = strftime "%F-%H.%M", localtime;
+		$self->v("\nTIMESTAMP: $timestamp", 1);
+
 		my $file = join('--', $dbType, $dbhost, $dbName, $timestamp);
 
                 ($stdout, $stderr, $exit) = $login->cmd("test -d $remoteTmpDir");
@@ -692,7 +694,9 @@ sub v
 	unless ($level) { $level = 1; }
 
 	if ($self->_verbose >= $level) {
-		print "$msg\n";
+		open(LOG, ">>/var/log/rsnapshotDB") or die "$!";
+		print LOG "$msg\n";
+		close(LOG)
 	}
 
 	return $self;
