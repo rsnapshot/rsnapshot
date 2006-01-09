@@ -1,0 +1,55 @@
+<?xml version="1.0"?>
+<rsnapshotDB>
+        <!--
+        This file should contain a <hostGroup/> pair for each group of <hostPair/> tags. The reasoning here is to set a default ssh host (must be under first <hostPair>). My ISP will only let one database user connect to one database on one host. Which is a major PITA for things like backups.
+
+        <hostPair> will significantly increase optimization of downloads because the database pull will come from the <defaultSSHHost> instead of your local server.
+
+        <defaultSSHHost/> can be left empty (but must be present), as long as you already have a definition at the top of the <hostGroup> data set.
+        -->
+	<!-- 
+		testing
+	-->
+	<hostGroup>
+		<hostPair>
+			<databaseHost>
+				<dbType>mysql</dbType>
+				<dbhostname>db.host.com</dbhostname>
+				<dbusername>user</dbusername>
+				<dbpassword>pass</dbpassword>
+			</databaseHost>
+			<defaultSSHHost>
+				<hostType>ssh2</hostType>
+				<hostname>foo.isp.com</hostname>
+				<username>me</username>
+				<password>StrongEncrypt</password>
+			</defaultSSHHost>
+
+		</hostPair>
+		<hostPair>
+			<databaseHost>
+				<dbType>mysql</dbType>
+				<dbhostname>db.host2.com</dbhostname>
+				<dbusername>user2</dbusername>
+				<dbpassword>#F0oB4r!</dbpassword>
+			</databaseHost>
+			<defaultSSHHost/>
+		</hostPair>
+	</hostGroup>
+	<hostGroup>
+		<hostPair>
+			<databaseHost>
+				<dbType>mysql</dbType>
+				<dbhostname>db.vacation.com</dbhostname>
+				<dbusername>me</dbusername>
+				<dbpassword>pw</dbpassword>
+			</databaseHost>
+			<defaultSSHHost>
+				<hostType>ssh2</hostType>
+				<hostname>www.vacation.com</hostname>
+				<username>user</username>
+				<password>optional</password>
+			</defaultSSHHost>
+		</hostPair>
+	</hostGroup>
+</rsnapshotDB>

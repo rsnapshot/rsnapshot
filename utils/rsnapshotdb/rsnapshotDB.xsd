@@ -1,0 +1,55 @@
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xml:lang="en-US">
+	<xs:annotation>
+		<xs:documentation>test valid foo.xml</xs:documentation>
+	</xs:annotation>
+	<xs:element name="rsnapshotDB" type="rsnapshotDBType"/>
+	<xs:complexType name="rsnapshotDBType">
+		<xs:annotation><xs:documentation>The root node definition</xs:documentation></xs:annotation>
+		<xs:sequence>
+			<xs:element name="rsnapshotConf" type="xs:string" minOccurs="0"/>
+			<xs:element name="rsnapshotDBConf" type="xs:string" minOccurs="0"/>
+			<xs:element name="hostGroup" type="hostGroupType" minOccurs="1" maxOccurs="unbounded"/>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="hostGroupType">
+		<xs:annotation>
+			<xs:documentation>Primary use is for segregating hostPair definitions</xs:documentation>
+		</xs:annotation>
+		<xs:sequence>
+			<xs:element name="hostPair" type="hostPairType" minOccurs="1" maxOccurs="unbounded"/>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="hostPairType">
+		<xs:annotation>
+			<xs:documentation>Used for pairing ssh host inside LAN to pull database backup from db server host</xs:documentation>
+		</xs:annotation>
+		<xs:sequence>
+			<xs:element name="databaseHost" type="databaseHostType" minOccurs="1"/>
+			<xs:element name="defaultSSHHost" type="defaultSSHHostType" minOccurs="1"/>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="defaultSSHHostType">
+		<xs:annotation>
+			<xs:documentation>Default ssh host to connect to in order to pull database backups. defaultSSHHost can be defined once</xs:documentation>
+		</xs:annotation>
+		<xs:sequence>
+			<xs:element name="hostType" type="xs:string" minOccurs="0"/>
+			<xs:element name="encryptionType" type="xs:string" minOccurs="0"/>
+			<xs:element name="hostname" type="xs:string" minOccurs="0"/>
+			<xs:element name="username" type="xs:string" minOccurs="0"/>
+			<xs:element name="password" type="xs:string" minOccurs="0"/>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="databaseHostType">
+		<xs:annotation>
+			<xs:documentation>database server from which you are pulling database backups. See defaultSSHHostType for pull location.</xs:documentation>
+		</xs:annotation>
+		<xs:sequence>
+			<xs:element name="dbType" type="xs:string"/>
+			<xs:element name="dbhostname" type="xs:string"/>
+			<xs:element name="dbusername" type="xs:string" minOccurs="0"/>
+			<xs:element name="dbpassword" type="xs:string" minOccurs="0"/>
+		</xs:sequence>
+	</xs:complexType>
+
+</xs:schema>

@@ -1,0 +1,5 @@
+Update: 1/4/05
+
+Switched to XML-based configuration file, and requirement of Net::SSH::Perl for more sophisticated ssh handling of database backups.
+
+Speed issue of remote database dumps should be slightly if not vastly more optimized in this release. Database tables were locking during a remote backup, which took down the web site temporarily ( ~ 30 mins on one forum I own).

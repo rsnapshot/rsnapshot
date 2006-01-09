@@ -1,0 +1,201 @@
+package rsnapshotDB;
+
+=head
+Anthony Ettinger
+copyright 2006
+=cut
+
+use strict;
+use Data::Dumper;
+use XML::Validator::Schema;
+use XML::Simple;
+
+sub new
+{
+	my $proto = shift;
+	my $class = ref($proto) || $proto;
+	my $self = bless( {}, $class );
+
+	my %data = ref($_[0]) eq 'HASH' ? %{$_[0]} : (@_);
+
+	$self->_dbpasswd($data{'dbpasswd'});
+	$self->_xsd($data{'xsd'});
+	$self->_dumper($data{'dumper'});
+
+	return $self;
+}
+
+sub validateXML
+{
+	my $self = shift;
+	my $xml = $self->_dbpasswd;
+	my $xsd = $self->_xsd;
+
+	my $validator = XML::Validator::Schema->new(file=> $xsd);
+	my $parser = XML::SAX::ParserFactory->parser(Handler => $validator);
+
+	eval { $parser->parse_uri($xml) };
+	die "File failed validation: $@" if $@;
+
+	print "Congratulations!\n";
+	print "xml config: '$xml' validated against XMLSchema: '$xsd'!\n";
+
+	return $self;
+
+}
+
+=head
+Utitility to parse our XML file for values
+=cut
+
+sub parseXML
+{
+	my $self = shift;
+
+	#start xml parsing of conf file.
+	my $xml = $self->_dbpasswd();
+	my $parser = XML::Simple->new();
+
+	#hardcoded xml tag names
+	my $xmlRef = $parser->XMLin($xml, ForceArray => ['hostGroup', 'hostPair', 'databaseHost', 'defaultSSHHost'] ); 
+
+	#count hostGroup tags
+	my $hostGroups = scalar(@{$xmlRef->{'hostGroup'}});
+
+	#process hostGroups
+	for (my $i=0; $i<$hostGroups; $i++)
+	{
+
+		print "group $i --- \n";
+
+		#save default hostGroup ssh host
+		my $defaultSSHHost = {};
+
+		#process  hostPairs
+		foreach my $hostPair (@{$xmlRef->{'hostGroup'}->[$i]->{'hostPair'}})
+		{
+
+			print "\thostpair:   \n";
+			#save databaseHost hashref
+			my $databaseHost = $hostPair->{'databaseHost'};
+
+			if ( exists($hostPair->{'defaultSSHHost'}[0]->{'hostType'}) )
+			{
+				#save default and continue to use it
+				$defaultSSHHost = $hostPair->{'defaultSSHHost'};
+
+			}
+
+			#print Dumper(@databaseHost);
+			#print Dumper(@defaultSSHHost);
+
+			$self->loginSSH($defaultSSHHost);
+			print $defaultSSHHost->[0]->{'hostType'}, "\n";
+			print $defaultSSHHost->[0]->{'hostname'}, "\n";
+			print $defaultSSHHost->[0]->{'username'}, "\n";
+			print $defaultSSHHost->[0]->{'password'}, "\n";
+			print "\n";
+
+			print $databaseHost->[0]->{'dbType'}, "\n";
+			print $databaseHost->[0]->{'dbhostname'}, "\n";
+			print $databaseHost->[0]->{'dbusername'}, "\n";
+			print $databaseHost->[0]->{'dbpassword'}, "\n";
+			print "\n";
+
+		}
+	}
+
+	return $self;
+}
+
+sub loginSSH
+{
+	#see 'man ssh-keygen' to automate without password prompt
+
+}
+
+sub showDBs
+{
+	#execute sql SHOW DATABASES;
+	#save and then dumbDB()
+	my $bin = $dumper->{$dbtype}->{'bin'};
+	die "$dbtype dumper not found: $bin - Add binary path to '\$dump        er'" unless ($bin);
+
+	my $dbh = DBI->connect("dbi:$dbtype:host=$host", $user, $pass) o        r die DBI->errstr;
+
+
+	#execute show databases query
+	my $sth = $dbh->prepare("SHOW DATABASES") or die $dbh->errstr;
+	$sth->execute() or die $dbh->errstr;
+
+	#fetch results from query
+	while (my $row = $sth->fetch)
+	{
+		push(@{$names}, $row->[0]);
+	}
+
+	$sth->finish();
+
+	dump_databases($names, $dbtype, $user, $pass, $host);
+
+	$dbh->disconnect();
+}
+
+}
+
+sub dumbDB
+{
+	#
+}
+
+sub archiveDB
+{
+
+}
+
+sub cleanUp
+{
+	#delete .sql and .tar.gz files
+}
+
+#Class::Accessors simulation
+sub _dbpasswd
+{
+	my $self = shift;
+
+	if (@_ == 0)
+	{
+		return $self->{'dbpasswd'};
+	}
+
+	$self->{'dbpasswd'} = shift;
+	return $self->{'dbpasswd'};
+}
+
+sub _xsd
+{
+	my $self = shift;
+
+	if (@_ == 0)
+	{
+		return $self->{'xsd'};
+	}
+
+	$self->{'xsd'} = shift;
+	return $self->{'xsd'};
+}
+
+sub _dumper
+{
+	my $self = shift;
+
+	if (@_ == 0)
+	{
+		return $self->{'dumper'};
+	}
+
+	$self->{'dumper'} = shift;
+	return $self->{'dumper'};
+}
+
+1;
