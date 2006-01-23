@@ -1,23 +1,13 @@
 TODO LIST:
 
-Optimize code efficiency, main reason I'm throwing this out on the web as GPL :-)
+1/22/06 - Thoroughly test rewrite using ssh keys and tunneling.
 
-is 'wait;' necessary? This came about in restricted CPU usage environment, I think it can be stripped.
+Optimize code efficiency, main reason I'm throwing this out on the web as GPL :-)
 
 Thoroughly test with postgresql, mysql on Linux only so far.
 
-Error verbosity handling/trigger
-
 Decide whether to stop, or continue on errors/connectivity issues. Possibly throw an email/SMS at someone. Problem because assumption is that you're db's are being archived without error.
-
-Work out the remoteWhichBin vs. localWhichBin for optimum compatability
-
-Move Dumper hash to an xml file? Naahhh....
-
-remotely 'echo -n 'SHOW DATABASES;' | mysql -s -u username -h db.server.com -p'
 
 Test in various scenarios: -p optional, postgresql, etc.
 
 Bypass the need to store database passwords locally in rsnapshotDB.conf if user is network authenticated.
-
-rename to rsnapshotDB and pull out deprecated code.

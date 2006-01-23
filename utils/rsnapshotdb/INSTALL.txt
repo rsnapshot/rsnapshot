@@ -4,13 +4,7 @@ Pre-install Requirements:
 
 1) Perl v. 5.8.7+
 
-2) Net::SSH::Perl
-
-When installing as root, type: "$ cpan", then at prompt: "cpan> install Net::SSH::Perl".
-
-I choose the defaults, and when asked, installed "Crypt::RSA", which I believe is necessary for RSA public/private keys used with ssh-keygen ('man ssh-keygen' for more info).
-
-Don't sweat it, there are lots of dependencies, after I got RSA, I just said "[yes]" to all. If you have a diskspace issue, you probably don't want to backup your data here anyway.
+2) SSH with ssh-keygen
 
 3) Unix commands: scp, rm, gzip, mysqldump/pg_dump, nice
 
@@ -18,13 +12,11 @@ These need to be inplace on both the remote and/or local server. If using XML co
 
 The "dumper" programs can be only on the remote server since rsnapshotDB version: 1.2.
 
-Nice-to-Haves:
+5) ssh-keygen public key on remote server
 
-1) ssh-keygen public key on remote server
+Ideally, you would automate easily by having public/private ssh keys on your servers. See ~/.ssh and 'man ssh-keygen'.
 
-Ideally, you would automate easily by having public/private ssh keys on your servers, but if not, Net::SSH::Perl is supposed to use the password given in the rsnapshotDB.conf xml file. See ~/.ssh and 'man ssh-keygen'.
-
-2) local access to database server
+6) local access to database server
 
 This would also negate the need of storing vital (ie - "password") info in the XML config file.
 
@@ -33,9 +25,5 @@ Please report any bugs to
 mailto:rsnapshot-discuss-request@lists.sf.net?subject=subscribe
 http://www.rsnapshot.org
 
-3) Copy rsnapshotDB.conf.sample to /etc/rsnapshotDB.conf
+7) Copy rsnapshotDB.conf.sample to /etc/rsnapshotDB.conf
 
-
-Note: Even without root, you should be able to install Net::SSH::Perl locally in your home directory. see:--PREFIX, etc. arguments when installing
-
-cpan> prompt may even have a way of doing this for you.
