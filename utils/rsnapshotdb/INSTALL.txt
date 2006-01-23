@@ -27,3 +27,13 @@ http://www.rsnapshot.org
 
 7) Copy rsnapshotDB.conf.sample to /etc/rsnapshotDB.conf
 
+BASIC INSTALL:
+
+Place the rsnapshotDB.conf and rsnapshotDB.xsd in a safe location (typicall /etc/) then type $ chmod 600 rsnapshotDB.*
+
+Copy rsnapshotDB.pl into a good location, something like:
+/usr/local/bin/rsnapshotDB.pl
+
+Then call it from the rsnapshot.conf file as:
+
+backup_script	/usr/local/bin/rsnapshotDB.pl     database/
