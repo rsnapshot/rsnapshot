@@ -51,7 +51,6 @@ make_cvs_snapshot.sh
 
 ./rsnapshotdb
 ------------------------------------------------------------------------------
-
     Directory containing rsnapshotDB.pl, a perl script with an XML configuration
     file for remote database backups. Please see ./rsnapshotdb/README.txt.
 
