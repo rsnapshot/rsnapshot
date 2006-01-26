@@ -49,6 +49,12 @@ make_cvs_snapshot.sh
     Quick and dirty shell script to find/replace "real" version numbers with
     a CVS-date version.
 
+./rsnapshotdb
+------------------------------------------------------------------------------
+
+    Directory containing rsnapshotDB.pl, a perl script with an XML configuration
+    file for remote database backups. Please see ./rsnapshotdb/README.txt.
+
 rsnapshot_if_mounted.sh
 ------------------------------------------------------------------------------
     Deprecated. A work-around for using removable drives as the snapshot
