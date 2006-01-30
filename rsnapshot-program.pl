@@ -4,6 +4,7 @@
 #                                                                      #
 # rsnapshot                                                            #
 # by Nathan Rosenquist                                                 #
+# now  maintained by David Cantrell                                    #
 #                                                                      #
 # Based on code originally by Mike Rubel                               #
 # http://www.mikerubel.org/computers/rsync_snapshots/                  #
@@ -17,7 +18,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.324 2005/12/23 22:33:55 drhyde Exp $
+# $Id: rsnapshot-program.pl,v 1.325 2006/01/30 23:14:39 drhyde Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -71,7 +72,7 @@ my @backup_points;
 # array of backup points to rollback, in the event of failure
 my @rollback_points;
 
-# "intervals" are user defined time periods (i.e. hourly, daily)
+# "intervals" are user defined time periods (e.g., hourly, daily)
 # this array holds hash_refs containing the name of the interval,
 # and the number of snapshots to keep of it
 my @intervals;
@@ -308,11 +309,11 @@ Commands:
     diff             - Front-end interface to the rsnapshot-diff program.
                        Accepts two optional arguments which can be either
                        filesystem paths or interval directories within the
-                       snapshot_root (i.e. /etc/ daily.0/etc/). The default
+                       snapshot_root (e.g., /etc/ daily.0/etc/). The default
                        is to compare the two most recent snapshots.
     du               - Show disk usage in the snapshot_root.
                        Accepts an optional destination path for comparison
-                       across snapshots (i.e. localhost/home/user/foo).
+                       across snapshots (e.g., localhost/home/user/foo).
     version          - Show the version number for rsnapshot.
     help             - Show this help message.
 HERE
@@ -412,7 +413,7 @@ sub parse_cmd_line_opts {
 			for (my $i=1; $i<scalar(@ARGV); $i++) {
 				print STDERR "Unknown option: $ARGV[$i]\n";
 				print STDERR "Please make sure all switches come before commands\n";
-				print STDERR "(i.e. 'rsnapshot -v hourly', not 'rsnapshot hourly -v')\n";
+				print STDERR "(e.g., 'rsnapshot -v hourly', not 'rsnapshot hourly -v')\n";
 				exit(1);
 			}
 			
@@ -1380,7 +1381,7 @@ sub parse_config_file {
 					my $tmp_bs = $bs_dest;
 					
 					# add trailing slashes back in so similarly named directories don't match
-					# i.e. localhost/abc/ and localhost/ab/
+					# e.g., localhost/abc/ and localhost/ab/
 					$tmp_b  .= '/';
 					$tmp_bs .= '/';
 					
@@ -1410,7 +1411,7 @@ sub parse_config_file {
 					my $path2 = $backup_script_dest[$j];
 					
 					# add trailing slashes back in so similarly named directories don't match
-					# i.e. localhost/abc/ and localhost/ab/
+					# e.g., localhost/abc/ and localhost/ab/
 					$path1 .= '/';
 					$path2 .= '/';
 					
@@ -1922,7 +1923,7 @@ sub syslog_msg {
 	
 	if (!defined($msg))			{ return (undef); }
 	if (!defined($facility))	{ $facility	= 'user'; }
-	if (!defined($level))		{ $level	= 'notice'; }
+	if (!defined($level))		{ $level	= 'info'; }
 	
 	if (defined($config_vars{'cmd_logger'})) {
 		# print out our call to syslog
@@ -2181,12 +2182,12 @@ sub get_interval_data {
 	my $interval_max;
 	
 	# this is the name of the previous interval, in relation to the one we're
-	# working on. i.e. if we're operating on weekly, this should be "daily"
+	# working on. e.g., if we're operating on weekly, this should be "daily"
 	my $prev_interval;
 	
 	# same as $interval_max, except for the previous interval.
 	# this is used to determine which of the previous snapshots to pull from
-	# i.e. cp -al hourly.$prev_interval_max/ daily.0/
+	# e.g., cp -al hourly.$prev_interval_max/ daily.0/
 	my $prev_interval_max;
 	
 	# FIGURE OUT WHICH INTERVAL WE'RE RUNNING, AND HOW IT RELATES TO THE OTHERS
@@ -2204,7 +2205,7 @@ sub get_interval_data {
 			
 			# how many of these intervals should we keep?
 			# we start counting from 0, so subtract one
-			# i.e. 6 intervals == interval.0 .. interval.5
+			# e.g., 6 intervals == interval.0 .. interval.5
 			$interval_max = $$i_ref{'number'} - 1;
 			
 			# we found our interval, exit the foreach loop
@@ -2221,7 +2222,7 @@ sub get_interval_data {
 		
 		# which of the previous interval's numbered directories should we pull from
 		# for the interval we're currently set to run?
-		# i.e. daily.0/ might get pulled from hourly.6/
+		# e.g., daily.0/ might get pulled from hourly.6/
 		#
 		$prev_interval_max = $$i_ref{'number'} - 1;
 		
@@ -2287,7 +2288,7 @@ sub exit_with_status {
 # accepts no arguments
 # returns nothing
 #
-# exits the program with the status of the config file (i.e. Syntax OK).
+# exits the program with the status of the config file (e.g., Syntax OK).
 # the exit code is 0 for success, 1 for failure (although failure should never happen)
 sub exit_configtest {
 	# if we're just doing a configtest, exit here with the results
@@ -2727,8 +2728,8 @@ sub handle_interval {
 }
 
 # accepts an interval_data_ref
-# acts on the interval defined as $$id_ref{'interval'} (i.e. hourly)
-# this should be the smallest interval (i.e. hourly, not daily)
+# acts on the interval defined as $$id_ref{'interval'} (e.g., hourly)
+# this should be the smallest interval (e.g., hourly, not daily)
 #
 # rotates older dirs within this interval, hard links .0 to .1,
 # and rsync data over to .0
@@ -3461,7 +3462,7 @@ sub exec_backup_script {
 	# run the backup script
 	#
 	# the assumption here is that the backup script is written in such a way
-	# that it creates files in it's current working directory.
+	# that it creates files in its current working directory.
 	#
 	# the backup script should return 0 on success, anything else is
 	# considered a failure.
@@ -3788,7 +3789,7 @@ sub touch_interval_dir {
 
 # accepts an interval_data_ref
 # looks at $$id_ref{'interval'} as the interval to act on,
-# and the previous interval $$id_ref{'prev_interval'} to pull up the directory from (i.e. daily, hourly)
+# and the previous interval $$id_ref{'prev_interval'} to pull up the directory from (e.g., daily, hourly)
 # the interval being acted upon should not be the lowest one.
 #
 # rotates older dirs within this interval, and hard links
@@ -5052,8 +5053,8 @@ sub copy_symlink {
 	return (1);
 }
 
-# accepts a file permission number from $st->mode (i.e. 33188)
-# returns a "normal" file permission number (i.e. 644)
+# accepts a file permission number from $st->mode (e.g., 33188)
+# returns a "normal" file permission number (e.g., 644)
 # do the appropriate bit shifting to get a "normal" UNIX file permission mode
 sub get_perms {
 	my $raw_mode = shift(@_);
@@ -5685,7 +5686,7 @@ files (such as FIFOs, sockets, and block/character devices) in one pass.
 
 If cmd_cp is disabled, rsnapshot will use its own built-in function,
 native_cp_al() to backup up regular files and directories. This will
-then be followed up by a seperate call to rsync, to move the special
+then be followed up by a separate call to rsync, to move the special
 files over (assuming there are any).
 
 =back
@@ -5712,7 +5713,7 @@ B<cmd_postexec>
 
 =over 4
 
-Full path (plus any arguments) to preexec script (optional).
+Full path (plus any arguments) to postexec script (optional).
 This script will run immediately after a backup operation (but not any
 rotations).
 
@@ -5722,7 +5723,7 @@ B<interval>           [name]   [number]
 
 =over 4
 
-"name" refers to the name of this interval (i.e. hourly, daily). "number"
+"name" refers to the name of this interval (e.g., hourly, daily). "number"
 is the number of snapshots for this type of interval that will be stored.
 The value of "name" will be the command passed to B<rsnapshot> to perform
 this type of backup.
@@ -5745,7 +5746,7 @@ corresponding directories in <snapshot_root>/hourly.0/
 
 Intervals must be specified in the config file in order, from most
 frequent to least frequent. The first entry is the one which will be
-synced with the backup points. The subsequent intervals (i.e. daily,
+synced with the backup points. The subsequent intervals (e.g., daily,
 weekly, etc) simply rotate, with each higher interval pulling from the
 one below it for its .0 directory.
 
@@ -5819,7 +5820,7 @@ This number means the same thing as B<verbose> above, but it determines how
 much data is written to the logfile, if one is being written.
 
 The only thing missing from this at the higher levels is the direct output
-from rsync. We hope to add support for this in a future relase.
+from rsync. We hope to add support for this in a future release.
 
 =back
 
@@ -6047,7 +6048,7 @@ B<backup_script      /usr/local/bin/backup_database.sh   db_backup/>
 =over 4
 
 In this example, we specify a script or program to run. This script should simply
-create files and/or directories in it's current working directory. rsnapshot will
+create files and/or directories in its current working directory. rsnapshot will
 then take that output and move it into the directory specified in the third column.
 
 Please note that whatever is in the destination directory will be completely
@@ -6087,7 +6088,7 @@ Putting it all together (an example file):
 
 =over 4
 
-    # THIS IS A COMMENT, REMEMBER TABS MUST SEPERATE ALL ELEMENTS
+    # THIS IS A COMMENT, REMEMBER TABS MUST SEPARATE ALL ELEMENTS
 
     config_version  1.2
 
