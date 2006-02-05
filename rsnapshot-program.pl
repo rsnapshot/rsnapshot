@@ -18,7 +18,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.325 2006/01/30 23:14:39 drhyde Exp $
+# $Id: rsnapshot-program.pl,v 1.326 2006/02/05 04:19:30 djk20 Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -2389,8 +2389,8 @@ sub is_ssh_path {
 	if ($path =~ m/^\s/)				{ return (undef); }
 	if ($path =~ m/\s$/)				{ return (undef); }
 	
-	# must have user@host:/path syntax
-	if ($path =~ m/^.*?\@.*?:\/.*$/)	{ return (1); }
+	# must have user@host:[~]/path syntax for ssh
+	if ($path =~ m/^.*?\@.*?:~?\/.*$/)	{ return (1); }
 	
 	return (0);
 }
@@ -6535,7 +6535,9 @@ David Keegel (B<djk@cybersource.com.au>)
 
 =over 4
 
-Fixed race condition in lock file creation, improved error reporting
+- Fixed race condition in lock file creation, improved error reporting
+- Allowed remote ssh directory paths starting with "~/" as well as "/".
+
 
 =back
 
