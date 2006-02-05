@@ -51,6 +51,7 @@ Justin Grote <justin@grote.name>
 
 David Keegel <djk@cybersource.com.au>
     - Fixed race condition in lock file creation, improved error reporting
+    - Allowed remote ssh directory paths starting with "~/" as well as "/".
 
 Anthony Ettinger <apwebdesign@yahoo.com>
     - Wrote the utils/mysqlbackup.pl script
