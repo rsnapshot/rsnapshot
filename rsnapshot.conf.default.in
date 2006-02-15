@@ -195,8 +195,8 @@ backup	/usr/local/	localhost/
 #backup_script		/usr/local/bin/backup_pgsql.sh	localhost/postgres/
 
 # EXAMPLE.COM
-#backup	root@example.com:/home/	example.com/
-#backup	root@example.com:/etc/	example.com/
+#backup	root@example.com:/home/	example.com/	+rsync_long_args=--bwlimit=16,exclude=core
+#backup	root@example.com:/etc/	example.com/	exclude=mtab,exclude=core
 
 # CVS.SOURCEFORGE.NET
 #backup_script	/usr/local/bin/backup_rsnapshot_cvsroot.sh	cvs.sourceforge.net/
