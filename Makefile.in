@@ -14,7 +14,7 @@
 
 @SET_MAKE@
 
-# $Id: Makefile.in,v 1.88 2005/12/23 22:33:55 drhyde Exp $ #
+# $Id: Makefile.in,v 1.89 2006/03/11 06:47:53 djk20 Exp $ #
 
 
 srcdir = @srcdir@
@@ -139,7 +139,7 @@ TEST_DU = @TEST_DU@
 TEST_LOGGER = @TEST_LOGGER@
 TEST_RM = @TEST_RM@
 TEST_SSH = @TEST_SSH@
-VERSION = 1.2.2
+VERSION = 1.2.4
 ac_ct_STRIP = @ac_ct_STRIP@
 am__leading_dot = @am__leading_dot@
 am__tar = @am__tar@
@@ -607,8 +607,13 @@ tar: man rpm-patch
 	mkdir rsnapshot-$(VERSION)/utils/
 	cp utils/{rsnaptar,*.sh,*.pl,README} rsnapshot-$(VERSION)/utils/
 
+	@# t - testing
+	mkdir rsnapshot-$(VERSION)/t
+	cp -a t/ rsnapshot-$(VERSION)/
+	-find rsnapshot-$(VERSION)/t -name CVS -exec rm -rf {} \;
+
 	@# change ownership to root, and delete build dir
-	chown -R root:root rsnapshot-$(VERSION)/
+	-chown -R root:root rsnapshot-$(VERSION)/
 	tar czf rsnapshot-$(VERSION).tar.gz rsnapshot-$(VERSION)/
 	rm -rf rsnapshot-$(VERSION)/
 

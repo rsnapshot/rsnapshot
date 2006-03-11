@@ -1,6 +1,6 @@
-# $Id: Makefile.am,v 1.65 2005/07/25 06:49:40 scubaninja Exp $ #
+# $Id: Makefile.am,v 1.66 2006/03/11 06:47:52 djk20 Exp $ #
 
-VERSION = 1.2.2
+VERSION = 1.2.4
 
 RPM_BASE_DIR = /usr/src/redhat
 
@@ -76,8 +76,13 @@ tar: man rpm-patch
 	mkdir rsnapshot-$(VERSION)/utils/
 	cp utils/{rsnaptar,*.sh,*.pl,README} rsnapshot-$(VERSION)/utils/
 	
+	@# t - testing
+	mkdir rsnapshot-$(VERSION)/t
+	cp -a t/ rsnapshot-$(VERSION)/
+	-find rsnapshot-$(VERSION)/t -name CVS -exec rm -rf {} \;
+	
 	@# change ownership to root, and delete build dir
-	chown -R root:root rsnapshot-$(VERSION)/
+	-chown -R root:root rsnapshot-$(VERSION)/
 	tar czf rsnapshot-$(VERSION).tar.gz rsnapshot-$(VERSION)/
 	rm -rf rsnapshot-$(VERSION)/
 
