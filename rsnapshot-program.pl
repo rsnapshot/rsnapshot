@@ -18,7 +18,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.326 2006/02/05 04:19:30 djk20 Exp $
+# $Id: rsnapshot-program.pl,v 1.327 2006/03/11 05:16:07 djk20 Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -523,7 +523,11 @@ sub parse_config_file {
 		if ($var eq 'snapshot_root') {
 			# make sure this is a full path
 			if (0 == is_valid_local_abs_path($value)) {
-				config_err($file_line_num, "$line - snapshot_root must be a full path");
+				if (is_ssh_path($value) || is_anon_rsync_path($value) || is_cwrsync_path($value)) {
+					config_err($file_line_num, "$line - snapshot_root must be a local path - you cannot have a remote snapshot_root");
+				} else {
+					config_err($file_line_num, "$line - snapshot_root must be a full path");
+				}
 				next;
 			# if the snapshot root already exists:
 			} elsif ( -e "$value" ) {
@@ -1332,6 +1336,11 @@ sub parse_config_file {
 	if (defined($config_vars{'no_create_root'})) {
 		if (1 == $config_vars{'no_create_root'}) {
 			if ( ! -d "$config_vars{'snapshot_root'}" ) {
+				if ( -e "$config_vars{'snapshot_root'}" ) {
+					print_err ("$config_vars{'snapshot_root'} is not a directory.", 1);
+				} else {
+					print_err ("$config_vars{'snapshot_root'} does not exist.", 1);
+				}
 				print_err ("rsnapshot refuses to create snapshot_root when no_create_root is enabled", 1);
 				syslog_err("rsnapshot refuses to create snapshot_root when no_create_root is enabled");
 				exit(1);
@@ -2522,6 +2531,8 @@ sub remove_trailing_slash {
 	
 	# it's not a trailing slash if it's the root filesystem
 	if ($str eq '/') { return ($str); }
+	# it's not a trailing slash if it's a remote root filesystem
+	if ($str =~ m%:/$% ) { return ($str); }
 	
 	$str =~ s/\/+$//;
 	
