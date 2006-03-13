@@ -18,7 +18,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.327 2006/03/11 05:16:07 djk20 Exp $
+# $Id: rsnapshot-program.pl,v 1.328 2006/03/13 00:57:56 djk20 Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -4041,7 +4041,7 @@ sub native_cp_al {
 	# LSTAT SRC
 	my $st = lstat("$src");
 	if (!defined($st)) {
-		print_err("Warning! Could not lstat(\"$src\")", 2);
+		print_err("Warning! Could not lstat source dir (\"$src\") : $!", 2);
 		return(0);
 	}
 	
@@ -4060,7 +4060,7 @@ sub native_cp_al {
 		
 		$result = mkdir("$dest", $st->mode);
 		if ( ! $result ) {
-			print_err("Warning! Could not mkdir(\"$dest\", $st->mode);", 2);
+			print_err("Warning! Could not mkdir(\"$dest\", $st->mode) : $!", 2);
 			return(0);
 		}
 	}
@@ -4102,7 +4102,7 @@ sub native_cp_al {
 			# make sure the node we just got is valid (this is highly unlikely to fail)
 			my $st = lstat("$src/$node");
 			if (!defined($st)) {
-				print_err("Warning! Could not lstat(\"$src/$node\")", 2);
+				print_err("Warning! Could not lstat source node (\"$src/$node\") : $!", 2);
 				next;
 			}
 			
@@ -4141,7 +4141,7 @@ sub native_cp_al {
 				# make a hard link
 				$result = link("$src/$node", "$dest/$node");
 				if (! $result) {
-					print_err("Warning! Could not link(\"$src/$node\", \"$dest/$node\")", 2);
+					print_err("Warning! Could not link(\"$src/$node\", \"$dest/$node\") : $!", 2);
 					next;
 				}
 				
