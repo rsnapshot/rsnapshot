@@ -28,7 +28,7 @@ snapshot_root	/.snapshots/
 
 # If no_create_root is enabled, rsnapshot will not automatically create the
 # snapshot_root directory. This is particularly useful if you are backing
-# up to removable media, such as a FireWire drive.
+# up to removable media, such as a FireWire or USB drive.
 #
 #no_create_root	1
 
@@ -38,6 +38,10 @@ snapshot_root	/.snapshots/
 
 # LINUX USERS:   Be sure to uncomment "cmd_cp". This gives you extra features.
 # EVERYONE ELSE: Leave "cmd_cp" commented out for compatibility.
+#
+# Note: Linux users with gnu cp/coreutils version > 5.3, should leave
+# cmd_cp commented out, since cp fails to create destination directories
+# with a trailing slash for versions 5.3 or later.
 #
 # See the README file or the man page for more details.
 #
@@ -68,7 +72,7 @@ snapshot_root	/.snapshots/
 
 # Uncomment this to specify the path to rsnapshot-diff.
 #
-#/usr/local/bin/rsnapshot-diff
+#cmd_rsnapshot_diff /usr/local/bin/rsnapshot-diff
 
 # Specify the path to a script (and any optional arguments) to run right
 # before rsnapshot syncs files
@@ -189,6 +193,7 @@ loglevel	3
 backup	/home/		localhost/
 backup	/etc/		localhost/
 backup	/usr/local/	localhost/
+#backup	/var/log/rsnapshot		localhost/
 #backup	/etc/passwd	localhost/
 #backup	/home/foo/My Documents/		localhost/
 #backup	/foo/bar/	localhost/	one_fs=1, rsync_short_args=-urltvpog
