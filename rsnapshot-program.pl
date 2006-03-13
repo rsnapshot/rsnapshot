@@ -18,7 +18,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.328 2006/03/13 00:57:56 djk20 Exp $
+# $Id: rsnapshot-program.pl,v 1.329 2006/03/13 06:34:00 djk20 Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -4208,7 +4208,7 @@ sub native_cp_al {
 	}
 	$result = utime($st->atime, $st->mtime, "$dest");
 	if (! $result) {
-		print_err("Warning! Could not utime(" . $st->atime . ", " . $st->mtime . ", \"$dest\");", 2);
+		print_err("Warning! Could not set utime(" . $st->atime . ", " . $st->mtime . ", \"$dest\") : $!", 2);
 		return(0);
 	}
 	
