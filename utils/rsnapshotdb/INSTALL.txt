@@ -37,3 +37,8 @@ Copy rsnapshotDB.pl into a good location, something like:
 Then call it from the rsnapshot.conf file as:
 
 backup_script	/usr/local/bin/rsnapshotDB.pl     database/
+
+
+SECURITY:
+
+The best option is to use ssh keys and network-authenticated database users. ie (only connect from localhost or 192.168.x.x -> db server without password). This avoids having to store our db passwords in /etc/rsnapshotDB.conf
