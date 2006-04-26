@@ -18,7 +18,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.330 2006/04/26 23:47:04 djk20 Exp $
+# $Id: rsnapshot-program.pl,v 1.331 2006/04/26 23:48:48 djk20 Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -4285,6 +4285,11 @@ sub rsync_cleanup_after_native_cp_al {
 			# bitmask return value
 			my $retval = get_retval($result);
 			
+			# a partial list of rsync exit values
+			# 0		Success
+			# 23	Partial transfer due to error
+			# 24	Partial transfer due to vanished source files
+	
 			if (23 == $retval) {
 				print_warn ("Some files and/or directories in $src only transferred partially during rsync_cleanup_after_native_cp_al operation", 2);
 				syslog_warn("Some files and/or directories in $src only transferred partially during rsync_cleanup_after_native_cp_al operation");
