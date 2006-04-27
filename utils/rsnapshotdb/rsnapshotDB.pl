@@ -13,13 +13,14 @@ Email: aettinger@sdsualumni.org
 Blog: http://www.chovy.com
 
 
+
 NOTES:
 
 This script was originally written to function as a MySQL database backup script in conjunction with the open source Perl/rsync backup program "rsnapshot".  rsnapshot can be found at: http://www.rsnapshot.org/
 
 In order to backup a database remotely, the necessary database user must be able to connect remotely to the database server from a trusted secure shell server. (some ISPs only allow access from an internal network - you may need to make sure you do have internal access from an internal ssh server to the database server).
 
-IF YOU DON'T HAVE SSH, this program isn't for you.
+IF YOU DON'T HAVE SSH KEYS, this program isn't for you. (see:man ssh-keygen).
 
 It is extremely important that you secure the /etc/rsnapshotDB.conf file so only YOU (the user who's cronjob this is running from) can read the file, 'chmod 0600 /etc/rsnapshotDB.conf', as it will store the database passwords in plain text format.
 

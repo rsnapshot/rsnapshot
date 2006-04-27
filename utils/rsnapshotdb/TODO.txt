@@ -1,7 +1,7 @@
 TODO LIST:
 
-4/20/06
-- as suggested by r00t in #bash, split on tables instead of db.
+- remove support for unencrypted SSH passwords in rsnapshotDB.conf, should be supported with ssh keys instead.
+- as suggested by r00t in #bash, add option to split on tables instead of db.
 - enable split | gzip to get in under isp radar (cpu resource limits with I/O on large db's).
 - thoroughly test with postgresql, mysql on Linux only so far. thanks to <poo> in #bash
 
