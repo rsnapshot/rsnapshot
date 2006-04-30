@@ -3,13 +3,23 @@ rsnapshot changelog
 http://www.rsnapshot.org/
 ------------------------------------------------------------------------------
 
-VERSION 1.2.5 (??? ?? ??:?? 2006)
+VERSION 1.2.4 (??? ?? ??:?? 2006)
 ------------------------------------------------------------------------------
+- Detect exit status 23 and 24 from rsync in rsync_cleanup_after_native_cp_al
+- Add $! (system error message) to various warning messages in native_cp_al
+- Add more examples and comments to rsnapshot.conf.default.in
+- In Makefile*, for "make tar", include "t" (testing) in the tar file.
+- Do not strip the trailing slash if it's a remote root filesystem.
+  (This was a bug in rsnapshot 1.2.3 if you use "backup host:/  ...")
+- Give a more descriptive error message "cannot have a remote snapshot_root"
+  if user tries to configure an ssh path or rsync path as snapshot_root.
+- Add some more description to the error "rsnapshot refuses to create
+  snapshot_root when no_create_root is enabled", after checking whether
+  the snapshot_root is a non-directory file, or just plain non-existent.
+- Changed default syslog level to 'info' instead of 'notice'
 - Added include_conf directive
 - Allowed remote ssh directory paths starting with "~/" as well as "/".
-
-VERSION 1.2.4 (??? ?? ??:?? 2005)
-------------------------------------------------------------------------------
+- Changed rsnapshot maintainer from Nathan Rosenquist to David Cantrell
 - David Cantrell <david@cantrell.org.uk> wrote the rsnapshot-diff utility
 - Chris Petersen added cwrsync permanent-share support
 - Robert Jackson <RobertJ@promedicalinc.com> added use_lazy_deletes
