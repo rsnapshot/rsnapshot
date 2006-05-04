@@ -18,7 +18,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.332 2006/05/04 04:38:27 djk20 Exp $
+# $Id: rsnapshot-program.pl,v 1.333 2006/05/04 21:56:46 djk20 Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -6580,6 +6580,22 @@ Sherman Boyd
 =over 4
 
 Wrote utils/random_file_verify.sh script
+
+=back
+
+William Bear (B<bear@umn.edu>)
+
+=over 4
+
+Wrote the utils/rsnapreport.pl script (pretty summary of rsync stats)
+
+=back
+
+Eric Anderson (B<anderson@centtech.com>)
+
+=over 4
+
+Improvements to utils/rsnapreport.pl.
 
 =back
 

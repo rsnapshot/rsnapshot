@@ -58,3 +58,9 @@ Anthony Ettinger <apwebdesign@yahoo.com>
 
 Sherman Boyd
     - Wrote the utils/random_file_verify.sh script
+
+William Bear <bear@umn.edu>
+    - Wrote the utils/rsnapreport.pl script (pretty summary of rsync stats)
+
+Eric Anderson <anderson@centtech.com>
+    - Improvements to utils/rsnapreport.pl.
