@@ -1,4 +1,4 @@
-#!/bin/env perl
+#!/usr/bin/env perl
 # this script prints a pretty report from rsnapshot output
 # in the rsnapshot.conf you must set
 # verbose >= 3
@@ -39,17 +39,18 @@ sub pretty_print(){
 		if($bkdata{$source} =~ /error/i) { print "ERROR $source $bkdata{$source}"; next; }
 		my $files = $bkdata{$source}{'files'};
 		my $filest = $bkdata{$source}{'files_tran'};
+		my $filelistgentime = $bkdata{$source}{'file_list_gen_time'};
+		my $filelistxfertime = $bkdata{$source}{'file_list_trans_time'};
 		my $bytes= $bkdata{$source}{'file_size'}/1000000; # convert to MB
 		my $bytest= $bkdata{$source}{'file_tran_size'}/1000000; # convert to MB
 		$source =~ s/^[^\@]+\@//; # remove username
 format BREPORTHEAD =
-SOURCE                                          TOTAL FILES   FILES TRANS       TOTAL MB       MB TRANS
--------------------------------------------------------------------------------------------------------
+SOURCE                          TOTAL FILES   FILES TRANS      TOTAL MB     MB TRANS   LIST GEN TIME  FILE XFER TIME
+--------------------------------------------------------------------------------------------------------------------
 .
 format BREPORTBODY =
-@<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<	@>>>>>>>>>>   @>>>>>>>>>> @##########.## @##########.##
-$source,                                        $files,       $filest,    $bytes,        $bytest
-        
+@<<<<<<<<<<<<<<<<<<<<<<<<<<<<<	@>>>>>>>>>>   @>>>>>>>>>> @#########.## @########.##   @>>>>>>>>>>>>  @>>>>>>>>>>>>>
+$source,                        $files,       $filest,    $bytes,       $bytest,       $filelistgentime, $filelistxfertime
 .
 		write STDOUT;
 	}
@@ -100,6 +101,12 @@ while (my $line = nextLine(\@rsnapout)){
 			}
 			elsif($line =~ /Total transferred file size:\s+(\d+)/){
 				$bkdata{$source}{'file_tran_size'}=$1;
+			}
+			elsif($line =~ /File list generation time:\s+(.+)/){
+				$bkdata{$source}{'file_list_gen_time'}=$1;
+			}
+			elsif($line =~ /File list transfer time:\s+(.+)/){
+				$bkdata{$source}{'file_list_trans_time'}=$1;
 			}
 			elsif($line =~ /ERROR/){ push(@errors,"$source $line"); } # we encountered an rsync error
 		}
