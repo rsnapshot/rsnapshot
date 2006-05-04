@@ -59,6 +59,12 @@ rsnapshot_if_mounted.sh
     Deprecated. A work-around for using removable drives as the snapshot
     root. Superceded by the "no_create_root" option in rsnapshot proper.
 
+rsnapreport.pl
+------------------------------------------------------------------------------
+    This script just takes the output of rsnapshot using the rsync --stats
+    option, and generates a pretty report, and tries to include errors at
+    the bottom.
+
 sign_packages.sh
 ------------------------------------------------------------------------------
     The shell script used to automate package signing for releases.
