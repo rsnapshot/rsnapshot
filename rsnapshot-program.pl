@@ -18,7 +18,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.334 2006/05/04 22:25:16 djk20 Exp $
+# $Id: rsnapshot-program.pl,v 1.335 2006/05/05 21:34:02 djk20 Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -6562,8 +6562,9 @@ David Keegel (B<djk@cybersource.com.au>)
 =over 4
 
 - Fixed race condition in lock file creation, improved error reporting
-- Allowed remote ssh directory paths starting with "~/" as well as "/".
-
+- Allowed remote ssh directory paths starting with "~/" as well as "/"
+- Fixed a number of other bugs and buglets
+- Release management for rsnapshot 1.2.4
 
 =back
 
