@@ -6,19 +6,26 @@
 # by Nathan Rosenquist                                                 #
 # now  maintained by David Cantrell                                    #
 #                                                                      #
-# Based on code originally by Mike Rubel                               #
-# http://www.mikerubel.org/computers/rsync_snapshots/                  #
-#                                                                      #
 # The official rsnapshot website is located at                         #
 # http://www.rsnapshot.org/                                            #
 #                                                                      #
+# Copyright (C) 2003-2005 Nathan Rosenquist                            #
+#                                                                      #
+# Portions Copyright (C) 2002-2006 Mike Rubel, Carl Wilhelm Soderstrom,#
+# Ted Zlatanov, Carl Boe, Shane Liebling, Bharat Mediratta,            #
+# Peter Palfrader, Nicolas Kaiser, David Cantrell, Chris Petersen,     #
+# Robert Jackson, Justin Grote, David Keegel                           #
+#                                                                      #
 # rsnapshot comes with ABSOLUTELY NO WARRANTY.  This is free software, #
-# and you are welcome to redistribute it under certain conditions.     #
-# See the GNU General Public License for details.                      #
+# and you are welcome to redistribute it under the terms of the GPL.   #
+# See the GNU General Public License (in file: COPYING) for details.   #
+#                                                                      #
+# Based on code originally by Mike Rubel                               #
+# http://www.mikerubel.org/computers/rsync_snapshots/                  #
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.335 2006/05/05 21:34:02 djk20 Exp $
+# $Id: rsnapshot-program.pl,v 1.336 2006/05/07 22:29:19 djk20 Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
