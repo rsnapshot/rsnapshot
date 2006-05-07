@@ -25,7 +25,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.336 2006/05/07 22:29:19 djk20 Exp $
+# $Id: rsnapshot-program.pl,v 1.337 2006/05/07 22:30:29 djk20 Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -6298,9 +6298,7 @@ run rsnapshot again, using example.com/etc as the optional parameter.
 
 =back
 
-=head1
-
-EXIT VALUES
+=head1 EXIT VALUES
 
 =over 4
 
