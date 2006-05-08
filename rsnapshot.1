@@ -129,7 +129,7 @@
 .\" ========================================================================
 .\"
 .IX Title "rsnapshot 1"
-.TH rsnapshot 1 "2005-07-24" "" ""
+.TH rsnapshot 1 "2006-05-08" "" ""
 .SH "NAME"
 rsnapshot \- remote filesystem snapshot utility
 .SH "SYNOPSIS"
@@ -194,6 +194,14 @@ Here is a list of allowed parameters:
 .Sp
 \&\fBsnapshot_root\fR      Local filesystem path to save all snapshots
 .Sp
+\&\fBinclude_conf\fR       Include another file in the configuration at this point.
+.Sp
+.RS 4
+This is recursive, but you may need to be careful about paths when specifying
+which file to include.  We check to see if the file you have specified is
+readable, and will yell an error if it isn't.  We recommend using a full
+path.
+.Sp
 \&\fBno_create_root\fR     If set to 1, rsnapshot won't create snapshot_root directory
 .Sp
 \&\fBcmd_rsync\fR          Full path to rsync (required)
@@ -211,7 +219,7 @@ files (such as FIFOs, sockets, and block/character devices) in one pass.
 .Sp
 If cmd_cp is disabled, rsnapshot will use its own built-in function,
 \&\fInative_cp_al()\fR to backup up regular files and directories. This will
-then be followed up by a seperate call to rsync, to move the special
+then be followed up by a separate call to rsync, to move the special
 files over (assuming there are any).
 .RE
 .RE
@@ -238,7 +246,7 @@ rotations).
 \&\fBcmd_postexec\fR
 .Sp
 .RS 4
-Full path (plus any arguments) to preexec script (optional).
+Full path (plus any arguments) to postexec script (optional).
 This script will run immediately after a backup operation (but not any
 rotations).
 .RE
@@ -248,7 +256,7 @@ rotations).
 \&\fBinterval\fR           [name]   [number]
 .Sp
 .RS 4
-\&\*(L"name\*(R" refers to the name of this interval (i.e. hourly, daily). \*(L"number\*(R"
+\&\*(L"name\*(R" refers to the name of this interval (e.g., hourly, daily). \*(L"number\*(R"
 is the number of snapshots for this type of interval that will be stored.
 The value of \*(L"name\*(R" will be the command passed to \fBrsnapshot\fR to perform
 this type of backup.
@@ -271,7 +279,7 @@ corresponding directories in <snapshot_root>/hourly.0/
 .Sp
 Intervals must be specified in the config file in order, from most
 frequent to least frequent. The first entry is the one which will be
-synced with the backup points. The subsequent intervals (i.e. daily,
+synced with the backup points. The subsequent intervals (e.g., daily,
 weekly, etc) simply rotate, with each higher interval pulling from the
 one below it for its .0 directory.
 .Sp
@@ -347,7 +355,7 @@ This number means the same thing as \fBverbose\fR above, but it determines how
 much data is written to the logfile, if one is being written.
 .Sp
 The only thing missing from this at the higher levels is the direct output
-from rsync. We hope to add support for this in a future relase.
+from rsync. We hope to add support for this in a future release.
 .RE
 .RE
 .RS 4
@@ -417,13 +425,13 @@ List of long arguments to pass to rsync. Beginning with rsnapshot 1.2.0, this
 default has changed. In previous versions, the default values were
 .Sp
 .Vb 1
-\&    \-\-delete \-\-numeric\-ids
+\&    --delete --numeric-ids
 .Ve
 .Sp
 Starting with version 1.2.0, the default values are
 .Sp
 .Vb 1
-\&    \-\-delete \-\-numeric\-ids \-\-relative \-\-delete\-excluded
+\&    --delete --numeric-ids --relative --delete-excluded
 .Ve
 .Sp
 This directly affects how the destination paths in your backup points are
@@ -578,7 +586,7 @@ If the global one_fs has been set, this will override it locally.
 .Sp
 .RS 4
 In this example, we specify a script or program to run. This script should simply
-create files and/or directories in it's current working directory. rsnapshot will
+create files and/or directories in its current working directory. rsnapshot will
 then take that output and move it into the directory specified in the third column.
 .Sp
 Please note that whatever is in the destination directory will be completely
@@ -608,17 +616,19 @@ additional disk space will be taken up.
 .RE
 .RS 4
 .RE
-.PP
+.RE
+.RS 4
+.Sp
 Remember that tabs must separate all elements, and that
 there must be a trailing slash on the end of every directory.
-.PP
+.Sp
 A hash mark (#) on the beginning of a line is treated
 as a comment.
-.PP
+.Sp
 Putting it all together (an example file):
 .Sp
 .Vb 1
-\&    # THIS IS A COMMENT, REMEMBER TABS MUST SEPERATE ALL ELEMENTS
+\&    # THIS IS A COMMENT, REMEMBER TABS MUST SEPARATE ALL ELEMENTS
 .Ve
 .Sp
 .Vb 1
@@ -657,18 +667,20 @@ Putting it all together (an example file):
 \&    backup          root@mail.foo.com:/home/  mail.foo.com/
 \&    backup          rsync://example.com/pub/  example.com/pub/
 .Ve
+.RE
+.RS 4
 .SH "USAGE"
 .IX Header "USAGE"
 \&\fBrsnapshot\fR can be used by any user, but for system-wide backups
 you will probably want to run it as root.
-.PP
+.Sp
 Since backups usually get neglected if human intervention is
 required, the preferred way is to run it from cron.
-.PP
+.Sp
 When you are first setting up your backups, you will probably
 also want to run it from the command line once or twice to get
 a feel for what it's doing.
-.PP
+.Sp
 Here is an example crontab entry, assuming that intervals \fBhourly\fR,
 \&\fBdaily\fR, \fBweekly\fR and \fBmonthly\fR have been defined in \fB/etc/rsnapshot.conf\fR
 .Sp
@@ -681,7 +693,9 @@ Here is an example crontab entry, assuming that intervals \fBhourly\fR,
 .Sp
 \&\fB30 23 1 * *         /usr/local/bin/rsnapshot monthly\fR
 .RE
-.PP
+.RE
+.RS 4
+.Sp
 This example will do the following:
 .Sp
 .RS 4
@@ -693,45 +707,51 @@ This example will do the following:
 .Sp
 1 monthly backup every month, at 11:30PM on the 1st day of the month
 .RE
-.PP
+.RE
+.RS 4
+.Sp
 It is usually a good idea to schedule the larger intervals to run a bit before the
 lower ones. For example, in the crontab above, notice that \*(L"daily\*(R" runs 10 minutes
 before \*(L"hourly\*(R". This helps prevent race conditions where the \*(L"daily\*(R" would try to
 run before the \*(L"hourly\*(R" job had finished. This is where the \fBlockfile\fR parameter
 really comes in handy.
-.PP
+.Sp
 Remember that these are just the times that the program runs.
 To set the number of backups stored, set the \fBinterval\fR numbers in
 \&\fB/etc/rsnapshot.conf\fR
-.PP
+.Sp
 To check the disk space used by rsnapshot, you can call it with the \*(L"du\*(R" argument.
-.PP
+.Sp
 For example:
 .Sp
 .RS 4
 \&\fBrsnapshot du\fR
 .RE
-.PP
+.RE
+.RS 4
+.Sp
 This will show you exactly how much disk space is taken up in the snapshot root. This
 feature requires the \s-1UNIX\s0 \fBdu\fR command to be installed on your system, for it to
 support the \*(L"\-csh\*(R" command line arguments, and to be in your path. You can also
 override your path settings and the flags passed to du using the cmd_du and du_args
 parameters.
-.PP
+.Sp
 It is also possible to pass a relative file path as a second argument, to get a report
 on a particular file or subdirectory.
 .Sp
 .RS 4
 \&\fBrsnapshot du localhost/home/\fR
 .RE
-.PP
+.RE
+.RS 4
+.Sp
 The \s-1GNU\s0 version of \*(L"du\*(R" is preferred. The \s-1BSD\s0 version works well also, but does
 not support the \-h flag (use \-k instead, to see the totals in kilobytes). Other
 versions of \*(L"du\*(R", such as Solaris, may not work at all.
-.PP
+.Sp
 To check the differences between two directories, call rsnapshot with the \*(L"diff\*(R"
 argument, followed by two intervals or directory paths.
-.PP
+.Sp
 For example:
 .Sp
 .RS 4
@@ -741,10 +761,12 @@ For example:
 .Sp
 \&\fBrsnapshot diff /.snapshots/daily.0 /.snapshots/daily.1\fR
 .RE
-.PP
+.RE
+.RS 4
+.Sp
 This will call the rsnapshot-diff program, which will scan both directories
 looking for differences (based on hard links).
-.PP
+.Sp
 \&\fBrsnapshot sync\fR
 .Sp
 .RS 4
@@ -767,7 +789,9 @@ the lowest, most frequent interval, and right before. For example:
 The sync operation simply runs rsync and all backup scripts. In this scenario, all
 interval calls simply rotate directories, even the lowest interval.
 .RE
-.PP
+.RE
+.RS 4
+.Sp
 \&\fBrsnapshot sync [dest]\fR
 .Sp
 .RS 4
@@ -790,10 +814,10 @@ It will \s-1NOT\s0 get any other backup points with slightly different values (l
 example.com/etc/, for example). In order to sync example.com/etc, you would need to
 run rsnapshot again, using example.com/etc as the optional parameter.
 .RE
-.SH ""
-.IX Header ""
-\&\s-1EXIT\s0 \s-1VALUES\s0
-.Sp
+.RE
+.RS 4
+.SH "EXIT VALUES"
+.IX Header "EXIT VALUES"
 .RS 4
 \&\fB0\fR  All operations completed successfully
 .Sp
@@ -801,6 +825,8 @@ run rsnapshot again, using example.com/etc as the optional parameter.
 .Sp
 \&\fB2\fR  Some warnings occurred, but the backup still finished
 .RE
+.RE
+.RS 4
 .SH "FILES"
 .IX Header "FILES"
 /etc/rsnapshot.conf
@@ -813,40 +839,40 @@ Use the \fB\-t\fR flag to see what commands would have been executed. This will 
 you the commands rsnapshot would try to run. There are a few minor differences
 (for example, not showing an attempt to remove the lockfile because it wasn't
 really created in the test), but should give you a very good idea what will happen.
-.PP
+.Sp
 Using the \fB\-v\fR, \fB\-V\fR, and \fB\-D\fR flags will print increasingly more information
 to \s-1STDOUT\s0.
-.PP
+.Sp
 Make sure you don't have spaces in the config file that you think are actually tabs.
-.PP
+.Sp
 Much other weird behavior can probably be attributed to plain old file system
 permissions and ssh authentication issues.
 .SH "BUGS"
 .IX Header "BUGS"
 Please report bugs (and other comments) to the rsnapshot-discuss mailing list:
-.PP
+.Sp
 \&\fBhttp://lists.sourceforge.net/lists/listinfo/rsnapshot\-discuss\fR
 .SH "NOTES"
 .IX Header "NOTES"
 Make sure your /etc/rsnapshot.conf file has all elements separated by tabs.
 See /etc/rsnapshot.conf.default for a working example file.
-.PP
+.Sp
 Make sure you put a trailing slash on the end of all directory references.
 If you don't, you may have extra directories created in your snapshots.
 For more information on how the trailing slash is handled, see the
 \&\fB\f(BIrsync\fB\|(1)\fR manpage.
-.PP
+.Sp
 Make sure to make the snapshot directory chmod 700 and owned by root
 (assuming backups are made by the root user). If the snapshot directory
 is readable by other users, they will be able to modify the snapshots
 containing their files, thus destroying the integrity of the snapshots.
-.PP
+.Sp
 If you would like regular users to be able to restore their own backups,
 there are a number of ways this can be accomplished. One such scenario
 would be:
-.PP
+.Sp
 Set \fBsnapshot_root\fR to \fB/.private/.snapshots\fR in \fB/etc/rsnapshot.conf\fR
-.PP
+.Sp
 Set the file permissions on these directories as follows:
 .Sp
 .RS 4
@@ -854,13 +880,15 @@ drwx\-\-\-\-\-\-    /.private
 .Sp
 drwxr-xr-x    /.private/.snapshots
 .RE
-.PP
+.RE
+.RS 4
+.Sp
 Export the /.private/.snapshots directory over read-only \s-1NFS\s0, a read-only
 Samba share, etc.
-.PP
+.Sp
 See the rsnapshot \s-1HOWTO\s0 for more information on making backups
 accessible to non-privileged users.
-.PP
+.Sp
 For ssh to work unattended through cron, you will probably want to use
 public key logins. Create an ssh key with no passphrase for root, and
 install the public key on each machine you want to backup. If you are
@@ -870,11 +898,11 @@ on the machine just for backups. Give the user a different name such
 as \*(L"rsnapshot\*(R", but keep the \s-1UID\s0 and \s-1GID\s0 set to 0, to give root
 privileges. However, make logins more restrictive, either through ssh
 configuration, or using an alternate shell.
-.PP
+.Sp
 \&\s-1BE\s0 \s-1CAREFUL\s0! If the private key is obtained by an attacker, they will
 have free run of all the systems involved. If you are unclear on how
 to do this, see \fB\f(BIssh\fB\|(1)\fR, \fB\f(BIsshd\fB\|(1)\fR, and \fB\f(BIssh\-keygen\fB\|(1)\fR.
-.PP
+.Sp
 Backup scripts are run as the same user that rsnapshot is running as.
 Typically this is root. Make sure that all of your backup scripts are
 only writable by root, and that they don't call any other programs
@@ -882,7 +910,7 @@ that aren't owned by root. If you fail to do this, anyone who can
 write to the backup script or any program it calls can fully take
 over the machine. Of course, this is not a situation unique to
 rsnapshot.
-.PP
+.Sp
 By default, rsync transfers are done using the \-\-numeric\-ids option.
 This means that user names and group names are ignored during transfers,
 but the \s-1UID/GID\s0 information is kept intact. The assumption is that the
@@ -892,13 +920,13 @@ be unmanageable. If you are archiving snapshots with \s-1GNU\s0 tar, you may
 want to use the \-\-numeric\-owner parameter. Also, keep a copy of the
 archived system's /etc/passwd and /etc/group files handy for the \s-1UID/GID\s0
 to name mapping.
-.PP
+.Sp
 If you remove backup points in the config file, the previously archived
 files under those points will permanently stay in the snapshots directory
 unless you remove the files yourself. If you want to conserve disk space,
 you will need to go into the <snapshot_root> directory and manually
 remove the files from the smallest interval's \*(L".0\*(R" directory.
-.PP
+.Sp
 For example, if you were previously backing up /home/ with a destination
 of localhost/, and hourly is your smallest interval, you would need to do
 the following to reclaim that disk space:
@@ -906,7 +934,9 @@ the following to reclaim that disk space:
 .RS 4
 rm \-rf <snapshot_root>/hourly.0/localhost/home/
 .RE
-.PP
+.RE
+.RS 4
+.Sp
 Please note that the other snapshots previously made of /home/ will still
 be using that disk space, but since the files are flushed out of hourly.0/,
 they will no longer be copied to the subsequent directories, and will thus
@@ -918,139 +948,196 @@ Mike Rubel \- \fBhttp://www.mikerubel.org/computers/rsync_snapshots/\fR
 .RS 4
 \&\- Created the original shell scripts on which this project is based
 .RE
-.PP
+.RE
+.RS 4
+.Sp
 Nathan Rosenquist (\fBnathan@rsnapshot.org\fR)
 .Sp
 .RS 4
-\&\- Primary author and maintainer of rsnapshot.
+\&\- Primary author and previous maintainer of rsnapshot.
 .RE
-.PP
+.RE
+.RS 4
+.Sp
+David Cantrell (\fBdavid@cantrell.org.uk\fR)
+.Sp
+.RS 4
+\&\- Current maintainer of rsnapshot
+\&\- Wrote the rsnapshot-diff utility
+.RE
+.RE
+.RS 4
+.Sp
 Carl Wilhelm Soderstrom \fB(chrome@real\-time.com)\fR
 .Sp
 .RS 4
 \&\- Created the \s-1RPM\s0 .spec file which allowed the \s-1RPM\s0 package to be built, among
 other things.
 .RE
-.PP
+.RE
+.RS 4
+.Sp
 Ted Zlatanov (\fBtzz@lifelogs.com\fR)
 .Sp
 .RS 4
 \&\- Added the one_fs feature, autoconf support, good advice, and much more.
 .RE
-.PP
+.RE
+.RS 4
+.Sp
 Ralf van Dooren (\fBr.vdooren@snow.nl\fR)
 .Sp
 .RS 4
 \&\- Added and maintains the rsnapshot entry in the FreeBSD ports tree.
 .RE
-.PP
+.RE
+.RS 4
+.Sp
 SlapAyoda
 .Sp
 .RS 4
 \&\- Provided access to his computer museum for software testing.
 .RE
-.PP
+.RE
+.RS 4
+.Sp
 Carl Boe (\fBboe@demog.berkeley.edu\fR)
 .Sp
 .RS 4
 \&\- Found several subtle bugs and provided fixes for them.
 .RE
-.PP
+.RE
+.RS 4
+.Sp
 Shane Leibling (\fBshane@cryptio.net\fR)
 .Sp
 .RS 4
 \&\- Fixed a compatibility bug in utils/backup_smb_share.sh
 .RE
-.PP
+.RE
+.RS 4
+.Sp
 Christoph Wegscheider (\fBchristoph.wegscheider@wegi.net\fR)
 .Sp
 .RS 4
 \&\- Added and maintains the Debian rsnapshot package.
 .RE
-.PP
+.RE
+.RS 4
+.Sp
 Bharat Mediratta (\fBbharat@menalto.com\fR)
 .Sp
 .RS 4
 \&\- Improved the exclusion rules to avoid backing up the snapshot root (among
 other things).
 .RE
-.PP
+.RE
+.RS 4
+.Sp
 Peter Palfrader (\fBweasel@debian.org\fR)
 .Sp
 .RS 4
 \&\- Enhanced error reporting to include command line options.
 .RE
-.PP
+.RE
+.RS 4
+.Sp
 Nicolas Kaiser (\fBnikai@nikai.net\fR)
 .Sp
 .RS 4
 \&\- Fixed typos in program and man page
 .RE
-.PP
-David Cantrell (\fBdavid@cantrell.org.uk\fR)
-.Sp
-.RS 4
-Wrote the rsnapshot-diff utility
 .RE
-.PP
+.RS 4
+.Sp
 Chris Petersen \- (\fBhttp://www.forevermore.net/\fR)
 .Sp
 .RS 4
 Added cwrsync permanent-share support
 .RE
-.PP
+.RE
+.RS 4
+.Sp
 Robert Jackson (\fBRobertJ@promedicalinc.com\fR)
 .Sp
 .RS 4
 Added use_lazy_deletes feature
 .RE
-.PP
+.RE
+.RS 4
+.Sp
 Justin Grote (\fBjustin@grote.name\fR)
 .Sp
 .RS 4
 Improved rsync error reporting code
 .RE
-.PP
+.RE
+.RS 4
+.Sp
 David Keegel (\fBdjk@cybersource.com.au\fR)
 .Sp
 .RS 4
-Fixed race condition in lock file creation, improved error reporting
-(and fixed other things).
+\&\- Fixed race condition in lock file creation, improved error reporting
+\&\- Allowed remote ssh directory paths starting with \*(L"~/\*(R" as well as \*(L"/\*(R"
+\&\- Fixed a number of other bugs and buglets
+\&\- Release management for rsnapshot 1.2.4
 .RE
-.PP
+.RE
+.RS 4
+.Sp
 Anthony Ettinger (\fBapwebdesign@yahoo.com\fR)
 .Sp
 .RS 4
 Wrote the utils/mysqlbackup.pl script
 .RE
-.PP
+.RE
+.RS 4
+.Sp
 Sherman Boyd
 .Sp
 .RS 4
 Wrote utils/random_file_verify.sh script
 .RE
+.RE
+.RS 4
+.Sp
+William Bear (\fBbear@umn.edu\fR)
+.Sp
+.RS 4
+Wrote the utils/rsnapreport.pl script (pretty summary of rsync stats)
+.RE
+.RE
+.RS 4
+.Sp
+Eric Anderson (\fBanderson@centtech.com\fR)
+.Sp
+.RS 4
+Improvements to utils/rsnapreport.pl.
+.RE
+.RE
+.RS 4
 .SH "COPYRIGHT"
 .IX Header "COPYRIGHT"
 Copyright (C) 2003\-2005 Nathan Rosenquist
-.PP
+.Sp
 Portions Copyright (C) 2002\-2005 Mike Rubel, Carl Wilhelm Soderstrom,
 Ted Zlatanov, Carl Boe, Shane Liebling, Bharat Mediratta, Peter Palfrader,
 Nicolas Kaiser, David Cantrell, Chris Petersen, Robert Jackson, Justin Grote,
 David Keegel
-.PP
+.Sp
 This man page is distributed under the same license as rsnapshot:
 the \s-1GPL\s0 (see below).
-.PP
+.Sp
 This program is free software; you can redistribute it and/or modify
 it under the terms of the \s-1GNU\s0 General Public License as published by
 the Free Software Foundation; either version 2 of the License, or
 (at your option) any later version.
-.PP
+.Sp
 This program is distributed in the hope that it will be useful,
 but \s-1WITHOUT\s0 \s-1ANY\s0 \s-1WARRANTY\s0; without even the implied warranty of
 \&\s-1MERCHANTABILITY\s0 or \s-1FITNESS\s0 \s-1FOR\s0 A \s-1PARTICULAR\s0 \s-1PURPOSE\s0.  See the
 \&\s-1GNU\s0 General Public License for more details.
-.PP
-You should have received a copy of the \s-1GNU\s0 General Public License
-along with this program; if not, write to the Free Software
-Foundation, Inc., 59 Temple Place, Suite 330, Boston, \s-1MA\s0  02111\-1307  \s-1USA\s0
+.Sp
+You should have received a copy of the \s-1GNU\s0 General Public License along
+with this program; if not, write to the Free Software Foundation, Inc.,
+51 Franklin Street, Fifth Floor, Boston, \s-1MA\s0  02110\-1301 \s-1USA\s0
