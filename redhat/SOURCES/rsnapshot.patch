@@ -1,6 +1,6 @@
---- rsnapshot.conf.default.in	2005-07-24 12:33:16.000000000 -0700
-+++ rsnapshot.conf.default.in.redhat	2005-07-24 13:00:23.000000000 -0700
-@@ -41,7 +41,7 @@
+--- rsnapshot.conf.default.in	2006-03-13 17:48:53.000000000 +1100
++++ rsnapshot.conf.default.in.redhat	2006-05-13 22:39:47.000000000 +1000
+@@ -45,7 +45,7 @@
  #
  # See the README file or the man page for more details.
  #
@@ -9,7 +9,7 @@
  
  # uncomment this to use the rm program instead of the built-in perl routine.
  #
-@@ -64,7 +64,7 @@
+@@ -68,7 +68,7 @@
  # If you have an older version of "du", you may also want to check the
  # "du_args" parameter below.
  #
@@ -18,7 +18,7 @@
  
  # Uncomment this to specify the path to rsnapshot-diff.
  #
-@@ -113,14 +113,14 @@
+@@ -117,14 +117,14 @@
  # If you enable this, data will be written to the file you specify. The
  # amount of data written is controlled by the "loglevel" parameter.
  #
