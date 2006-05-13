@@ -17,7 +17,8 @@
 # Robert Jackson, Justin Grote, David Keegel                           #
 #                                                                      #
 # rsnapshot comes with ABSOLUTELY NO WARRANTY.  This is free software, #
-# and you are welcome to redistribute it under the terms of the GPL.   #
+# and you may copy, distribute and/or modify it under the terms of     #
+# the GNU GPL (version 2 or at your option any later version).         #
 # See the GNU General Public License (in file: COPYING) for details.   #
 #                                                                      #
 # Based on code originally by Mike Rubel                               #
@@ -25,7 +26,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.337 2006/05/07 22:30:29 djk20 Exp $
+# $Id: rsnapshot-program.pl,v 1.338 2006/05/13 11:52:52 djk20 Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
