@@ -1,4 +1,4 @@
-# $Id: Makefile.am,v 1.67 2006/05/13 12:42:01 djk20 Exp $ #
+# $Id: Makefile.am,v 1.68 2006/05/13 12:55:53 djk20 Exp $ #
 
 VERSION = 1.2.4
 
@@ -9,11 +9,16 @@ upgrade:
 	${PERL} rsnapshot-program.pl -c ${sysconfdir}/rsnapshot.conf upgrade-config-file
 	@echo ""
 
-man:
+doc: man html
+	@echo "Documentation rsnapshot.1 and rsnapshot.html are now up to date."
+
+man: rsnapshot.1
+rsnapshot.1 : rsnapshot
 	@# perl 5.8 for this
 	/usr/bin/pod2man -c '' -n 'rsnapshot' -r '' rsnapshot > rsnapshot.1
 	
-html:
+html: rsnapshot.html
+rsnapshot.html: rsnapshot
 	pod2html rsnapshot | grep -v 'link rev' > rsnapshot.html
 	rm -f pod2htmd.*
 	rm -f pod2htmi.*
@@ -52,7 +57,7 @@ rpm: tar
 	rpmbuild -bb $(RPM_BASE_DIR)/SPECS/rsnapshot.spec
 	cp $(RPM_BASE_DIR)/RPMS/noarch/rsnapshot-$(VERSION)-1.noarch.rpm .
 
-tar: man rpm-patch
+tar: doc rpm-patch
 	rm -f rsnapshot-$(VERSION).tar.gz
 	
 	@# core files
