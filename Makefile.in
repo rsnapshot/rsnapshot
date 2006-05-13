@@ -14,7 +14,7 @@
 
 @SET_MAKE@
 
-# $Id: Makefile.in,v 1.90 2006/05/13 12:26:40 djk20 Exp $ #
+# $Id: Makefile.in,v 1.91 2006/05/13 12:42:01 djk20 Exp $ #
 
 
 srcdir = @srcdir@
@@ -610,7 +610,7 @@ tar: man rpm-patch
 	@# t - testing
 	mkdir rsnapshot-$(VERSION)/t
 	cp -a t/ rsnapshot-$(VERSION)/
-	-find rsnapshot-$(VERSION)/t -name CVS -exec rm -rf {} \;
+	-find rsnapshot-$(VERSION)/t -depth -name CVS -exec rm -rf {} \;
 
 	@# change ownership to root, and delete build dir
 	-chown -R root:root rsnapshot-$(VERSION)/

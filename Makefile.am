@@ -1,4 +1,4 @@
-# $Id: Makefile.am,v 1.66 2006/03/11 06:47:52 djk20 Exp $ #
+# $Id: Makefile.am,v 1.67 2006/05/13 12:42:01 djk20 Exp $ #
 
 VERSION = 1.2.4
 
@@ -79,7 +79,7 @@ tar: man rpm-patch
 	@# t - testing
 	mkdir rsnapshot-$(VERSION)/t
 	cp -a t/ rsnapshot-$(VERSION)/
-	-find rsnapshot-$(VERSION)/t -name CVS -exec rm -rf {} \;
+	-find rsnapshot-$(VERSION)/t -depth -name CVS -exec rm -rf {} \;
 	
 	@# change ownership to root, and delete build dir
 	-chown -R root:root rsnapshot-$(VERSION)/
