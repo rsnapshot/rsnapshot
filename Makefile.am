@@ -1,4 +1,4 @@
-# $Id: Makefile.am,v 1.68 2006/05/13 12:55:53 djk20 Exp $ #
+# $Id: Makefile.am,v 1.69 2006/05/14 02:02:59 djk20 Exp $ #
 
 VERSION = 1.2.4
 
@@ -73,18 +73,20 @@ tar: doc rpm-patch
 	mkdir rsnapshot-$(VERSION)/redhat/
 	mkdir rsnapshot-$(VERSION)/redhat/SOURCES/
 	mkdir rsnapshot-$(VERSION)/redhat/SPECS/
-	cp redhat/README rsnapshot-$(VERSION)/redhat/
-	cp redhat/SOURCES/rsnapshot.patch rsnapshot-$(VERSION)/redhat/SOURCES/
-	cp redhat/SPECS/rsnapshot.spec rsnapshot-$(VERSION)/redhat/SPECS/
+	cp -p redhat/README rsnapshot-$(VERSION)/redhat/
+	cp -p redhat/SOURCES/rsnapshot.patch rsnapshot-$(VERSION)/redhat/SOURCES/
+	cp -p redhat/SPECS/rsnapshot.spec rsnapshot-$(VERSION)/redhat/SPECS/
 	
 	@# utils
 	mkdir rsnapshot-$(VERSION)/utils/
-	cp utils/{rsnaptar,*.sh,*.pl,README} rsnapshot-$(VERSION)/utils/
+	cp -p utils/{rsnaptar,*.sh,*.pl,README} rsnapshot-$(VERSION)/utils/
+	cp -p utils/rsnapshotdb/*.* rsnapshot-$(VERSION)/utils/
 	
 	@# t - testing
-	mkdir rsnapshot-$(VERSION)/t
-	cp -a t/ rsnapshot-$(VERSION)/
-	-find rsnapshot-$(VERSION)/t -depth -name CVS -exec rm -rf {} \;
+	mkdir -p rsnapshot-$(VERSION)/t/support/etc
+	mkdir rsnapshot-$(VERSION)/t/support/files
+	mkdir rsnapshot-$(VERSION)/t/support/snapshots
+	cp -a t/*.t.in t/support/etc/*.in t/support/files rsnapshot-$(VERSION)/
 	
 	@# change ownership to root, and delete build dir
 	-chown -R root:root rsnapshot-$(VERSION)/
