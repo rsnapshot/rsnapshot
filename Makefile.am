@@ -1,4 +1,4 @@
-# $Id: Makefile.am,v 1.69 2006/05/14 02:02:59 djk20 Exp $ #
+# $Id: Makefile.am,v 1.70 2006/05/14 02:49:51 djk20 Exp $ #
 
 VERSION = 1.2.4
 
@@ -80,13 +80,16 @@ tar: doc rpm-patch
 	@# utils
 	mkdir rsnapshot-$(VERSION)/utils/
 	cp -p utils/{rsnaptar,*.sh,*.pl,README} rsnapshot-$(VERSION)/utils/
-	cp -p utils/rsnapshotdb/*.* rsnapshot-$(VERSION)/utils/
+	mkdir rsnapshot-$(VERSION)/utils/rsnapshotdb
+	cp -p --parents utils/rsnapshotdb/*.* rsnapshot-$(VERSION)/
 	
 	@# t - testing
 	mkdir -p rsnapshot-$(VERSION)/t/support/etc
 	mkdir rsnapshot-$(VERSION)/t/support/files
 	mkdir rsnapshot-$(VERSION)/t/support/snapshots
-	cp -a t/*.t.in t/support/etc/*.in t/support/files rsnapshot-$(VERSION)/
+	cp -a --parents t/*.t.in t/support/etc/*.in t/support/files rsnapshot-$(VERSION)/
+	@# remove CVS directories from t/support/files.
+	-find rsnapshot-$(VERSION)/t -depth -name CVS -exec rm -rf {} \;
 	
 	@# change ownership to root, and delete build dir
 	-chown -R root:root rsnapshot-$(VERSION)/
