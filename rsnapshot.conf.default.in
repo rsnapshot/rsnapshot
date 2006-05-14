@@ -204,7 +204,7 @@ backup	/usr/local/	localhost/
 #backup	root@example.com:/etc/	example.com/	exclude=mtab,exclude=core
 
 # CVS.SOURCEFORGE.NET
-#backup_script	/usr/local/bin/backup_rsnapshot_cvsroot.sh	cvs.sourceforge.net/
+#backup_script	/usr/local/bin/backup_rsnapshot_cvsroot.sh	rsnapshot.cvs.sourceforge.net/
 
 # RSYNC.SAMBA.ORG
 #backup	rsync://rsync.samba.org/rsyncftp/	rsync.samba.org/rsyncftp/
