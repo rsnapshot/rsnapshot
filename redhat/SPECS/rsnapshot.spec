@@ -1,8 +1,8 @@
-# $Id: rsnapshot.spec,v 1.43 2006/02/16 04:52:35 djk20 Exp $
+# $Id: rsnapshot.spec,v 1.44 2006/05/18 10:12:37 djk20 Exp $
 
 Name: rsnapshot
 Summary: Local and remote filesystem snapshot utility
-Version: 1.2.4
+Version: 1.2.9
 Release: 1
 BuildArch: noarch
 License: GPL
@@ -85,11 +85,14 @@ rm -rf $RPM_BUILD_DIR/%{name}-%{version}/
 %verify(user group mode md5 size mtime) %{_mandir}/man1/rsnapshot.1*
 
 %changelog
-* Sun Feb 5 2006 David Keegel <djk@cybersource.com.au>
+* Thu May 18 2006 David Keegel <djk@cybersource.com.au>
+- Update version number to 1.2.9
+
+* Sun Feb  5 2006 David Keegel <djk@cybersource.com.au>
 - Added rsnapshot-diff to %files
 - Update version number to 1.2.4
 
-* Sat Apr 2 2005 Nathan Rosenquist <nathan@rsnapshot.org>
+* Sat Apr  2 2005 Nathan Rosenquist <nathan@rsnapshot.org>
 - Added rsnapshot-diff to install
 
 * Sun Jan 29 2005 Nathan Rosenquist <nathan@rsnapshot.org>

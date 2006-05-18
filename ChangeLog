@@ -3,7 +3,7 @@ rsnapshot changelog
 http://www.rsnapshot.org/
 ------------------------------------------------------------------------------
 
-VERSION 1.2.4 (??? ?? ??:?? 2006)
+VERSION 1.2.9  (May 18 2006)
 ------------------------------------------------------------------------------
 - Added utils/rsnapreport.pl, written by William Bear.
 - Detect exit status 23 and 24 from rsync in rsync_cleanup_after_native_cp_al

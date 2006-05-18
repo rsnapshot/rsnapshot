@@ -1,6 +1,6 @@
-# $Id: Makefile.am,v 1.70 2006/05/14 02:49:51 djk20 Exp $ #
+# $Id: Makefile.am,v 1.71 2006/05/18 10:12:37 djk20 Exp $ #
 
-VERSION = 1.2.4
+VERSION = 1.2.9
 
 RPM_BASE_DIR = /usr/src/redhat
 
