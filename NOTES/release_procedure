@@ -1,6 +1,13 @@
 RELEASE PROCEDURES
 --------------------------------------------
 
+This file is intended for developers and packagers of rsnapshot,
+not for regular users/installers of rsnapshot.
+
+It was originally emailled by Nathan Rosenquist (former rsnapshot
+maintainer) in response to a request for information from David Keegel
+about rsnapshot release procedures.  It has subsequently been updated.
+
 First of all, automating all of this would be a good thing.  As it stands,
 you have a series of fairly useful Makefile targets and scripts, but
 unfortunately there's no "build-everything-with-one-command" feature.
@@ -15,6 +22,7 @@ release:
     configure.ac
     rsnapshot-program.pl
     redhat/SPECS/rsnapshot.spec
+    ChangeLog
 
 Automake/Autoconf file generation summary:
 
@@ -95,8 +103,8 @@ several hundred pages of documentation detailing all those rules).
 
 At a point where the CVS files are stable and no more changes are
 needed for the release, tag the CVS files for the new version.
-eg (for version 1.2.4):
-   cvs tag release_1_2_4
+eg (for version 1.2.9):
+   cvs tag release_1_2_9
 
 Once you have all the packages created (or as many as you decide to
 do), there's a utils/sign_packages.sh script that will go through
