@@ -1,0 +1,107 @@
+RELEASE PROCEDURES
+--------------------------------------------
+
+First of all, automating all of this would be a good thing.  As it stands,
+you have a series of fairly useful Makefile targets and scripts, but
+unfortunately there's no "build-everything-with-one-command" feature.
+There's obviously room for improvement here.
+
+Files that need to have the rsnapshot version number updated before a
+release:
+
+    INSTALL
+    Makefile.am
+    README
+    configure.ac
+    rsnapshot-program.pl
+    redhat/SOURCES/rsnapshot.patch
+    redhat/SPECS/rsnapshot.spec
+
+Automake/Autoconf file generation summary:
+
+    The 'automake' command takes Makefile.am and creates Makefile.in
+(plus some other junk that 'make clean' gets rid of)
+    The 'autoconf' command takes configure.ac and generates the
+'configure' file (plus more junk that 'make clean' gets rid of)
+
+You should run them before each release, if only to propogate the
+version number updates into Makefile.in and configure
+
+
+Commands that should be run (to generate Makefile.in and configure)
+
+    autoconf
+    automake
+
+To generate the Makefile, which you'll need below
+
+    ./configure
+
+To generate the man page from the POD data in rsnapshot
+
+    make man
+
+To make an updated HTML man page for the website (i usually manually
+put a different style sheet on it afterwards)
+
+    make html
+
+To generate the RPM patch file (which localizes certain paths) for
+use in building the RPM later
+
+    make rpm-patch
+
+To create the tarball for release:
+I like to do this, untar the resulting tar file, and then run ./
+configure && make tar again and verify that all the right files are
+there
+(and that none of the wrong files have slipped in. you'll notice
+every file in this Makefile target is pretty specific)
+
+    make tar
+
+The test suite is far from complete, but i guess it could be
+considered a good start
+
+    make test
+
+To clean up the mess left by automake/autoconf (they generate some
+cache/intermediate files that you don't need)
+
+    make clean
+
+To create the RPM (on a RedHat compatible system, I usually used
+CentOS). beware, RPMs are not necessarily compatible between distros!
+rsnapshot is simple enough that the RPMs seem to work everywhere
+(partly thanks to a bug reported by a SuSE user where needless RPM
+dependencies were being introduced). If all goes well, you should end
+up with an RPM in your working directory. see the rpm Makefile target
+for details on the commands.
+
+    tar xzvf rsnapshot-x.y.z.tar.gz
+    cd rsnapshot-x.y.z
+    ./configure
+    make rpm
+
+The Debian package is maintained by Christoph Wegscheider
+<christoph.wegscheider@wegi.net>. I'm honestly not sure exactly what he
+does, I would usually coordinate with him before a release to create
+the Debian package. As a last resort, the existing 1.2.1 release
+source code should be available from the Debian archives as a
+starting point. Unlike the Debian packages I created in the earlier
+days, the ones Christoph makes are Debian Policy compliant (they have
+several hundred pages of documentation detailing all those rules).
+
+Once you have all the packages created (or as many as you decide to
+do), there's a utils/sign_packages.sh script that will go through
+and create md5/sha1 hashes and gpg sign them with your GPG key. If
+you don't have a GPG key, you should create one to sign the
+new packages and append the public GPG key to the KEYS file in the
+rsnapshot.org web root. Personally I would always 'chattr +i' the
+files in the downloads directory as a reminder of their permanence
+(and an extra layer of protection against hackers and clumsy
+fingers).
+
+Obviously, I'd also update the links on the web site to point to the
+newest download release as well.
+
