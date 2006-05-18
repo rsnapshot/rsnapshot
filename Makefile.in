@@ -14,7 +14,7 @@
 
 @SET_MAKE@
 
-# $Id: Makefile.in,v 1.94 2006/05/14 03:25:06 djk20 Exp $ #
+# $Id: Makefile.in,v 1.95 2006/05/18 10:17:53 djk20 Exp $ #
 
 
 srcdir = @srcdir@
@@ -139,7 +139,7 @@ TEST_DU = @TEST_DU@
 TEST_LOGGER = @TEST_LOGGER@
 TEST_RM = @TEST_RM@
 TEST_SSH = @TEST_SSH@
-VERSION = 1.2.4
+VERSION = 1.2.9
 ac_ct_STRIP = @ac_ct_STRIP@
 am__leading_dot = @am__leading_dot@
 am__tar = @am__tar@
