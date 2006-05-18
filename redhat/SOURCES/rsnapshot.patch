@@ -1,5 +1,5 @@
 --- rsnapshot.conf.default.in	2006-05-14 11:01:23.000000000 +1000
-+++ rsnapshot.conf.default.in.redhat	2006-05-14 13:50:13.000000000 +1000
++++ rsnapshot.conf.default.in.redhat	2006-05-18 20:19:45.000000000 +1000
 @@ -45,7 +45,7 @@
  #
  # See the README file or the man page for more details.
