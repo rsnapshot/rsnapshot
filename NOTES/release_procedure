@@ -14,22 +14,23 @@ release:
     README
     configure.ac
     rsnapshot-program.pl
-    redhat/SOURCES/rsnapshot.patch
     redhat/SPECS/rsnapshot.spec
 
 Automake/Autoconf file generation summary:
 
+    The 'aclocal' command takes configure.ac and generates aclocal.m4
+    The 'autoconf' command takes configure.ac + aclocal.m4 and generates 
+the 'configure' file (plus some junk that 'make clean' gets rid of)
     The 'automake' command takes Makefile.am and creates Makefile.in
 (plus some other junk that 'make clean' gets rid of)
-    The 'autoconf' command takes configure.ac and generates the
-'configure' file (plus more junk that 'make clean' gets rid of)
 
-You should run them before each release, if only to propogate the
+You should run them before each release, if only to propagate the
 version number updates into Makefile.in and configure
 
 
 Commands that should be run (to generate Makefile.in and configure)
 
+    aclocal
     autoconf
     automake
 
@@ -91,6 +92,11 @@ source code should be available from the Debian archives as a
 starting point. Unlike the Debian packages I created in the earlier
 days, the ones Christoph makes are Debian Policy compliant (they have
 several hundred pages of documentation detailing all those rules).
+
+At a point where the CVS files are stable and no more changes are
+needed for the release, tag the CVS files for the new version.
+eg (for version 1.2.4):
+   cvs tag release_1_2_4
 
 Once you have all the packages created (or as many as you decide to
 do), there's a utils/sign_packages.sh script that will go through
