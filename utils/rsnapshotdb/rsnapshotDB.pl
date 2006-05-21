@@ -124,9 +124,9 @@ my $dbApp = {
 	},
 };
 
-main();
+init();
 
-sub main
+sub init
 {
 
 	#check mode of $dbpasswd file
@@ -332,7 +332,7 @@ sub showDB
 
 	$self->v("START: showDB command...", 1);
 	my $cmdShowDB = "ssh $sshOption $user\@$host \"echo -n 'SHOW DATABASES;' | \ $dbApp->{$dbType}->{'prompt'}->{'bin'} \ $dbApp->{$dbType}->{'prompt'}->{'opts'} \ $dbApp->{$dbType}->{'prompt'}->{'user'} $dbuser \ $dbApp->{$dbType}->{'prompt'}->{'pass'}$dbpass \ $dbApp->{$dbType}->{'prompt'}->{'host'} $dbhost\""; 
-	my $out = qx/$cmdShowDB/;
+	my $out = qx/$cmdShowDB/ or warn 'SHOW DATABASES failed...';
 	$self->v("CMD: $cmdShowDB -> $out.", 2);
 	$self->v("DONE: showDB command.", 1);
 
@@ -374,12 +374,12 @@ sub dumbDB
 	my $dumper = $dbApp->{$dbType}->{'dumper'}->{'bin'};
 	my $prompt = $dbApp->{$dbType}->{'prompt'}->{'bin'};
 
-	my $tmpDir = $self->_tmpDir(); #tmp directory path
+	my $tmpDir = $self->_tmpDir(); #remote tmp directory path
 	my $localTmpDir = cwd(); #need by rsnapshot
 	my $cmdRemoteTmpDir = "ssh $sshOption $user\@$host 'echo -n $tmpDir'";
 
 	$self->v("CMD: remote tmp dir '$cmdRemoteTmpDir'.", 2);
-	my $remoteTmpDir = qx/$cmdRemoteTmpDir/;
+	my $remoteTmpDir = qx/$cmdRemoteTmpDir/ or warn "REMOTE TMP DIR failed...";
 	$self->v("SET: remote temp dir... '$remoteTmpDir'", 1);
 
 	#dumper arguments

@@ -1,4 +1,0 @@
-mysql:dbusername:dbpassword:dbhost
-#This is a comment:
-#psql:dbusername:dbpassword:dbhost
-#dbType:dbusername:dbpassword:dbhost

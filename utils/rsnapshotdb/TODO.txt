@@ -1,14 +1,13 @@
 TODO LIST:
 
-- remove support for unencrypted SSH passwords in rsnapshotDB.conf, should be supported with ssh keys instead.
 - as suggested by r00t in #bash, add option to split on tables instead of db.
 - enable split | gzip to get in under isp radar (cpu resource limits with I/O on large db's).
-- thoroughly test with postgresql, mysql on Linux only so far. thanks to <poo> in #bash
+- thoroughly test with postgresql, mysql on Linux only so far.
 
 1/22/06
 - DONE - Thoroughly test rewrite using ssh keys and tunneling.
 - DONE - Optimize code efficiency, main reason I'm throwing this out on the web as GPL :-)
 
-Decide whether to stop, or continue on errors/connectivity issues. Possibly throw an email/SMS at someone. Problem because assumption is that you're db's are being archived without error.
+- Decide whether to stop, or continue on errors/connectivity issues. Possibly throw an email/SMS at someone. Problem because assumption is that you're db's are being archived without error.
 
-- DONE - Bypass the need to store database passwords locally in rsnapshotDB.conf if user is network authenticated.
+DONE - remove support for unencrypted SSH passwords in rsnapshotDB.conf, should be supported with ssh keys instead.
