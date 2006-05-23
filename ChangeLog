@@ -3,6 +3,11 @@ rsnapshot changelog
 http://www.rsnapshot.org/
 ------------------------------------------------------------------------------
 
+VERSION 1.3.0  (??? ?? 2006)
+------------------------------------------------------------------------------
+- More examples in rsnapshot.conf.default.in.
+
+
 VERSION 1.2.9  (May 18 2006)
 ------------------------------------------------------------------------------
 - Added utils/rsnapreport.pl, written by William Bear.
