@@ -39,10 +39,6 @@ snapshot_root	/.snapshots/
 # LINUX USERS:   Be sure to uncomment "cmd_cp". This gives you extra features.
 # EVERYONE ELSE: Leave "cmd_cp" commented out for compatibility.
 #
-# Note: Linux users with gnu cp/coreutils version > 5.3, should leave
-# cmd_cp commented out, since cp fails to create destination directories
-# with a trailing slash for versions 5.3 or later.
-#
 # See the README file or the man page for more details.
 #
 #@CMD_CP@
