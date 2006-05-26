@@ -50,13 +50,14 @@ Justin Grote <justin@grote.name>
     - Improved rsync error reporting code
 
 David Keegel <djk@cybersource.com.au>
-    - Fixed race condition in lock file creation, improved error reporting
     - Allowed remote ssh directory paths starting with "~/" as well as "/"
+    - Fixed race condition in lock file creation, improved error reporting
     - Fixed a number of other bugs and buglets
-    - Release management for rsnapshot 1.2.4
+    - Release management for rsnapshot 1.2.9
 
 Anthony Ettinger <apwebdesign@yahoo.com>
     - Wrote the utils/mysqlbackup.pl script
+    - Wrote utils/rsnapshotdb
 
 Sherman Boyd
     - Wrote the utils/random_file_verify.sh script
