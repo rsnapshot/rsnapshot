@@ -5,8 +5,15 @@ Nathan Rosenquist <nathan@rsnapshot.org>
     - Primary author and ex-maintainer of rsnapshot.
 
 David Cantrell <david@cantrell.org.uk>
-    - Current maintainer of rsnapshot
+    - Current co-maintainer of rsnapshot
     - Wrote the rsnapshot-diff utility
+
+David Keegel <djk@cybersource.com.au>
+    - Co-maintainer, with particular responsibility for release management
+    - Allowed remote ssh directory paths starting with "~/" as well as "/"
+    - Fixed race condition in lock file creation, improved error reporting
+    - Fixed a number of other bugs and buglets
+    - Release management for rsnapshot 1.2.9
 
 Carl Wilhelm Soderstrom <chrome@real-time.com>
     - Created the RPM .spec file which allowed the RPM package to be built,
@@ -48,12 +55,6 @@ Robert Jackson <RobertJ@promedicalinc.com>
 
 Justin Grote <justin@grote.name>
     - Improved rsync error reporting code
-
-David Keegel <djk@cybersource.com.au>
-    - Allowed remote ssh directory paths starting with "~/" as well as "/"
-    - Fixed race condition in lock file creation, improved error reporting
-    - Fixed a number of other bugs and buglets
-    - Release management for rsnapshot 1.2.9
 
 Anthony Ettinger <apwebdesign@yahoo.com>
     - Wrote the utils/mysqlbackup.pl script

@@ -26,7 +26,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.339 2006/05/18 10:12:37 djk20 Exp $
+# $Id: rsnapshot-program.pl,v 1.340 2006/05/28 16:15:06 drhyde Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -6452,8 +6452,20 @@ David Cantrell (B<david@cantrell.org.uk>)
 
 =over 4
 
-- Current maintainer of rsnapshot
+- Current co-maintainer of rsnapshot
 - Wrote the rsnapshot-diff utility
+
+=back
+
+David Keegel <djk@cybersource.com.au>
+
+=over 4
+
+- Co-maintainer, the responsibility for release management
+- Fixed race condition in lock file creation, improved error reporting
+- Allowed remote ssh directory paths starting with "~/" as well as "/"
+- Fixed a number of other bugs and buglets
+- Release management for rsnapshot 1.2.9
 
 =back
 
@@ -6560,17 +6572,6 @@ Justin Grote (B<justin@grote.name>)
 =over 4
 
 Improved rsync error reporting code
-
-=back
-
-David Keegel (B<djk@cybersource.com.au>)
-
-=over 4
-
-- Fixed race condition in lock file creation, improved error reporting
-- Allowed remote ssh directory paths starting with "~/" as well as "/"
-- Fixed a number of other bugs and buglets
-- Release management for rsnapshot 1.2.9
 
 =back
 
