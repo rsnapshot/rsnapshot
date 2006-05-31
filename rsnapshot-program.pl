@@ -26,7 +26,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.340 2006/05/28 16:15:06 drhyde Exp $
+# $Id: rsnapshot-program.pl,v 1.341 2006/05/31 21:53:01 drhyde Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -245,7 +245,8 @@ log_startup();
 # this is reported to fix some semi-obscure problems with rmtree()
 set_posix_locale();
 
-# if we're using a lockfile, try to add it (the program will bail if one exists)
+# if we're using a lockfile, try to add it
+# (the program will bail if one exists and it's not stale)
 add_lockfile();
 
 # create snapshot_root if it doesn't exist (and no_create_root != 1)
@@ -2056,6 +2057,10 @@ sub log_startup {
 #
 # we don't use bail() to exit on error, because that would remove the
 # lockfile that may exist from another invocation
+#
+# if a lockfile exists, we try to read it (and stop if we can't) to get a PID,
+# then see if that PID exists.  If it does, we stop, otherwise we assume it's
+# a stale lock and remove it first.
 sub add_lockfile {
 	# if we don't have a lockfile defined, just return undef
 	if (!defined($config_vars{'lockfile'})) {
@@ -2072,11 +2077,26 @@ sub add_lockfile {
 	}
 	
 	# does a lockfile already exist?
-	if (1 == is_real_local_abs_path($lockfile)) {
-		print_err ("Lockfile $lockfile exists, can not continue!", 1);
-		syslog_err("Lockfile $lockfile exists, can not continue");
-		exit(1);
-	}
+        if (1 == is_real_local_abs_path($lockfile)) {
+            if(!open(LOCKFILE, $lockfile)) {
+                print_err ("Lockfile $lockfile exists and can't be read, can not continue!", 1);
+                syslog_err("Lockfile $lockfile exists and can't be read, can not continue");
+                exit(1);
+            }
+            my $pid = <LOCKFILE>;
+            chomp($pid);
+            close(LOCKFILE);
+            if(kill(0, $pid)) {
+                print_err ("Lockfile $lockfile exists and so does its process, can not continue");
+                syslog_err("Lockfile $lockfile exists and so does its process, can not continue");
+                exit(1);
+            } else {
+                print_warn("Removing stale lockfile $lockfile", 1);
+                syslog_warn("Removing stale lockfile $lockfile");
+                remove_lockfile();
+            }
+        }
+
 	
 	# create the lockfile
 	print_cmd("echo $$ > $lockfile");
@@ -5965,6 +5985,12 @@ Lockfile to use when rsnapshot is run. This prevents a second invocation
 from clobbering the first one. If not specified, no lock file is used.
 Make sure to use a directory that is not world writeable for security
 reasons.
+
+If a lockfile exists when rsnapshot starts, it will try to read the file
+and stop with an error if it can't.  If it *can* read the file, it sees if
+a process exists with the PID noted in the file.  If it does, rsnapshot
+stops with an error message.  If there is no process with that PID, then
+we assume that the lockfile is stale and ignore it.
 
 =back
 
