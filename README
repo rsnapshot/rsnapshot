@@ -50,13 +50,8 @@ COMPATIBILITY NOTICES (Please read)
 (1)
   Note that systems which use GNU cp version 5.9 or later will have problems
   with rsnapshot versions up to and including 1.2.3, if cmd_cp is enabled
-  (and points at the later gnu cp).  GNU cp was changed in 2005 not to create
-  a destination directory if it has a trailing slash.
-
-  This problem was found with SuSE version 9.3 and Gentoo in 2005.
-  Users of these systems mostly opt to disable cmd_cp.
-  It is believed that rsnapshot version 1.2.4 will interoperate nicely
-  with gnu cp versions 5.9.x.
+  (and points at the later gnu cp).  This is no longer a problem with
+  rsnapshot 1.2.9, which strips off trailing slashes when running cp.
 
 (2)
   If you have rsync version 2.5.7 or later, you may want to enable the
@@ -113,11 +108,13 @@ new snapshot, rotate the old ones, and retain the most recent six
 (hourly.0 - hourly.5).
 
 For the full documentation, type "man rsnapshot" once it is installed,
-or visit http://www.rsnapshot.org/
+or visit http://www.rsnapshot.org/.  The HowTo on the web site has a
+detailed overview of how to install and configure rsnapshot, and things
+like how to set it up so users can restore their own files.
 
 If you plan on using the "backup_script" parameter in your backup scheme,
 take a look at the utils/ directory in the source distribution for several
-example scripts.
+example scripts.  The utils/rsnapreport.pl script is well worth a look.
 
 ------------------------------------------------------------------------------
 AUTHORS
