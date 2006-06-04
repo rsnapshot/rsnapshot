@@ -1,4 +1,4 @@
-# $Id: Makefile.am,v 1.71 2006/05/18 10:12:37 djk20 Exp $ #
+# $Id: Makefile.am,v 1.72 2006/06/04 04:23:14 djk20 Exp $ #
 
 VERSION = 1.2.9
 
@@ -46,6 +46,7 @@ rpm-patch:
 	perl -pi -e 's/^\#\@CMD_DU\@/\@CMD_DU\@/' rsnapshot.conf.default.in.redhat
 	perl -pi -e 's/^\#logfile/logfile/' rsnapshot.conf.default.in.redhat
 	perl -pi -e 's/^\#lockfile/lockfile/' rsnapshot.conf.default.in.redhat
+	perl -pi -e 's%^\#cmd_rsnapshot_diff /usr/local/bin/rsnapshot-diff%cmd_rsnapshot_diff /usr/bin/rsnapshot-diff%' rsnapshot.conf.default.in.redhat
 	@# diff doesn't return 0
 	diff -u rsnapshot.conf.default.in rsnapshot.conf.default.in.redhat > redhat/SOURCES/rsnapshot.patch || /bin/true
 	rm -f rsnapshot.conf.default.in.redhat
