@@ -4,16 +4,17 @@ use strict;
 use Test::More tests => 2;
 
 # copy files into place
+mkdir("t/support/files/a")		unless -d "t/support/files/a";
 `cp t/support/files/template/a/1 t/support/files/template/a/2 t/support/files/a/`;
 
 # run rsnapshot once to copy the files into the snapshot root
-`@PERL@ rsnapshot -c t/support/etc/rsync.conf hourly`;
+`@PERL@ ./rsnapshot -c t/support/etc/rsync.conf hourly`;
 
 # now remove a file from the source
 `rm -f t/support/files/a/1`;
 
 # run rsnapshot again, it _should_ delete the "1" file
-`@PERL@ rsnapshot -c t/support/etc/relative_delete_bugfix.conf hourly`;
+`@PERL@ ./rsnapshot -c t/support/etc/relative_delete_bugfix.conf hourly`;
 
 my $pwd = `pwd`;
 chomp($pwd);
