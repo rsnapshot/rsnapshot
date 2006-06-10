@@ -14,7 +14,7 @@
 
 @SET_MAKE@
 
-# $Id: Makefile.in,v 1.96 2006/06/04 04:28:55 djk20 Exp $ #
+# $Id: Makefile.in,v 1.97 2006/06/10 06:05:01 djk20 Exp $ #
 
 
 srcdir = @srcdir@
@@ -577,7 +577,7 @@ rpm-patch:
 	perl -pi -e 's/^\#\@CMD_DU\@/\@CMD_DU\@/' rsnapshot.conf.default.in.redhat
 	perl -pi -e 's/^\#logfile/logfile/' rsnapshot.conf.default.in.redhat
 	perl -pi -e 's/^\#lockfile/lockfile/' rsnapshot.conf.default.in.redhat
-	perl -pi -e 's%^\#cmd_rsnapshot_diff /usr/local/bin/rsnapshot-diff%cmd_rsnapshot_diff /usr/bin/rsnapshot-diff%' rsnapshot.conf.default.in.redhat
+	perl -pi -e 's%^\#cmd_rsnapshot_diff	/usr/local/bin/rsnapshot-diff%cmd_rsnapshot_diff	/usr/bin/rsnapshot-diff%' rsnapshot.conf.default.in.redhat
 	@# diff doesn't return 0
 	diff -u rsnapshot.conf.default.in rsnapshot.conf.default.in.redhat > redhat/SOURCES/rsnapshot.patch || /bin/true
 	rm -f rsnapshot.conf.default.in.redhat
