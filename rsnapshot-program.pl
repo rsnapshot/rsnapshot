@@ -26,7 +26,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.341 2006/05/31 21:53:01 drhyde Exp $
+# $Id: rsnapshot-program.pl,v 1.342 2006/06/10 08:24:18 djk20 Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -5721,6 +5721,8 @@ This is recursive, but you may need to be careful about paths when specifying
 which file to include.  We check to see if the file you have specified is
 readable, and will yell an error if it isn't.  We recommend using a full
 path.
+
+=back
 
 B<no_create_root>     If set to 1, rsnapshot won't create snapshot_root directory
 
