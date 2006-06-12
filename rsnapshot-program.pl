@@ -26,7 +26,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.343 2006/06/12 14:53:46 drhyde Exp $
+# $Id: rsnapshot-program.pl,v 1.344 2006/06/12 22:16:51 drhyde Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -3069,7 +3069,6 @@ sub rsync_backup_point {
 	
 	# other misc variables
 	my @cmd_stack				= undef;
-	my @rsync_long_args_stack	= undef;
 	my $src						= undef;
 	my $result					= undef;
 	my $using_relative			= 0;
@@ -3156,34 +3155,9 @@ sub rsync_backup_point {
 	# split up rsync long args into an array, paying attention to
 	# quoting - ideally we'd use Text::Balanced or similar, but that's
 	# only relatively recently gone into core
-        my $inquotes = '';
-	for(my $i = 0; $i < length($rsync_long_args); $i++) {
-            my $thischar = substr($rsync_long_args, $i, 1);
-	    # got whitespace and not in quotes? end this argument, start next
-	    if($thischar =~ /\s/ && !$inquotes) {
-		$#rsync_long_args_stack++;
-	        next;
-	    # not in quotes and got a quote? remember that we're in quotes
-            } elsif($thischar =~ /['"]/ && !$inquotes) {
-	        $inquotes = $thischar;
-	    # in quotes and got a different quote? no nesting allowed
-            } elsif($thischar =~ /['"]/ && $inquotes ne $thischar) {
-	        print_err("Nested quotes not allowed in rsync_long_args", 1);
-	        syslog_err("Nested quotes not allowed in rsync_long_args");
-		exit(1);
-	    # in quotes and got a close quote
-	    } elsif($thischar eq $inquotes) {
-	        $inquotes = '';
-            }
-	    $rsync_long_args_stack[-1] .= $thischar;
-	}
-	if($inquotes) {
-	    print_err("Unbalanced quotes in rsync_long_args", 1);
-	    syslog_err("Unbalanced quotes in rsync_long_args");
-	    exit(1);
-	}
-	
-	# create $interval.0/$$bp_ref{'dest'} or .sync/$$bp_ref{'dest'} directory if it doesn't exist
+    my @rsync_long_args_stack = split_long_args_with_quotes('rsync_long_args', $rsync_long_args);
+
+    # create $interval.0/$$bp_ref{'dest'} or .sync/$$bp_ref{'dest'} directory if it doesn't exist
 	# (this may create the .sync dir, which is why we had to check for it above)
 	#
 	create_backup_point_dir($interval, $bp_ref);
@@ -3207,10 +3181,10 @@ sub rsync_backup_point {
 	}
 	# RSYNC LONG ARGS
 	if ( defined($$bp_ref{'opts'}) && defined($$bp_ref{'opts'}->{'rsync_long_args'}) ) {
-		@rsync_long_args_stack = split(/\s+/, $$bp_ref{'opts'}->{'rsync_long_args'});
+		@rsync_long_args_stack = split_long_args_with_quotes('rsync_long_args (for a backup point)', $$bp_ref{'opts'}->{'rsync_long_args'});
 	}
 	if ( defined($$bp_ref{'opts'}) && defined($$bp_ref{'opts'}->{'extra_rsync_long_args'}) ) {
-		push(@rsync_long_args_stack, split(/\s+/, $$bp_ref{'opts'}->{'extra_rsync_long_args'}));
+		push(@rsync_long_args_stack, split_long_args_with_quotes('extra_rsync_long_args (for a backup point)', $$bp_ref{'opts'}->{'extra_rsync_long_args'}));
 	}
 	# SSH ARGS
 	if ( defined($$bp_ref{'opts'}) && defined($$bp_ref{'opts'}->{'ssh_args'}) ) {
@@ -3408,6 +3382,42 @@ sub rsync_backup_point {
 			handle_rsync_error($retval, $bp_ref);
 		}
 	}
+}
+
+# accepts the name of the argument to split, and its value
+# the name is used for spitting out error messages
+#
+# returns a list
+sub split_long_args_with_quotes {
+    my($argname, $argvalue) = @_;
+    my $inquotes = '';
+	my @stack = ('');
+	for(my $i = 0; $i < length($argvalue); $i++) {
+        my $thischar = substr($argvalue, $i, 1);
+	    # got whitespace and not in quotes? end this argument, start next
+	    if($thischar =~ /\s/ && !$inquotes) {
+		$#stack++;
+	        next;
+            # not in quotes and got a quote? remember that we're in quotes
+            } elsif($thischar =~ /['"]/ && !$inquotes) {
+	        $inquotes = $thischar;
+            # in quotes and got a different quote? no nesting allowed
+            } elsif($thischar =~ /['"]/ && $inquotes ne $thischar) {
+	        print_err("Nested quotes not allowed in $argname", 1);
+	        syslog_err("Nested quotes not allowed in $argname");
+		exit(1);
+        # in quotes and got a close quote
+	    } elsif($thischar eq $inquotes) {
+	        $inquotes = '';
+            }
+	    $stack[-1] .= $thischar;
+	}
+	if($inquotes) {
+	    print_err("Unbalanced quotes in $argname", 1);
+	    syslog_err("Unbalanced quotes in $argname");
+	    exit(1);
+	}
+	return @stack;
 }
 
 # accepts rsync exit code, backup_point_ref
@@ -5987,7 +5997,8 @@ source distribution for more information.
 
 Quotes are permitted in rsync_long_args, eg --rsync-path="sudo /usr/bin/rsync".
 You may use either single (') or double (") quotes, but nested quotes (including
-mixed nested quotes) are not permitted.
+mixed nested quotes) are not permitted.  Similar quoting is also allowed in
+per-backup-point rsync_long_args.
 
 =back
 
