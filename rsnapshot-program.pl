@@ -26,7 +26,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.342 2006/06/10 08:24:18 djk20 Exp $
+# $Id: rsnapshot-program.pl,v 1.343 2006/06/12 14:53:46 drhyde Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -3153,8 +3153,35 @@ sub rsync_backup_point {
 	# extra verbose?
 	if ($verbose > 3) { $rsync_short_args .= 'v'; }
 	
-	# split up rsync long args into an array
-	@rsync_long_args_stack = ( split(/\s+/, $rsync_long_args) );
+	# split up rsync long args into an array, paying attention to
+	# quoting - ideally we'd use Text::Balanced or similar, but that's
+	# only relatively recently gone into core
+        my $inquotes = '';
+	for(my $i = 0; $i < length($rsync_long_args); $i++) {
+            my $thischar = substr($rsync_long_args, $i, 1);
+	    # got whitespace and not in quotes? end this argument, start next
+	    if($thischar =~ /\s/ && !$inquotes) {
+		$#rsync_long_args_stack++;
+	        next;
+	    # not in quotes and got a quote? remember that we're in quotes
+            } elsif($thischar =~ /['"]/ && !$inquotes) {
+	        $inquotes = $thischar;
+	    # in quotes and got a different quote? no nesting allowed
+            } elsif($thischar =~ /['"]/ && $inquotes ne $thischar) {
+	        print_err("Nested quotes not allowed in rsync_long_args", 1);
+	        syslog_err("Nested quotes not allowed in rsync_long_args");
+		exit(1);
+	    # in quotes and got a close quote
+	    } elsif($thischar eq $inquotes) {
+	        $inquotes = '';
+            }
+	    $rsync_long_args_stack[-1] .= $thischar;
+	}
+	if($inquotes) {
+	    print_err("Unbalanced quotes in rsync_long_args", 1);
+	    syslog_err("Unbalanced quotes in rsync_long_args");
+	    exit(1);
+	}
 	
 	# create $interval.0/$$bp_ref{'dest'} or .sync/$$bp_ref{'dest'} directory if it doesn't exist
 	# (this may create the .sync dir, which is why we had to check for it above)
@@ -5957,6 +5984,10 @@ the values to make the program behave like the old version or the current
 version. The newer settings are recommended if you're just starting. If
 you are upgrading, read the upgrade guide in the INSTALL file in the
 source distribution for more information.
+
+Quotes are permitted in rsync_long_args, eg --rsync-path="sudo /usr/bin/rsync".
+You may use either single (') or double (") quotes, but nested quotes (including
+mixed nested quotes) are not permitted.
 
 =back
 
