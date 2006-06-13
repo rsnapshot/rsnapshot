@@ -4,7 +4,7 @@
 #                                                                      #
 # rsnapshot                                                            #
 # by Nathan Rosenquist                                                 #
-# now  maintained by David Cantrell                                    #
+# now maintained by David Cantrell                                     #
 #                                                                      #
 # The official rsnapshot website is located at                         #
 # http://www.rsnapshot.org/                                            #
@@ -14,7 +14,7 @@
 # Portions Copyright (C) 2002-2006 Mike Rubel, Carl Wilhelm Soderstrom,#
 # Ted Zlatanov, Carl Boe, Shane Liebling, Bharat Mediratta,            #
 # Peter Palfrader, Nicolas Kaiser, David Cantrell, Chris Petersen,     #
-# Robert Jackson, Justin Grote, David Keegel                           #
+# Robert Jackson, Justin Grote, David Keegel, Alan Batie               #
 #                                                                      #
 # rsnapshot comes with ABSOLUTELY NO WARRANTY.  This is free software, #
 # and you may copy, distribute and/or modify it under the terms of     #
@@ -26,7 +26,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.344 2006/06/12 22:16:51 drhyde Exp $
+# $Id: rsnapshot-program.pl,v 1.345 2006/06/13 16:33:03 drhyde Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -44,6 +44,7 @@ use File::Path;			# mkpath(), rmtree()
 use File::stat;			# stat(), lstat()
 use POSIX qw(locale_h);	# setlocale()
 use Fcntl;				# sysopen()
+use IO::File;			# recursive open in parse_config_file
 
 ########################################
 ###           CPAN MODULES           ###
@@ -159,6 +160,11 @@ my $run_string = "$0 " . join(' ', @ARGV);
 
 # if we have any errors, we print the run string once, at the top of the list
 my $have_printed_run_string = 0;
+	
+# pre-buffer the include/exclude parameter flags
+# local to parse_config_file and validate_config_file
+my $rsync_include_args		= undef;
+my $rsync_include_file_args	= undef;
 
 ########################################
 ###         SIGNAL HANDLERS          ###
@@ -210,6 +216,7 @@ if ($cmd eq 'configtest') {
 if (defined($config_file) && (-f "$config_file") && (-r "$config_file")) {
 	# if there is a problem, this subroutine will exit the program and notify the user of the error
 	parse_config_file();
+	validate_config_file();
 	
 # no config file found
 } else {
@@ -464,17 +471,13 @@ sub parse_config_file {
 	# count the lines in the config file, so the user can pinpoint errors more precisely
 	my $file_line_num = 0;
 	
-	# pre-buffer the include/exclude parameter flags
-	my $rsync_include_args		= undef;
-	my $rsync_include_file_args	= undef;
-	
 	# open the config file
 	my $config_file = shift() || $config_file;
-	open(CONFIG, $config_file)
+	my $CONFIG = IO::File->new($config_file)
 		or bail("Could not open config file \"$config_file\"\nAre you sure you have permission?");
 	
 	# read it line by line
-	while (my $line = <CONFIG>) {
+	while (my $line = <$CONFIG>) {
 		chomp($line);
 		
 		# count line numbers
@@ -505,7 +508,7 @@ sub parse_config_file {
 				$line_syntax_ok = 1;
 				parse_config_file($value);
 			} else {
-				config_err($file_line_num, "$line - can't find file '$value'");
+				config_err($file_line_num, "$line - can't find or read file '$value'");
 				next;
 			}
 		}
@@ -1241,8 +1244,9 @@ sub parse_config_file {
 			}
 		}
 	}
-	# close(CONFIG) or print_warn("Could not close $config_file", 2);
+}
 	
+sub validate_config_file {
 	####################################################################
 	# SET SOME SENSIBLE DEFAULTS FOR VALUES THAT MAY NOT HAVE BEEN SET #
 	####################################################################
@@ -6677,14 +6681,22 @@ Improvements to utils/rsnapreport.pl.
 
 =back
 
+Alan Batie (B<alan@batie.org>)
+
+=over 4
+
+Bug fixes for include_conf
+
+=back
+
 =head1 COPYRIGHT
 
 Copyright (C) 2003-2005 Nathan Rosenquist
 
-Portions Copyright (C) 2002-2005 Mike Rubel, Carl Wilhelm Soderstrom,
+Portions Copyright (C) 2002-2006 Mike Rubel, Carl Wilhelm Soderstrom,
 Ted Zlatanov, Carl Boe, Shane Liebling, Bharat Mediratta, Peter Palfrader,
 Nicolas Kaiser, David Cantrell, Chris Petersen, Robert Jackson, Justin Grote,
-David Keegel
+David Keegel, Alan Batie
 
 This man page is distributed under the same license as rsnapshot:
 the GPL (see below).
