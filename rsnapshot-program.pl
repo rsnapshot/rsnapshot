@@ -26,7 +26,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.345 2006/06/13 16:33:03 drhyde Exp $
+# $Id: rsnapshot-program.pl,v 1.346 2006/06/14 05:46:37 djk20 Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -2106,10 +2106,10 @@ sub add_lockfile {
 	print_cmd("echo $$ > $lockfile");
 	
 	if (0 == $test) {
-		# sysopen() is atomic, whereas open() is not
-		my $result = sysopen(LOCKFILE, $lockfile, O_WRONLY | O_EXCL | O_CREAT);
-		if (!defined($result)) {
-			print_err ("Could not write lockfile $lockfile", 1);
+		# sysopen() can do exclusive opens, whereas perl open() can not
+		my $result = sysopen(LOCKFILE, $lockfile, O_WRONLY | O_EXCL | O_CREAT, 0644);
+		if (!defined($result) || 0 == $result) {
+			print_err ("Could not write lockfile $lockfile: $!", 1);
 			syslog_err("Could not write lockfile $lockfile");
 			exit(1);
 		}
@@ -2118,8 +2118,8 @@ sub add_lockfile {
 		print LOCKFILE $$;
 		
 		$result = close(LOCKFILE);
-		if (!defined($result)) {
-			print_warn("Could not close lockfile $lockfile", 2);
+		if (!defined($result) || 0 == $result) {
+			print_warn("Could not close lockfile $lockfile: $!", 2);
 		}
 	}
 	
@@ -5776,7 +5776,7 @@ B<cmd_cp>             Full path to cp  (optional, but must be GNU version)
 =over 4
 
 If you are using Linux, you should uncomment cmd_cp. If you are using a
-different platform, you should leave cmd_cp commented out.
+platform which does not have GNU cp, you should leave cmd_cp commented out.
 
 With GNU cp, rsnapshot can take care of both normal files and special
 files (such as FIFOs, sockets, and block/character devices) in one pass.
@@ -5801,7 +5801,7 @@ B<cmd_preexec>
 =over 4
 
 Full path (plus any arguments) to preexec script (optional).
-This script will run immediately before a backup operation (but not any
+This script will run immediately before each backup operation (but not any
 rotations).
 
 =back
@@ -5811,7 +5811,7 @@ B<cmd_postexec>
 =over 4
 
 Full path (plus any arguments) to postexec script (optional).
-This script will run immediately after a backup operation (but not any
+This script will run immediately after each backup operation (but not any
 rotations).
 
 =back
@@ -5931,7 +5931,7 @@ this is commented out, no log file will be written.
 
 =back
 
-B<include             ???>
+B<include             [file-name-pattern]>
 
 =over 4
 
@@ -5941,7 +5941,7 @@ per line. See the rsync(1) man page for the syntax.
 
 =back
 
-B<exclude             ???>
+B<exclude             [file-name-pattern]>
 
 =over 4
 
@@ -6032,7 +6032,7 @@ B<lockfile    /var/run/rsnapshot.pid>
 Lockfile to use when rsnapshot is run. This prevents a second invocation
 from clobbering the first one. If not specified, no lock file is used.
 Make sure to use a directory that is not world writeable for security
-reasons.
+reasons.  Use of a lock file is strongly recommended.
 
 If a lockfile exists when rsnapshot starts, it will try to read the file
 and stop with an error if it can't.  If it *can* read the file, it sees if
@@ -6170,6 +6170,7 @@ So in this example, say the backup_database.sh script simply runs a command like
 #!/bin/sh
 
 mysqldump -uusername mydatabase > mydatabase.sql
+chmod u=r,go= mydatabase.sql	# Set permissions to r-------- (0400)
 
 =back
 
@@ -6246,7 +6247,7 @@ B<0 */4 * * *         /usr/local/bin/rsnapshot hourly>
 
 B<50 23 * * *         /usr/local/bin/rsnapshot daily>
 
-B<40 23 1,8,15,22 * * /usr/local/bin/rsnapshot weekly>
+B<40 23 * * 6         /usr/local/bin/rsnapshot weekly>
 
 B<30 23 1 * *         /usr/local/bin/rsnapshot monthly>
 
@@ -6260,7 +6261,7 @@ This example will do the following:
 
 1 daily backup every day, at 11:50PM
 
-4 weekly backups a month, at 11:40PM, on the 1st, 8th, 15th, and 22nd
+1 weekly backup every week, at 11:40PM, on Saturdays (6th day of week)
 
 1 monthly backup every month, at 11:30PM on the 1st day of the month
 
@@ -6268,9 +6269,18 @@ This example will do the following:
 
 It is usually a good idea to schedule the larger intervals to run a bit before the
 lower ones. For example, in the crontab above, notice that "daily" runs 10 minutes
-before "hourly". This helps prevent race conditions where the "daily" would try to
-run before the "hourly" job had finished. This is where the B<lockfile> parameter
-really comes in handy.
+before "hourly".  The main reason for this is that the daily rotate will
+pull out the oldest hourly and make that the youngest daily (which means
+that the next hourly rotate will not need to delete the oldest hourly),
+which is more efficient.  A secondary reason is that it is harder to
+predict how long the lowest interval will take, since it needs to actually
+do an rsync of the source as well as the rotate that all intervals do.
+
+If rsnapshot takes longer than 10 minutes to do the "daily" rotate
+(which usually includes deleting the oldest daily snapshot), then you
+should increase the time between the intervals.
+Otherwise (assuming you have set the B<lockfile> parameter, as is recommended)
+your hourly snapshot will fail sometimes because the daily still has the lock.  
 
 Remember that these are just the times that the program runs.
 To set the number of backups stored, set the B<interval> numbers in
