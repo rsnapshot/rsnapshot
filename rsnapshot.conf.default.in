@@ -120,7 +120,7 @@ loglevel	3
 # If you enable this, make sure the lockfile directory is not world
 # writable. Otherwise anyone can prevent the program from running.
 #
-#lockfile	/var/run/rsnapshot.pid
+lockfile	/var/run/rsnapshot.pid
 
 # Default rsync args. All rsync commands have at least these options set.
 #
@@ -145,8 +145,8 @@ loglevel	3
 
 # The include and exclude parameters, if enabled, simply get passed directly
 # to rsync. If you have multiple include/exclude patterns, put each one on a
-# seperate line. Please look up the --include and --exclude options in the
-# rsync man page for more details. 
+# separate line. Please look up the --include and --exclude options in the
+# rsync man page for more details on how to specify file name patterns. 
 # 
 #include	???
 #include	???
