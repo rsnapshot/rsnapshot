@@ -26,7 +26,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.347 2006/06/16 12:38:45 djk20 Exp $
+# $Id: rsnapshot-program.pl,v 1.348 2006/06/17 05:28:54 djk20 Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -1161,7 +1161,7 @@ sub parse_config_file {
 		}
 		# SSH ARGS
 		if ($var eq 'ssh_args') {
-			if (defined($config_vars{'ssh_args'})) {
+			if (!defined($default_ssh_args) && defined($config_vars{'ssh_args'})) {
 				config_err($file_line_num, "$line - global ssh_args can only be set once, but is already set.  Perhaps you wanted to use a per-backup ssh_args instead.");
 				next;
 			} else {
