@@ -5,6 +5,8 @@ http://www.rsnapshot.org/
 
 VERSION 1.3.0  (??? ?? 2006)
 ------------------------------------------------------------------------------
+- rsnapshot detects the global ssh_args option being set multiple times,
+  and gives a config error suggesting the per-backup ssh_args instead.
 - Move Upgrading section of INSTALL to NOTES/Upgrade_from_1.1.
 - Updates to rsnapshot man pages (via perldoc).
 - Change rsnapshot.conf default to have lockfile enabled.
