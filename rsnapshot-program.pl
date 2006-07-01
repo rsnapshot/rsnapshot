@@ -26,7 +26,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.348 2006/06/17 05:28:54 djk20 Exp $
+# $Id: rsnapshot-program.pl,v 1.349 2006/07/01 05:15:31 djk20 Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -2669,7 +2669,7 @@ sub handle_interval {
 			
 			# create the sync root if it doesn't exist (and we need it right now)
 			if ($cmd eq 'sync') {
-				# don't create tye .sync directory, it gets created later on
+				# don't create the .sync directory, it gets created later on
 			}
 				
 		# sync_first is disabled
@@ -3994,7 +3994,7 @@ sub rotate_higher_interval {
 			exit(1);
 		}
 	} else {
-		print_msg("$config_vars{'snapshot_root'}/$prev_interval.$prev_interval_max not present (yet), nothing to copy", 4);
+		print_msg("$config_vars{'snapshot_root'}/$prev_interval.$prev_interval_max not present (yet), nothing to copy", 3);
 	}
 }
 

@@ -14,6 +14,8 @@ VERSION 1.3.0  (??? ?? 2006)
 - Check for stale lock files (PID not currently running).
 - explicitly add mode 0644 to sysopen() to create lockfile
 - give warning if write() or close() return 0 when writing/closing lockfile
+- Make prev_max_interval "not present (yet), nothing to copy" message
+  when rotating interval.0 more visible (level 3 instead of level 4).
 - Add man page for rsnapshot-diff (generated from perldoc).
 - Updates to rsnapshot man pages (via perldoc).
   - add missing =back
