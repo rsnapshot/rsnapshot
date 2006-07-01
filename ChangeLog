@@ -8,16 +8,28 @@ VERSION 1.3.0  (??? ?? 2006)
 - rsnapshot detects the global ssh_args option being set multiple times,
   and gives a config error suggesting the per-backup ssh_args instead.
 - Move Upgrading section of INSTALL to NOTES/Upgrade_from_1.1.
-- Updates to rsnapshot man pages (via perldoc).
+- Incorporate patch from Alan Batie to fix bugs with include_conf.
+- check for quoting on $rsync_long_args rather than just splitting on space.
 - Change rsnapshot.conf default to have lockfile enabled.
 - Check for stale lock files (PID not currently running).
+- explicitly add mode 0644 to sysopen() to create lockfile
+- give warning if write() or close() return 0 when writing/closing lockfile
 - Add man page for rsnapshot-diff (generated from perldoc).
+- Updates to rsnapshot man pages (via perldoc).
+  - add missing =back
+  - document stale lock file detection 
+  - strongly recommend using a lock file
+  - add a chmod to example backup script
+  - change crontab example for weekly from 4 "weekly"s per month to 1 per week
+  - expand on why higher intervals are done first via cron.
 - Change space to tab after #cmd_rsnapshot_diff in rsnapshot.conf.default.in.
-- Set the test scripts t/*.t.in to run from the source directory.
+- In rpm patch, set cmd_rsnapshot_diff to /usr/bin/rsnapshot-diff.
+- Set the test scripts t/*.t.in to run from the source directory
+  and create directory t/support/files/a if necessary.
 - Trim comments in README about gnu cp versions > 5.3 since rsnapshot 
   strips trailing slashes for gnu cp with rsnapshot 1.2.9 and later.
 - Add pointers to HOWTO and utils/rsnapreport.pl in README.
-- More examples in rsnapshot.conf.default.in.
+- More examples (eg: timestamp backup_script) in rsnapshot.conf.default.in.
 
 
 VERSION 1.2.9  (May 18 2006)
