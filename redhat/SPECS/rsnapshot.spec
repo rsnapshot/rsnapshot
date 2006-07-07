@@ -1,21 +1,23 @@
-# $Id: rsnapshot.spec,v 1.44 2006/05/18 10:12:37 djk20 Exp $
+# $Id: rsnapshot.spec,v 1.45 2006/07/07 22:47:46 djk20 Exp $
 
 Name: rsnapshot
 Summary: Local and remote filesystem snapshot utility
-Version: 1.2.9
-Release: 1
+Version: 1.2.9.1
+Release: 2
 BuildArch: noarch
 License: GPL
+URL: http://www.rsnapshot.org/
 Group: Applications/System
 Source: http://www.rsnapshot.org/downloads/rsnapshot-%{version}.tar.gz
 Patch: rsnapshot.patch
-BuildRoot: %{_tmppath}/%{name}-%{version}-root
+BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 Requires: perl, rsync
 AutoReqProv: no
 
 %description
-This is a remote backup program that uses rsync to take backup snapshots of filesystems.
-It uses hard links to save space on disk.
+This is a remote backup program that uses rsync to take backup snapshots of
+filesystems.  It uses hard links to save space on disk.
+For more details see http://www.rsnapshot.org/.
 
 %prep
 
@@ -77,18 +79,26 @@ rm -rf $RPM_BUILD_DIR/%{name}-%{version}/
 
 %files
 %defattr(-,root,root)
-%verify(user group mode md5 size mtime) %doc AUTHORS COPYING ChangeLog README INSTALL TODO
-%verify(user group mode md5 size mtime) %config %{_sysconfdir}/rsnapshot.conf.default
-%verify(user group mode) %config(noreplace) %{_sysconfdir}/rsnapshot.conf
-%verify(user group mode md5 size mtime) %{_bindir}/rsnapshot
-%verify(user group mode md5 size mtime) %{_bindir}/rsnapshot-diff
-%verify(user group mode md5 size mtime) %{_mandir}/man1/rsnapshot.1*
+%doc AUTHORS COPYING ChangeLog README INSTALL TODO
+%config %{_sysconfdir}/rsnapshot.conf.default
+%config(noreplace) %verify(user group mode) %{_sysconfdir}/rsnapshot.conf
+%{_bindir}/rsnapshot
+%{_bindir}/rsnapshot-diff
+%{_mandir}/man1/rsnapshot.1*
 
 %changelog
-* Thu May 18 2006 David Keegel <djk@cybersource.com.au>
+* Thu Jun 22 2006 David Keegel <djk@cybersource.com.au> - 1.2.9.1-2
+- Change BuildRoot to format recommended in Fedora Packaging Guidelines
+- Reformat description to fit in 80 columns, and add URL.
+- Add URL (www.rsnapshot.org)
+- Remove %verify on %files (except rsnapshot.conf).  
+- Change rsnapshot.conf to %config(noreplace).
+- Add version numbers to my ChangeLog entries.
+
+* Thu May 18 2006 David Keegel <djk@cybersource.com.au> - 1.2.9-1
 - Update version number to 1.2.9
 
-* Sun Feb  5 2006 David Keegel <djk@cybersource.com.au>
+* Sun Feb  5 2006 David Keegel <djk@cybersource.com.au> - 1.2.4-1
 - Added rsnapshot-diff to %files
 - Update version number to 1.2.4
 
