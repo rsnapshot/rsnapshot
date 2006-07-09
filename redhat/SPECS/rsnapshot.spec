@@ -1,4 +1,4 @@
-# $Id: rsnapshot.spec,v 1.45 2006/07/07 22:47:46 djk20 Exp $
+# $Id: rsnapshot.spec,v 1.47 2006/07/09 04:35:16 djk20 Exp $
 
 Name: rsnapshot
 Summary: Local and remote filesystem snapshot utility
@@ -80,6 +80,7 @@ rm -rf $RPM_BUILD_DIR/%{name}-%{version}/
 %files
 %defattr(-,root,root)
 %doc AUTHORS COPYING ChangeLog README INSTALL TODO
+# rsnapshot.conf.default is replaceable - user is not supposed to edit it
 %config %{_sysconfdir}/rsnapshot.conf.default
 %config(noreplace) %verify(user group mode) %{_sysconfdir}/rsnapshot.conf
 %{_bindir}/rsnapshot
