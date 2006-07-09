@@ -26,7 +26,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.350 2006/07/09 04:14:06 djk20 Exp $
+# $Id: rsnapshot-program.pl,v 1.351 2006/07/09 04:23:49 djk20 Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -507,7 +507,7 @@ sub parse_config_file {
 				# User put spaces in config line instead of tabs.
 				config_err($file_line_num, "$line - missing tabs to separate words - change spaces to tabs.");
 				next;
-			} else
+			} else {
 				# User put only one word
 				config_err($file_line_num, "$line - could not find second word on this line");
 				next;
