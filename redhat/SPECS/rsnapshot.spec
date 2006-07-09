@@ -1,4 +1,4 @@
-# $Id: rsnapshot.spec,v 1.47 2006/07/09 04:35:16 djk20 Exp $
+# $Id: rsnapshot.spec,v 1.48 2006/07/09 06:06:47 djk20 Exp $
 
 Name: rsnapshot
 Summary: Local and remote filesystem snapshot utility
@@ -26,16 +26,12 @@ For more details see http://www.rsnapshot.org/.
 %patch
 
 %build
-./configure \
-	--prefix=/usr \
-	--bindir=/usr/bin \
-	--mandir=/usr/share/man \
-	--sysconfdir=/etc \
-	--with-perl=/usr/bin/perl \
-	--with-rsync=/usr/bin/rsync \
-	--with-ssh=/usr/bin/ssh \
-	--with-logger=/usr/bin/logger \
-	--with-du=/usr/bin/du
+%configure					\
+	--with-perl="%{__perl}"			\
+	--with-rsync="%{_bindir}/rsync"		\
+	--with-ssh="%{_bindir}/ssh"		\
+	--with-logger="%{_bindir}/logger"	\
+	--with-du="%{_bindir}/du"
 
 %install
 install -d $RPM_BUILD_ROOT/%{_bindir}
