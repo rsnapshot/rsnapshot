@@ -50,8 +50,8 @@ COMPATIBILITY NOTICES (Please read)
 (1)
   Note that systems which use GNU cp version 5.9 or later will have problems
   with rsnapshot versions up to and including 1.2.3, if cmd_cp is enabled
-  (and points at the later gnu cp).  This is no longer a problem with
-  rsnapshot 1.2.9, which strips off trailing slashes when running cp.
+  (and points at the later gnu cp).  This is no longer a problem since
+  rsnapshot 1.2.9, as it strips off trailing slashes when running cp.
 
 (2)
   If you have rsync version 2.5.7 or later, you may want to enable the
@@ -106,6 +106,30 @@ For example:
 This means that every time "rsnapshot hourly" is run, it will make a
 new snapshot, rotate the old ones, and retain the most recent six
 (hourly.0 - hourly.5).
+
+If you prefer instead to have daily, weekly and monthly backups,
+you might set up cron like this:
+    00 00 * * *     /usr/local/bin/rsnapshot daily
+    00 23 * * 6     /usr/local/bin/rsnapshot weekly
+    00 22 1 * *     /usr/local/bin/rsnapshot monthly
+
+This specifies a daily rsnapshot at midnight, a weekly snapshot
+on Saturdays at 11:00pm and a monthly rsnapshot at 10pm on the
+first day of each month.
+
+Note that the backups are done from the highest interval first
+(in this case monthly) and go down to the lowest interval.  If
+you are not having cron invoke the "hourly" snapshot interval,
+then you must also ensure that hourly is not listed as one of 
+your intervals in rsnapshot.conf (for example, comment out hourly,
+so that "daily" becomes the lowest interval).
+
+Remember that it is only the lowest interval which actually does
+the rsync to back up the relevant source directories, the higher
+intervals just rotate snapshots around.  Unless you have enabled
+sync_first in your rsnapshot.conf, in which case only the "sync"
+pseudo-interval does the actual rsync, and all real intervals 
+just rotate snapshots.  
 
 For the full documentation, type "man rsnapshot" once it is installed,
 or visit http://www.rsnapshot.org/.  The HowTo on the web site has a
