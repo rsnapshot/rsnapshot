@@ -26,7 +26,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.351 2006/07/09 04:23:49 djk20 Exp $
+# $Id: rsnapshot-program.pl,v 1.352 2006/08/24 00:12:29 djk20 Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -4082,7 +4082,7 @@ sub gnu_cp_al {
 	# make the system call to GNU cp
 	$result = system( $config_vars{'cmd_cp'}, '-al', "$src", "$dest" );
 	if ($result != 0) {
-		print_err("$config_vars{'cmd_cp'} failed. Perhaps this is not GNU cp?", 2);
+		print_err("$config_vars{'cmd_cp'} failed (result $result). Perhaps this is not GNU cp?", 2);
 		return (0);
 	}
 	
