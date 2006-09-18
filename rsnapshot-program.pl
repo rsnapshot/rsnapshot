@@ -26,7 +26,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.353 2006/08/24 00:26:59 djk20 Exp $
+# $Id: rsnapshot-program.pl,v 1.354 2006/09/18 03:53:56 djk20 Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -6188,6 +6188,7 @@ So in this example, say the backup_database.sh script simply runs a command like
 #!/bin/sh
 
 mysqldump -uusername mydatabase > mydatabase.sql
+
 chmod u=r,go= mydatabase.sql	# Set permissions to r-------- (0400)
 
 =back
