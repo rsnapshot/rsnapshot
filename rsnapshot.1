@@ -129,7 +129,7 @@
 .\" ========================================================================
 .\"
 .IX Title "rsnapshot 1"
-.TH rsnapshot 1 "2006-06-14" "" ""
+.TH rsnapshot 1 "2006-09-18" "" ""
 .SH "NAME"
 rsnapshot \- remote filesystem snapshot utility
 .SH "SYNOPSIS"
@@ -613,6 +613,7 @@ So in this example, say the backup_database.sh script simply runs a command like
 #!/bin/sh
 .Sp
 mysqldump \-uusername mydatabase > mydatabase.sql
+.Sp
 chmod u=r,go= mydatabase.sql	# Set permissions to r\-\-\-\-\-\-\-\- (0400)
 .RE
 .RE
