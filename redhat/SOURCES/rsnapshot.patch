@@ -1,5 +1,5 @@
---- rsnapshot.conf.default.in	2006-06-10 16:00:14.000000000 +1000
-+++ rsnapshot.conf.default.in.redhat	2006-06-10 17:11:09.000000000 +1000
+--- rsnapshot.conf.default.in	2006-06-14 15:48:01.000000000 +1000
++++ rsnapshot.conf.default.in.redhat	2006-09-18 13:58:56.000000000 +1000
 @@ -41,7 +41,7 @@
  #
  # See the README file or the man page for more details.
@@ -23,7 +23,7 @@
  
  # Specify the path to a script (and any optional arguments) to run right
  # before rsnapshot syncs files
-@@ -113,14 +113,14 @@
+@@ -113,7 +113,7 @@
  # If you enable this, data will be written to the file you specify. The
  # amount of data written is controlled by the "loglevel" parameter.
  #
@@ -32,11 +32,3 @@
  
  # If enabled, rsnapshot will write a lockfile to prevent two instances
  # from running simultaneously (and messing up the snapshot_root).
- # If you enable this, make sure the lockfile directory is not world
- # writable. Otherwise anyone can prevent the program from running.
- #
--#lockfile	/var/run/rsnapshot.pid
-+lockfile	/var/run/rsnapshot.pid
- 
- # Default rsync args. All rsync commands have at least these options set.
- #
