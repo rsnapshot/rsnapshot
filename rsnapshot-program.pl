@@ -26,7 +26,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.354 2006/09/18 03:53:56 djk20 Exp $
+# $Id: rsnapshot-program.pl,v 1.355 2006/09/28 22:28:53 djk20 Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -4065,6 +4065,7 @@ sub gnu_cp_al {
 	my $src    = shift(@_);
 	my $dest   = shift(@_);
 	my $result = 0;
+	my $status;
 	
 	# make sure we were passed two arguments
 	if (!defined($src))  { return(0); }
