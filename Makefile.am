@@ -1,4 +1,4 @@
-# $Id: Makefile.am,v 1.74 2006/10/08 05:06:46 djk20 Exp $ #
+# $Id: Makefile.am,v 1.75 2006/10/08 05:19:00 djk20 Exp $ #
 
 VERSION = 1.3.0
 
@@ -63,11 +63,13 @@ tar: doc rpm-patch
 	
 	@# core files
 	mkdir rsnapshot-$(VERSION)
-	cp rsnapshot-preamble.pl rsnapshot-program.pl rsnapshot-diff.pl rsnapshot.conf.default.in \
-		rsnapshot.1 AUTHORS COPYING INSTALL README TODO NEWS ChangeLog rsnapshot-$(VERSION)/
+	cp -p rsnapshot-preamble.pl rsnapshot-program.pl rsnapshot-diff.pl rsnapshot.conf.default.in \
+		rsnapshot.1 AUTHORS COPYING INSTALL README TODO NEWS ChangeLog \
+		rsnapshot-$(VERSION)/
+	cp -a docs rsnapshot-$(VERSION)/
 	
 	@# autoconf files
-	cp Makefile.am Makefile.in aclocal.m4 configure configure.ac config.guess config.sub \
+	cp -p Makefile.am Makefile.in aclocal.m4 configure configure.ac config.guess config.sub \
 		install-sh missing mkinstalldirs rsnapshot-$(VERSION)/
 	
 	@# redhat
