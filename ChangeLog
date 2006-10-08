@@ -7,7 +7,7 @@ VERSION 1.3.0  (??? ?? 2006)
 ------------------------------------------------------------------------------
 - rsnapshot detects the global ssh_args option being set multiple times,
   and gives a config error suggesting the per-backup ssh_args instead.
-- Move Upgrading section of INSTALL to NOTES/Upgrade_from_1.1.
+- Move Upgrading section of INSTALL to docs/Upgrading_from_1.1.
 - Incorporate patch from Alan Batie to fix bugs with include_conf.
 - check for quoting on $rsync_long_args rather than just splitting on space.
 - Change rsnapshot.conf default to have lockfile enabled.
@@ -18,7 +18,8 @@ VERSION 1.3.0  (??? ?? 2006)
   when rotating interval.0 more visible (level 3 instead of level 4).
 - Add man page for rsnapshot-diff (generated from perldoc).
 - Updates to rsnapshot man pages (via perldoc).
-  - add missing =back
+  - Use =item in AUTHORS section
+  - move mis-placed =back
   - document stale lock file detection 
   - strongly recommend using a lock file
   - add a chmod to example backup script
@@ -32,6 +33,7 @@ VERSION 1.3.0  (??? ?? 2006)
   strips trailing slashes for gnu cp with rsnapshot 1.2.9 and later.
 - Add pointers to HOWTO and utils/rsnapreport.pl in README.
 - More examples (eg: timestamp backup_script) in rsnapshot.conf.default.in.
+- Change "Perhaps this is not GNU cp?" error message.
 
 
 VERSION 1.2.9  (May 18 2006)
