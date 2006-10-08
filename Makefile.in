@@ -14,7 +14,7 @@
 
 @SET_MAKE@
 
-# $Id: Makefile.in,v 1.99 2006/10/08 08:23:28 djk20 Exp $ #
+# $Id: Makefile.in,v 1.100 2006/10/08 08:28:58 djk20 Exp $ #
 
 
 srcdir = @srcdir@
@@ -573,7 +573,7 @@ clean:
 rpm-patch: redhat/SOURCES/rsnapshot.patch
 redhat/SOURCES/rsnapshot.patch: rsnapshot.conf.default.in Makefile
 	@# redhat config file patch
-	cp rsnapshot.conf.default.in rsnapshot.conf.default.in.redhat
+	cp -p rsnapshot.conf.default.in rsnapshot.conf.default.in.redhat
 	perl -pi -e 's/^\#\@CMD_CP\@/\@CMD_CP\@/' rsnapshot.conf.default.in.redhat
 	perl -pi -e 's/^\#\@CMD_DU\@/\@CMD_DU\@/' rsnapshot.conf.default.in.redhat
 	perl -pi -e 's/^\#logfile/logfile/' rsnapshot.conf.default.in.redhat
