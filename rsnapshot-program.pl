@@ -26,7 +26,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.357 2006/10/08 06:16:20 djk20 Exp $
+# $Id: rsnapshot-program.pl,v 1.358 2006/10/08 07:57:55 djk20 Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -6538,7 +6538,8 @@ Mike Rubel - B<http://www.mikerubel.org/computers/rsync_snapshots/>
 
 =over 4
 
-- Created the original shell scripts on which this project is based
+=item -
+Created the original shell scripts on which this project is based
 
 =back
 
@@ -6546,7 +6547,8 @@ Nathan Rosenquist (B<nathan@rsnapshot.org>)
 
 =over 4
 
-- Primary author and previous maintainer of rsnapshot.
+=item -
+Primary author and previous maintainer of rsnapshot.
 
 =back
 
@@ -6554,8 +6556,11 @@ David Cantrell (B<david@cantrell.org.uk>)
 
 =over 4
 
-- Current co-maintainer of rsnapshot
-- Wrote the rsnapshot-diff utility
+=item -
+Current co-maintainer of rsnapshot
+
+=item -
+Wrote the rsnapshot-diff utility
 
 =back
 
@@ -6563,11 +6568,17 @@ David Keegel <djk@cybersource.com.au>
 
 =over 4
 
-- Co-maintainer, the responsibility for release management
-- Fixed race condition in lock file creation, improved error reporting
-- Allowed remote ssh directory paths starting with "~/" as well as "/"
-- Fixed a number of other bugs and buglets
-- Release management for rsnapshot 1.2.9 onwards
+=item -
+Co-maintainer, with responsibility for release management since 1.2.9
+
+=item -
+Fixed race condition in lock file creation, improved error reporting
+
+=item -
+Allowed remote ssh directory paths starting with "~/" as well as "/"
+
+=item -
+Fixed a number of other bugs and buglets
 
 =back
 
@@ -6575,7 +6586,8 @@ Carl Wilhelm Soderstrom B<(chrome@real-time.com)>
 
 =over 4
 
-- Created the RPM .spec file which allowed the RPM package to be built, among
+=item -
+Created the RPM .spec file which allowed the RPM package to be built, among
 other things.
 
 =back
@@ -6584,7 +6596,8 @@ Ted Zlatanov (B<tzz@lifelogs.com>)
 
 =over 4
 
-- Added the one_fs feature, autoconf support, good advice, and much more.
+=item -
+Added the one_fs feature, autoconf support, good advice, and much more.
 
 =back
 
@@ -6592,7 +6605,8 @@ Ralf van Dooren (B<r.vdooren@snow.nl>)
 
 =over 4
 
-- Added and maintains the rsnapshot entry in the FreeBSD ports tree.
+=item -
+Added and maintains the rsnapshot entry in the FreeBSD ports tree.
 
 =back
 
@@ -6600,7 +6614,8 @@ SlapAyoda
 
 =over 4
 
-- Provided access to his computer museum for software testing.
+=item -
+Provided access to his computer museum for software testing.
 
 =back
 
@@ -6608,7 +6623,8 @@ Carl Boe (B<boe@demog.berkeley.edu>)
 
 =over 4
 
-- Found several subtle bugs and provided fixes for them.
+=item -
+Found several subtle bugs and provided fixes for them.
 
 =back
 
@@ -6616,7 +6632,8 @@ Shane Leibling (B<shane@cryptio.net>)
 
 =over 4
 
-- Fixed a compatibility bug in utils/backup_smb_share.sh
+=item -
+Fixed a compatibility bug in utils/backup_smb_share.sh
 
 =back
 
@@ -6624,7 +6641,8 @@ Christoph Wegscheider (B<christoph.wegscheider@wegi.net>)
 
 =over 4
 
-- Added and maintains the Debian rsnapshot package.
+=item -
+Added (and previously maintained) the Debian rsnapshot package.
 
 =back
 
@@ -6632,7 +6650,8 @@ Bharat Mediratta (B<bharat@menalto.com>)
 
 =over 4
 
-- Improved the exclusion rules to avoid backing up the snapshot root (among
+=item -
+Improved the exclusion rules to avoid backing up the snapshot root (among
 other things).
 
 =back
@@ -6641,7 +6660,8 @@ Peter Palfrader (B<weasel@debian.org>)
 
 =over 4
 
-- Enhanced error reporting to include command line options.
+=item -
+Enhanced error reporting to include command line options.
 
 =back
 
@@ -6649,7 +6669,8 @@ Nicolas Kaiser (B<nikai@nikai.net>)
 
 =over 4
 
-- Fixed typos in program and man page
+=item -
+Fixed typos in program and man page
 
 =back
 
