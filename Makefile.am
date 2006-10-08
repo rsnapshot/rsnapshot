@@ -1,4 +1,4 @@
-# $Id: Makefile.am,v 1.75 2006/10/08 05:19:00 djk20 Exp $ #
+# $Id: Makefile.am,v 1.76 2006/10/08 05:31:02 djk20 Exp $ #
 
 VERSION = 1.3.0
 
@@ -39,7 +39,8 @@ clean:
 	rm -f t/support/files/a/{1,2}
 	rm -rf t/support/snapshots/*.*
 	
-rpm-patch:
+rpm-patch: redhat/SOURCES/rsnapshot.patch
+redhat/SOURCES/rsnapshot.patch: rsnapshot.conf.default.in Makefile
 	@# redhat config file patch
 	cp rsnapshot.conf.default.in rsnapshot.conf.default.in.redhat
 	perl -pi -e 's/^\#\@CMD_CP\@/\@CMD_CP\@/' rsnapshot.conf.default.in.redhat
@@ -51,7 +52,7 @@ rpm-patch:
 	diff -u rsnapshot.conf.default.in rsnapshot.conf.default.in.redhat > redhat/SOURCES/rsnapshot.patch || /bin/true
 	rm -f rsnapshot.conf.default.in.redhat
 	
-rpm: tar
+rpm: tar redhat/SOURCES/rsnapshot.patch
 	cp rsnapshot-$(VERSION).tar.gz $(RPM_BASE_DIR)/SOURCES/
 	cp redhat/SOURCES/rsnapshot.patch $(RPM_BASE_DIR)/SOURCES/
 	cp redhat/SPECS/rsnapshot.spec $(RPM_BASE_DIR)/SPECS/
