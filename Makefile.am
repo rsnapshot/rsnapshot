@@ -1,4 +1,4 @@
-# $Id: Makefile.am,v 1.77 2006/10/08 08:19:56 djk20 Exp $ #
+# $Id: Makefile.am,v 1.78 2006/10/08 08:25:54 djk20 Exp $ #
 
 VERSION = 1.3.0
 
@@ -42,7 +42,7 @@ clean:
 rpm-patch: redhat/SOURCES/rsnapshot.patch
 redhat/SOURCES/rsnapshot.patch: rsnapshot.conf.default.in Makefile
 	@# redhat config file patch
-	cp rsnapshot.conf.default.in rsnapshot.conf.default.in.redhat
+	cp -p rsnapshot.conf.default.in rsnapshot.conf.default.in.redhat
 	perl -pi -e 's/^\#\@CMD_CP\@/\@CMD_CP\@/' rsnapshot.conf.default.in.redhat
 	perl -pi -e 's/^\#\@CMD_DU\@/\@CMD_DU\@/' rsnapshot.conf.default.in.redhat
 	perl -pi -e 's/^\#logfile/logfile/' rsnapshot.conf.default.in.redhat
