@@ -1,6 +1,6 @@
-dnl $Id: configure.ac,v 1.46 2006/05/18 10:12:37 djk20 Exp $
+dnl $Id: configure.ac,v 1.47 2006/10/08 05:06:46 djk20 Exp $
 
-AC_INIT(rsnapshot, 1.2.9, david@rsnapshot.org)
+AC_INIT(rsnapshot, 1.3.0, djk@rsnapshot.org)
 AM_INIT_AUTOMAKE
 AC_PROG_MAKE_SET
 AC_PROG_INSTALL

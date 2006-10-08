@@ -1,9 +1,9 @@
-# $Id: rsnapshot.spec,v 1.48 2006/07/09 06:06:47 djk20 Exp $
+# $Id: rsnapshot.spec,v 1.49 2006/10/08 05:06:46 djk20 Exp $
 
 Name: rsnapshot
 Summary: Local and remote filesystem snapshot utility
-Version: 1.2.9.1
-Release: 2
+Version: 1.3.0
+Release: 1
 BuildArch: noarch
 License: GPL
 URL: http://www.rsnapshot.org/
@@ -84,7 +84,10 @@ rm -rf $RPM_BUILD_DIR/%{name}-%{version}/
 %{_mandir}/man1/rsnapshot.1*
 
 %changelog
-* Thu Jun 22 2006 David Keegel <djk@cybersource.com.au> - 1.2.9.1-2
+* Sun Sep 24 2006 David Keegel <djk@cybersource.com.au> - 1.3.0-1
+- Update version number to 1.3.0
+
+* Thu Jun 22 2006 David Keegel <djk@cybersource.com.au> - 1.3.0-0
 - Change BuildRoot to format recommended in Fedora Packaging Guidelines
 - Reformat description to fit in 80 columns, and add URL.
 - Add URL (www.rsnapshot.org)

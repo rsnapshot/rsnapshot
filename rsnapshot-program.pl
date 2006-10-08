@@ -26,7 +26,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.355 2006/09/28 22:28:53 djk20 Exp $
+# $Id: rsnapshot-program.pl,v 1.356 2006/10/08 05:06:46 djk20 Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -63,7 +63,7 @@ my $have_lchown = 0;
 $| = 1;
 
 # version of rsnapshot
-my $VERSION = '1.2.9';
+my $VERSION = '1.3.0';
 
 # command or interval to execute (first cmd line arg)
 my $cmd;
@@ -6569,7 +6569,7 @@ David Keegel <djk@cybersource.com.au>
 - Fixed race condition in lock file creation, improved error reporting
 - Allowed remote ssh directory paths starting with "~/" as well as "/"
 - Fixed a number of other bugs and buglets
-- Release management for rsnapshot 1.2.9
+- Release management for rsnapshot 1.2.9 onwards
 
 =back
 
