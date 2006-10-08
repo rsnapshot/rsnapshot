@@ -3,7 +3,7 @@ rsnapshot changelog
 http://www.rsnapshot.org/
 ------------------------------------------------------------------------------
 
-VERSION 1.3.0  (??? ?? 2006)
+VERSION 1.3.0  (Oct 08 2006)
 ------------------------------------------------------------------------------
 - rsnapshot detects the global ssh_args option being set multiple times,
   and gives a config error suggesting the per-backup ssh_args instead.
