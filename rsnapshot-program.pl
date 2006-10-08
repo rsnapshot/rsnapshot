@@ -26,7 +26,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.356 2006/10/08 05:06:46 djk20 Exp $
+# $Id: rsnapshot-program.pl,v 1.357 2006/10/08 06:16:20 djk20 Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -6190,7 +6190,7 @@ So in this example, say the backup_database.sh script simply runs a command like
 
 mysqldump -uusername mydatabase > mydatabase.sql
 
-chmod u=r,go= mydatabase.sql	# Set permissions to r-------- (0400)
+chmod u=r,go= mydatabase.sql	# r-------- (0400)
 
 =back
 
@@ -6200,8 +6200,6 @@ rsnapshot checks the differences between the files created against the
 previous files. If the backup script generates the same output on the next
 run, the files will be hard linked against the previous ones, and no
 additional disk space will be taken up.
-
-=back
 
 =back
 
