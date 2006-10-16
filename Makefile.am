@@ -1,4 +1,4 @@
-# $Id: Makefile.am,v 1.78 2006/10/08 08:25:54 djk20 Exp $ #
+# $Id: Makefile.am,v 1.79 2006/10/16 21:22:40 djk20 Exp $ #
 
 VERSION = 1.3.0
 
@@ -67,6 +67,8 @@ tar: doc rpm-patch
 	cp -p rsnapshot-preamble.pl rsnapshot-program.pl rsnapshot-diff.pl rsnapshot.conf.default.in \
 		rsnapshot.1 AUTHORS COPYING INSTALL README TODO NEWS ChangeLog \
 		rsnapshot-$(VERSION)/
+
+	@# documentation files
 	cp -a docs rsnapshot-$(VERSION)/
 	
 	@# autoconf files
