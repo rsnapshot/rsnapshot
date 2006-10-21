@@ -26,7 +26,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.358 2006/10/08 07:57:55 djk20 Exp $
+# $Id: rsnapshot-program.pl,v 1.359 2006/10/21 06:09:50 djk20 Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -2652,7 +2652,7 @@ sub handle_interval {
 			if (0 == $is_file) {
 				display_rm_rf("$config_vars{'snapshot_root'}/$interval.delete/");
 				if (0 == $test) {
-					$result = rm_rf( "$config_vars{'snapshot_root'}/$$id_ref{'interval'}.delete/" );
+					$result = rm_rf( "$config_vars{'snapshot_root'}/$interval.delete/" );
 					if (0 == $result) {
 						bail("Error! rm_rf(\"$config_vars{'snapshot_root'}/$interval.delete/\")");
 					}		
