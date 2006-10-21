@@ -1,4 +1,4 @@
-# $Id: rsnapshot.spec,v 1.50 2006/10/11 22:05:56 djk20 Exp $
+# $Id: rsnapshot.spec,v 1.51 2006/10/21 06:29:48 djk20 Exp $
 
 Name: rsnapshot
 Summary: Local and remote filesystem snapshot utility
@@ -37,7 +37,7 @@ For more details see http://www.rsnapshot.org/.
 install -d $RPM_BUILD_ROOT/%{_bindir}
 install -m 755 rsnapshot $RPM_BUILD_ROOT/usr/bin/rsnapshot
 install -m 755 rsnapshot-diff $RPM_BUILD_ROOT/usr/bin/rsnapshot-diff
-install -m 755 rsnapreport.pl $RPM_BUILD_ROOT/usr/bin/rsnapreport.pl
+install -m 755 utils/rsnapreport.pl $RPM_BUILD_ROOT/usr/bin/rsnapreport.pl
 
 install -d $RPM_BUILD_ROOT/%{_mandir}/man1
 install -m 644 rsnapshot.1 $RPM_BUILD_ROOT/usr/share/man/man1/
