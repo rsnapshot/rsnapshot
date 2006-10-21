@@ -3,8 +3,10 @@ rsnapshot changelog
 http://www.rsnapshot.org/
 ------------------------------------------------------------------------------
 
-VERSION 1.3.0  (Oct 08 2006)
+VERSION 1.3.0  (Oct 21 2006)
 ------------------------------------------------------------------------------
+- Add files rsnapreport.pl Upgrading_from_1.1 rsnapshot-HOWTO.en.html to rpm.
+- fix a bug with removing interval.delete (with use_lazy_deletes).
 - rsnapshot detects the global ssh_args option being set multiple times,
   and gives a config error suggesting the per-backup ssh_args instead.
 - Move Upgrading section of INSTALL to docs/Upgrading_from_1.1.
