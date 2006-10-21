@@ -8,11 +8,6 @@ It was originally emailled by Nathan Rosenquist (former rsnapshot
 maintainer) in response to a request for information from David Keegel
 about rsnapshot release procedures.  It has subsequently been updated.
 
-First of all, automating all of this would be a good thing.  As it stands,
-you have a series of fairly useful Makefile targets and scripts, but
-unfortunately there's no "build-everything-with-one-command" feature.
-There's obviously room for improvement here.
-
 Files that need to have the rsnapshot version number updated before a
 release:
 
@@ -24,27 +19,38 @@ release:
     redhat/SPECS/rsnapshot.spec
     ChangeLog
 
-Automake/Autoconf file generation summary:
+Automake/Autoconf file generation :
 
-    The 'aclocal' command takes configure.ac and generates aclocal.m4
-    The 'autoconf' command takes configure.ac + aclocal.m4 and generates 
-the 'configure' file (plus some junk that 'make clean' gets rid of)
-    The 'automake' command takes Makefile.am and creates Makefile.in
-(plus some other junk that 'make clean' gets rid of)
+    Quick Start:
+	You can just run
+		utils/mkmakefile.sh
+	or
+		utils/mkmakefile.sh --sysconfdir=/etc
+	Then skip down to the USING MAKE section.
 
-You should run them before each release, if only to propagate the
-version number updates into Makefile.in and configure
+    Manual automake/autoconf:
+
+	    The 'aclocal' command takes configure.ac and generates aclocal.m4
+	    The 'autoconf' command takes configure.ac + aclocal.m4 and generates 
+	the 'configure' file (plus some junk that 'make clean' gets rid of)
+	    The 'automake' command takes Makefile.am and creates Makefile.in
+	(plus some other junk that 'make clean' gets rid of)
+
+	You should run them before each release, if only to propagate the
+	version number updates into Makefile.in and configure
 
 
-Commands that should be run (to generate Makefile.in and configure)
+	Commands that should be run (to generate Makefile.in and configure)
 
-    aclocal
-    autoconf
-    automake
+	    aclocal
+	    autoconf
+	    automake
 
-To generate the Makefile, which you'll need below
+	To generate the Makefile, which you'll need below
 
-    ./configure
+	    ./configure
+
+USING MAKE:
 
 To generate the man page from the POD data in rsnapshot
 
@@ -55,10 +61,10 @@ put a different style sheet on it afterwards)
 
     make html
 
-To generate the RPM patch file (which localizes certain paths) for
-use in building the RPM later
+Or alternatively, to make both man and html
 
-    make rpm-patch
+    make doc
+
 
 To create the tarball for release:
 I like to do this, untar the resulting tar file, and then run ./
@@ -92,7 +98,7 @@ for details on the commands.
     ./configure
     make rpm
 
-The Debian package is maintained by Christoph Wegscheider
+The Debian package was maintained by Christoph Wegscheider
 <christoph.wegscheider@wegi.net>. I'm honestly not sure exactly what he
 does, I would usually coordinate with him before a release to create
 the Debian package. As a last resort, the existing 1.2.1 release
