@@ -1,4 +1,4 @@
-# $Id: rsnapshot.spec,v 1.53 2006/10/27 22:31:03 djk20 Exp $
+# $Id: rsnapshot.spec,v 1.54 2006/10/27 22:59:59 djk20 Exp $
 
 Name: rsnapshot
 Summary: Local and remote filesystem snapshot utility
@@ -40,7 +40,7 @@ install -m 755 rsnapshot-diff $RPM_BUILD_ROOT/usr/bin/rsnapshot-diff
 install -m 755 utils/rsnapreport.pl $RPM_BUILD_ROOT/usr/bin/rsnapreport.pl
 
 install -d $RPM_BUILD_ROOT/%{_mandir}/man1
-install -m 644 rsnapshot*.1 $RPM_BUILD_ROOT/usr/share/man/man1/
+install -m 644 rsnapshot*.1* $RPM_BUILD_ROOT/usr/share/man/man1/
 
 install -d $RPM_BUILD_ROOT/%{_sysconfdir}
 install -m 644 rsnapshot.conf.default $RPM_BUILD_ROOT/etc/rsnapshot.conf.default
@@ -84,11 +84,11 @@ rm -rf $RPM_BUILD_DIR/%{name}-%{version}/
 %{_bindir}/rsnapshot
 %{_bindir}/rsnapshot-diff
 %{_bindir}/rsnapreport.pl
-%{_mandir}/man1/rsnapshot*.1
+%{_mandir}/man1/rsnapshot*.1*
 
 %changelog
 * Sat Oct 28 2006 David Keegel <djk@cybersource.com.au> - 1.3.0-2
-- Include rsnapshot-diff.1, by using rsnapshot*.1 for man page files.
+- Include rsnapshot-diff.1, by using rsnapshot*.1* for man page files.
 
 * Tue Oct 10 2006 David Keegel <djk@cybersource.com.au> - 1.3.0-1
 - Add docs: Upgrading_from_1.1 rsnapshot-HOWTO.en.html
