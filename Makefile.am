@@ -1,4 +1,4 @@
-# $Id: Makefile.am,v 1.80 2006/10/27 21:57:43 djk20 Exp $ #
+# $Id: Makefile.am,v 1.81 2006/10/27 23:01:43 djk20 Exp $ #
 
 VERSION = 1.3.0
 
@@ -56,7 +56,8 @@ redhat/SOURCES/rsnapshot.patch: rsnapshot.conf.default.in Makefile
 	diff -u rsnapshot.conf.default.in rsnapshot.conf.default.in.redhat > redhat/SOURCES/rsnapshot.patch || /bin/true
 	rm -f rsnapshot.conf.default.in.redhat
 	
-rpm: tar redhat/SOURCES/rsnapshot.patch
+rpm: tar redhat/SOURCES/rsnapshot.patch redhat/SPECS/rsnapshot.spec
+	@# build rpm file
 	cp rsnapshot-$(VERSION).tar.gz $(RPM_BASE_DIR)/SOURCES/
 	cp redhat/SOURCES/rsnapshot.patch $(RPM_BASE_DIR)/SOURCES/
 	cp redhat/SPECS/rsnapshot.spec $(RPM_BASE_DIR)/SPECS/
@@ -64,6 +65,8 @@ rpm: tar redhat/SOURCES/rsnapshot.patch
 	cp $(RPM_BASE_DIR)/RPMS/noarch/rsnapshot-$(VERSION)-1.noarch.rpm .
 
 tar: doc rpm-patch
+	@echo building tar file 
+	@# recommended to run make tar as root for the chown
 	rm -f rsnapshot-$(VERSION).tar.gz
 	
 	@# core files
