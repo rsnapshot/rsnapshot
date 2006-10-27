@@ -14,7 +14,7 @@
 
 @SET_MAKE@
 
-# $Id: Makefile.in,v 1.102 2006/10/27 22:01:59 djk20 Exp $ #
+# $Id: Makefile.in,v 1.103 2006/10/27 23:02:02 djk20 Exp $ #
 
 
 srcdir = @srcdir@
@@ -587,7 +587,8 @@ redhat/SOURCES/rsnapshot.patch: rsnapshot.conf.default.in Makefile
 	diff -u rsnapshot.conf.default.in rsnapshot.conf.default.in.redhat > redhat/SOURCES/rsnapshot.patch || /bin/true
 	rm -f rsnapshot.conf.default.in.redhat
 
-rpm: tar redhat/SOURCES/rsnapshot.patch
+rpm: tar redhat/SOURCES/rsnapshot.patch redhat/SPECS/rsnapshot.spec
+	@# build rpm file
 	cp rsnapshot-$(VERSION).tar.gz $(RPM_BASE_DIR)/SOURCES/
 	cp redhat/SOURCES/rsnapshot.patch $(RPM_BASE_DIR)/SOURCES/
 	cp redhat/SPECS/rsnapshot.spec $(RPM_BASE_DIR)/SPECS/
@@ -595,6 +596,8 @@ rpm: tar redhat/SOURCES/rsnapshot.patch
 	cp $(RPM_BASE_DIR)/RPMS/noarch/rsnapshot-$(VERSION)-1.noarch.rpm .
 
 tar: doc rpm-patch
+	@echo building tar file 
+	@# recommended to run make tar as root for the chown
 	rm -f rsnapshot-$(VERSION).tar.gz
 
 	@# core files
