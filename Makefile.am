@@ -1,8 +1,13 @@
-# $Id: Makefile.am,v 1.81 2006/10/27 23:01:43 djk20 Exp $ #
+# $Id: Makefile.am,v 1.82 2006/10/27 23:16:24 djk20 Exp $ #
 
+# rsnapshot version
 VERSION = 1.3.0
 
+# Where RPM files are built on this system
 RPM_BASE_DIR = /usr/src/redhat
+
+# update of spec file, within this rsnapshot version
+RPM_RELEASE = 1
 
 upgrade:
 	@echo ""
@@ -31,7 +36,7 @@ clean:
 	rm -rf rsnapshot-$(VERSION)/
 	rm -rf autom4te.cache
 	rm -f rsnapshot-$(VERSION).tar.gz
-	rm -f rsnapshot-$(VERSION)-1.noarch.rpm
+	rm -f rsnapshot-$(VERSION)-$(RPM_RELEASE).noarch.rpm
 	rm -f rsnapshot.conf.default
 	rm -f rsnapshot.conf.default.in.redhat
 	rm -f rsnapshot.html
@@ -56,13 +61,15 @@ redhat/SOURCES/rsnapshot.patch: rsnapshot.conf.default.in Makefile
 	diff -u rsnapshot.conf.default.in rsnapshot.conf.default.in.redhat > redhat/SOURCES/rsnapshot.patch || /bin/true
 	rm -f rsnapshot.conf.default.in.redhat
 	
-rpm: tar redhat/SOURCES/rsnapshot.patch redhat/SPECS/rsnapshot.spec
+rpm: rsnapshot-$(VERSION)-$(RPM_RELEASE).noarch.rpm
+rsnapshot-$(VERSION)-$(RPM_RELEASE).noarch.rpm: tar redhat/SOURCES/rsnapshot.patch redhat/SPECS/rsnapshot.spec
 	@# build rpm file
 	cp rsnapshot-$(VERSION).tar.gz $(RPM_BASE_DIR)/SOURCES/
 	cp redhat/SOURCES/rsnapshot.patch $(RPM_BASE_DIR)/SOURCES/
 	cp redhat/SPECS/rsnapshot.spec $(RPM_BASE_DIR)/SPECS/
-	rpmbuild -bb $(RPM_BASE_DIR)/SPECS/rsnapshot.spec
-	cp $(RPM_BASE_DIR)/RPMS/noarch/rsnapshot-$(VERSION)-1.noarch.rpm .
+	rpmbuild -ba $(RPM_BASE_DIR)/SPECS/rsnapshot.spec
+	cp -p $(RPM_BASE_DIR)/RPMS/noarch/rsnapshot-$(VERSION)-$(RPM_RELEASE).noarch.rpm .
+	-cp -p $(RPM_BASE_DIR)/SRPMS/rsnapshot-$(VERSION)-$(RPM_RELEASE).src.rpm .
 
 tar: doc rpm-patch
 	@echo building tar file 
