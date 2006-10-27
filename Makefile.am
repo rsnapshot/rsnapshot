@@ -1,4 +1,4 @@
-# $Id: Makefile.am,v 1.79 2006/10/16 21:22:40 djk20 Exp $ #
+# $Id: Makefile.am,v 1.80 2006/10/27 21:57:43 djk20 Exp $ #
 
 VERSION = 1.3.0
 
@@ -10,12 +10,16 @@ upgrade:
 	@echo ""
 
 doc: man html
-	@echo "Documentation rsnapshot.1 and rsnapshot.html are now up to date."
+	@echo "Documentation $(man_MANS) and rsnapshot.html are now up to date."
 
-man: rsnapshot.1
+man: $(man_MANS)
 rsnapshot.1 : rsnapshot
 	@# perl 5.8 for this
 	/usr/bin/pod2man -c '' -n 'rsnapshot' -r '' rsnapshot > rsnapshot.1
+	
+rsnapshot-diff.1 : rsnapshot-diff
+	@# perl 5.8 for this
+	/usr/bin/pod2man -c '' -n 'rsnapshot-diff' -r '' rsnapshot-diff > rsnapshot-diff.1
 	
 html: rsnapshot.html
 rsnapshot.html: rsnapshot
@@ -65,7 +69,7 @@ tar: doc rpm-patch
 	@# core files
 	mkdir rsnapshot-$(VERSION)
 	cp -p rsnapshot-preamble.pl rsnapshot-program.pl rsnapshot-diff.pl rsnapshot.conf.default.in \
-		rsnapshot.1 AUTHORS COPYING INSTALL README TODO NEWS ChangeLog \
+		$(man_MANS) AUTHORS COPYING INSTALL README TODO NEWS ChangeLog \
 		rsnapshot-$(VERSION)/
 
 	@# documentation files
@@ -106,6 +110,6 @@ test:
 	@PERL@ -MTest::Harness -e 'runtests(glob "t/*.t")';
 
 bin_SCRIPTS = rsnapshot rsnapshot-diff
-man_MANS = rsnapshot.1
+man_MANS = rsnapshot.1 rsnapshot-diff.1
 sysconf_DATA = rsnapshot.conf.default
 
