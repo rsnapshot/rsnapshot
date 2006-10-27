@@ -1,4 +1,4 @@
-# $Id: Makefile.am,v 1.82 2006/10/27 23:16:24 djk20 Exp $ #
+# $Id: Makefile.am,v 1.83 2006/10/27 23:44:53 djk20 Exp $ #
 
 # rsnapshot version
 VERSION = 1.3.0
@@ -8,11 +8,6 @@ RPM_BASE_DIR = /usr/src/redhat
 
 # update of spec file, within this rsnapshot version
 RPM_RELEASE = 1
-
-upgrade:
-	@echo ""
-	${PERL} rsnapshot-program.pl -c ${sysconfdir}/rsnapshot.conf upgrade-config-file
-	@echo ""
 
 doc: man html
 	@echo "Documentation $(man_MANS) and rsnapshot.html are now up to date."
@@ -31,6 +26,11 @@ rsnapshot.html: rsnapshot
 	pod2html rsnapshot | grep -v 'link rev' > rsnapshot.html
 	rm -f pod2htmd.*
 	rm -f pod2htmi.*
+
+upgrade:
+	@echo ""
+	${PERL} rsnapshot-program.pl -c ${sysconfdir}/rsnapshot.conf upgrade-config-file
+	@echo ""
 
 clean:
 	rm -rf rsnapshot-$(VERSION)/
@@ -71,7 +71,8 @@ rsnapshot-$(VERSION)-$(RPM_RELEASE).noarch.rpm: tar redhat/SOURCES/rsnapshot.pat
 	cp -p $(RPM_BASE_DIR)/RPMS/noarch/rsnapshot-$(VERSION)-$(RPM_RELEASE).noarch.rpm .
 	-cp -p $(RPM_BASE_DIR)/SRPMS/rsnapshot-$(VERSION)-$(RPM_RELEASE).src.rpm .
 
-tar: doc rpm-patch
+tar: rsnapshot-$(VERSION).tar.gz
+rsnapshot-$(VERSION).tar.gz: doc rpm-patch Makefile $(bin_SCRIPTS) $(sysconf_DATA)
 	@echo building tar file 
 	@# recommended to run make tar as root for the chown
 	rm -f rsnapshot-$(VERSION).tar.gz
