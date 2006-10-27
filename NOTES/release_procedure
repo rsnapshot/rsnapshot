@@ -125,3 +125,11 @@ fingers).
 Obviously, I'd also update the links on the web site to point to the
 newest download release as well.
 
+$ ftp upload.sourceforge.net
+ftp> cd incoming
+ftp> bin
+ftp> mput rsnapshot-<release>*
+
+Login to sourceforge as a project admin of rsnapshot and go to
+Admin -> File Releases.  Add a new release and add files to it. 
+
