@@ -1,4 +1,4 @@
-# $Id: Makefile.am,v 1.83 2006/10/27 23:44:53 djk20 Exp $ #
+# $Id: Makefile.am,v 1.84 2006/11/03 23:31:23 djk20 Exp $ #
 
 # rsnapshot version
 VERSION = 1.3.0
@@ -11,6 +11,7 @@ RPM_RELEASE = 1
 
 doc: man html
 	@echo "Documentation $(man_MANS) and rsnapshot.html are now up to date."
+	@touch doc
 
 man: $(man_MANS)
 rsnapshot.1 : rsnapshot
@@ -43,12 +44,14 @@ clean:
 	rm -f pod2htmd.*
 	rm -f pod2htmi.*
 	rm -f Makefile config.log config.status configure.lineno rsnapshot rsnapshot-diff
+	-rm -f doc rpm-patch rpm tar
 	rm -f t/*.t
 	rm -f t/support/etc/*.conf
 	rm -f t/support/files/a/{1,2}
 	rm -rf t/support/snapshots/*.*
 	
 rpm-patch: redhat/SOURCES/rsnapshot.patch
+	@touch rpm-patch
 redhat/SOURCES/rsnapshot.patch: rsnapshot.conf.default.in Makefile
 	@# redhat config file patch
 	cp -p rsnapshot.conf.default.in rsnapshot.conf.default.in.redhat
@@ -62,6 +65,7 @@ redhat/SOURCES/rsnapshot.patch: rsnapshot.conf.default.in Makefile
 	rm -f rsnapshot.conf.default.in.redhat
 	
 rpm: rsnapshot-$(VERSION)-$(RPM_RELEASE).noarch.rpm
+	@touch rpm
 rsnapshot-$(VERSION)-$(RPM_RELEASE).noarch.rpm: tar redhat/SOURCES/rsnapshot.patch redhat/SPECS/rsnapshot.spec
 	@# build rpm file
 	cp rsnapshot-$(VERSION).tar.gz $(RPM_BASE_DIR)/SOURCES/
@@ -72,7 +76,8 @@ rsnapshot-$(VERSION)-$(RPM_RELEASE).noarch.rpm: tar redhat/SOURCES/rsnapshot.pat
 	-cp -p $(RPM_BASE_DIR)/SRPMS/rsnapshot-$(VERSION)-$(RPM_RELEASE).src.rpm .
 
 tar: rsnapshot-$(VERSION).tar.gz
-rsnapshot-$(VERSION).tar.gz: doc rpm-patch Makefile $(bin_SCRIPTS) $(sysconf_DATA)
+	@touch tar
+rsnapshot-$(VERSION).tar.gz: $(man_MANS) rpm-patch Makefile $(bin_SCRIPTS) $(sysconf_DATA)
 	@echo building tar file 
 	@# recommended to run make tar as root for the chown
 	rm -f rsnapshot-$(VERSION).tar.gz
@@ -117,7 +122,7 @@ rsnapshot-$(VERSION).tar.gz: doc rpm-patch Makefile $(bin_SCRIPTS) $(sysconf_DAT
 	tar czf rsnapshot-$(VERSION).tar.gz rsnapshot-$(VERSION)/
 	rm -rf rsnapshot-$(VERSION)/
 
-test:
+test: rsnapshot
 	@PERL@ -MTest::Harness -e 'runtests(glob "t/*.t")';
 
 bin_SCRIPTS = rsnapshot rsnapshot-diff
