@@ -14,7 +14,7 @@
 
 @SET_MAKE@
 
-# $Id: Makefile.in,v 1.105 2006/10/27 23:48:08 djk20 Exp $ #
+# $Id: Makefile.in,v 1.106 2006/11/03 23:47:22 djk20 Exp $ #
 
 
 srcdir = @srcdir@
@@ -544,6 +544,7 @@ uninstall-man: uninstall-man1
 
 doc: man html
 	@echo "Documentation $(man_MANS) and rsnapshot.html are now up to date."
+	@touch doc
 
 man: $(man_MANS)
 rsnapshot.1 : rsnapshot
@@ -576,14 +577,17 @@ clean:
 	rm -f pod2htmd.*
 	rm -f pod2htmi.*
 	rm -f Makefile config.log config.status configure.lineno rsnapshot rsnapshot-diff
+	-rm -f doc rpm-patch rpm tar
 	rm -f t/*.t
 	rm -f t/support/etc/*.conf
 	rm -f t/support/files/a/{1,2}
 	rm -rf t/support/snapshots/*.*
 
 rpm-patch: redhat/SOURCES/rsnapshot.patch
+	@echo
+	@touch rpm-patch
 redhat/SOURCES/rsnapshot.patch: rsnapshot.conf.default.in Makefile
-	@# redhat config file patch
+	@echo building rpm config file patch $@
 	cp -p rsnapshot.conf.default.in rsnapshot.conf.default.in.redhat
 	perl -pi -e 's/^\#\@CMD_CP\@/\@CMD_CP\@/' rsnapshot.conf.default.in.redhat
 	perl -pi -e 's/^\#\@CMD_DU\@/\@CMD_DU\@/' rsnapshot.conf.default.in.redhat
@@ -595,7 +599,9 @@ redhat/SOURCES/rsnapshot.patch: rsnapshot.conf.default.in Makefile
 	rm -f rsnapshot.conf.default.in.redhat
 
 rpm: rsnapshot-$(VERSION)-$(RPM_RELEASE).noarch.rpm
+	@touch rpm
 rsnapshot-$(VERSION)-$(RPM_RELEASE).noarch.rpm: tar redhat/SOURCES/rsnapshot.patch redhat/SPECS/rsnapshot.spec
+	@echo building rpm file $@
 	@# build rpm file
 	cp rsnapshot-$(VERSION).tar.gz $(RPM_BASE_DIR)/SOURCES/
 	cp redhat/SOURCES/rsnapshot.patch $(RPM_BASE_DIR)/SOURCES/
@@ -603,9 +609,11 @@ rsnapshot-$(VERSION)-$(RPM_RELEASE).noarch.rpm: tar redhat/SOURCES/rsnapshot.pat
 	rpmbuild -ba $(RPM_BASE_DIR)/SPECS/rsnapshot.spec
 	cp -p $(RPM_BASE_DIR)/RPMS/noarch/rsnapshot-$(VERSION)-$(RPM_RELEASE).noarch.rpm .
 	-cp -p $(RPM_BASE_DIR)/SRPMS/rsnapshot-$(VERSION)-$(RPM_RELEASE).src.rpm .
+	@echo
 
 tar: rsnapshot-$(VERSION).tar.gz
-rsnapshot-$(VERSION).tar.gz: doc rpm-patch Makefile $(bin_SCRIPTS) $(sysconf_DATA)
+	@touch tar
+rsnapshot-$(VERSION).tar.gz: $(man_MANS) rpm-patch Makefile $(bin_SCRIPTS) $(sysconf_DATA)
 	@echo building tar file 
 	@# recommended to run make tar as root for the chown
 	rm -f rsnapshot-$(VERSION).tar.gz
@@ -649,8 +657,9 @@ rsnapshot-$(VERSION).tar.gz: doc rpm-patch Makefile $(bin_SCRIPTS) $(sysconf_DAT
 	-chown -R root:root rsnapshot-$(VERSION)/
 	tar czf rsnapshot-$(VERSION).tar.gz rsnapshot-$(VERSION)/
 	rm -rf rsnapshot-$(VERSION)/
+	@echo
 
-test:
+test: rsnapshot
 	@PERL@ -MTest::Harness -e 'runtests(glob "t/*.t")';
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
