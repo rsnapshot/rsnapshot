@@ -1,4 +1,4 @@
-# $Id: Makefile.am,v 1.84 2006/11/03 23:31:23 djk20 Exp $ #
+# $Id: Makefile.am,v 1.85 2006/11/03 23:44:00 djk20 Exp $ #
 
 # rsnapshot version
 VERSION = 1.3.0
@@ -51,9 +51,10 @@ clean:
 	rm -rf t/support/snapshots/*.*
 	
 rpm-patch: redhat/SOURCES/rsnapshot.patch
+	@echo
 	@touch rpm-patch
 redhat/SOURCES/rsnapshot.patch: rsnapshot.conf.default.in Makefile
-	@# redhat config file patch
+	@echo building rpm config file patch $@
 	cp -p rsnapshot.conf.default.in rsnapshot.conf.default.in.redhat
 	perl -pi -e 's/^\#\@CMD_CP\@/\@CMD_CP\@/' rsnapshot.conf.default.in.redhat
 	perl -pi -e 's/^\#\@CMD_DU\@/\@CMD_DU\@/' rsnapshot.conf.default.in.redhat
@@ -67,6 +68,7 @@ redhat/SOURCES/rsnapshot.patch: rsnapshot.conf.default.in Makefile
 rpm: rsnapshot-$(VERSION)-$(RPM_RELEASE).noarch.rpm
 	@touch rpm
 rsnapshot-$(VERSION)-$(RPM_RELEASE).noarch.rpm: tar redhat/SOURCES/rsnapshot.patch redhat/SPECS/rsnapshot.spec
+	@echo building rpm file $@
 	@# build rpm file
 	cp rsnapshot-$(VERSION).tar.gz $(RPM_BASE_DIR)/SOURCES/
 	cp redhat/SOURCES/rsnapshot.patch $(RPM_BASE_DIR)/SOURCES/
@@ -74,6 +76,7 @@ rsnapshot-$(VERSION)-$(RPM_RELEASE).noarch.rpm: tar redhat/SOURCES/rsnapshot.pat
 	rpmbuild -ba $(RPM_BASE_DIR)/SPECS/rsnapshot.spec
 	cp -p $(RPM_BASE_DIR)/RPMS/noarch/rsnapshot-$(VERSION)-$(RPM_RELEASE).noarch.rpm .
 	-cp -p $(RPM_BASE_DIR)/SRPMS/rsnapshot-$(VERSION)-$(RPM_RELEASE).src.rpm .
+	@echo
 
 tar: rsnapshot-$(VERSION).tar.gz
 	@touch tar
@@ -121,6 +124,7 @@ rsnapshot-$(VERSION).tar.gz: $(man_MANS) rpm-patch Makefile $(bin_SCRIPTS) $(sys
 	-chown -R root:root rsnapshot-$(VERSION)/
 	tar czf rsnapshot-$(VERSION).tar.gz rsnapshot-$(VERSION)/
 	rm -rf rsnapshot-$(VERSION)/
+	@echo
 
 test: rsnapshot
 	@PERL@ -MTest::Harness -e 'runtests(glob "t/*.t")';
