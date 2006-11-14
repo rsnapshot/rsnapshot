@@ -1,0 +1,9 @@
+On Debian, you need the following packages:
+
+    xsltproc
+    docbook-xsl
+    docbook-xml
+    fop
+    docbook2x
+    texinfo
+    

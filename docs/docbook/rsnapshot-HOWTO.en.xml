@@ -1,0 +1,549 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd" []>
+
+<article>
+	<articleinfo>
+		<title>rsnapshot HOWTO</title>
+		
+		<author>
+			<firstname>Nathan</firstname>
+			<surname>Rosenquist</surname>
+			<affiliation>
+				<address><email>nathan@rsnapshot.org</email></address>
+			</affiliation>
+		</author>
+		
+		<!-- All dates specified in ISO "YYYY-MM-DD" format -->
+		<pubdate>2004-01-20</pubdate>
+		
+		<!-- Most recent revision goes at the top; list in descending order -->
+		<revhistory>
+			<revision>
+				<revnumber>1.0.0</revnumber>
+				<date>2005-01-31</date>
+				<authorinitials>NR</authorinitials>
+				<revremark>Updated for rsnapshot 1.2.0</revremark>
+			</revision>
+			<revision>
+				<revnumber>0.9.7</revnumber>
+				<date>2005-01-17</date>
+				<authorinitials>NR</authorinitials>
+				<revremark>Spelling corrections submitted by Nicolas Kaiser</revremark>
+			</revision>
+			<revision>
+				<revnumber>0.9.6</revnumber>
+				<date>2004-12-13</date>
+				<authorinitials>NR</authorinitials>
+				<revremark>Misc. updates</revremark>
+			</revision>
+			<revision>
+				<revnumber>0.9.5</revnumber>
+				<date>2004-07-10</date>
+				<authorinitials>NR</authorinitials>
+				<revremark>Relicensed document under GPL, instead of FDL</revremark>
+			</revision>
+			<revision>
+				<revnumber>0.9.4</revnumber>
+				<date>2004-07-02</date>
+				<authorinitials>NR</authorinitials>
+				<revremark>Added description of proper crontab time settings</revremark>
+			</revision>
+			<revision>
+				<revnumber>0.9.3</revnumber>
+				<date>2004-06-11</date>
+				<authorinitials>NR</authorinitials>
+				<revremark>Misc. updates</revremark>
+			</revision>
+			<revision>
+				<revnumber>0.9.2</revnumber>
+				<date>2004-05-16</date>
+				<authorinitials>NR</authorinitials>
+				<revremark>Updated --link-dest info</revremark>
+			</revision>
+			<revision>
+				<revnumber>0.9.1</revnumber>
+				<date>2004-01-20</date>
+				<authorinitials>NR</authorinitials>
+				<revremark>Added --link-dest info</revremark>
+			</revision>
+			<revision>
+				<revnumber>0.9</revnumber>
+				<date>2004-01-10</date>
+				<authorinitials>NR</authorinitials>
+				<revremark>First draft</revremark>
+			</revision>
+		</revhistory>
+		
+		<!-- Provide a good abstract; a couple of sentences is sufficient -->
+		<abstract>
+			<para>
+				rsnapshot is a filesystem backup utility based on rsync. Using rsnapshot, it is possible to take snapshots
+				of your filesystems at different points in time. Using hard links, rsnapshot creates the illusion of
+				multiple full backups, while only taking up the space of one full backup plus differences. When coupled
+				with ssh, it is possible to take snapshots of remote filesystems as well. This document is a tutorial in
+				the installation and configuration of rsnapshot.
+			</para>
+		</abstract>
+	</articleinfo>
+
+<sect1 id="intro">
+	<title>Introduction</title>
+	
+	<para>rsnapshot is a filesystem backup utility based on rsync. Using rsnapshot, it is possible to take snapshots of your filesystems at different points in time. Using hard links, rsnapshot creates the illusion of multiple full backups, while only taking up the space of one full backup plus differences. When coupled with ssh, it is possible to take snapshots of remote filesystems as well.</para>
+	<para>rsnapshot is written in Perl, and depends on rsync. OpenSSH, GNU cp, GNU du, and the BSD logger program are also recommended, but not required. All of these should be present on most Linux systems. rsnapshot is written with the lowest common denominator in mind. It only requires at minimum Perl 5.004 and rsync. As a result of this, it works on pretty much any UNIX-like system you care to throw at it. It has been successfully tested with Perl 5.004 through 5.8.2, on Debian, Redhat, Fedora, Solaris, Mac OS X, FreeBSD, OpenBSD, NetBSD, and IRIX.</para>
+	
+	<para>The latest version of the program and this document can always be found at <ulink url="http://www.rsnapshot.org/">http://www.rsnapshot.org/</ulink>.</para>
+	
+	<sect2 id="what_you_will_need">
+		<title>What you will need</title>
+		
+		<para>At a minimum: <emphasis>perl, rsync</emphasis></para>
+		<para>Optionally: <emphasis>ssh, logger, GNU cp, GNU du</emphasis></para>
+		<para>Additionally, it will help if you have reasonably good sysadmin skills.</para>
+	</sect2>
+	
+	<!-- Legal Sections -->
+	<sect2 id="copyright">
+		<title>Copyright and License</title>
+		
+		<!-- GPL License -->
+		<para>This document, rsnapshot HOWTO, is copyrighted (c) 2005 by Nathan Rosenquist. You can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version. A copy of the license is available at <ulink url="http://www.gnu.org/copyleft/gpl.html">http://www.gnu.org/copyleft/gpl.html</ulink>.</para>
+	</sect2>
+	
+	<sect2 id="disclaimer">
+		<title>Disclaimer</title>
+		
+		<para>No liability for the contents of this document can be accepted. Use the concepts, examples and information at your own risk. There may be errors and inaccuracies, that could be damaging to your system.  Proceed with caution, and although this is highly unlikely, the author(s) do not take any responsibility.</para>
+		
+		<para>All copyrights are held by their by their respective owners, unless specifically noted otherwise.  Use of a term in this document should not be regarded as affecting the validity of any trademark or service mark.  Naming of particular products or brands should not be seen as endorsements.</para>
+	</sect2>
+	
+	<!-- Feedback -->
+	<sect2 id="feedback">
+		<title>Feedback</title>
+		
+		<para>Feedback is most certainly welcome for this document. Send your additions, comments and criticisms to the following email address : <email>nathan@rsnapshot.org</email>.</para>
+	</sect2>
+</sect1>
+
+<!-- MOTIVATION -->
+<sect1 id="motivation">
+	<title>Motivation</title>
+	
+	<para>I originally used Mike Rubel's shell scripts to do rsync snapshots a while back. These worked very well, but there were a number of things that I wanted to improve upon. I had to write two shell scripts that were customized for my server. If I wanted to change the number of intervals stored, or the parts of the filesystem that were archived, that meant manually editing these shell scripts. If I wanted to install them on a different server with a different configuration, this meant manually editing the scripts for the new server, and hoping the logic and the sequence of operations was correct. Also, I was doing all the backups locally, on a single machine, on a single hard drive (just to protect from dumb user mistakes like deleting files). Never the less, I continued on with this system for a while, and it did work very well.</para>
+	<para>Several months later, the IDE controller on my web server failed horribly (when I typed <command>/sbin/shutdown</command>, it said the command was not found). I was then faced with what was in the back of my mind all along: I had not been making regular remote backups of my server, and the local backups were of no use to me since the entire drive was corrupted. The reason I had only been making sporadic, partial remote backups is that they weren't automatic and effortless. Of course, this was no one's fault but my own, but I got frustrated enough to write a tool that would make automated remote snapshots so easy that I wouldn't ever have to worry about them again. This goal has long been reached, but work on rsnapshot still continues as people submit patches, request features, and ways are found to improve the program.</para>
+</sect1>
+
+<!-- INSTALLATION -->
+<sect1 id="installation">
+	<title>Installation</title>
+	<para>This section will walk you through the installation of rsnapshot, step by step. This is not the only way to do it, but it is a way that works and that is well documented. Feel free to improvise if you know what you're doing.</para>
+	
+	<para>This guide assumes you are installing rsnapshot 1.2.0 for the first time. If you are upgrading from an earlier version, please read the <filename>INSTALL</filename> file that comes with the source distribution instead.</para>
+	
+	<sect2 id="thirty_second_version">
+		<title>30 second version (for the impatient)</title>
+		
+		<screen><command>./configure --sysconfdir=/etc</command>
+<command>su</command>
+<command>make install</command>
+<command>cp /etc/rsnapshot.conf.default /etc/rsnapshot.conf</command></screen>
+		
+		<para>The rest of this section is the long version.</para>
+	</sect2>
+	
+	<sect2 id="untar_the_source_code_package">
+		<title>Untar the source code package</title>
+		
+		<screen><command>tar xzvf rsnapshot-1.2.0.tar.gz</command></screen>
+		
+		<para>If you don't have GNU <filename>tar</filename>, you may have to do this in two steps instead:</para>
+		
+		<screen><command>gunzip rsnapshot-1.2.0.tar.gz</command>
+<command>tar xvf rsnapshot-1.2.0.tar</command></screen>
+	</sect2>
+	
+	<sect2 id="change_to_src_dir">
+		<title>Change to the source directory</title>
+		
+		<screen><command>cd rsnapshot-1.2.0/</command></screen>
+	</sect2>
+	
+	<sect2 id="decide_where_to_install">
+		<title>Decide where you want to install</title>
+		
+		<para>By default, the installation procedure will install all files under <filename class="directory">/usr/local</filename>. For this tutorial, this will be OK except we will install the config file under <filename class="directory">/etc</filename>.</para>
+		
+		<para>We are assuming that <filename>rsync</filename>, <filename>ssh</filename>, <filename>logger</filename>, and <filename>du</filename> are all in your search path. If this is not the case, you can specify the path to any of these programs using the typical Autoconf <parameter>--with-program=/path/to/program</parameter> syntax. For example, if Perl was in <filename class="directory">/opt/bin/perl</filename> and rsync was in <filename>/home/me/bin/rsync</filename>, you could run configure like:</para>
+		
+		<screen><command>./configure --with-perl=/opt/bin/perl --with-rsync=/home/me/bin/rsync</command></screen>
+		
+	</sect2>
+	
+	<sect2 id="run_the_configure_script">
+		<title>Run the configure script</title>
+		
+		<para>This will poke and prod your system to figure out where the various external programs that rsnapshot depends on live. It also generates the Makefile that we will use to install the program. The configure script accepts arguments that can be used to tell it where to install the program, and also where to find the supporting programs. For this installation, the only non-default option we want is to put the config file in the <filename class="directory">/etc</filename> directory. To do this, run this command at the shell:</para>
+
+		<screen><command>./configure --sysconfdir=/etc</command></screen>
+
+		<para>If all goes well, you're ready to install the program. If there was a problem, it should be descriptive. Most likely a problem would be the result of something that was required and not found (like rsync or perl). If this happens, you must figure out where the missing program is located on your system, or install it if necessary. If you know where it is but configure couldn't find it, you can specify the path using the <parameter>--with-program=/path/to/program</parameter> options described above.</para>
+	</sect2>
+	
+	<sect2 id="install_the_program">
+		<title>Install the program</title>
+		
+		<para>If you've followed these instructions so far, you will have configured rsnapshot to be installed under <filename class="directory">/usr/local</filename>, with the config file in <filename class="directory">/etc</filename>. Under these circumstances, it will be necessary to become root to install the program. Now is the time to do so. You will, of course, need the root password to do this:</para>
+		
+		<screen><command>su</command></screen>
+		
+		<para>This will prompt you for the root password.</para>
+		
+		<para>Now, to install rsnapshot, run the following command:</para>
+		
+		<screen><command>make install</command></screen>
+		
+		<para>This will install rsnapshot with all the settings you specified in the ./configure stage. If all goes well, you will have the following files on your system:</para>
+		
+		<!-- TODO: put these in a table or something -->
+		<para><filename>/usr/local/bin/rsnapshot</filename>           The rsnapshot program</para>
+		<para><filename>/usr/local/man/man1/rsnapshot.1</filename>    Man page</para>
+		<para><filename>/etc/rsnapshot.conf.default</filename>        The example config file</para>
+		
+		<para>If you decide later that you don't want rsnapshot on your system anymore, simply remove the files listed above, or run <command>make uninstall</command> in the same source directory you installed from. Of course, if you installed with different options, the location of these files may be different.</para>
+		
+	</sect2>
+</sect1>
+
+<!-- CONFIGURATION -->
+<sect1 id="configuration">
+	<title>Configuration</title>
+	
+	<sect2 id="create_the_config_file">
+		<title>Create the config file</title>
+		
+		<para>In the install process, the config file is not created or installed. However, a working example is provided that you can copy. To copy the example config file into the location rsnapshot will be looking for the real config file:</para>
+		
+		<screen><command>cp /etc/rsnapshot.conf.default /etc/rsnapshot.conf</command></screen>
+		
+		<para>As a general rule, you should avoid modifying <filename>/etc/rsnapshot.conf.default</filename>, simply because it is a working example that you may wish to refer to later. Also, if you perform an upgrade, the <filename>rsnapshot.conf.default</filename> file will always be upgraded to the latest version, while your real config file will be safe out of harm's way. Please note that if you run <command>make upgrade</command> during an upgrade, your rsnapshot.conf may be modified slightly, and the original will then be saved in <filename>rsnapshot.conf.backup</filename> in the same directory.</para>
+	</sect2>
+	
+	<sect2 id="where_to_go_for_more_info">
+		<title>Where to go for more info</title>
+		
+		<para>The <filename>rsnapshot.conf</filename> config file is well commented, and much of it should be fairly self-explanatory. For a full reference of all the various options, please consult the rsnapshot man page. Type:</para>
+		
+		<screen><command>man rsnapshot</command></screen>
+		
+		<para>This will give you the complete documentation. However, it assumes that you already know what you're doing to a certain extent. If you just want to get something up and running, this tutorial is a better place to start. If your system can't find the man page, <filename class="directory">/usr/local/man</filename> probably isn't in your $MANPATH environmental variable. This is beyond the scope of this document, but if it isn't working for you, you can always read the newest man page on the rsnapshot web site at <ulink url="http://www.rsnapshot.org/">http://www.rsnapshot.org/</ulink></para>
+		
+	</sect2>
+	
+	<sect2 id="modifying_the_config_file">
+		<title>Modifying the config file</title>
+		
+		<para>In this example, we will be using the <filename class="directory">/.snapshots/</filename> directory to hold the filesystem snapshots. This is referred to as the <quote>snapshot root</quote>. Feel free to put this anywhere you have lots of free disk space. However, the examples in this document assume you have not changed this parameter, so you will have to substitute this in your commands if you put it somewhere else.</para>
+		<para>Also please note that fields are separated by tabs, not spaces. The reason for this is so it's easier to specify file paths with spaces in them.</para>
+		
+		<sect3 id="cmd_cp">
+			<title>cmd_cp</title>
+			
+			<para>If enabled, the <emphasis>cmd_cp</emphasis> parameter should contain the path to the GNU <filename>cp</filename> program on your filesystem. If you are using Linux, be sure to uncomment this by removing the hash mark (#) in front of it. If you are using BSD, Solaris, IRIX, or most other UNIX variants, you should leave this commented out.</para>
+			<para>What makes GNU <filename>cp</filename> so special is that unlike the traditional UNIX <filename>cp</filename>, it has the ability to make recursive <quote>copies</quote> of directories as hard links.</para>
+			<para>If you don't have GNU <filename>cp</filename>, there is a subroutine in rsnapshot that somewhat approximates this functionality (although it won't support more esoteric files such as device nodes, FIFOs, sockets, etc). This gets followed up by another call to rsync, which transfers the remaining special files, if any. In this way, rsnapshot can support all file types on every platform.</para>
+			<para>The rule of thumb is that if you're on a Linux system, leave <emphasis>cmd_cp</emphasis> enabled. If you aren't on a Linux system, leave <emphasis>cmd_cp</emphasis> disabled. There are reports of GNU <filename>cp</filename> working on BSD and other non-Linux platforms, but there have also been some cases where problems have been encountered. If you enable <emphasis>cmd_cp</emphasis> on a non-Linux platform, please let the mailing list know how it worked out for you.</para>
+		</sect3>
+		
+		<sect3 id="cmd_rsync">
+			<title>cmd_rsync</title>
+			
+			<para>The <emphasis>cmd_rsync</emphasis> parameter must not be commented out, and it must point to a working version of <filename>rsync</filename>. If it doesn't, the program just will not work at all.</para>
+			<para>Please note that if you are using IRIX, there is another program named <filename>rsync</filename> that is different than the <quote>real</quote> <filename>rsync</filename> most people know of. If you're on an IRIX machine, you should double check this.</para>
+		</sect3>
+		
+		<sect3 id="cmd_ssh">
+			<title>cmd_ssh</title>
+			
+			<para>If you have <filename>ssh</filename> installed on your system, you will want to uncomment the <emphasis>cmd_ssh</emphasis> parameter. By enabling <filename>ssh</filename>, you can take snapshots of any number of remote systems. If you don't have <filename>ssh</filename>, or plan to only take snapshots of the local filesystem, you may safely leave this commented out.</para>
+		</sect3>
+		
+		<sect3 id="cmd_logger">
+			<title>cmd_logger</title>
+			
+			<para>The <emphasis>cmd_logger</emphasis> parameter specifies the path to the <filename>logger</filename> program. <filename>logger</filename> is a command line interface to syslog. See the <filename>logger</filename> man page for more details. <filename>logger</filename> should be a standard part of most UNIX-like systems. It appears to have remained unchanged since about 1993, which is good for cross-platform stability. If you comment out this parameter, it will disable syslog support in rsnapshot. It is recommended that you leave this enabled.</para>
+		</sect3>
+		
+		<sect3 id="cmd_du">
+			<title>cmd_du</title>
+			
+			<para>The <emphasis>cmd_du</emphasis> parameter specifies the path to the <filename>du</filename> program. <filename>du</filename> is a command line tool that reports on disk usage. rsnapshot uses <filename>du</filename> to generate reports about the actual amount of disk space taken up, which is otherwise difficult to estimate because of all the hard links.</para>
+			<para>If you comment this out, rsnapshot will try to use the version of <filename>du</filename> it finds in your path, if possible. The GNU version of <filename>du</filename> is recommended, since it has the best selection of features, and supports the most options. The BSD version also seems to work, although some versions don't support the <command>-h</command> flag. Solaris <command>du</command> does not work at all, because it doesn't support the <command>-c</command> parameter.</para>
+		</sect3>
+		
+		<sect3 id="link_dest">
+			<title>link_dest</title>
+			
+			<para>If you have <filename>rsync</filename> version 2.5.7 or later, you may want to enable this. With <emphasis>link_dest</emphasis> enabled, rsnapshot relies on rsync to create recursive hard links, overriding GNU cp in most, but not all, cases. With <emphasis>link_dest</emphasis> enabled, every single file on your system can be backed up in one pass, on any operating system. To get the most out of rsnapshot on non-Linux platforms, <emphasis>link_dest</emphasis> should be enabled. Be advised, however, that if a remote host is unavailable during a backup, rsnapshot will take an extra step and roll back the files from the previous backup. Using GNU cp, this would not be necessary.</para>
+		</sect3>
+		
+		<sect3 id="interval">
+			<title>interval</title>
+			
+			<para>rsnapshot has no idea how often you want to take snapshots. Everyone's backup scheme may be different. In order to specify how much data to save, you need to tell rsnapshot which <quote>intervals</quote> to keep, and how many of each. An interval, in the context of the rsnapshot config file, is a unit of time measurement. These can actually be named anything (as long as it's alphanumeric, and not a reserved word), but by convention we will call ours <emphasis>hourly</emphasis> and <emphasis>daily</emphasis>. In this example, we want to take a snapshot every four hours, or six times a day (these are the <emphasis>hourly</emphasis> intervals). We also want to keep a second set, which are taken once a day, and stored for a week (or seven days). This happens to be the default, so as you can see the config file reads:</para>
+			
+<screen>interval    hourly  6
+interval    daily   7</screen>
+			
+			<para>It also has some other entries, but you can either ignore them or comment them out for now.</para>
+			<para>Please note that the <emphasis>hourly</emphasis> interval is specified first. This is very important. The first <emphasis>interval</emphasis> line is assumed to be the smallest unit of time, with each additional line getting successively larger. Thus, if you add a <emphasis>yearly</emphasis> interval, it should go at the bottom, and if you add a <emphasis>minutes</emphasis> interval, it should go before hourly. It's also worth noting that the snapshots get <quote>pulled up</quote> from the smallest interval to the largest. In this example, the daily snapshots get pulled from the oldest hourly snapshot, not directly from the main filesystem.</para>
+		</sect3>
+		
+		<sect3 id="backup">
+			<title>backup</title>
+			
+			<para>Please note that the destination paths specified here are based on the assumption that the <emphasis>--relative</emphasis> flag is being passed to <filename>rsync</filename> via the <emphasis>rsync_long_args</emphasis> parameter. If you are installing for the first time, this is the default setting. If you upgraded from a previous version, please read the <filename>INSTALL</filename> file that came with the source distribution for more information.</para>
+			
+			<para>This is the section where you tell rsnapshot what files you actually want to back up. You put a <quote>backup</quote> parameter first, followed by the full path to the directory or network path you're backing up. The third column is the relative path you want to back up to inside the snapshot root. Let's look at an example:</para>
+			
+			<screen>backup      /etc/      localhost/</screen>
+			
+			<para>In this example, <emphasis>backup</emphasis> tells us it's a backup point. <filename class="directory">/etc/</filename> is the full path to the directory we want to take snapshots of, and <filename class="directory">localhost/</filename> is a directory inside the <emphasis>snapshot_root</emphasis> we're going to put them in. Using the word <emphasis>localhost</emphasis> as the destination directory is just a convention. You might also choose to use the server's fully qualified domain name instead of <emphasis>localhost</emphasis>. If you are taking snapshots of several machines on one dedicated backup server, it's a good idea to use their various hostnames as directories to keep track of which files came from which server.</para>
+			
+			<para>In addition to full paths on the local filesystem, you can also backup remote systems using <filename>rsync</filename> over <filename>ssh</filename>. If you have <filename>ssh</filename> installed and enabled (via the <emphasis>cmd_ssh</emphasis> parameter), you can specify a path like:</para>
+			
+			<screen>backup      root@example.com:/etc/     example.com/</screen>
+			
+			<para>This behaves fundamentally the same way, but you must take a few extra things into account.</para>
+			
+			<itemizedlist>
+				<listitem><para>The ssh daemon must be running on example.com</para></listitem>
+				<listitem><para>You must have access to the account you specify the remote machine, in this case the root user on example.com.</para></listitem>
+				<listitem><para>You must have key-based logins enabled for the root user at example.com, without passphrases. If you wanted to perform backups as another user, you could specify the other user instead of root for the source (i.e. user@domain.com). Please note that allowing remote logins with no passphrase is a security risk that may or may not be acceptable in your situation. Make sure you guard access to the backup server very carefully! For more information on how to set this up, please consult the ssh man page, or a tutorial on using ssh public and private keys. You will find that the key based logins are better in many ways, not just for rsnapshot but for convenience and security in general. <ulink url="http://www.jdmz.net/rsnapshot">Troy Johnson</ulink>'s excellent tutorial on using nifty ssh features for secure snapshots which, in case his site ever suffers a mishap, is mirrored <ulink url="http://www.rsnapshot.org/howto/using-rsnapshot-and-ssh.html">here</ulink> on this site.</para></listitem>
+				<listitem><para>This backup occurs over the network, so it may be slower. Since this uses <filename>rsync</filename>, this is most noticeable during the first backup. Depending on how much your data changes, subsequent backups should go much, much faster since <emphasis>rsync</emphasis> only sends the differences between files.</para></listitem>
+			</itemizedlist>
+		</sect3>
+		
+		<sect3 id="backup_script">
+			<title>backup_script</title>
+			
+			<para>With this parameter, the second column is the full path to an executable backup script, and the third column is the local path you want to store it in (just like with the "backup" parameter). For example:</para>
+			
+			<screen>backup_script      /usr/local/bin/backup_pgsql.sh       localhost/postgres/</screen>
+			
+			<para>In this example, rsnapshot will run the script <filename>/usr/local/bin/backup_pgsql.sh</filename> in a temp directory, then sync the results into the <filename class="directory">localhost/postgres/</filename> directory under the snapshot root. You can find the backup_pgsql.sh example script in the <filename class="directory">utils/</filename> directory of the source distribution. Feel free to modify it for your system.</para>
+			<para>Your backup script simply needs to dump out the contents of whatever it does into it's current working directory. It can create as many files and/or directories as necessary, but it should not put its files in any pre-determined path. The reason for this is that rsnapshot creates a temp directory, changes to that directory, runs the backup script, and then syncs the contents of the temp directory to the local path you specified in the third column. A typical backup script would be one that archives the contents of a database. It might look like this:</para>
+			
+			<screen><command>#!/bin/sh
+
+/usr/bin/mysqldump -uroot mydatabase > mydatabase.sql
+/bin/chmod 644 mydatabase.sql</command></screen>
+			
+			<para>There are several example scripts in the <filename class="directory">utils/</filename> directory of the rsnapshot source distribution to give you more ideas.</para>
+			
+			<para>Make sure the destination path you specify is unique. The backup script will completely overwrite anything in the destination path, so if you tried to specify the same destination twice, you would be left with only the files from the last script. Fortunately, rsnapshot will try to prevent you from doing this when it reads the config file.</para>
+			
+			<para>Please remember that these backup scripts will be invoked as the user running rsnapshot. In our example, this is root. Make sure your backup scripts are owned by root, and not writable by anyone else. If you fail to do this, anyone with write access to these backup scripts will be able to put commands in them that will be run as the root user. If they are malicious, they could take over your server.</para>
+			
+		</sect3>
+	</sect2>
+	
+	<sect2 id="testing_your_config_file">
+		<title>Testing your config file</title>
+		
+		<para>When you have made all your changes, you should verify that the config file is syntactically valid, and that all the supporting programs are where you think they are. To do this, run rsnapshot with the configtest argument:</para>
+		
+		<screen><command>rsnapshot configtest</command></screen>
+		
+		<para>If all is well, it should say <computeroutput>Syntax OK</computeroutput>. If there's a problem, it should tell you exactly what it is. Make sure your config file is using tabs and not spaces, etc.</para>
+		<para>The final step to test your configuration is to run rsnapshot in test mode. This will print out a verbose list of the things it will do, without actually doing them. To do a test run, run this command:</para>
+		
+		<screen><command>rsnapshot -t hourly</command></screen>
+		
+		<para>This tells rsnapshot to simulate an "hourly" backup. It should print out the commands it will perform when it runs for real. Please note that the test output might be slightly different than the real execution, but only because the test doesn't actually do things that may be checked for later in the program. For example, if the program will create a directory and then later test to see if that directory exists, the test run might claim that it would create the directory twice, since it didn't actually get created during the test. This should be the only type of difference you will see while running a test.</para>
+	</sect2>
+</sect1>
+
+<!-- AUTOMATION -->
+<sect1 id="automation">
+	<title>Automation</title>
+	
+	<para>Now that you have your config file set up, it's time to set up rsnapshot to be run from cron. As the root user, edit root's crontab by typing:</para>
+	
+	<screen><command>crontab -e</command></screen>
+	
+	<para>You could alternately keep a crontab file that you load in, but the concepts are the same. You want to enter the following information into root's crontab:</para>
+	
+<screen>
+0 */4 * * *       /usr/local/bin/rsnapshot hourly
+30 23 * * *       /usr/local/bin/rsnapshot daily
+</screen>
+
+	<para>It is usually a good idea to schedule the larger intervals to run a bit before the lower ones. For example, in the crontab above, notice that <emphasis>daily</emphasis> runs 30 minutes before <emphasis>hourly</emphasis>. This helps prevent race conditions where the <emphasis>daily</emphasis> would try to run before the <emphasis>hourly</emphasis> job had finished. This same strategy should be extended so that a <emphasis>weekly</emphasis> entry would run before the <emphasis>daily</emphasis> and so on.
+</para>
+
+</sect1>
+
+<!-- HOW IT WORKS -->
+<sect1 id="how_it_works">
+	<title>How it works</title>
+	
+	<para>We have a snapshot root under which all backups are stored. By default, this is the directory <filename class="directory">/.snapshots/</filename>. Within this directory, other directories are created for the various intervals that have been defined. In the beginning it will be empty, but once rsnapshot has been running for a week, it should look something like this:</para>
+	
+<screen>
+[root@localhost]# <command>ls -l /.snapshots/</command>
+drwxr-xr-x    7 root     root         4096 Dec 28 00:00 daily.0
+drwxr-xr-x    7 root     root         4096 Dec 27 00:00 daily.1
+drwxr-xr-x    7 root     root         4096 Dec 26 00:00 daily.2
+drwxr-xr-x    7 root     root         4096 Dec 25 00:00 daily.3
+drwxr-xr-x    7 root     root         4096 Dec 24 00:00 daily.4
+drwxr-xr-x    7 root     root         4096 Dec 23 00:00 daily.5
+drwxr-xr-x    7 root     root         4096 Dec 22 00:00 daily.6
+drwxr-xr-x    7 root     root         4096 Dec 29 00:00 hourly.0
+drwxr-xr-x    7 root     root         4096 Dec 28 20:00 hourly.1
+drwxr-xr-x    7 root     root         4096 Dec 28 16:00 hourly.2
+drwxr-xr-x    7 root     root         4096 Dec 28 12:00 hourly.3
+drwxr-xr-x    7 root     root         4096 Dec 28 08:00 hourly.4
+drwxr-xr-x    7 root     root         4096 Dec 28 04:00 hourly.5
+</screen>
+	
+	<para>Inside each of these directories is a <quote>full</quote> backup of that point in time. The destination directory paths you specified under the <emphasis>backup</emphasis> and <emphasis>backup_script</emphasis> parameters get stuck directly under these directories. In the example:</para>
+	
+	<screen>backup          /etc/           localhost/</screen>
+	
+	<para>The <filename class="directory">/etc/</filename> directory will initially get backed up into <filename class="directory">/.snapshots/hourly.0/localhost/etc/</filename></para>
+	
+	<para>Each subsequent time rsnapshot is run with the <emphasis>hourly</emphasis> command, it will rotate the <filename class="directory">hourly.X</filename> directories, and then <quote>copy</quote> the contents of the <filename class="directory">hourly.0</filename> directory (using hard links) into <filename class="directory">hourly.1</filename>.</para>
+	<para>When <command>rsnapshot daily</command> is run, it will rotate all the <filename class="directory">daily.X</filename> directories, then copy the contents of <filename class="directory">hourly.5</filename> into <filename class="directory">daily.0</filename>.</para>
+	<para><filename class="directory">hourly.0</filename> will always contain the most recent snapshot, and <filename class="directory">daily.6</filename> will always contain a snapshot from a week ago. Unless the files change between snapshots, the <quote>full</quote> backups are really just multiple hard links to the same files. Thus, if your <filename>/etc/passwd</filename> file doesn't change in a week, <filename>hourly.0/localhost/etc/passwd</filename> and <filename>daily.6/localhost/etc/passwd</filename> will literally be the same exact file. This is how rsnapshot can be so efficient on space. If the file changes at any point, the next backup will unlink the hard link in <filename class="directory">hourly.0</filename>, and replace it with a brand new file. This will now take double the disk space it did before, but it is still considerably less than it would be to have full unique copies of this file 13 times over.</para>
+	<para>Remember that if you are using different intervals than the ones in this example, the first interval listed is the one that gets updates directly from the main filesystem. All subsequently listed intervals pull from the previous intervals. For example, if you had <emphasis>weekly</emphasis>, <emphasis>monthly</emphasis>, and <emphasis>yearly</emphasis> intervals defined (in that order), the weekly ones would get updated directly from the filesystem, the monthly ones would get updated from weekly, and the yearly ones would get updated from monthly.</para>
+</sect1>
+
+<!-- RESTORING BACKUPS -->
+<sect1 id="restoring_backups">
+	<title>Restoring backups</title>
+	
+	<para>When rsnapshot is first run, it will create the <emphasis>snapshot_root</emphasis> directory (<filename class="directory">/.snapshots/</filename> by default). It assigns this directory the permissions 700, and for good reason. The snapshot root will probably contain files owned by all sorts of users on your system. If any of these files are writeable (and of course some of them will be), the users will still have write access to their files. Thus, if they can see the snapshots directly, they can modify them, and the integrity of the snapshots can not be guaranteed.</para>
+	
+	<para>For example, if a user had write permission to the backups and accidentally ran <command>rm -rf /</command>, they would delete all their files in their home directory and all the files they owned in the backups!</para>
+	
+	<sect2 id="root_only">
+		<title>root only</title>
+		
+		<para>The simplest, but least flexible solution, is to simply deny non-root users access to the snapshot root altogether. The root user will still have access of course, and as with all other aspects of system administration, must be trusted not to go messing with things too much. However, by simply denying access to everyone, the root user will be the only one who can pull backups. This may or may not be desirable, depending on your situation. For a small setup or a single-user machine, this may be all you need.</para>
+	</sect2>
+	
+	<sect2 id="all_users">
+		<title>All users</title>
+		
+		<para>If users need to be able to pull their own backups, you will need to do a little extra work up front (but probably less work in the long run). The best way to do this seems to be creating a container directory for the snapshot root with 700 permissions, giving the snapshot root directory 755 permissions, and mounting the snapshot root for the users read-only. This can be done over NFS and Samba, to name two possibilities. Let's explore how to do this using NFS on a single machine:</para>
+		
+		<para>Set the snapshot_root variable in <filename>/etc/rsnapshot.conf</filename> equal to <filename class="directory">/.private/.snapshots/</filename></para>
+		<screen>snapshot_root       /.private/.snapshots/</screen>
+		
+		
+		<para>Create the container directory:</para>
+		<screen><command>mkdir /.private/</command></screen>
+		
+		<para>Create the real snapshot root:</para>
+		<screen><command>mkdir /.private/.snapshots/</command></screen>
+		
+		<para>Create the read-only snapshot root mount point:</para>
+		<screen><command>mkdir /.snapshots/</command></screen>
+		
+		<para>Set the proper permissions on these new directories:</para>
+		<screen><command>chmod 0700 /.private/
+chmod 0755 /.private/.snapshots/
+chmod 0755 /.snapshots/</command></screen>
+		
+		<para>In <filename>/etc/exports</filename>, add <filename class="directory">/.private/.snapshots/</filename> as a read only NFS export:</para>
+		
+		<screen>/.private/.snapshots/  127.0.0.1(ro,no_root_squash)</screen>
+		
+		<para>In <filename>/etc/fstab</filename>, mount <filename class="directory">/.private/.snapshots/</filename> read-only under <filename class="directory">/.snapshots/</filename></para>
+		
+		<screen>localhost:/.private/.snapshots/   /.snapshots/   nfs    ro   0 0</screen>
+		
+		<para>You should now restart your NFS daemon.</para>
+		
+		<para>Now mount the read-only snapshot root:</para>
+		
+		<screen><command>mount /.snapshots/</command></screen>
+		
+		<para>To test this, go into the /.snapshots/ directory as root. It is set to read-only, so even root shouldn't be able to write to it. As root, try:</para>
+		
+		<screen><command>touch /.snapshots/testfile</command></screen>
+		
+		<para>This should fail, citing insufficient permissions. This is what you want. It means that your users won't be able to mess with the snapshots either.</para>
+		<para>Now, all your users have to do to recover old files is go into the /.snapshots directory, select the interval they want, and browse through the filesystem until they find the files they are looking for. They can't modify anything in here because NFS will prevent them, but they can copy anything that they had read permission for in the first place. All the regular filesystem permissions are still at work, but the read-only NFS mount prevents any writes from happening.</para>
+		<para>Please note that some NFS configurations may prevent you from accessing files that are owned by root and set to only be readable by root. In this situation, you may wish to pull backups for root from the "real" snapshot root, and let non-privileged users pull from the read-only NFS mount.</para>
+	</sect2>
+</sect1>
+
+<!-- CONCLUSION -->
+<sect1 id="conclusion">
+	<title>Conclusion</title>
+	
+	<para>If you followed the instructions in this document, you should now have rsnapshot installed and set up to perform automatic backups of your system. If it's not working, go back and trace your steps back to see if you can isolate the problem.</para>
+	<para>The amount of disk space taken up will be equal to one full backup, plus an additional copy of every file that is changed. There is also a slight disk space overhead with creating multiple hard links, but it's not very much. On my system, adding a second, completely identical 3 Gigabyte interval alongside the original one only added about 15 Megabytes.</para>
+	<para>You can use the <emphasis>du</emphasis> option to rsnapshot to generate disk usage reports. To see the sum total of all space used, try:</para>
+	<screen><command>rsnapshot du</command></screen>
+	<para>If you were storing backups under <filename class="directory">localhost/home/</filename> and wanted to see how much this subdirectory takes up throughout all your backups, try this instead:</para>
+	<screen><command>rsnapshot du localhost/home/</command></screen>
+	<para>The latest version of this document and the rsnapshot program can always be found at <ulink url="http://www.rsnapshot.org/">http://www.rsnapshot.org/</ulink></para>
+</sect1>
+
+<sect1 id="more_resources">
+	<title>More resources</title>
+	
+	<variablelist>
+		<title>Web sites</title>
+		
+		<varlistentry>
+			<term>Mike Rubel's original shell scripts, upon which this project is based</term>
+			<listitem><para>
+			<ulink url="http://www.mikerubel.org/computers/rsync_snapshots/">http://www.mikerubel.org/computers/rsync_snapshots/</ulink>
+			</para></listitem>
+		</varlistentry>
+		
+		<varlistentry>
+			<term>Perl</term>
+			<listitem><para>
+			<ulink url="http://www.perl.org/">http://www.perl.org/</ulink>
+			</para></listitem>
+		</varlistentry>
+		
+		<varlistentry>
+			<term>GNU cp and du (coreutils package)</term>
+			<listitem><para>
+			<ulink url="http://www.gnu.org/software/coreutils/">http://www.gnu.org/software/coreutils/</ulink>
+			</para></listitem>
+		</varlistentry>
+		
+		<varlistentry>
+			<term>rsync</term>
+			<listitem><para>
+			<ulink url="http://rsync.samba.org/">http://rsync.samba.org/</ulink>
+			</para></listitem>
+		</varlistentry>
+		
+		<varlistentry>
+			<term>OpenSSH</term>
+			<listitem><para>
+			<ulink url="http://www.openssh.org/">http://www.openssh.org/</ulink>
+			</para></listitem>
+		</varlistentry>
+		
+		<varlistentry>
+			<term>rsnapshot</term>
+			<listitem><para>
+			<ulink url="http://www.rsnapshot.org/">http://www.rsnapshot.org/</ulink>
+			</para></listitem>
+		</varlistentry>
+		
+	</variablelist>
+</sect1>
+
+</article>
+
