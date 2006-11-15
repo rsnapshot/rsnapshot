@@ -26,7 +26,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.359 2006/10/21 06:09:50 djk20 Exp $
+# $Id: rsnapshot-program.pl,v 1.360 2006/11/15 00:08:46 djk20 Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -3449,8 +3449,9 @@ sub handle_rsync_error {
 	my $bp_ref	= shift(@_);
 	
 	# shouldn't ever happen
-	if (!defined($retval)) { bail('retval undefined in warn_rsync_error()'); }
-	if (!defined($bp_ref)) { bail('bp_ref undefined in warn_rsync_error()'); }
+	if (!defined($retval)) { bail('retval undefined in handle_rsync_error()'); }
+	if (0 == $retval)) { bail('retval == 0 in handle_rsync_error()'); }
+	if (!defined($bp_ref)) { bail('bp_ref undefined in handle_rsync_error()'); }
 	
 	# a partial list of rsync exit values (from the rsync 2.6.0 man page)
 	#
