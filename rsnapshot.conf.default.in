@@ -196,12 +196,12 @@ backup	/usr/local/	localhost/
 #backup_script	/usr/local/bin/backup_pgsql.sh	localhost/postgres/
 
 # EXAMPLE.COM
-#backup_script	/bin/date	"+ backup of example.com started at %c"	unused1
+#backup_script	/bin/date "+ backup of example.com started at %c"	unused1
 #backup	root@example.com:/home/	example.com/	+rsync_long_args=--bwlimit=16,exclude=core
 #backup	root@example.com:/etc/	example.com/	exclude=mtab,exclude=core
-#backup_script	ssh root@example.com "mysqldump -A > /var/db/dump/mysql.sql"
-#backup	root@example.com:/var/db/dump/	example.com/	
-#backup_script	/bin/date	"+ backup of example.com ended at %c"	unused2
+#backup_script	ssh root@example.com "mysqldump -A > /var/db/dump/mysql.sql"	unused2
+#backup	root@example.com:/var/db/dump/	example.com/
+#backup_script	/bin/date	"+ backup of example.com ended at %c"	unused9
 
 # CVS.SOURCEFORGE.NET
 #backup_script	/usr/local/bin/backup_rsnapshot_cvsroot.sh	rsnapshot.cvs.sourceforge.net/
