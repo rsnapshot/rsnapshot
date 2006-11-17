@@ -26,7 +26,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.360 2006/11/15 00:08:46 djk20 Exp $
+# $Id: rsnapshot-program.pl,v 1.361 2006/11/17 12:15:45 drhyde Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -5996,6 +5996,12 @@ B<rsync_short_args    -a>
 List of short arguments to pass to rsync. If not specified,
 "-a" is the default. Please note that these must be all next to each other.
 For example, "-az" is valid, while "-a -z" is not.
+
+"-a" is rsync's "archive mode" which tells it to copy as much of the
+filesystem metadata as it can for each file.  This specifically does *not*
+include information about hard links, as that would greatly increase rsync's
+memory usage and slow it down.  If you need to preserve hard links in your
+backups, then add "H" to this.
 
 =back
 
