@@ -26,7 +26,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.361 2006/11/17 12:15:45 drhyde Exp $
+# $Id: rsnapshot-program.pl,v 1.362 2007/01/11 14:39:48 drhyde Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -2615,61 +2615,13 @@ sub handle_interval {
 	
 	my $result = 0;
 	
-	# make sure we don't have any leftover interval.delete directories
-	# if so, loop through and delete them
-	foreach my $interval_ref (@intervals) {
-		my $interval = $$interval_ref{'interval'};
-		
-		my $is_file = 0;
-		my $exists = 0;
-		
-		# double check that the node and snapshot_root are not the same directory
-		# it would be very bad to accidentally delete the snapshot root!
-		# first test for symlinks (should never be here)
-		if ( -l "$config_vars{'snapshot_root'}/$interval.delete" ) {
-			$exists = 1;
-			$is_file = 1;
-			
-		# file (should never be here)
-		} elsif ( -f "$config_vars{'snapshot_root'}/$interval.delete" ) {
-			$exists = 1;
-			$is_file = 1;
-			
-		# directory (this is what we're expecting)
-		} elsif ( -d "$config_vars{'snapshot_root'}/$interval.delete" ) {
-			$exists = 1;
-			$is_file = 0;
-			
-		# exists, but is something else
-		} elsif ( -e "$config_vars{'snapshot_root'}/$interval.delete" ) {
-			bail("Invalid file type for \"$config_vars{'snapshot_root'}/$interval.delete\" in handle_interval()\n");
-		}
-		
-		# we don't use if (-e $dir), because that fails for invalid symlinks
-		if (1 == $exists) {
-			# if we found any leftover directories, delete them now before they pile up and cause problems
-			# this is a directory
-			if (0 == $is_file) {
-				display_rm_rf("$config_vars{'snapshot_root'}/$interval.delete/");
-				if (0 == $test) {
-					$result = rm_rf( "$config_vars{'snapshot_root'}/$interval.delete/" );
-					if (0 == $result) {
-						bail("Error! rm_rf(\"$config_vars{'snapshot_root'}/$interval.delete/\")");
-					}		
-				}		
-				
-			# this is a file or symlink
-			} else {
-				print_cmd("rm -f $config_vars{'snapshot_root'}/$interval.delete");
-				if (0 == $test) {
-					$result = unlink("$config_vars{'snapshot_root'}/$interval.delete");
-					if (0 == $result) {
-						bail("Could not remove \"$config_vars{'snapshot_root'}/$interval.delete\" in handle_interval()");
-					}
-				}
-			}
-		}
-	}
+	# here we used to check for interval.delete directories.  This was
+	# removed when we switched to using _delete.$$ directories.  This
+	# was done so that you can run another (eg) rsnapshot hourly, while
+	# the .delete directory from the previous hourly backup was still
+	# going.  Potentially you may have several parallel deletes going on
+	# with the new scheme, but I'm pretty sure that you'll catch up
+	# eventually and not hopelessly wedge the machine -- DRC
 	
 	# handle toggling between sync_first being enabled and disabled
 	
@@ -2769,19 +2721,19 @@ sub handle_interval {
 		rotate_higher_interval( $id_ref );
 	}
 	
-	# if use_lazy_delete is on, delete the interval.delete directory
+	# if use_lazy_delete is on, delete the _delete.$$ directory
 	# we just check for the directory, it will have been created or not depending on the value of use_lazy_delete
-	if ( -d "$config_vars{'snapshot_root'}/$$id_ref{'interval'}.delete" ) {
+	if ( -d "$config_vars{'snapshot_root'}/_delete.$$" ) {
 		# this is the last thing to do here, and it can take quite a while.
 		# we remove the lockfile here since this delete shouldn't block other rsnapshot jobs from running
 		remove_lockfile();
 		
 		# start the delete
-		display_rm_rf("$config_vars{'snapshot_root'}/$$id_ref{'interval'}.delete/");
+		display_rm_rf("$config_vars{'snapshot_root'}/_delete.$$");
 		if (0 == $test) {
-			my $result = rm_rf( "$config_vars{'snapshot_root'}/$$id_ref{'interval'}.delete/" );
+			my $result = rm_rf( "$config_vars{'snapshot_root'}/_delete.$$" );
 			if (0 == $result) {
-				bail("Error! rm_rf(\"$config_vars{'snapshot_root'}/$$id_ref{'interval'}.delete/\")\n");
+				bail("Error! rm_rf(\"$config_vars{'snapshot_root'}/_delete.$$\")\n");
 			}
 		}
 	}
@@ -2901,22 +2853,22 @@ sub rotate_lowest_snapshots {
 	
 	# remove oldest directory
 	if ( (-d "$config_vars{'snapshot_root'}/$interval.$interval_max") && ($interval_max > 0) ) {
-		# if use_lazy_deletes is set move the oldest directory to interval.delete
+		# if use_lazy_deletes is set move the oldest directory to _delete.$$
 		if (1 == $use_lazy_deletes) {
 			print_cmd("mv",
 				"$config_vars{'snapshot_root'}/$interval.$interval_max/",
-				"$config_vars{'snapshot_root'}/$interval.delete/"
+				"$config_vars{'snapshot_root'}/_delete.$$/"
 			);
 			
 			if (0 == $test) {
 				my $result = safe_rename(
 					"$config_vars{'snapshot_root'}/$interval.$interval_max",
-					"$config_vars{'snapshot_root'}/$interval.delete"
+					"$config_vars{'snapshot_root'}/_delete.$$"
 				);
 				if (0 == $result) {
 					my $errstr = '';
 					$errstr .= "Error! safe_rename(\"$config_vars{'snapshot_root'}/$interval.$interval_max/\", \"";
-					$errstr .= "$config_vars{'snapshot_root'}/$interval.delete/\")";
+					$errstr .= "$config_vars{'snapshot_root'}/_delete.$$/\")";
 					bail($errstr);
 				}				
 			}				
@@ -3916,23 +3868,23 @@ sub rotate_higher_interval {
 	#
 	# delete the oldest one (if we're keeping more than one)
 	if ( -d "$config_vars{'snapshot_root'}/$interval.$interval_max" ) {
-		# if use_lazy_deletes is set move the oldest directory to interval.delete
+		# if use_lazy_deletes is set move the oldest directory to _delete.$$
 		# otherwise preform the default behavior
 		if (1 == $use_lazy_deletes) {
 			print_cmd("mv ",
 				"$config_vars{'snapshot_root'}/$interval.$interval_max/ ",
-				"$config_vars{'snapshot_root'}/$interval.delete/"
+				"$config_vars{'snapshot_root'}/_delete.$$/"
 			);
 			
 			if (0 == $test) {
 				my $result = safe_rename(
 					"$config_vars{'snapshot_root'}/$interval.$interval_max",
-					("$config_vars{'snapshot_root'}/$interval.delete")
+					("$config_vars{'snapshot_root'}/_delete.$$")
 				);
 				if (0 == $result) {
 					my $errstr = '';
 					$errstr .= "Error! safe_rename(\"$config_vars{'snapshot_root'}/$interval.$interval_max/\", \"";
-					$errstr .= "$config_vars{'snapshot_root'}/$interval.delete/\")";
+					$errstr .= "$config_vars{'snapshot_root'}/_delete.$$/\")";
 					bail($errstr);
 				}				
 			}				
@@ -6083,14 +6035,20 @@ B<use_lazy_deletes    1>
 =over 4
 
 Changes default behavior of rsnapshot and does not initially remove the 
-oldest snapshot. Instead it moves that directory to "interval".delete, and 
+oldest snapshot. Instead it moves that directory to _delete.[processid] and
 continues as normal. Once the backup has been completed, the lockfile will
 be removed before rsnapshot starts deleting the directory.
 
 Enabling this means that snapshots get taken sooner (since the delete doesn't
 come first), and any other rsnapshot processes are allowed to start while the
-final delete is happening. This benefit comes at the cost of one more
-snapshot worth of disk space. The default is 0 (off).
+final delete is happening. This benefit comes at the cost of using more
+disk space. The default is 0 (off).
+
+The details of how this works have changed from the original implementation.
+Originally you could only ever have one .delete directory per backup interval.
+Now you can have many, so if your next (eg) hourly backup kicks off while the
+previous one is still doing a lazy delete you may temporarily have extra
+_delete directories hanging around.
 
 =back
 
@@ -6569,6 +6527,10 @@ Current co-maintainer of rsnapshot
 =item -
 Wrote the rsnapshot-diff utility
 
+=item -
+Improved how use_lazy_deletes work so slow deletes don't screw up the next
+backup at that interval.
+
 =back
 
 David Keegel <djk@cybersource.com.au>
@@ -6749,7 +6711,7 @@ Bug fixes for include_conf
 
 Copyright (C) 2003-2005 Nathan Rosenquist
 
-Portions Copyright (C) 2002-2006 Mike Rubel, Carl Wilhelm Soderstrom,
+Portions Copyright (C) 2002-2007 Mike Rubel, Carl Wilhelm Soderstrom,
 Ted Zlatanov, Carl Boe, Shane Liebling, Bharat Mediratta, Peter Palfrader,
 Nicolas Kaiser, David Cantrell, Chris Petersen, Robert Jackson, Justin Grote,
 David Keegel, Alan Batie
