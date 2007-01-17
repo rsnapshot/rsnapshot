@@ -26,7 +26,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.363 2007/01/11 15:02:24 drhyde Exp $
+# $Id: rsnapshot-program.pl,v 1.364 2007/01/17 15:34:43 drhyde Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -258,6 +258,14 @@ add_lockfile();
 
 # create snapshot_root if it doesn't exist (and no_create_root != 1)
 create_snapshot_root();
+
+# now chdir to the snapshot_root.
+# note that this is needed because in the rare case that you do this ...
+# sudo -u peon rsnapshot ... and are in a directory that 'peon' can't
+# read, then some versions of GNU rm will later fail, as they try to
+# lstat the cwd.  It's safe to chdir because all directories etc that
+# we ever mention are absolute.
+chdir($config_vars{'snapshot_root'});
 
 # actually run the backup job
 # $cmd should store the name of the interval we'll run against
