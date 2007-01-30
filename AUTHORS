@@ -68,3 +68,6 @@ William Bear <bear@umn.edu>
 
 Eric Anderson <anderson@centtech.com>
     - Improvements to utils/rsnapreport.pl.
+
+Alan Batie <alan@batie.org>
+    - Bug fixes for include_conf
