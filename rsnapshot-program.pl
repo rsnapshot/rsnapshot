@@ -26,7 +26,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.364 2007/01/17 15:34:43 drhyde Exp $
+# $Id: rsnapshot-program.pl,v 1.365 2007/01/31 00:12:03 drhyde Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -84,6 +84,10 @@ my @rollback_points;
 # "intervals" are user defined time periods (e.g., hourly, daily)
 # this array holds hash_refs containing the name of the interval,
 # and the number of snapshots to keep of it
+#
+# NB, intervals and now called backup levels, and the config parameter
+# is 'retain'
+
 my @intervals;
 
 # store interval data (mostly info about which one we're on, what was before, etc.)
@@ -324,7 +328,7 @@ Options:
     -x one_fs        - Don't cross filesystems (same as -x option to rsync).
 
 Commands:
-    [interval]       - An interval as defined in rsnapshot.conf.
+    [backuplevel]    - A backup level as defined in rsnapshot.conf.
     configtest       - Syntax check the config file.
     sync [dest]      - Sync files, without rotating. "sync_first" must be
                        enabled for this to work. If a full backup point
@@ -332,7 +336,7 @@ Commands:
                        those files will be synced.
     diff             - Front-end interface to the rsnapshot-diff program.
                        Accepts two optional arguments which can be either
-                       filesystem paths or interval directories within the
+                       filesystem paths or backup directories within the
                        snapshot_root (e.g., /etc/ daily.0/etc/). The default
                        is to compare the two most recent snapshots.
     du               - Show disk usage in the snapshot_root.
@@ -759,14 +763,21 @@ sub parse_config_file {
 		}
 		
 		# INTERVALS
-		if ($var eq 'interval') {
+		# 'retain' is the new name for this parameter, although for
+		# Laziness reasons (plus the fact that I'm making this change
+		# at 10 minutes to midnight and so an wary of making changes
+		# throughout the code and getting it wrong) the code will
+		# still call it 'interval'.  Documentation and messages should
+		# refer to 'retain'.  The old 'interval' will be kept as an
+		# alias.
+		if ($var eq 'interval' || $var eq 'retain') {
 			# check if interval is blank
-			if (!defined($value)) { config_err($file_line_num, "$line - Interval can not be blank"); }
+			if (!defined($value)) { config_err($file_line_num, "$line - Retain can not be blank"); }
 			
 			foreach my $word (@reserved_words) {
 				if ($value eq $word) {
 					config_err($file_line_num,
-						"$line - \"$value\" is not a valid interval, reserved word conflict");
+						"$line - \"$value\" is not a valid interval name, reserved word conflict");
 					next;
 				}
 			}
@@ -774,7 +785,7 @@ sub parse_config_file {
 			# make sure interval is alpha-numeric
 			if ($value !~ m/^[\w\d]+$/) {
 				config_err($file_line_num,
-					"$line - \"$value\" is not a valid interval, must be alphanumeric characters only");
+					"$line - \"$value\" is not a valid backup name, must be alphanumeric characters only");
 				next;
 			}
 			
@@ -786,7 +797,7 @@ sub parse_config_file {
 			
 			# check if number is valid
 			if ($value2 !~ m/^\d+$/) {
-				config_err($file_line_num, "$line - \"$value2\" is not a legal value for an interval");
+				config_err($file_line_num, "$line - \"$value2\" is not a legal value for an backup level's retention count");
 				next;
 			# ok, it's a number. is it positive?
 			} else {
@@ -1345,8 +1356,8 @@ sub validate_config_file {
 	}
 	# make sure we have at least one interval
 	if (0 == scalar(@intervals)) {
-		print_err ("At least one interval must be set. rsnapshot can not continue.", 1);
-		syslog_err("At least one interval must be set. rsnapshot can not continue.");
+		print_err ("At least one backup level must be set. rsnapshot can not continue.", 1);
+		syslog_err("At least one backup level must be set. rsnapshot can not continue.");
 		exit(1);
 	}
 	# make sure we have at least one backup point
@@ -1364,8 +1375,8 @@ sub validate_config_file {
 	if (scalar(@intervals) > 1) {
 		if (defined($intervals[0]->{'number'})) {
 			if (1 == $intervals[0]->{'number'}) {
-				print_err ("Can not have first interval set to 1, and have a second interval", 1);
-				syslog_err("Can not have first interval set to 1, and have a second interval");
+				print_err ("Can not have first backup level's retention count set to 1, and have a second backup level", 1);
+				syslog_err("Can not have first backup level's retention count set to 1, and have a second backup level");
 				exit(1);
 			}
 		}
@@ -4556,7 +4567,7 @@ sub show_rsnapshot_diff {
 	
 	# see if we even got the right number of arguments (none is OK, but 1 isn't. 2 is also OK)
 	if (defined($ARGV[1]) && !defined($ARGV[2])) {
-		print STDERR "Usage: rsnapshot diff [interval|dir] [interval|dir]\n";
+		print STDERR "Usage: rsnapshot diff [backup level|dir] [backup level|dir]\n";
 		exit(1);
 	}
 	
@@ -4614,7 +4625,7 @@ sub show_rsnapshot_diff {
 	
 	# double check to make sure the directories exists (and are directories)
 	if ( (!defined($cmd_args[0]) or (!defined($cmd_args[1]))) or ((! -d "$cmd_args[0]") or (! -d "$cmd_args[1]")) ) {
-		print STDERR "ERROR: Arguments must be valid intervals or directories\n";
+		print STDERR "ERROR: Arguments must be valid backup levels or directories\n";
 		exit(1);
 	}
 	
@@ -5796,16 +5807,19 @@ rotations).
 
 =back
 
-B<interval>           [name]   [number]
+B<retain>             [name]   [number]
 
 =over 4
 
-"name" refers to the name of this interval (e.g., hourly, daily). "number"
-is the number of snapshots for this type of interval that will be stored.
+"name" refers to the name of this backup level (e.g., hourly, daily,
+so also called the 'interval'). "number"
+is the number of snapshots for this type of interval that will be retained.
 The value of "name" will be the command passed to B<rsnapshot> to perform
 this type of backup.
 
-Example: B<interval hourly 6>
+A deprecated alias for 'retain' is 'interval'.
+
+Example: B<retain hourly 6>
 
 [root@localhost]# B<rsnapshot hourly>
 
@@ -5821,21 +5835,21 @@ using hard links.
 Each backup point (explained below) will then be rsynced to the
 corresponding directories in <snapshot_root>/hourly.0/
 
-Intervals must be specified in the config file in order, from most
+Backup levels must be specified in the config file in order, from most
 frequent to least frequent. The first entry is the one which will be
-synced with the backup points. The subsequent intervals (e.g., daily,
-weekly, etc) simply rotate, with each higher interval pulling from the
+synced with the backup points. The subsequent backup levels (e.g., daily,
+weekly, etc) simply rotate, with each higher backup level pulling from the
 one below it for its .0 directory.
 
 Example:
 
 =over 4
 
-B<interval  hourly 6>
+B<retain  hourly 6>
 
-B<interval  daily  7>
+B<retain  daily  7>
 
-B<interval  weekly 4>
+B<retain  weekly 4>
 
 =back
 
@@ -5861,7 +5875,7 @@ B<sync_first          1>
 =over 4
 
 sync_first changes the behaviour of rsnapshot. When this is enabled, all calls
-to rsnapshot with various intervals simply rotate files. All backups are handled
+to rsnapshot with various backup levels simply rotate files. All backups are handled
 by calling rsnapshot with the "sync" argument. The synced files are stored in
 a ".sync" directory under the snapshot_root.
 
@@ -6053,7 +6067,7 @@ final delete is happening. This benefit comes at the cost of using more
 disk space. The default is 0 (off).
 
 The details of how this works have changed from the original implementation.
-Originally you could only ever have one .delete directory per backup interval.
+Originally you could only ever have one .delete directory per backup level.
 Now you can have many, so if your next (eg) hourly backup kicks off while the
 previous one is still doing a lazy delete you may temporarily have extra
 _delete directories hanging around.
@@ -6088,7 +6102,7 @@ B<backup   /etc/        localhost/>
 
 =over 4
 
-Backs up /etc/ to <snapshot_root>/<interval>.0/localhost/etc/ using rsync on
+Backs up /etc/ to <snapshot_root>/<retain>.0/localhost/etc/ using rsync on
 the local filesystem
 
 =back
@@ -6097,7 +6111,7 @@ B<backup   /usr/local/  localhost/>
 
 =over 4
 
-Backs up /usr/local/ to <snapshot_root>/<interval>.0/localhost/usr/local/
+Backs up /usr/local/ to <snapshot_root>/<retain>.0/localhost/usr/local/
 using rsync on the local filesystem
 
 =back
@@ -6106,7 +6120,7 @@ B<backup   root@example.com:/etc/       example.com/>
 
 =over 4
 
-Backs up root@example.com:/etc/ to <snapshot_root>/<interval>.0/example.com/etc/
+Backs up root@example.com:/etc/ to <snapshot_root>/<retain>.0/example.com/etc/
 using rsync over ssh
 
 =back
@@ -6116,7 +6130,7 @@ B<backup   root@example.com:/usr/local/ example.com/>
 =over 4
 
 Backs up root@example.com:/usr/local/ to
-<snapshot_root>/<interval>.0/example.com/usr/local/ using rsync over ssh
+<snapshot_root>/<retain>.0/example.com/usr/local/ using rsync over ssh
 
 =back
 
@@ -6124,7 +6138,7 @@ B<backup   rsync://example.com/pub/      example.com/pub/>
 
 =over 4
 
-Backs up rsync://example.com/pub/ to <snapshot_root>/<interval>.0/example.com/pub/
+Backs up rsync://example.com/pub/ to <snapshot_root>/<retain>.0/example.com/pub/
 using an anonymous rsync server. Please note that unlike backing up local paths
 and using rsync over ssh, rsync servers have "modules", which are top level
 directories that are exported. Therefore, the module should also be specified in
@@ -6168,7 +6182,7 @@ chmod u=r,go= mydatabase.sql	# r-------- (0400)
 =back
 
 rsnapshot will take the generated "mydatabase.sql" file and move it into the
-<snapshot_root>/<interval>.0/db_backup/ directory. On subsequent runs,
+<snapshot_root>/<retain>.0/db_backup/ directory. On subsequent runs,
 rsnapshot checks the differences between the files created against the
 previous files. If the backup script generates the same output on the next
 run, the files will be hard linked against the previous ones, and no
@@ -6201,10 +6215,10 @@ Putting it all together (an example file):
     cmd_logger      /usr/bin/logger
     cmd_du          /usr/bin/du
 
-    interval        hourly  6
-    interval        daily   7
-    interval        weekly  7
-    interval        monthly 3
+    retain          hourly  6
+    retain          daily   7
+    retain          weekly  7
+    retain          monthly 3
 
     backup          /etc/                     localhost/
     backup          /home/                    localhost/
@@ -6229,7 +6243,7 @@ When you are first setting up your backups, you will probably
 also want to run it from the command line once or twice to get
 a feel for what it's doing.
 
-Here is an example crontab entry, assuming that intervals B<hourly>,
+Here is an example crontab entry, assuming that backup levels B<hourly>,
 B<daily>, B<weekly> and B<monthly> have been defined in B</etc/rsnapshot.conf>
 
 =over 4
@@ -6258,23 +6272,23 @@ This example will do the following:
 
 =back
 
-It is usually a good idea to schedule the larger intervals to run a bit before the
+It is usually a good idea to schedule the larger backup levels to run a bit before the
 lower ones. For example, in the crontab above, notice that "daily" runs 10 minutes
 before "hourly".  The main reason for this is that the daily rotate will
 pull out the oldest hourly and make that the youngest daily (which means
 that the next hourly rotate will not need to delete the oldest hourly),
 which is more efficient.  A secondary reason is that it is harder to
-predict how long the lowest interval will take, since it needs to actually
-do an rsync of the source as well as the rotate that all intervals do.
+predict how long the lowest backup level will take, since it needs to actually
+do an rsync of the source as well as the rotate that all backups do.
 
 If rsnapshot takes longer than 10 minutes to do the "daily" rotate
 (which usually includes deleting the oldest daily snapshot), then you
-should increase the time between the intervals.
+should increase the time between the backup levels.
 Otherwise (assuming you have set the B<lockfile> parameter, as is recommended)
 your hourly snapshot will fail sometimes because the daily still has the lock.  
 
 Remember that these are just the times that the program runs.
-To set the number of backups stored, set the B<interval> numbers in
+To set the number of backups stored, set the B<retain> numbers in
 B</etc/rsnapshot.conf>
 
 To check the disk space used by rsnapshot, you can call it with the "du" argument.
@@ -6307,7 +6321,7 @@ not support the -h flag (use -k instead, to see the totals in kilobytes). Other
 versions of "du", such as Solaris, may not work at all.
 
 To check the differences between two directories, call rsnapshot with the "diff"
-argument, followed by two intervals or directory paths.
+argument, followed by two backup levels or directory paths.
 
 For example:
 
@@ -6330,7 +6344,7 @@ B<rsnapshot sync>
 
 When B<sync_first> is enabled, rsnapshot must first be called with the B<sync>
 argument, followed by the other usual cron entries. The sync should happen as
-the lowest, most frequent interval, and right before. For example:
+the lowest, most frequent backup level, and right before. For example:
 
 =over 4
 
@@ -6345,7 +6359,7 @@ B<30 23 1 * *         /usr/local/bin/rsnapshot monthly>
 =back
 
 The sync operation simply runs rsync and all backup scripts. In this scenario, all
-interval calls simply rotate directories, even the lowest interval.
+calls simply rotate directories, even the lowest backup level.
 
 =back
 
@@ -6488,10 +6502,10 @@ If you remove backup points in the config file, the previously archived
 files under those points will permanently stay in the snapshots directory
 unless you remove the files yourself. If you want to conserve disk space,
 you will need to go into the <snapshot_root> directory and manually
-remove the files from the smallest interval's ".0" directory.
+remove the files from the smallest backup level's ".0" directory.
 
 For example, if you were previously backing up /home/ with a destination
-of localhost/, and hourly is your smallest interval, you would need to do
+of localhost/, and hourly is your smallest backup level, you would need to do
 the following to reclaim that disk space:
 
 =over 4
@@ -6537,7 +6551,7 @@ Wrote the rsnapshot-diff utility
 
 =item -
 Improved how use_lazy_deletes work so slow deletes don't screw up the next
-backup at that interval.
+backup at that backup level.
 
 =back
 
