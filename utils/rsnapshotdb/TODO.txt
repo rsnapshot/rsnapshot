@@ -1,12 +1,20 @@
 TODO LIST:
 
-- as suggested by r00t in #bash, add option to split on tables instead of db.
+- as suggested by r00t in #bash, add option to split on tables instead of db. ie: ./hostname/database/table.tar.gz
 - enable split | gzip to get in under isp radar (cpu resource limits with I/O on large db's).
-- thoroughly test with postgresql, mysql on Linux only so far.
+- thoroughly test with postgresql, mysql on Linux only testing so far.
+
+
+10/22/06
+DONE - remove requirement for database password to be present in xml config file.
+
+
+8/16/06
+DONE - changed log file to 0600 permissions
 
 1/22/06
-- DONE - Thoroughly test rewrite using ssh keys and tunneling.
-- DONE - Optimize code efficiency, main reason I'm throwing this out on the web as GPL :-)
+DONE - Thoroughly test rewrite using ssh keys and tunneling.
+DONE - Optimize code efficiency, main reason I'm throwing this out on the web as GPL :-)
 
 - Decide whether to stop, or continue on errors/connectivity issues. Possibly throw an email/SMS at someone. Problem because assumption is that you're db's are being archived without error.
 

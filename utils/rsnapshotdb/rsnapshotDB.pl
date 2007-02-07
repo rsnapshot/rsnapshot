@@ -9,7 +9,7 @@ License: GPL http://www.gnu.org/licenses/gpl.txt
 Web: http://www.rsnapshot.org
 
 Author: Anthony Ettinger
-Email: aettinger@sdsualumni.org
+Email: aettinger<--at-->sdsualumni<--dot-->org
 Blog: http://www.chovy.com
 
 
@@ -328,10 +328,20 @@ sub showDB
 	my $dumper = $dbApp->{$dbType}->{'dumper'}->{'bin'};
 	my $prompt = $dbApp->{$dbType}->{'prompt'}->{'bin'};
 	my $dbNames = []; #results from SHOW DATABASES;
+	my $dbpass_arg = defined($dbpass) ? "$dbApp->{$dbType}->{'prompt'}->{'pass'}$dbpass" : ''; #dbpass not required
 	
 
 	$self->v("START: showDB command...", 1);
+	my $cmdShowDB = "ssh $sshOption $user\@$host \"echo -n 'SHOW DATABASES;' | \ $dbApp->{$dbType}->{'prompt'}->{'bin'} \ $dbApp->{$dbType}->{'prompt'}->{'opts'} \ $dbApp->{$dbType}->{'prompt'}->{'user'} $dbuser \ $dbpass_arg \ $dbApp->{$dbType}->{'prompt'}->{'host'} $dbhost\""; 
+
+=pod
+
+#remove requirement for database password to be present.
+
 	my $cmdShowDB = "ssh $sshOption $user\@$host \"echo -n 'SHOW DATABASES;' | \ $dbApp->{$dbType}->{'prompt'}->{'bin'} \ $dbApp->{$dbType}->{'prompt'}->{'opts'} \ $dbApp->{$dbType}->{'prompt'}->{'user'} $dbuser \ $dbApp->{$dbType}->{'prompt'}->{'pass'}$dbpass \ $dbApp->{$dbType}->{'prompt'}->{'host'} $dbhost\""; 
+
+=cut
+
 	my $out = qx/$cmdShowDB/ or warn 'SHOW DATABASES failed...';
 	$self->v("CMD: $cmdShowDB -> $out.", 2);
 	$self->v("DONE: showDB command.", 1);
@@ -475,6 +485,7 @@ sub v
 	my ($self, $msg, $level) = @_;
 
 	open(LOG, ">>/var/log/rsnapshotDB") or warn "$!";
+	chmod 0600, "/var/log/rsnapshotDB";
 
 	if ($self->_verbose >= $level) {
 		print LOG "$msg\n";

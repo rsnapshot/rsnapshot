@@ -5,11 +5,11 @@ See TODO.txt for more to come
 
 For latest documentation type:
 
-$perldoc rsnapshotDB.pl
+$ perldoc rsnapshotDB.pl
 or
-$perldoc rsnapshotDB
+$ perldoc rsnapshotDB
 or
-$perldoc /path/to/rsnapshotDB.pl
+$ perldoc /path/to/rsnapshotDB.pl
 
 
 Trouble Shooting:

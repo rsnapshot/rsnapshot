@@ -1,3 +1,12 @@
+10/22/06
+
+Removed requirement that a database password be present in rsnapshotDB.conf xml file.
+
+
+8/16/06
+
+Changed permission of log file /var/log/rsnapshotDB to 0600. When passwords are used to access the database, they are shown in the log file when verbosity is enabled.
+
 1/22/06
 
 Cleaned up code and removed password requirement for ssh server connection.
