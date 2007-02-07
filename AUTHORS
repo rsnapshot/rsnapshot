@@ -56,7 +56,7 @@ Robert Jackson <RobertJ@promedicalinc.com>
 Justin Grote <justin@grote.name>
     - Improved rsync error reporting code
 
-Anthony Ettinger <apwebdesign@yahoo.com>
+Anthony Ettinger <aettinger@sdsualumni.org>
     - Wrote the utils/mysqlbackup.pl script
     - Wrote utils/rsnapshotdb
 
