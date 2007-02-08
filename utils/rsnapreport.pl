@@ -35,7 +35,7 @@ sub pretty_print(){
 	$FORMAT_TOP_NAME="BREPORTHEAD";
 	select($ofh);
 
-	foreach my $source (keys %bkdata){
+	foreach my $source (sort keys %bkdata){
 		if($bkdata{$source} =~ /error/i) { print "ERROR $source $bkdata{$source}"; next; }
 		my $files = $bkdata{$source}{'files'};
 		my $filest = $bkdata{$source}{'files_tran'};
