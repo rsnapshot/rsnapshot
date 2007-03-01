@@ -74,3 +74,6 @@ Alan Batie <alan@batie.org>
 
 Dieter Bloms <dieter@bloms.de>
     - Multi-line configuration options
+
+Henning Moll <newsScott@gmx.de>
+    - stop_on_stale_lockfile

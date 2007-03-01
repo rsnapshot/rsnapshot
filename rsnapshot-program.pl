@@ -26,7 +26,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.366 2007/03/01 15:46:18 drhyde Exp $
+# $Id: rsnapshot-program.pl,v 1.367 2007/03/01 16:54:14 drhyde Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -118,10 +118,13 @@ my @reserved_words = qw(
 # global flags that change the outcome of the program,
 # and are configurable by both cmd line and config flags
 #
-my $test			= 0; # turn verbose on, but don't execute any filesystem commands
-my $do_configtest	= 0; # parse config file and exit
-my $one_fs			= 0; # one file system (don't cross partitions within a backup point)
-my $link_dest		= 0; # use the --link-dest option to rsync
+my $test			= 0; # turn verbose on, but don't execute
+                                     # any filesystem commands
+my $do_configtest		= 0; # parse config file and exit
+my $one_fs			= 0; # one file system (don't cross
+                                     # partitions within a backup point)
+my $link_dest			= 0; # use the --link-dest option to rsync
+my $stop_on_stale_lockfile	= 0; # stop if there is a stale lockfile
 
 # how much noise should we make? the default is 2
 #
@@ -1110,6 +1113,23 @@ sub parse_config_file {
 				next;
 			}
 			$config_vars{'lockfile'} = $value;
+			$line_syntax_ok = 1;
+			next;
+		}
+		#STOP_ON_STALE_LOCKFILE
+		if ($var eq 'stop_on_stale_lockfile') {
+			if (!defined($value)) {
+				config_err($file_line_num, "$line - stop_on_stale_lockfile can not be blank");
+				next;
+			}
+			if (!is_boolean($value)) {
+				config_err(
+					$file_line_num, "$line - \"$value\" is not a legal value for stop_on_stale_lockfile, must be 0 or 1 only"
+				);
+				next;
+			}
+
+			$stop_on_stale_lockfile = $value;
 			$line_syntax_ok = 1;
 			next;
 		}
@@ -2140,9 +2160,15 @@ sub add_lockfile {
                 syslog_err("Lockfile $lockfile exists and so does its process, can not continue");
                 exit(1);
             } else {
-                print_warn("Removing stale lockfile $lockfile", 1);
-                syslog_warn("Removing stale lockfile $lockfile");
-                remove_lockfile();
+		if(1 == $stop_on_stale_lockfile) {
+		    print_err ("Stale lockfile $lockfile detected. You need to remove it manually to continue", 1);
+		    syslog_err("Stale lockfile $lockfile detected. Exiting.");
+		    exit(1);
+	        } else {
+	            print_warn("Removing stale lockfile $lockfile", 1);
+		    syslog_warn("Removing stale lockfile $lockfile");
+		    remove_lockfile();
+	        }
             }
         }
 
@@ -6042,6 +6068,8 @@ features.
 
 B<lockfile    /var/run/rsnapshot.pid>
 
+B<stop_on_stale_lockfile	0>
+
 =over 4
 
 Lockfile to use when rsnapshot is run. This prevents a second invocation
@@ -6053,7 +6081,10 @@ If a lockfile exists when rsnapshot starts, it will try to read the file
 and stop with an error if it can't.  If it *can* read the file, it sees if
 a process exists with the PID noted in the file.  If it does, rsnapshot
 stops with an error message.  If there is no process with that PID, then
-we assume that the lockfile is stale and ignore it.
+we assume that the lockfile is stale and ignore it *unless*
+stop_on_stale_lockfile is set to 1 in which case we stop.
+
+stop_on_stale_lockfile defaults to 0.
 
 =back
 
@@ -6752,6 +6783,14 @@ Multi-line configuration options
 
 =back
 
+Henning Moll (B<newsScott@gmx.de>)
+
+=over 4
+
+stop_on_stale_lockfile
+
+=back
+
 =head1 COPYRIGHT
 
 Copyright (C) 2003-2005 Nathan Rosenquist
@@ -6759,7 +6798,7 @@ Copyright (C) 2003-2005 Nathan Rosenquist
 Portions Copyright (C) 2002-2007 Mike Rubel, Carl Wilhelm Soderstrom,
 Ted Zlatanov, Carl Boe, Shane Liebling, Bharat Mediratta, Peter Palfrader,
 Nicolas Kaiser, David Cantrell, Chris Petersen, Robert Jackson, Justin Grote,
-David Keegel, Alan Batie, Dieter Bloms
+David Keegel, Alan Batie, Dieter Bloms, Henning Moll
 
 This man page is distributed under the same license as rsnapshot:
 the GPL (see below).
