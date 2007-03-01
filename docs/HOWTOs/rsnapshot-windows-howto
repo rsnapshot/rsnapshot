@@ -1,0 +1,312 @@
+Date: Sun, 25 Feb 2007 13:34:00 -0800 (PST)
+From: Bruce Hohl <brucehohl@yahoo.com>
+To: Rsnapshot mailing list <rsnapshot-discuss@lists.sourceforge.net>
+
+Using cwRsync 2.0.10 and Rsnapshot 1.2.1 to backup a WinXP computer.
+
+----------------
+A- What to use:
+----------------
+1- Method #1 - connect to cwRsync server on WinXP source:
+   Install cwRsync server on the WinXP box and define modules (rsync file share).
+   An Rsync client will connect to the cwRsync server module on the WinXP box.
+   Files are transferred over port 873 unencrypted.
+
+   B 1-3  Except OpenSSH parts.
+   B 4    Module definition; Add module security as desired (man rsyncd.conf).
+   C 1    Rsnapshot config entry for connection to a cwRsync server module.
+   E      Restoring files.
+
+
+2- Method #2 - connect to OpenSSH server on WinXP source:
+   Install cwRsync server and OpenSSH server on the WinXP box.
+   An SSH client will connect to the OpenSSH server on the WinXP box.
+   Files will be read from a CygWin drive.
+   cwRsync will be used for incremental file transfer.
+   Files will be transferred over port 22 encrypted.
+
+   B 1-3  Except cwRsync parts in steps 2-3.
+   B 5    SSH key authentication
+   C 2    Rsnapshot config entry for connection to Cygwin drive over ssh.
+   E      Restoring files.
+
+
+3- Optional Features:
+   B 6    SSH and SFTP access with passwords.
+   D 1-2  Backing up using Rsync.
+
+
+   Notes:
+
+   - Routing:
+     Routing over a WAN (internet) will work only if only if DNS and routers 
+     (firewalls) are configured such that the destination (pc1.mycompany.com) 
+     can be reached reachable.
+     +++++
+     Alternatives:
+     Use VPN between source and destination.          
+     
+     Use SSH tunnel(s) to the internal source(s).
+       Incorporate into each backup entry.
+       Open and close tunnels with preexec and postexec.       
+     
+     Use firewall port forward rule(s) to the internal source(s).
+     
+
+   - cwRsync Server:
+     Under Method #2 the cwRsync server is not used.
+     
+
+   - Windows file permissions:
+     Rsync (Rsnapshot) does not preserve Windows files permissions.
+     So use an appropriate method to restore files - see last section.
+   
+     Rsync runs on the WinXP box as SvcwRsync 1007:513.
+     When files are copied from an Rsync module the files at the destination 
+     are owned by 1007:513 with mode of 755 for directories and 644 for files.
+
+     The files on the WinXP box are seen by SSH as: rwx------+ ???????? ????????
+     When files are copied via Rsync over SSH the files at the destination 
+     are owned by root:root with mode of 700 for directories and 700 for files.   
+       
+
+   - Rsnapshot relative parameter:
+     backup  administrator@apost1.mycompany.com:/cygdrive/c/\
+     Documents\ and\ Settings/apost/My\ Documents  apost_My_Documents/ \
+     rsync_long_args=--delete --numeric-ids --delete-excluded
+
+     Without --relative path to backuped files is:
+     "/home/rsnapshot/daily.0/apost_My_Documents/My Documents/..."
+
+     With --relative path to backuped files is:
+     "/home/rsnapshot/daily.0/apost_My_Documents/c/Documents and Settings/\
+     apost/My Documents/..."
+
+
+
+----------------------------------------------
+B- cwRsync 2.0.10 with OpenSSH setup on WinXP:
+----------------------------------------------
+1- Installation:
+   Install cwRsync_Server_2.0.10_Installer.zip on WinXP computer.
+   Choose the Optional OpenSSH server.
+   Service account user:pswd = SvcwRsync:Ncj97P8hO1
+
+
+2- Server settings:
+   Set Rsync and OpenSSH to start at boot:
+   Control Panel > Admin Tools > Services
+   For RsyncServer: Right click then click Properties.
+    Click Start button.
+    Set Startup = Automatic.
+   For Openssh SSHD: Right click then click Properties.
+    Click Start button.
+    Set Startup = Automatic.
+
+
+3- Firewall settings:
+   Open Firewall ports needed - for Windows firewall:
+   Control Panel > Security Center > Windows Firewall
+    General tab: On = Y.
+   Exceptions tab: Click "Add Port" and add follow:
+    RsyncServer          873  TCP
+    RsyncServer          873  UCP
+    Secure Shell (ssh)    22  TCP
+    Secure Shell (ssh)    22  UCP
+
+
+4- Rysync [file share] module:
+   Add a file access module in C:\Program Files\cwRsyncServer\rsyncd.conf for
+   the directory to be made available. Restart RsyncServer after any change.
+   The default setup allows anonymous read-only access using the rsync client.
+   Access can be limited to specified hosts and by module specific passwords.
+
+   # global parameters:
+   use chroot = false
+   strict modes = false
+   hosts allow = *
+   log file = rsyncd.log
+   pid file = rsyncd.pid
+
+   [My_Documents]
+   path = cygdrive/c/Documents and Settings/apost/My Documents/
+   read only = true
+   transfer logging = yes
+
+
+5- SSH key authentication:
+   For passwordless rsa public key access to the WinXP PC do the following.
+   During connection ssh requests a public keys before prompting for a password.
+
+   (1) On the other computer (key maker) generate a key set as follows:
+       root@linux_box:~# ssh-keygen -t rsa -b 2048
+       Accept default location and press enter when promted for a password.
+       This creates key files id_rsa and id_rsa.pub.
+
+   (2) On the WinXP box add the contents of id_rsa.pub to:
+       c:\Program Files\cwRsyncServer\home\administrator\.ssh\authorized_keys
+
+   (3) On the WinXP box edit config file:
+       c:\Program Files\cwRsyncServer\etc\sshd_config
+       to include "StrictModes no"
+
+   Now root@linux_box can ssh to administrator@WinXP_box and will connect without
+   being prompted for a password.  This allows secure automated connections.
+
+
+6- SSH passwords:
+   Optional: for ssh and sftp password connections:
+   For ssh and sftp access using local accounts on the Windows PC copy the
+   local Windows users and groups to the CygWin environment as follows.
+   These steps must be repeated if a needed change is made to a local account.
+
+   Start > Programs > cwRsync Server > Start a UNIX BASH Shell
+   $ mkpasswd --local > /etc/passwd
+   $ mkgroup  --local > /etc/group
+
+   Note: A partial CygWin environment is installed at C:\Program Files\cwRsyncServer\
+         It includes a small subset of a Unix environment including directories
+         for bin, doc, etc, home, tmp, var.
+
+
+   OpenSSH access:
+   To access the Windows ssh server using a local account with a known password:
+
+   Secure shell
+   $ ssh administrator@apost1
+
+   Secure FTP
+   $ sftp administrator@aposta1
+
+
+
+-------------------
+C- Rsnapshot setup:
+-------------------
+1- Method 1 - Connect to a cwRsync Server module over port 873 (unencrypted):
+   Add the following to /etc/rsnapshot.conf on rsnapshot server.
+   Use tab separated entries.
+   +++++
+   backup rsync://apost1.mycompany.com/My_Documents/  apost1/My_Documents/
+   +++++
+   Use a /etc/crontab entry to run rsnapshot:
+   0 22 * * *   root   /usr/bin/rsnapshot daily  > /dev/null 2>&1
+   0 22 * * *   root   /usr/bin/rsnapshot weekly > /dev/null 2>&1
+
+
+2- Method 2 - Connect to a Cygwin drive over ssh port 22 (encrypted):
+   cwRsync client will be used for incremental file transfer.
+   Add the following to /etc/rsnapshot.conf on rsnapshot server.
+   Use tab separated entries.
+   +++++
+   backup  administrator@apost1.mycompany.com:/cygdrive/c/\
+   Documents\ and\ Settings/apost/My\ Documents  apost_My_Documents/ \
+   rsync_long_args=--delete --numeric-ids --delete-excluded
+   +++++
+   Use a /etc/crontab entry to run rsnapshot:
+   0 22 * * *   root   /usr/bin/rsnapshot daily  > /dev/null 2>&1
+   0 22 * * *   root   /usr/bin/rsnapshot weekly > /dev/null 2>&1
+
+
+
+------------------
+D- Rsync commands:
+------------------
+1- Method 1 - get files from cwRsync module over port 873:
+
+   To see the modules available from the rsync server:
+   # rsync apost1.mycompany.com::
+   My_Documents
+   +++++
+   Files are accessed from rsync module "My_Documents".
+   Anonymous connections are allowed (if so configured).
+   Uses rsync on port 873 without encryption.
+   +++++
+   command:
+   # rsync -azSP --numeric-ids --delete apost1.mycompany.com::My_Documents \
+   /home/rsnapshot/My_Documents/
+
+
+2- Method 2 - get files from CygWin drive over port 22:
+
+   File access via CygWin drive "/cygdrive/c/Documents and Settings/apost/My Documents"
+   Uses encrypted ssh connection over port 22.
+   Under this method the password for user 'administrator' must be entered
+   unless passwordless rsa public key authentication is setup (see above).
+   +++++
+
+   command:
+   # rsync -azSP --numeric-ids --delete --rsh=ssh "administrator@apost1.\
+   mycompany.com:/cygdrive/c/Documents\ and\ Settings/apost/My\ Documents" \
+   /home/rsnapshot/
+
+   command (alternate form):
+   # rsync -azSP --numeric-ids --delete -e "ssh -l administrator" "apost1.\
+   mycompany.com:/cygdrive/c/Documents\ and\ Settings/apost/My\ Documents" \
+   /home/rsnapshot/
+
+
+
+-------------------
+E- Restoring Files:
+-------------------
+1- Method #1 - From the backup server by the administrator:
+    Mount the client WinXP box:
+    # smbmunt //apost1/C$ /mnt -o username=administrator/MYCOMPANY
+   
+    Copy needed files from the backup server to the mounted computer:
+    # cp "/home/workstations/daily.1/apost1/My Documents/Some File" \
+         "/mnt/C/Documents and Settings/apost/My Documents/
+
+
+2- Method #2 - From any computer by the administrator:
+    SFTP into the backup box as root.
+    Move needed files to a public file share.
+    Have user to retrieve the files.
+
+
+3- Method #3 - From source computer by the administrator:
+    SFTP into the backup box as root.
+    Copy needed files to the source computer.
+
+
+4- Method #4 - From source computer via Samba by the user:
+    Here is one possible approach under which the user would have
+    read only access to the workstation backup intervals via a 
+    Samba file share at //backup1/user.
+        
+    a- Install Samba.
+       Join backup1 to the domain for centralized user accounts management.
+       Or create a local unix and samba accounts for each user.
+
+    b- Set the homes shares to read only in /etc/samba/smb.conf.
+       [homes]
+       comment = Home Directories
+       browseable = no
+       writable = no
+   
+    c- Create home directories as needed:
+       Example:
+       # mkdir /home/apost
+    
+    d- Create symbolic links to the appropriate backup interval directories:    
+       Example:
+       # ln -s /home/workstations/daily.0/apost /home/apost/daily.O
+       # ln -s /home/workstations/daily.1/apost /home/apost/daily.1
+       # ln -s /home/workstations/daily.2/apost /home/apost/daily.2
+       # ln -s /home/workstations/daily.3/apost /home/apost/daily.3
+       # ln -s /home/workstations/daily.4/apost /home/apost/daily.4
+       # ln -s /home/workstations/daily.5/apost /home/apost/daily.5
+       # ln -s /home/workstations/daily.6/apost /home/apost/daily.6
+       # ln -s /home/workstations/weekly.0/apost /home/apost/weekly.O
+       # ln -s /home/workstations/weekly.1/apost /home/apost/weekly.1
+       # ln -s /home/workstations/weekly.2/apost /home/apost/weekly.2    
+       # ln -s /home/workstations/weekly.3/apost /home/apost/weekly.3
+
+    e- If rsync via ssh is used add a cmd_postexec script to the /etc/rsnapshot 
+       config to set file modes so that file acls do not block the user from
+       reading the needed files.
+       
+       script:    
+       find /home/workstations/daily.0 -type d -exec chmod 777 {} \;
+       find /home/workstations/daily.0 -type f -exec chmod 666 {} \;
