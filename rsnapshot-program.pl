@@ -26,7 +26,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.365 2007/01/31 00:12:03 drhyde Exp $
+# $Id: rsnapshot-program.pl,v 1.366 2007/03/01 15:46:18 drhyde Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -482,6 +482,7 @@ sub parse_cmd_line_opts {
 sub parse_config_file {
 	# count the lines in the config file, so the user can pinpoint errors more precisely
 	my $file_line_num = 0;
+	my @configs = ();
 	
 	# open the config file
 	my $config_file = shift() || $config_file;
@@ -489,7 +490,8 @@ sub parse_config_file {
 		or bail("Could not open config file \"$config_file\"\nAre you sure you have permission?");
 	
 	# read it line by line
-	while (my $line = <$CONFIG>) {
+	@configs = <$CONFIG>;
+	while (my $line = $configs[$file_line_num]) {
 		chomp($line);
 		
 		# count line numbers
@@ -503,6 +505,13 @@ sub parse_config_file {
 		
 		# ignore blank lines
 		if (is_blank($line)) { next; }
+
+		# if the next line begins with space or tab it belongs to this line
+		while (defined ($configs[$file_line_num]) && $configs[$file_line_num] =~ /^(\t|\s)/) {
+			(my $newline = $configs[$file_line_num]) =~ s/^\s+|\s+$//g;
+			$line = $line . "\t" . $newline;
+			$file_line_num++;
+		}
 		
 		# parse line
 		my ($var, $value, $value2, $value3) = split(/\t+/, $line, 4);
@@ -5737,6 +5746,12 @@ It is recommended that you copy B</etc/rsnapshot.conf.default> to
 B</etc/rsnapshot.conf>, and then modify B</etc/rsnapshot.conf> to suit
 your needs.
 
+Long lines may be split over several lines.  "Continuation" lines
+*must* begind with a space or a tab character.  Continuation lines will
+have all leading and trailing whitespace stripped off, and then be appended
+with an intervening tab character to the previous line when the configuation
+file is parsed.
+
 Here is a list of allowed parameters:
 
 =over 4
@@ -6729,6 +6744,14 @@ Bug fixes for include_conf
 
 =back
 
+Dieter Bloms (B<dieter@bloms.de>)
+
+=over 4
+
+Multi-line configuration options
+
+=back
+
 =head1 COPYRIGHT
 
 Copyright (C) 2003-2005 Nathan Rosenquist
@@ -6736,7 +6759,7 @@ Copyright (C) 2003-2005 Nathan Rosenquist
 Portions Copyright (C) 2002-2007 Mike Rubel, Carl Wilhelm Soderstrom,
 Ted Zlatanov, Carl Boe, Shane Liebling, Bharat Mediratta, Peter Palfrader,
 Nicolas Kaiser, David Cantrell, Chris Petersen, Robert Jackson, Justin Grote,
-David Keegel, Alan Batie
+David Keegel, Alan Batie, Dieter Bloms
 
 This man page is distributed under the same license as rsnapshot:
 the GPL (see below).

@@ -71,3 +71,6 @@ Eric Anderson <anderson@centtech.com>
 
 Alan Batie <alan@batie.org>
     - Bug fixes for include_conf
+
+Dieter Bloms <dieter@bloms.de>
+    - Multi-line configuration options
