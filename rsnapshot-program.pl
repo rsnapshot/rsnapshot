@@ -26,7 +26,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.367 2007/03/01 16:54:14 drhyde Exp $
+# $Id: rsnapshot-program.pl,v 1.368 2007/03/14 14:09:14 drhyde Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -1744,7 +1744,9 @@ sub bail {
 	}
 	
 	# get rid of the lockfile, if it exists
-	remove_lockfile();
+	if(0 == $stop_on_stale_lockfile) {
+	        remove_lockfile();
+	}
 	
 	# exit showing an error
 	exit(1);
