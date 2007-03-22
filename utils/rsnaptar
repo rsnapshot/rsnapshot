@@ -14,7 +14,9 @@
 # http://www.rsnapshot.org/
 ##############################################################################
 
-# $Id: rsnaptar,v 1.10 2005/04/02 07:37:07 scubaninja Exp $
+# $Id: rsnaptar,v 1.11 2007/03/22 02:50:21 drhyde Exp $
+
+umask 0077
 
 # DIRECTORIES
 TAR_DIR="/var/dvd_backup"
