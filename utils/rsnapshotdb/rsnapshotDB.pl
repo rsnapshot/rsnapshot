@@ -425,7 +425,7 @@ sub dumbDB
 		}
 	
 		#the actual .sql.gz remote file creation!
-                my $cmdRemoteDump = "ssh $sshOption $user\@$host 'nice --adjustment=$niceness $dumper \ $dumpOptsArg $dumpUserArg $dbuser $dumpPassArg" . "$dbpass $dumpHostArg $dbhost \ $dbName > $remoteTmpDir/$file.sql'";
+                my $cmdRemoteDump = "ssh $sshOption $user\@$host 'umask 0077;nice --adjustment=$niceness $dumper \ $dumpOptsArg $dumpUserArg $dbuser $dumpPassArg" . "$dbpass $dumpHostArg $dbhost \ $dbName > $remoteTmpDir/$file.sql'";
 
 		$self->v("WAITING: remote dump...", 1);
 		$out = qx/$cmdRemoteDump/;
