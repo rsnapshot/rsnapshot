@@ -26,7 +26,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.368 2007/03/14 14:09:14 drhyde Exp $
+# $Id: rsnapshot-program.pl,v 1.369 2007/04/11 22:24:40 drhyde Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -536,6 +536,11 @@ sub parse_config_file {
 				config_err($file_line_num, "$line - could not find second word on this line");
 				next;
 			}
+		}
+		foreach (grep {
+		    defined($_) && index($_, ' ') == 0
+		} ($value, $value2, $value3)) {
+		    print_warn("$line - extra space found between tab and $_");
 		}
 		
 		# INCLUDEs
