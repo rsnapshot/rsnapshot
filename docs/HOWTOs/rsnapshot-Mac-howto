@@ -1,0 +1,487 @@
+To: rsnapshot-discuss@lists.sourceforge.net
+From: Jonathan Guyer <guyer@nist.gov>
+Date: Thu, 19 Apr 2007 11:18:06 -0400
+Subject: [rsnapshot-discuss] Backing up a Mac to an external FireWire drive
+
+I've been fumbling around trying to get a satisfactory backup of my  
+Mac laptop to an external FireWire drive. I like the design  
+principles of rsnapshot much better than the (large) number of other  
+backup tools (including some very expensive commercial options).
+
+There are a number of issues though, some relating to it being a Mac  
+(I've been using a Mac since '84, so I still have and still care  
+about things like resource forks) and some relating to it being a  
+laptop (it's not on full-time and not reliably configured the same  
+way all the time, so cron jobs aren't entirely reliable).
+
+After a lot of fumbling around, I've come up with a scheme that seems  
+to back up *all* of the information I care about and which does so as  
+automatically and painlessly as possible  when I plug in my backup  
+drive.
+
+I wrote this up for my own purposes, just so I'd remember how to get  
+things working again when some future OS upgrade or hardware purchase  
+inevitably breaks things, but in the hopes that it might prove useful  
+to others, I offer it here.
+
+Any comments or corrections are more than welcome.
+
+
+=========================================================
+What I did to back up a Mac to an external FireWire drive
+=========================================================
+
+:Author:    Jonathan Guyer
+:Contact:   guyer@nist.gov
+:Date:      19 April 2007
+:Copyright: This document has been placed in the public domain
+
+- Get, build and install ``rsync`` version 3 from `CVS
+   <http://rsync.samba.org/download.html>`_. The ``rsync`` shipped by  
+Apple
+   is buggy and the fixes proposed by http://www.onthenet.com.au/~q/ 
+rsync/
+   and by http://lartmaker.nl/rsync/ don't work.
+
+   .. note::
+
+      If you don't care about Mac meta data (resource forks and such)  
+then
+      you don't need this, but are you *sure* you don't care about  
+Mac meta
+      data? You *are* using a Mac, right?
+
+- Edit your ``rsnapshot.conf`` file
+
+     - set, e.g.::
+
+         snapshot_root	/Volumes/Backup/snapshot/
+
+       and be sure to create the appropriate directory.
+
+       .. note::
+
+          If you wish to `Set the backup to run automatically when a
+          FireWire drive is mounted`_, you don't need to declare
+          ``snapshot_root`` in the ``rsnapshot.conf`` file, but you do
+          still need to create the appropriate directories.
+
+       .. note::
+
+          The NFS protection schemes suggested in the ``rsnapshot``
+          documentation aren't too applicable to a Mac, but you can  
+protect
+          the backup directory from all but ``sudo``. This idea was
+          suggested by `Giuliano Gavazzi
+          <http://sourceforge.net/mailarchive/message.php? 
+msg_id=ED74A128-77F1-4856-B4CB-7291F5FD4C9D%40humph.com>`_
+
+              - Create a ``backup`` group using NetInfo Manager (not in
+                ``/etc/groups``) containing all user accounts. (Is  
+there a more automatic
+                group that will accomplish this?)
+
+              - Use Access Control Lists (ACLs) to secure the backup  
+directory
+
+                    - Enable ACLs::
+
+                          $ sudo fsaclctl -p /Volumes/Backup -e
+
+                    - Set desired ACLs::
+
+                          $ sudo chmod +a "backup deny add_file,  
+delete, \
+                          add_subdirectory, delete_child, writeattr,  
+writeextattr \
+                          directory_inherit" /Volumes/Backup/snapshot
+
+     - set::
+
+         no_create_root	1
+
+       to prevent ``rsnapshot`` from making a mess in your ``/Volumes/``
+       directory when the drive is not mounted.
+
+     - set the path to the ``rsync`` you installed above::
+
+         cmd_rsync	/usr/local/bin/rsync
+
+     - set the backup intervals appropriately
+
+     - pass the following arguments to ``rsync``::
+
+         rsync_short_args	-a
+         rsync_long_args	--delete --numeric-ids --relative --delete- 
+excluded --xattrs
+
+       The important one here for the Mac is ``--xattrs``. If you don't
+       care about Macish resource forks (are you sure you don't?),  
+then you
+       can omit this and you don't need ``rsync`` 3.
+
+     - you may want to set::
+
+         one_fs		1
+
+     - exclude transitory, dangerous, and boring things::
+
+         exclude	/dev/
+         exclude	/automount/
+         exclude	/cores/
+         exclude	/.vol/
+         exclude	/Volumes/
+         exclude	.Trashes/
+         exclude	.Trash/
+         exclude	.TemporaryItems/
+         exclude	.Spotlight-V100/
+         exclude	Library/Caches/
+         exclude	Library/Safari/Icons/
+         exclude	/private/tmp/
+         exclude	/private/var/vm/
+         exclude	/private/var/tmp/
+         exclude	/private/var/spool/
+         exclude	/private/var/launchd/
+         exclude	/private/var/run/
+
+     - back up everything else::
+
+         backup	/		path.to.machine/
+
+       Backing up to ``path.to.machine`` is arbitrary, but makes it  
+easy to sort
+       things out later if you back up more than one thing and  
+``rsnapshot``
+       requires you to back up somewhere.
+
+       .. note:: Can you back up to ``.``?
+
+     .. attention::
+
+        If your home directory is protected by FileVault, then you'll  
+want to
+        add::
+
+            exclude	/Users/.username/
+
+        to the excludes list and::
+
+            backup	/Users/username/	path.to.machine/
+
+        to the backup list, otherwise the encrypted FileVault archive  
+will be
+        recopied, in its entirety, and the visible ``$HOME``  
+directory will be empty
+        in the backup.
+
+        .. caution::
+
+           If you do this, the backup ``$HOME`` directory will not be  
+encrypted.
+           Appropriate physical security measures must be taken with  
+the backup
+           drive.
+
+Set the backup to run automatically when a FireWire drive is mounted
+--------------------------------------------------------------------
+
+     - Apple's `exhortation to use the disk arbitration framework
+       <http://developer.apple.com/documentation/MacOSX/Conceptual/ 
+BPSystemStartup/Articles/LaunchOnDemandDaemons.html#//apple_ref/doc/ 
+uid/TP40001762-DontLinkElementID_14>`_
+       is somewhat less than helpful, and R. Matthew Emerson has a  
+peculiar
+       definition of "well-commented", but `his code
+       <http://www.thoughtstuff.com/rme/weblog/?p=3>`_ is a useful  
+starting
+       point::
+
+           // rsnapshotd
+           //
+           //   Mac OS X daemon for detecting the mount of a backup  
+drive and launching
+           //   rsnapshot
+           //
+           // Jonathan Guyer <guyer@nist.gov>
+           //
+           // This code is in the public domain
+
+           #include <stdio.h>
+           #include <syslog.h>
+           #include <CoreFoundation/CoreFoundation.h>
+           #include <DiskArbitration/DiskArbitration.h>
+
+           typedef struct {
+               CFUUIDRef       uuid;
+               const char *    snapshot_root_conf;
+               const char *    snapshot_root_dir;
+               const char *    cmd;
+               const char **   argv;
+               pid_t           pid;
+           } tRsnapshotContext;
+
+           // Lifted from Steve Christensen on carbon-dev
+           char* CopyCStringFromCFString(CFStringRef cfString,  
+CFStringEncoding encoding)
+           {
+               CFIndex bufferSize = CFStringGetMaximumSizeForEncoding 
+(CFStringGetLength(cfString), encoding) + 1;
+               char*   buffer = malloc(bufferSize);
+
+               if (buffer != NULL)
+               {
+                   if (!CFStringGetCString(cfString, buffer,  
+bufferSize, encoding))
+                   {
+                       free(buffer);
+                       buffer = NULL;
+                   }
+               }
+
+               return buffer;
+           }
+
+           void hello_disk(DADiskRef disk, void *contextP)
+           {
+               CFDictionaryRef     diskref = DADiskCopyDescription 
+(disk);
+               CFUUIDRef           uuid = CFDictionaryGetValue 
+(diskref, kDADiskDescriptionVolumeUUIDKey);
+               tRsnapshotContext * context = (tRsnapshotContext *)  
+contextP;
+
+               diskref = DADiskCopyDescription(disk);
+
+               if (uuid != NULL && uuid == context->uuid) {
+                   CFURLRef    pathURL = CFDictionaryGetValue 
+(diskref, kDADiskDescriptionVolumePathKey);
+                   CFStringRef uuidStr = CFUUIDCreateString 
+(kCFAllocatorDefault, uuid);
+                   char *      uuidCStr = CopyCStringFromCFString 
+(uuidStr, kCFStringEncodingUTF8);
+
+                   if (pathURL != NULL) {
+                       CFStringRef pathStr = CFURLCopyFileSystemPath 
+(pathURL, kCFURLPOSIXPathStyle);
+                       char *      path = CopyCStringFromCFString 
+(pathStr, kCFStringEncodingUTF8);
+                       FILE *      f = fopen(context- 
+ >snapshot_root_conf, "w");
+
+                       syslog(LOG_NOTICE, "performing rsnapshot  
+backup to disk %s, UUID: %s", path, uuidCStr);
+
+                       CFRelease(pathStr);
+                       fprintf(f, "# This file automatically  
+generated by rsnapshotd\n");
+                       fprintf(f, "snapshot_root\t%s/%s\n", path,  
+context->snapshot_root_dir);
+                       fclose(f);
+                       free(path);
+                   } else {
+                       syslog(LOG_NOTICE, "performing rsnapshot  
+backup to nameless disk, UUID: %s", uuidCStr);
+                   }
+
+                   free(uuidCStr);
+                   CFRelease(uuidStr);
+
+                   switch (context->pid = vfork()) {
+                       case 0: {    // child process
+                           int     err = execv(context->cmd, context- 
+ >argv);
+                           syslog(LOG_ERR, "rsnapshot backup failed  
+to launch: %d", err);
+                           exit(1);    // in case exec fails
+                       }
+                       case -1:
+                           syslog(LOG_ERR, "vfork failed");
+                           break;
+                       default: {
+                       }
+                   }
+               }
+
+               CFRelease(diskref);
+           }
+
+           // // This handler is pointless. The disk won't unmount as  
+long as the process is running,
+           // // so the the process must be killed first, which means  
+there's nothign to kill here.
+           // // I welcome suggestions of how to do something useful  
+with this
+           // void goodbye_disk(DADiskRef disk, void *contextP)
+           // {
+           //     CFDictionaryRef     diskref = DADiskCopyDescription 
+(disk);
+           //     CFUUIDRef           uuid = CFDictionaryGetValue 
+(diskref, kDADiskDescriptionVolumeUUIDKey);
+           //     tRsnapshotContext * context = (tRsnapshotContext *)  
+contextP;
+           //
+           //     diskref = DADiskCopyDescription(disk);
+           //
+           //     if (uuid != NULL && uuid == context->uuid &&  
+context->pid != 0) {
+           //         kill(context->pid, 3);
+           //         printf("\n\ndisk unmounted\n");
+           //     }
+           // }
+
+           int main (int argc, const char * argv[])
+           {
+               DASessionRef        session;
+               CFStringRef         uuidStr;
+               tRsnapshotContext   context;
+
+               if (argc < 5) {
+                   syslog(LOG_ERR, "Usage: rsnapshotd UUID  
+SNAPSHOT_ROOT.CONFIG SHAPSHOT_ROOT_DIR CMD [OPTION ...]");
+                   exit(1);
+               }
+
+               uuidStr = CFStringCreateWithCString 
+(kCFAllocatorDefault, argv[1], kCFStringEncodingUTF8);
+               if (!uuidStr) {
+                   syslog(LOG_ERR, "Unable to create UUID string");
+                   exit(1);
+               }
+
+               context.uuid = CFUUIDCreateFromString 
+(kCFAllocatorDefault, uuidStr);
+               if (!context.uuid) {
+                   syslog(LOG_ERR, "Unable to parse UUID string");
+                   exit(1);
+               }
+               context.snapshot_root_conf = argv[2];
+               context.snapshot_root_dir = argv[3];
+               context.cmd = argv[4];
+               context.argv = &argv[4];
+               context.pid = -1;
+
+               session = DASessionCreate(kCFAllocatorDefault);
+
+               DARegisterDiskAppearedCallback(session, NULL,  
+hello_disk, &context);
+               // DARegisterDiskDisappearedCallback(session, NULL,  
+goodbye_disk, &context);
+
+               DASessionScheduleWithRunLoop(session,
+                                            CFRunLoopGetCurrent(),  
+kCFRunLoopDefaultMode);
+
+               CFRunLoopRun();
+
+               CFRelease(session);
+               exit(0);
+           }
+
+       If you save this as, e.g., ``rsnapshotd.c``, you can build it  
+with::
+
+           gcc -framework DiskArbitration -framework CoreFoundation  
+rsnapshotd.c -o rsnapshotd
+
+       ``rsnapshotd`` takes four required arguments, followed by any
+       options to pass to the command:
+
+           ``UUID``
+               The Universally Unique Identifier for the disk you  
+wish to
+               back up to. You can obtain the ``UUID`` by executing  
+``diskutil
+               info <device>`` (run ``diskutil list`` to find the  
+device ID).
+
+           ``/PATH/TO/snapshot_root.conf``
+               The (writable) location of a file to put the path of the
+               backup disk. This is necessary.
+
+               .. attention::
+
+                  You must be sure to include the line::
+
+                      include_conf	/PATH/TO/snapshot_root.conf
+
+                  after (or in place of) the ``snapshot_root``  
+parameter in
+                  your ``rsnapshot.conf`` file.
+
+           ``snapshot_root_directory``
+               The relative path to the backup on the backup drive
+               associated with ``UUID``, e.g., ``snapshot/``.
+
+           ``CMD``
+               The fully qualified path to ``rsnapshot``.
+
+               .. note::
+
+                  There's nothing magical about ``rsnapshot``. This  
+daemon will
+                  launch any command with any options you supply when  
+the
+                  appropriate disk is mounted.
+
+
+           ``ARGS``
+               Arguments to send to ``rsnapshot``, e.g., ``-c``,
+               ``/PATH/TO/rsnapshot.conf`` and ``daily``.
+
+     - Rather than setting up a cron job, add a file
+       ``net.sourceforge.rsnapshotd.plst`` to
+       ``/Library/LaunchDaemons/``::
+
+           <?xml version="1.0" encoding="UTF-8"?>
+           <!DOCTYPE plist PUBLIC -//Apple Computer//DTD PLIST 1.0//EN
+           http://www.apple.com/DTDs/PropertyList-1.0.dtd >
+           <plist version="1.0">
+           <dict>
+                <key>Label</key>
+                <string>net.sourceforge.rsnapshotd</string>
+                <key>ProgramArguments</key>
+                <array>
+                     <string>/PATH/TO/rsnapshotd</string>
+                     <string>UUID</string>
+                     <string>/PATH/TO/snapshot_root.conf</string>
+                     <string>snapshot/</string>
+                     <string>/PATH/TO/rsnapshot</string>
+                     <string>-c</string>
+                     <string>/PATH/TO/rsnapshot.conf</string>
+                     <string>daily</string>
+                </array>
+                <key>OnDemand</key>
+                <false/>
+                <key>RunAtLoad</key>
+                <true/>
+                <key>LowPriorityIO</key>
+                <true/>
+                <key>Nice</key>
+                <integer>20</integer>
+           </dict>
+           </plist>
+
+
+       This will cause the daemon to sit quietly, waiting for the  
+disk to
+       mount (it will trigger if the disk is already mounted when the  
+daemon
+       is loaded). The ``LowPriorityIO`` and ``Nice`` keys should  
+prevent
+       the rsnapshot process from being too much of a resource hog  
+when it
+       launches (``LowPriorityIO`` is probably more important than
+       ``Nice``).
+
+    - Install the daemon by executing::
+
+          $ sudo launchctl load /Library/LaunchDaemons/ 
+net.sourceforge.rsnapshotd.plst
+
+
+
+-- 
+Jonathan E. Guyer, PhD
+Metallurgy Division
+National Institute of Standards and Technology
+<http://www.metallurgy.nist.gov/>
