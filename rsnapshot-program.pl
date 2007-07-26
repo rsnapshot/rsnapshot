@@ -26,7 +26,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.369 2007/04/11 22:24:40 drhyde Exp $
+# $Id: rsnapshot-program.pl,v 1.370 2007/07/26 20:06:28 drhyde Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -653,6 +653,7 @@ sub parse_config_file {
 		
 		# CHECK FOR RSYNC (required)
 		if ($var eq 'cmd_rsync') {
+                        $value =~ s/\s+$//;
 			if ((-f "$value") && (-x "$value") && (1 == is_real_local_abs_path($value))) {
 				$config_vars{'cmd_rsync'} = $value;
 				$line_syntax_ok = 1;
@@ -665,6 +666,7 @@ sub parse_config_file {
 		
 		# CHECK FOR SSH (optional)
 		if ($var eq 'cmd_ssh') {
+                        $value =~ s/\s+$//;
 			if ((-f "$value") && (-x "$value") && (1 == is_real_local_abs_path($value))) {
 				$config_vars{'cmd_ssh'} = $value;
 				$line_syntax_ok = 1;
@@ -677,6 +679,7 @@ sub parse_config_file {
 		
 		# CHECK FOR GNU cp (optional)
 		if ($var eq 'cmd_cp') {
+                        $value =~ s/\s+$//;
 			if ((-f "$value") && (-x "$value") && (1 == is_real_local_abs_path($value))) {
 				$config_vars{'cmd_cp'} = $value;
 				$line_syntax_ok = 1;
@@ -689,6 +692,7 @@ sub parse_config_file {
 		
 		# CHECK FOR rm (optional)
 		if ($var eq 'cmd_rm') {
+                        $value =~ s/\s+$//;
 			if ((-f "$value") && (-x "$value") && (1 == is_real_local_abs_path($value))) {
 				$config_vars{'cmd_rm'} = $value;
 				$line_syntax_ok = 1;
@@ -701,6 +705,7 @@ sub parse_config_file {
 		
 		# CHECK FOR LOGGER (syslog program) (optional)
 		if ($var eq 'cmd_logger') {
+                        $value =~ s/\s+$//;
 			if ((-f "$value") && (-x "$value") && (1 == is_real_local_abs_path($value))) {
 				$config_vars{'cmd_logger'} = $value;
 				$line_syntax_ok = 1;
@@ -713,6 +718,7 @@ sub parse_config_file {
 		
 		# CHECK FOR du (optional)
 		if ($var eq 'cmd_du') {
+                        $value =~ s/\s+$//;
 			if ((-f "$value") && (-x "$value") && (1 == is_real_local_abs_path($value))) {
 				$config_vars{'cmd_du'} = $value;
 				$line_syntax_ok = 1;
@@ -769,6 +775,7 @@ sub parse_config_file {
 		
 		# CHECK FOR rsnapshot-diff (optional)
 		if ($var eq 'cmd_rsnapshot_diff') {
+                        $value =~ s/\s+$//;
 			if ((-f "$value") && (-x "$value") && (1 == is_real_local_abs_path($value))) {
 				$config_vars{'cmd_rsnapshot_diff'} = $value;
 				$line_syntax_ok = 1;
