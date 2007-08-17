@@ -26,7 +26,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.371 2007/07/30 16:33:30 drhyde Exp $
+# $Id: rsnapshot-program.pl,v 1.372 2007/08/17 14:15:36 drhyde Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -729,6 +729,51 @@ sub parse_config_file {
 			}
 		}
 		
+		# CHECK FOR lvcreate (optional)
+		if ($var eq 'linux_lvm_cmd_lvcreate') {
+			if ((-f "$value") && (-x "$value") && (1 == is_real_local_abs_path($value))) {
+				$config_vars{'linux_lvm_cmd_lvcreate'} = $value;
+				$line_syntax_ok = 1;
+				next;
+			} else {
+				config_err($file_line_num, "$line - $value is not executable");
+				next;
+			}
+		}
+		# CHECK FOR lvremove (optional)
+		if ($var eq 'linux_lvm_cmd_lvremove') {
+			if ((-f "$value") && (-x "$value") && (1 == is_real_local_abs_path($value))) {
+				$config_vars{'linux_lvm_cmd_lvremove'} = $value;
+				$line_syntax_ok = 1;
+				next;
+			} else {
+				config_err($file_line_num, "$line - $value is not executable");
+				next;
+			}
+		}
+		# CHECK FOR mount (optional)
+		if ($var eq 'linux_lvm_cmd_mount') {
+			if ((-f "$value") && (-x "$value") && (1 == is_real_local_abs_path($value))) {
+				$config_vars{'linux_lvm_cmd_mount'} = $value;
+				$line_syntax_ok = 1;
+				next;
+			} else {
+				config_err($file_line_num, "$line - $value is not executable");
+				next;
+			}
+		}
+		# CHECK FOR umount (optional)
+		if ($var eq 'linux_lvm_cmd_umount') {
+			if ((-f "$value") && (-x "$value") && (1 == is_real_local_abs_path($value))) {
+				$config_vars{'linux_lvm_cmd_umount'} = $value;
+				$line_syntax_ok = 1;
+				next;
+			} else {
+				config_err($file_line_num, "$line - $value is not executable");
+				next;
+			}
+		}
+		
 		# CHECK FOR cmd_preexec (optional)
 		if ($var eq 'cmd_preexec') {
 			my $full_script	= $value;	# backup script to run (including args)
@@ -902,6 +947,43 @@ sub parse_config_file {
 			} elsif ( is_cwrsync_path($src) ) {
 				$line_syntax_ok = 1;
 				
+			# check for lvm
+			} elsif ( is_linux_lvm_path($src) ) {
+				# if it's an lvm path, make sure we have lvm commands and arguments
+				if (!defined($config_vars{'linux_lvm_cmd_lvcreate'})) {
+					config_err($file_line_num, "$line - Cannot handle $src, linux_lvm_cmd_lvcreate not defined in $config_file");
+					next;
+				}
+				if (!defined($config_vars{'linux_lvm_cmd_lvremove'})) {
+					config_err($file_line_num, "$line - Cannot handle $src, linux_lvm_cmd_lvremove not defined in $config_file");
+					next;
+				}
+				if (!defined($config_vars{'linux_lvm_cmd_mount'})) {
+					config_err($file_line_num, "$line - Cannot handle $src, linux_lvm_cmd_mount not defined in $config_file");
+					next;
+				}
+				if (!defined($config_vars{'linux_lvm_cmd_umount'})) {
+					config_err($file_line_num, "$line - Cannot handle $src, linux_lvm_cmd_umount not defined in $config_file");
+					next;
+				}
+				if (!defined($config_vars{'linux_lvm_snapshotsize'})) {
+					config_err($file_line_num, "$line - Cannot handle $src, linux_lvm_snapshotsize not defined in $config_file");
+					next;
+				}
+				if (!defined($config_vars{'linux_lvm_snapshotname'})) {
+					config_err($file_line_num, "$line - Cannot handle $src, linux_lvm_snapshotname not defined in $config_file");
+					next;
+				}
+				if (!defined($config_vars{'linux_lvm_vgpath'})) {
+					config_err($file_line_num, "$line - Cannot handle $src, linux_lvm_vgpath not defined in $config_file");
+					next;
+				}
+				if (!defined($config_vars{'linux_lvm_mountpath'})) {
+					config_err($file_line_num, "$line - Cannot handle $src, linux_lvm_mountpath not defined in $config_file");
+					next;
+				}
+				$line_syntax_ok = 1;
+
 			# fear the unknown
 			} else {
 				config_err($file_line_num, "$line - Source directory \"$src\" doesn't exist");
@@ -1245,6 +1327,18 @@ sub parse_config_file {
 		# DU ARGS
 		if ($var eq 'du_args') {
 			$config_vars{'du_args'} = $value;
+			$line_syntax_ok = 1;
+			next;
+		}
+		# LVM CMDS
+		if ($var =~ m/^linux_lvm_cmd_(lvcreate|mount)$/) {
+			$config_vars{$var} = $value;
+			$line_syntax_ok = 1;
+			next;
+		}
+		# LVM ARGS
+		if ($var =~ m/^linux_lvm_(vgpath|snapshotname|snapshotsize|mountpath)$/) {
+			$config_vars{$var} = $value;
 			$line_syntax_ok = 1;
 			next;
 		}
@@ -1599,6 +1693,10 @@ sub parse_backup_opts {
 			
 		# ssh_args
 		} elsif ( $name eq 'ssh_args' ) {
+			# pass unchecked
+			
+		# lvm args
+		} elsif ( $name =~ m/^linux_lvm_(vgpath|snapshotname|snapshotsize|mountpath)$/ ) {
 			# pass unchecked
 			
 		# include
@@ -2544,6 +2642,18 @@ sub is_anon_rsync_path {
 	return (0);
 }
 
+# accepts path
+# returns 1 if it's a syntactically valid LVM path
+# returns 0 otherwise
+sub is_linux_lvm_path {
+	my $path = shift(@_);
+	
+	if (!defined($path))		{ return (undef); }
+	if ($path =~ m|^lvm://.*$|)	{ return (1); }
+	
+	return (0);
+}
+
 # accepts proposed list for rsync_short_args
 # makes sure that rsync_short_args is in the format '-abcde'
 # (not '-a -b' or '-ab c', etc)
@@ -3114,6 +3224,10 @@ sub rsync_backup_point {
 	my $result					= undef;
 	my $using_relative			= 0;
 	
+	my $linux_lvm                     = 0;
+	my $linux_lvm_oldpwd              = undef;
+	my $linux_lvm_snapshotname        = undef;
+
 	if (defined($$bp_ref{'src'})) {
 		$src = remove_trailing_slash( "$$bp_ref{'src'}" );
 		$src = add_slashdot_if_root( "$src" );
@@ -3271,6 +3385,85 @@ sub rsync_backup_point {
 		# make rsync quiet if we're not running EXTRA verbose
 		if ($verbose < 4) { $rsync_short_args .= 'q'; }
 		
+	# LVM path
+	} elsif ( is_linux_lvm_path($$bp_ref{'src'}) ) {
+		# take LVM snapshot and mount, reformat src into local path
+
+        unless (defined($config_vars{'linux_lvm_snapshotsize'})) {
+            bail("Missing required argument for LVM source: linux_lvm_snapshotsize");
+        }
+        unless (defined($config_vars{'linux_lvm_snapshotname'})) {
+            bail("Missing required argument for LVM source: linux_lvm_snapshotname");
+        }
+        unless (defined($config_vars{'linux_lvm_vgpath'})) {
+            bail("Missing required argument for LVM source: linux_lvm_vgpath");
+        }
+        unless (defined($config_vars{'linux_lvm_mountpath'})) {
+            bail("Missing required argument for LVM source: linux_lvm_mountpath");
+        }
+
+        # parse LVM src ('lvm://vgname/volname/path')
+        my ($linux_lvmvgname,$linux_lvmvolname, $linux_lvmpath) = ($$bp_ref{'src'} =~ m|^lvm://([^/]+)/([^/]+)/(.*)$|);
+        # lvmvolname and/or path could be the string "0", so test for 'defined':
+        unless (defined($linux_lvmvgname) and defined($linux_lvmvolname) and defined($linux_lvmpath)) {
+            bail("Could not understand LVM source \"$$bp_ref{'src'}\" in backup_lowest_interval()");
+        }
+        
+        # assemble and execute LVM snapshot command
+        @cmd_stack = ();
+        push(@cmd_stack, $config_vars{'linux_lvm_cmd_lvcreate'});
+        push(@cmd_stack, '--snapshot');
+
+        push(@cmd_stack, '--size');
+        push(@cmd_stack, $config_vars{'linux_lvm_snapshotsize'});
+        push(@cmd_stack, '--name');
+        push(@cmd_stack, $config_vars{'linux_lvm_snapshotname'});
+
+        push(@cmd_stack, join('/', $config_vars{'linux_lvm_vgpath'}, $linux_lvmvgname, $linux_lvmvolname));
+        
+        print_cmd(@cmd_stack);
+        if (0 == $test) {
+            # silence gratuitous lvcreate output
+            #$result = system(@cmd_stack);
+            $result = system(join " ", @cmd_stack, ">/dev/null");
+            
+            if ($result != 0) {
+                bail("Create LVM snapshot failed: $result");
+            }
+        }
+        
+        # mount the snapshot
+        @cmd_stack = ();
+        push(@cmd_stack, $config_vars{'linux_lvm_cmd_mount'});
+
+        $linux_lvm_snapshotname = join('/', $config_vars{'linux_lvm_vgpath'}, $linux_lvmvgname, $config_vars{'linux_lvm_snapshotname'});
+        push(@cmd_stack, $linux_lvm_snapshotname);
+        push(@cmd_stack, $config_vars{'linux_lvm_mountpath'});
+        
+        print_cmd(@cmd_stack);
+        if (0 == $test) {
+            $result = system(@cmd_stack);
+            
+            if ($result != 0) {
+                bail("Mount LVM snapshot failed: $result");
+            }
+        }
+        
+        
+        # rewrite src to point to mount path
+        # - to avoid including the mountpath in the snapshot, change the working directory and use a relative source
+        $linux_lvm_oldpwd = $ENV{PWD};
+        print_cmd("chdir($config_vars{'linux_lvm_mountpath'})");
+        if (0 == $test) {
+            $result = chdir($config_vars{'linux_lvm_mountpath'});
+            if (0 == $result) {
+            bail("Could not change directory to \"$config_vars{'linux_lvm_mountpath'}\"");
+            }
+        }
+
+        $$bp_ref{'src'} = './' .  $linux_lvmpath;
+        $linux_lvm = 1;
+		
 	# this should have already been validated once, but better safe than sorry
 	} else {
 		bail("Could not understand source \"$$bp_ref{'src'}\" in backup_lowest_interval()");
@@ -3424,6 +3617,49 @@ sub rsync_backup_point {
 			handle_rsync_error($retval, $bp_ref);
 		}
 	}
+	
+	# unmount and drop snapshot if required
+	if ($linux_lvm) {
+	
+        print_cmd("chdir($linux_lvm_oldpwd)");
+        if (0 == $test) {
+            $result = chdir($linux_lvm_oldpwd);
+            if (0 == $result) {
+            bail("Could not change directory to \"$linux_lvm_oldpwd\"");
+            }
+        }
+
+        @cmd_stack = ();
+        push(@cmd_stack, $config_vars{'linux_lvm_cmd_umount'});
+
+        push(@cmd_stack, $config_vars{'linux_lvm_mountpath'});
+        
+        print_cmd(@cmd_stack);
+        if (0 == $test) {
+            # silence gratuitous lvremove output
+            #$result = system(@cmd_stack);
+            $result = system(join " ", @cmd_stack, ">/dev/null");
+            
+            if ($result != 0) {
+                bail("Unmount LVM snapshot failed: $result");
+            }
+        }
+
+        @cmd_stack = ();
+        push(@cmd_stack, $config_vars{'linux_lvm_cmd_lvremove'});
+
+        push(@cmd_stack, '--force');
+        push(@cmd_stack, $linux_lvm_snapshotname);
+        
+        print_cmd(@cmd_stack);
+        if (0 == $test) {
+            $result = system(@cmd_stack);
+            
+            if ($result != 0) {
+                bail("Removal of LVM snapshot failed: $result");
+            }
+        }
+    }
 }
 
 # accepts the name of the argument to split, and its value
@@ -5864,6 +6100,22 @@ rotations).
 
 =back
 
+B<linux_lvm_cmd_lvcreate>
+
+B<linux_lvm_cmd_lvremove>
+
+B<linux_lvm_cmd_mount>
+
+B<linux_lvm_cmd_umount>
+
+=over 4
+
+Paths to lvcreate, lvremove, mou ntand umount commands, for use with Linux
+LVMs.  The lvcreate, lvremove, mount and umount commands are required for
+managing snapshots of LVM volumes and are otherwise optional.
+
+=back
+
 B<retain>             [name]   [number]
 
 =over 4
@@ -6136,6 +6388,39 @@ _delete directories hanging around.
 
 =back
 
+B<linux_lvm_snapshotsize    2G>
+
+=over 4
+
+LVM snapshot(s) size (lvcreate --size option).
+
+=back
+
+B<linux_lvm_snapshotname  rsnapshot>
+
+=over 4
+
+Name to be used when creating the LVM logical volume snapshot(s) (lvcreate --name option).
+
+=back
+
+B<linux_lvm_vgpath		/dev>
+
+=over 4
+
+Path to the LVM Volume Groups.
+
+=back
+
+B<linux_lvm_mountpath		/mnt/lvm-snapshot>
+
+=over 4
+
+Mount point to use to temporarily mount the snapshot(s). 
+
+=back
+
+
 B<UPGRADE NOTICE:>
 
 =over 4
@@ -6153,6 +6438,8 @@ B<backup>  root@example.com:/etc/      example.com/
 B<backup>  rsync://example.com/path2/  example.com/
 
 B<backup>  /var/                       localhost/      one_fs=1
+
+B<backup>  lvm://vg0/home/path2/       lvm-vg0/
 
 B<backup_script>   /usr/local/bin/backup_pgsql.sh    pgsql_backup/
 
@@ -6219,6 +6506,17 @@ If the global one_fs has been set, this will override it locally.
 
 =back
 
+B<backup  lvm://vg0/home/path2/       lvm-vg0/>
+
+=over 4
+
+Backs up the LVM logical volume called home, of volume group vg0, to 
+<snapshot_root>/<interval>.0/lvm-vg0/. Will create, mount, backup, unmount and remove an LVM 
+snapshot for each lvm:// entry.
+
+=back
+
+
 B<backup_script      /usr/local/bin/backup_database.sh   db_backup/>
 
 =over 4
@@ -6270,26 +6568,37 @@ Putting it all together (an example file):
 
     snapshot_root   /.snapshots/
 
-    cmd_rsync       /usr/bin/rsync
-    cmd_ssh         /usr/bin/ssh
-    #cmd_cp         /bin/cp
-    cmd_rm          /bin/rm
-    cmd_logger      /usr/bin/logger
-    cmd_du          /usr/bin/du
+    cmd_rsync           /usr/bin/rsync
+    cmd_ssh             /usr/bin/ssh
+    #cmd_cp             /bin/cp
+    cmd_rm              /bin/rm
+    cmd_logger          /usr/bin/logger
+    cmd_du              /usr/bin/du
 
-    retain          hourly  6
-    retain          daily   7
-    retain          weekly  7
-    retain          monthly 3
+    linux_lvm_cmd_lvcreate        /sbin/lvcreate
+    linux_lvm_cmd_lvremove        /sbin/lvremove
+    linux_lvm_cmd_mount           /bin/mount
+    linux_lvm_cmd_umount          /bin/umount
 
-    backup          /etc/                     localhost/
-    backup          /home/                    localhost/
-    backup_script   /usr/local/bin/backup_mysql.sh  mysql_backup/
+    linux_lvm_snapshotsize    2G
+    linux_lvm_snapshotname    rsnapshot
+    linux_lvm_vgpath          /dev
+    linux_lvm_mountpath       /mnt/lvm-snapshot
 
-    backup          root@foo.com:/etc/        foo.com/
-    backup          root@foo.com:/home/       foo.com/
-    backup          root@mail.foo.com:/home/  mail.foo.com/
-    backup          rsync://example.com/pub/  example.com/pub/
+    retain              hourly  6
+    retain              daily   7
+    retain              weekly  7
+    retain              monthly 3
+
+    backup              /etc/                     localhost/
+    backup              /home/                    localhost/
+    backup_script       /usr/local/bin/backup_mysql.sh  mysql_backup/
+
+    backup              root@foo.com:/etc/        foo.com/
+    backup              root@foo.com:/home/       foo.com/
+    backup              root@mail.foo.com:/home/  mail.foo.com/
+    backup              rsync://example.com/pub/  example.com/pub/
+    backup              lvm://vg0/xen-home/       lvm-vg0/xen-home/
 
 =back
 
@@ -6807,6 +7116,14 @@ stop_on_stale_lockfile
 
 =back
 
+Ben Low (B<ben@bdlow.net>)
+
+=over 4
+
+Linux LVM snapshot support
+
+=back
+
 =head1 COPYRIGHT
 
 Copyright (C) 2003-2005 Nathan Rosenquist
@@ -6814,7 +7131,8 @@ Copyright (C) 2003-2005 Nathan Rosenquist
 Portions Copyright (C) 2002-2007 Mike Rubel, Carl Wilhelm Soderstrom,
 Ted Zlatanov, Carl Boe, Shane Liebling, Bharat Mediratta, Peter Palfrader,
 Nicolas Kaiser, David Cantrell, Chris Petersen, Robert Jackson, Justin Grote,
-David Keegel, Alan Batie, Dieter Bloms, Henning Moll
+David Keegel, Alan Batie, Dieter Bloms, Henning Moll, Ben Low, Anthony
+Ettinger
 
 This man page is distributed under the same license as rsnapshot:
 the GPL (see below).

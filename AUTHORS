@@ -77,3 +77,6 @@ Dieter Bloms <dieter@bloms.de>
 
 Henning Moll <newsScott@gmx.de>
     - stop_on_stale_lockfile
+
+Ben Low <ben@bdlow.net>
+    - Added support for Linux LVM snapshots
