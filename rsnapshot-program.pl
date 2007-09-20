@@ -2,12 +2,12 @@
 
 ########################################################################
 #                                                                      #
-# arrsnapshot                                                            #
+# rsnapshot                                                            #
 # by Nathan Rosenquist                                                 #
 # now maintained by David Cantrell                                     #
 #                                                                      #
-# The official arrsnapshot website is located at                         #
-# http://www.arrsnapshot.org/                                            #
+# The official rsnapshot website is located at                         #
+# http://www.rsnapshot.org/                                            #
 #                                                                      #
 # Copyright (C) 2003-2005 Nathan Rosenquist                            #
 #                                                                      #
@@ -16,7 +16,7 @@
 # Peter Palfrader, Nicolas Kaiser, David Cantrell, Chris Petersen,     #
 # Robert Jackson, Justin Grote, David Keegel, Alan Batie               #
 #                                                                      #
-# arrsnapshot comes with ABSOLUTELY NO WARRANTY.  This is free software, #
+# rsnapshot comes with ABSOLUTELY NO WARRANTY.  This is free software, #
 # and you may copy, distribute and/or modify it under the terms of     #
 # the GNU GPL (version 2 or at your option any later version).         #
 # See the GNU General Public License (in file: COPYING) for details.   #
@@ -26,7 +26,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.373 2007/09/19 16:13:42 drhyde Exp $
+# $Id: rsnapshot-program.pl,v 1.374 2007/09/20 11:07:06 drhyde Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -62,7 +62,7 @@ my $have_lchown = 0;
 # turn off buffering
 $| = 1;
 
-# version of arrsnapshot
+# version of rsnapshot
 my $VERSION = '1.3.0';
 
 # command or interval to execute (first cmd line arg)
@@ -149,7 +149,7 @@ my $default_loglevel	= 3;
 # assume the config file is valid until we find an error
 my $config_perfect = 1;
 
-# exit code for arrsnapshot
+# exit code for rsnapshot
 my $exit_code = 0;
 
 # global defaults for external programs
@@ -179,10 +179,10 @@ my $rsync_include_file_args	= undef;
 
 # shut down gracefully if necessary
 $SIG{'HUP'}		= 'IGNORE';
-$SIG{'INT'}		= sub { bail('arrsnapshot was sent INT signal... cleaning up');  };
-$SIG{'QUIT'}	= sub { bail('arrsnapshot was sent QUIT signal... cleaning up'); };
-$SIG{'ABRT'}	= sub { bail('arrsnapshot was sent ABRT signal... cleaning up'); };
-$SIG{'TERM'}	= sub { bail('arrsnapshot was sent TERM signal... cleaning up'); };
+$SIG{'INT'}		= sub { bail('rsnapshot was sent INT signal... cleaning up');  };
+$SIG{'QUIT'}	= sub { bail('rsnapshot was sent QUIT signal... cleaning up'); };
+$SIG{'ABRT'}	= sub { bail('rsnapshot was sent ABRT signal... cleaning up'); };
+$SIG{'TERM'}	= sub { bail('rsnapshot was sent TERM signal... cleaning up'); };
 
 ########################################
 ###      CORE PROGRAM STRUCTURE      ###
@@ -239,12 +239,12 @@ if (1 == $do_configtest) {
 	exit_configtest();
 }
 
-# if we're just using "du" or "arrsnapshot-diff" to check the disk space, do it now (and exit)
+# if we're just using "du" or "rsnapshot-diff" to check the disk space, do it now (and exit)
 # these commands are down here because they needs to know the contents of the config file
 if ($cmd eq 'du') {
 	show_disk_usage();
 } elsif ($cmd eq 'diff') {
-	show_arrsnapshot_diff();
+	show_rsnapshot_diff();
 } elsif ($cmd eq 'get-latest-snapshot') {
 	show_latest_snapshot();
 }
@@ -268,7 +268,7 @@ create_snapshot_root();
 
 # now chdir to the snapshot_root.
 # note that this is needed because in the rare case that you do this ...
-# sudo -u peon arrsnapshot ... and are in a directory that 'peon' can't
+# sudo -u peon rsnapshot ... and are in a directory that 'peon' can't
 # read, then some versions of GNU rm will later fail, as they try to
 # lstat the cwd.  It's safe to chdir because all directories etc that
 # we ever mention are absolute.
@@ -291,31 +291,31 @@ exit_with_status();
 ########################################
 
 # concise usage information
-# runs when arrsnapshot is called with no arguments
+# runs when rsnapshot is called with no arguments
 # exits with an error condition
 sub show_usage {
 	print<<HERE;
-arrsnapshot $VERSION
-Usage: arrsnapshot [-vtxqVD] [-c cfgfile] [command] [args]
-Type \"arrsnapshot help\" or \"man arrsnapshot\" for more information.
+rsnapshot $VERSION
+Usage: rsnapshot [-vtxqVD] [-c cfgfile] [command] [args]
+Type \"rsnapshot help\" or \"man rsnapshot\" for more information.
 HERE
 	
 	exit(1);
 }
 
 # extended usage information
-# runs when arrsnapshot is called with "help" as an argument
+# runs when rsnapshot is called with "help" as an argument
 # exits 0
 sub show_help {
 	print<<HERE;
-arrsnapshot $VERSION
-Usage: arrsnapshot [-vtxqVD] [-c cfgfile] [command] [args]
-Type "man arrsnapshot" for more information.
+rsnapshot $VERSION
+Usage: rsnapshot [-vtxqVD] [-c cfgfile] [command] [args]
+Type "man rsnapshot" for more information.
 
-arrsnapshot is a filesystem snapshot utility. It can take incremental
+rsnapshot is a filesystem snapshot utility. It can take incremental
 snapshots of local and remote filesystems for any number of machines.
 
-arrsnapshot comes with ABSOLUTELY NO WARRANTY.  This is free software,
+rsnapshot comes with ABSOLUTELY NO WARRANTY.  This is free software,
 and you are welcome to redistribute it under certain conditions.
 See the GNU General Public License for details.
 
@@ -331,13 +331,13 @@ Options:
     -x one_fs        - Don't cross filesystems (same as -x option to rsync).
 
 Commands:
-    [backuplevel]    - A backup level as defined in arrsnapshot.conf.
+    [backuplevel]    - A backup level as defined in rsnapshot.conf.
     configtest       - Syntax check the config file.
     sync [dest]      - Sync files, without rotating. "sync_first" must be
                        enabled for this to work. If a full backup point
                        destination is given as an optional argument, only
                        those files will be synced.
-    diff             - Front-end interface to the arrsnapshot-diff program.
+    diff             - Front-end interface to the rsnapshot-diff program.
                        Accepts two optional arguments which can be either
                        filesystem paths or backup directories within the
                        snapshot_root (e.g., /etc/ daily.0/etc/). The default
@@ -345,7 +345,7 @@ Commands:
     du               - Show disk usage in the snapshot_root.
                        Accepts an optional destination path for comparison
                        across snapshots (e.g., localhost/home/user/foo).
-    version          - Show the version number for arrsnapshot.
+    version          - Show the version number for rsnapshot.
     help             - Show this help message.
 HERE
 	
@@ -355,7 +355,7 @@ HERE
 # prints out the name and version
 # exits 0
 sub show_version {
-	print "arrsnapshot $VERSION\n";
+	print "rsnapshot $VERSION\n";
 	exit(0);
 }
 
@@ -378,7 +378,7 @@ sub find_config_file {
 	# autoconf variables (may have too many slashes)
 	my $autoconf_sysconfdir	= '@sysconfdir@';
 	my $autoconf_prefix		= '@prefix@';
-	my $default_config_file	= '/etc/arrsnapshot.conf';
+	my $default_config_file	= '/etc/rsnapshot.conf';
 	
 	# consolidate multiple slashes
 	$autoconf_sysconfdir	=~ s/\/+/\//g;
@@ -390,11 +390,11 @@ sub find_config_file {
 	
 	# if --sysconfdir was not set explicitly during ./configure, but we did use autoconf
 	if ($autoconf_sysconfdir eq '${prefix}/etc') {
-		$default_config_file = "$autoconf_prefix/etc/arrsnapshot.conf";
+		$default_config_file = "$autoconf_prefix/etc/rsnapshot.conf";
 		
 	# if --sysconfdir was set explicitly at ./configure, overriding the --prefix setting
 	} elsif ($autoconf_sysconfdir ne ('@' . 'sysconfdir' . '@')) {
-		$default_config_file = "$autoconf_sysconfdir/arrsnapshot.conf";
+		$default_config_file = "$autoconf_sysconfdir/rsnapshot.conf";
 	}
 	
 	# set global variable
@@ -427,7 +427,7 @@ sub parse_cmd_line_opts {
 	# die if we don't understand all the flags
 	if (!defined($result) or (1 != $result)) {
 		# At this point, getopts() or our @ARGV check will have printed out "Unknown option: -X"
-		print STDERR "Type \"arrsnapshot help\" or \"man arrsnapshot\" for more information.\n";
+		print STDERR "Type \"rsnapshot help\" or \"man rsnapshot\" for more information.\n";
 		exit(1);
 	}
 	
@@ -444,7 +444,7 @@ sub parse_cmd_line_opts {
 			for (my $i=1; $i<scalar(@ARGV); $i++) {
 				print STDERR "Unknown option: $ARGV[$i]\n";
 				print STDERR "Please make sure all switches come before commands\n";
-				print STDERR "(e.g., 'arrsnapshot -v hourly', not 'arrsnapshot hourly -v')\n";
+				print STDERR "(e.g., 'rsnapshot -v hourly', not 'rsnapshot hourly -v')\n";
 				exit(1);
 			}
 			
@@ -480,7 +480,7 @@ sub parse_cmd_line_opts {
 # accepts an optional argument - no arg means to parse the default file,
 #   if an arg is present parse that file instead
 # returns no value
-# this subroutine parses the config file (arrsnapshot.conf)
+# this subroutine parses the config file (rsnapshot.conf)
 #
 sub parse_config_file {
 	# count the lines in the config file, so the user can pinpoint errors more precisely
@@ -610,7 +610,7 @@ sub parse_config_file {
 		}
 		
 		# SYNC_FIRST
-		# if this is enabled, arrsnapshot syncs data to a staging directory with the "arrsnapshot sync" command,
+		# if this is enabled, rsnapshot syncs data to a staging directory with the "rsnapshot sync" command,
 		# and all "interval" runs will simply rotate files. this changes the behaviour of the lowest interval.
 		# when a sync occurs, no directories are rotated. the sync directory is kind of like a staging area for data transfers.
 		# the files in the sync directory will be hard linked with the others in the other snapshot directories.
@@ -818,11 +818,11 @@ sub parse_config_file {
 			next;
 		}
 		
-		# CHECK FOR arrsnapshot-diff (optional)
-		if ($var eq 'cmd_arrsnapshot_diff') {
+		# CHECK FOR rsnapshot-diff (optional)
+		if ($var eq 'cmd_rsnapshot_diff') {
                         $value =~ s/\s+$//;
 			if ((-f "$value") && (-x "$value") && (1 == is_real_local_abs_path($value))) {
-				$config_vars{'cmd_arrsnapshot_diff'} = $value;
+				$config_vars{'cmd_rsnapshot_diff'} = $value;
 				$line_syntax_ok = 1;
 				next;
 			} else {
@@ -1014,7 +1014,7 @@ sub parse_config_file {
 			# there are now two methods of making sure the user doesn't accidentally backup their snapshot_root
 			# recursively in a backup point: the good way, and the old way.
 			#
-			# in the old way, when arrsnapshot detects the snapshot_root is under a backup point, the files and
+			# in the old way, when rsnapshot detects the snapshot_root is under a backup point, the files and
 			# directories under that backup point are enumerated and get turned into several distinct rsync calls.
 			# for example, if you tried to back up "/", it would do a separate rsync invocation for "/bin/", "/etc/",
 			# and so on. this wouldn't be so bad except that it makes certain rsync options like one_fs and the
@@ -1024,7 +1024,7 @@ sub parse_config_file {
 			# for those that specifically enable the rsync_long_args parameter but don't set the --relative option.
 			#
 			# the new way is much nicer, but relies on the --relative option to rsync, which only became the default
-			# in arrsnapshot 1.2.0 (primarily for this feature). basically, arrsnapshot dynamically constructs an exclude
+			# in rsnapshot 1.2.0 (primarily for this feature). basically, rsnapshot dynamically constructs an exclude
 			# path to avoid backing up the snapshot_root. clean and simple. many thanks to bharat mediratta for coming
 			# up with this solution!!!
 			#
@@ -1456,12 +1456,12 @@ sub validate_config_file {
 	if (0 == $config_perfect) {
 		print_err("---------------------------------------------------------------------", 1);
 		print_err("Errors were found in $config_file,", 1);
-		print_err("arrsnapshot can not continue. If you think an entry looks right, make", 1);
+		print_err("rsnapshot can not continue. If you think an entry looks right, make", 1);
 		print_err("sure you don't have spaces where only tabs should be.", 1);
 		
 		# if this wasn't a test, report the error to syslog
 		if (0 == $do_configtest) {
-			syslog_err("Errors were found in $config_file, arrsnapshot can not continue.");
+			syslog_err("Errors were found in $config_file, rsnapshot can not continue.");
 		}
 		
 		# exit showing an error
@@ -1473,8 +1473,8 @@ sub validate_config_file {
 	#
 	# make sure config_version was set
 	if (!defined($config_vars{'config_version'})) {
-		print_err ("config_version was not defined. arrsnapshot can not continue.", 1);
-		syslog_err("config_version was not defined. arrsnapshot can not continue.");
+		print_err ("config_version was not defined. rsnapshot can not continue.", 1);
+		syslog_err("config_version was not defined. rsnapshot can not continue.");
 		exit(1);
 	}
 	# make sure rsync was defined
@@ -1485,20 +1485,20 @@ sub validate_config_file {
 	}
 	# make sure we got a snapshot_root
 	if (!defined($config_vars{'snapshot_root'})) {
-		print_err ("snapshot_root was not defined. arrsnapshot can not continue.", 1);
-		syslog_err("snapshot_root was not defined. arrsnapshot can not continue.");
+		print_err ("snapshot_root was not defined. rsnapshot can not continue.", 1);
+		syslog_err("snapshot_root was not defined. rsnapshot can not continue.");
 		exit(1);
 	}
 	# make sure we have at least one interval
 	if (0 == scalar(@intervals)) {
-		print_err ("At least one backup level must be set. arrsnapshot can not continue.", 1);
-		syslog_err("At least one backup level must be set. arrsnapshot can not continue.");
+		print_err ("At least one backup level must be set. rsnapshot can not continue.", 1);
+		syslog_err("At least one backup level must be set. rsnapshot can not continue.");
 		exit(1);
 	}
 	# make sure we have at least one backup point
 	if (0 == scalar(@backup_points)) {
-		print_err ("At least one backup point must be set. arrsnapshot can not continue.", 1);
-		syslog_err("At least one backup point must be set. arrsnapshot can not continue.");
+		print_err ("At least one backup point must be set. rsnapshot can not continue.", 1);
+		syslog_err("At least one backup point must be set. rsnapshot can not continue.");
 		exit(1);
 	}
 
@@ -1525,8 +1525,8 @@ sub validate_config_file {
 				} else {
 					print_err ("$config_vars{'snapshot_root'} does not exist.", 1);
 				}
-				print_err ("arrsnapshot refuses to create snapshot_root when no_create_root is enabled", 1);
-				syslog_err("arrsnapshot refuses to create snapshot_root when no_create_root is enabled");
+				print_err ("rsnapshot refuses to create snapshot_root when no_create_root is enabled", 1);
+				syslog_err("rsnapshot refuses to create snapshot_root when no_create_root is enabled");
 				exit(1);
 			}
 		}
@@ -2016,7 +2016,7 @@ sub print_err {
 	if (0 == $have_printed_run_string) {
 		if ((!defined($verbose)) or ($level <= $verbose)) {
 			print STDERR "----------------------------------------------------------------------------\n";
-			print STDERR "arrsnapshot encountered an error! The program was invoked with these options:\n";
+			print STDERR "rsnapshot encountered an error! The program was invoked with these options:\n";
 			print STDERR wrap_cmd($run_string), "\n";
 			print STDERR "----------------------------------------------------------------------------\n";
 		}
@@ -2127,15 +2127,15 @@ sub syslog_msg {
 	if (defined($config_vars{'cmd_logger'})) {
 		# print out our call to syslog
 		if (defined($verbose) && ($verbose >= 4)) {
-			print_cmd("$config_vars{'cmd_logger'} -i -p $facility.$level -t arrsnapshot $msg");
+			print_cmd("$config_vars{'cmd_logger'} -i -p $facility.$level -t rsnapshot $msg");
 		}
 		
 		# log to syslog
 		if (0 == $test) {
-			$result = system($config_vars{'cmd_logger'}, '-i', '-p', "$facility.$level", '-t', 'arrsnapshot', $msg);
+			$result = system($config_vars{'cmd_logger'}, '-i', '-p', "$facility.$level", '-t', 'rsnapshot', $msg);
 			if (0 != $result) {
 				print_warn("Could not log to syslog:", 2);
-				print_warn("$config_vars{'cmd_logger'} -i -p $facility.$level -t arrsnapshot $msg", 2);
+				print_warn("$config_vars{'cmd_logger'} -i -p $facility.$level -t rsnapshot $msg", 2);
 			}
 		}
 	}
@@ -2347,7 +2347,7 @@ sub remove_lockfile {
 sub set_posix_locale {
 	# set POSIX locale
 	# this may fix some potential problems with rmtree()
-	# another solution is to enable "cmd_rm" in arrsnapshot.conf
+	# another solution is to enable "cmd_rm" in rsnapshot.conf
 	print_msg("Setting locale to POSIX \"C\"", 4);
 	setlocale(POSIX::LC_ALL, 'C');
 }
@@ -2362,8 +2362,8 @@ sub create_snapshot_root {
 		# make sure no_create_root == 0
 		if (defined($config_vars{'no_create_root'})) {
 			if (1 == $config_vars{'no_create_root'}) {
-				print_err ("arrsnapshot refuses to create snapshot_root when no_create_root is enabled", 1);
-				syslog_err("arrsnapshot refuses to create snapshot_root when no_create_root is enabled");
+				print_err ("rsnapshot refuses to create snapshot_root when no_create_root is enabled", 1);
+				syslog_err("rsnapshot refuses to create snapshot_root when no_create_root is enabled");
 				bail();
 			}
 		}
@@ -2795,7 +2795,7 @@ sub handle_interval {
 	
 	# here we used to check for interval.delete directories.  This was
 	# removed when we switched to using _delete.$$ directories.  This
-	# was done so that you can run another (eg) arrsnapshot hourly, while
+	# was done so that you can run another (eg) rsnapshot hourly, while
 	# the .delete directory from the previous hourly backup was still
 	# going.  Potentially you may have several parallel deletes going on
 	# with the new scheme, but I'm pretty sure that you'll catch up
@@ -2903,7 +2903,7 @@ sub handle_interval {
 	# we just check for the directory, it will have been created or not depending on the value of use_lazy_delete
 	if ( -d "$config_vars{'snapshot_root'}/_delete.$$" ) {
 		# this is the last thing to do here, and it can take quite a while.
-		# we remove the lockfile here since this delete shouldn't block other arrsnapshot jobs from running
+		# we remove the lockfile here since this delete shouldn't block other rsnapshot jobs from running
 		remove_lockfile();
 		
 		# start the delete
@@ -4722,7 +4722,7 @@ sub cmd_rm_rf {
 }
 
 # accepts no arguments
-# calls the 'du' command to show arrsnapshot's disk usage
+# calls the 'du' command to show rsnapshot's disk usage
 # exits the program with 0 for success, 1 for failure
 #
 # this subroutine isn't like a lot of the "real" ones that write to logfiles, etc.
@@ -4827,16 +4827,16 @@ sub show_disk_usage {
 }
 
 # accept two args from $ARGV[1] and [2], like "daily.0" "daily.1" etc.
-# stick the full snapshot_root path on the beginning, and call arrsnapshot-diff with these args
+# stick the full snapshot_root path on the beginning, and call rsnapshot-diff with these args
 # NOTE: since this is a read-only operation, we're not concerned with directory traversals and relative paths
-sub show_arrsnapshot_diff {
-	my $cmd_arrsnapshot_diff = 'arrsnapshot-diff';
+sub show_rsnapshot_diff {
+	my $cmd_rsnapshot_diff = 'rsnapshot-diff';
 	
 	my $retval;
 	
 	# this will only hold two entries, no more no less
 	# paths_in holds the incoming arguments
-	# args will be assigned the arguments that arrsnapshot-diff will use
+	# args will be assigned the arguments that rsnapshot-diff will use
 	#
 	my @paths_in	= ();
 	my @cmd_args	= ();
@@ -4847,19 +4847,19 @@ sub show_arrsnapshot_diff {
 		exit(1);
 	}
 	
-	# check for arrsnapshot-diff program (falling back on $PATH)
-	if (defined($config_vars{'cmd_arrsnapshot_diff'})) {
-		$cmd_arrsnapshot_diff = $config_vars{'cmd_arrsnapshot_diff'};
+	# check for rsnapshot-diff program (falling back on $PATH)
+	if (defined($config_vars{'cmd_rsnapshot_diff'})) {
+		$cmd_rsnapshot_diff = $config_vars{'cmd_rsnapshot_diff'};
 	}
 	
 	# see if we even got the right number of arguments (none is OK, but 1 isn't. 2 is also OK)
 	if (defined($ARGV[1]) && !defined($ARGV[2])) {
-		print STDERR "Usage: arrsnapshot diff [backup level|dir] [backup level|dir]\n";
+		print STDERR "Usage: rsnapshot diff [backup level|dir] [backup level|dir]\n";
 		exit(1);
 	}
 	
 	# make this automatically pick the two lowest intervals (or .sync dir) for comparison, as the default
-	# we actually want to specify the older directory first, since arrsnapshot-diff will flip them around
+	# we actually want to specify the older directory first, since rsnapshot-diff will flip them around
 	# anyway based on mod times. doing it this way should make both programs consistent, and cause less
 	# surprises.
 	if (!defined($ARGV[1]) && !defined($ARGV[2])) {
@@ -4934,17 +4934,17 @@ sub show_arrsnapshot_diff {
 		unshift(@cmd_args, '-vi');
 	}
 	
-	# run arrsnapshot-diff
+	# run rsnapshot-diff
 	if (defined($verbose) && ($verbose >= 3)) {
-		print wrap_cmd(("$cmd_arrsnapshot_diff " . join(' ', @cmd_args))), "\n\n";
+		print wrap_cmd(("$cmd_rsnapshot_diff " . join(' ', @cmd_args))), "\n\n";
 	}
 	if (0 == $test) {
-		$retval = system($cmd_arrsnapshot_diff, @cmd_args);
+		$retval = system($cmd_rsnapshot_diff, @cmd_args);
 		if (0 == $retval) {
 			exit(0);
 		} else {
 			# exit showing error
-			print STDERR "Error while calling $cmd_arrsnapshot_diff\n";
+			print STDERR "Error while calling $cmd_rsnapshot_diff\n";
 			exit(1);
 		}
 	} else {
@@ -5641,7 +5641,7 @@ sub get_config_version {
 
 # accepts no args
 # exits the program, 0 on success, 1 on failure
-# attempts to upgrade the arrsnapshot.conf file for compatibility with this version
+# attempts to upgrade the rsnapshot.conf file for compatibility with this version
 sub upgrade_config_file {
 	my $result;
 	my @lines;
@@ -5722,7 +5722,7 @@ sub upgrade_config_file {
 
 # accepts array_ref of config file lines
 # exits 1 on errors
-# attempts to backup arrsnapshot.conf to arrsnapshot.conf.backup.(#)
+# attempts to backup rsnapshot.conf to rsnapshot.conf.backup.(#)
 sub backup_config_file {
 	my $lines_ref = shift(@_);
 	
@@ -5785,7 +5785,7 @@ sub backup_config_file {
 
 # accepts no args
 # exits 1 on errors
-# attempts to write an upgraded config file to arrsnapshot.conf
+# attempts to write an upgraded config file to rsnapshot.conf
 sub write_upgraded_config_file {
 	my $lines_ref			= shift(@_);
 	my $add_rsync_long_args	= shift(@_);
@@ -5797,12 +5797,12 @@ sub write_upgraded_config_file {
 	$upgrade_notice .= "#-----------------------------------------------------------------------------\n";
 	$upgrade_notice .= "# UPGRADE NOTICE:\n";
 	$upgrade_notice .= "#\n";
-	$upgrade_notice .= "# This file was upgraded automatically by arrsnapshot.\n";
+	$upgrade_notice .= "# This file was upgraded automatically by rsnapshot.\n";
 	$upgrade_notice .= "#\n";
 	$upgrade_notice .= "# The \"config_version\" parameter was added, since it is now required.\n";
 	$upgrade_notice .= "#\n";
 	$upgrade_notice .= "# The default value for \"rsync_long_args\" has changed in this release.\n";
-	$upgrade_notice .= "# By explicitly setting it to the old default values, arrsnapshot will still\n";
+	$upgrade_notice .= "# By explicitly setting it to the old default values, rsnapshot will still\n";
 	$upgrade_notice .= "# behave like it did in previous versions.\n";
 	$upgrade_notice .= "#\n";
 	
@@ -5815,10 +5815,10 @@ sub write_upgraded_config_file {
 	}
 	
 	$upgrade_notice .= "#\n";
-	$upgrade_notice .= "# New features and improvements have been added to arrsnapshot that can\n";
+	$upgrade_notice .= "# New features and improvements have been added to rsnapshot that can\n";
 	$upgrade_notice .= "# only be fully utilized by making some additional changes to\n";
 	$upgrade_notice .= "# \"rsync_long_args\" and your \"backup\" points. If you would like to get the\n";
-	$upgrade_notice .= "# most out of arrsnapshot, please read the INSTALL file that came with this\n";
+	$upgrade_notice .= "# most out of rsnapshot, please read the INSTALL file that came with this\n";
 	$upgrade_notice .= "# program for more information.\n";
 	$upgrade_notice .= "#-----------------------------------------------------------------------------\n";
 	
@@ -5963,15 +5963,15 @@ sub safe_chown {
 
 =head1 NAME
 
-arrsnapshot - remote filesystem snapshot utility
+rsnapshot - remote filesystem snapshot utility
 
 =head1 SYNOPSIS
 
-B<arrsnapshot> [B<-vtxqVD>] [B<-c> cfgfile] [command] [args]
+B<rsnapshot> [B<-vtxqVD>] [B<-c> cfgfile] [command] [args]
 
 =head1 DESCRIPTION
 
-B<arrsnapshot> is a filesystem snapshot utility. It can take incremental
+B<rsnapshot> is a filesystem snapshot utility. It can take incremental
 snapshots of local and remote filesystems for any number of machines.
 
 Local filesystem snapshots are handled with B<rsync(1)>. Secure remote
@@ -5979,18 +5979,18 @@ connections are handled with rsync over B<ssh(1)>, while anonymous
 rsync connections simply use an rsync server. Both remote and local
 transfers depend on rsync.
 
-B<arrsnapshot> saves much more disk space than you might imagine. The amount
+B<rsnapshot> saves much more disk space than you might imagine. The amount
 of space required is roughly the size of one full backup, plus a copy
-of each additional file that is changed. B<arrsnapshot> makes extensive
+of each additional file that is changed. B<rsnapshot> makes extensive
 use of hard links, so if the file doesn't change, the next snapshot is
 simply a hard link to the exact same file.
 
-B<arrsnapshot> will typically be invoked as root by a cron job, or series
+B<rsnapshot> will typically be invoked as root by a cron job, or series
 of cron jobs. It is possible, however, to run as any arbitrary user
 with an alternate configuration file.
 
 All important options are specified in a configuration file, which is
-located by default at B</etc/arrsnapshot.conf>. An alternate file can be
+located by default at B</etc/rsnapshot.conf>. An alternate file can be
 specified on the command line. There are also additional options which
 can be passed on the command line.
 
@@ -6016,12 +6016,12 @@ B<-D> a firehose of diagnostic information
 
 =head1 CONFIGURATION
 
-B</etc/arrsnapshot.conf> is the default configuration file. All parameters
-in this file must be separated by tabs. B</etc/arrsnapshot.conf.default>
+B</etc/rsnapshot.conf> is the default configuration file. All parameters
+in this file must be separated by tabs. B</etc/rsnapshot.conf.default>
 can be used as a reference.
 
-It is recommended that you copy B</etc/arrsnapshot.conf.default> to
-B</etc/arrsnapshot.conf>, and then modify B</etc/arrsnapshot.conf> to suit
+It is recommended that you copy B</etc/rsnapshot.conf.default> to
+B</etc/rsnapshot.conf>, and then modify B</etc/rsnapshot.conf> to suit
 your needs.
 
 Long lines may be split over several lines.  "Continuation" lines
@@ -6049,7 +6049,7 @@ path.
 
 =back
 
-B<no_create_root>     If set to 1, arrsnapshot won't create snapshot_root directory
+B<no_create_root>     If set to 1, rsnapshot won't create snapshot_root directory
 
 B<cmd_rsync>          Full path to rsync (required)
 
@@ -6062,10 +6062,10 @@ B<cmd_cp>             Full path to cp  (optional, but must be GNU version)
 If you are using Linux, you should uncomment cmd_cp. If you are using a
 platform which does not have GNU cp, you should leave cmd_cp commented out.
 
-With GNU cp, arrsnapshot can take care of both normal files and special
+With GNU cp, rsnapshot can take care of both normal files and special
 files (such as FIFOs, sockets, and block/character devices) in one pass.
 
-If cmd_cp is disabled, arrsnapshot will use its own built-in function,
+If cmd_cp is disabled, rsnapshot will use its own built-in function,
 native_cp_al() to backup up regular files and directories. This will
 then be followed up by a separate call to rsync, to move the special
 files over (assuming there are any).
@@ -6078,7 +6078,7 @@ B<cmd_logger>         Full path to logger (optional, for syslog support)
 
 B<cmd_du>             Full path to du (optional, for disk usage reports)
 
-B<cmd_arrsnapshot_diff> Full path to arrsnapshot-diff (optional)
+B<cmd_rsnapshot_diff> Full path to rsnapshot-diff (optional)
 
 B<cmd_preexec>
 
@@ -6123,14 +6123,14 @@ B<retain>             [name]   [number]
 "name" refers to the name of this backup level (e.g., hourly, daily,
 so also called the 'interval'). "number"
 is the number of snapshots for this type of interval that will be retained.
-The value of "name" will be the command passed to B<arrsnapshot> to perform
+The value of "name" will be the command passed to B<rsnapshot> to perform
 this type of backup.
 
 A deprecated alias for 'retain' is 'interval'.
 
 Example: B<retain hourly 6>
 
-[root@localhost]# B<arrsnapshot hourly>
+[root@localhost]# B<rsnapshot hourly>
 
 For this example, every time this is run, the following will happen:
 
@@ -6174,7 +6174,7 @@ B<link_dest           1>
 
 If your version of rsync supports --link-dest (2.5.7 or newer), you can enable
 this to let rsync handle some things that GNU cp or the built-in subroutines would
-otherwise do. Enabling this makes arrsnapshot take a slightly more complicated code
+otherwise do. Enabling this makes rsnapshot take a slightly more complicated code
 branch, but it's the best way to support special files on non-Linux systems.
 
 =back
@@ -6183,14 +6183,14 @@ B<sync_first          1>
 
 =over 4
 
-sync_first changes the behaviour of arrsnapshot. When this is enabled, all calls
-to arrsnapshot with various backup levels simply rotate files. All backups are handled
-by calling arrsnapshot with the "sync" argument. The synced files are stored in
+sync_first changes the behaviour of rsnapshot. When this is enabled, all calls
+to rsnapshot with various backup levels simply rotate files. All backups are handled
+by calling rsnapshot with the "sync" argument. The synced files are stored in
 a ".sync" directory under the snapshot_root.
 
-This allows better recovery in the event that arrsnapshot is interrupted in the
+This allows better recovery in the event that rsnapshot is interrupted in the
 middle of a sync operation, since the sync step and rotation steps are
-seperated. This also means that you can easily run "arrsnapshot sync" on the
+seperated. This also means that you can easily run "rsnapshot sync" on the
 command line without fear of forcing all the other directories to rotate up.
 This benefit comes at the cost of one more snapshot worth of disk space.
 The default is 0 (off).
@@ -6224,11 +6224,11 @@ from rsync. We hope to add support for this in a future release.
 
 =back
 
-B<logfile             /var/log/arrsnapshot>
+B<logfile             /var/log/rsnapshot>
 
 =over 4
 
-Full filesystem path to the arrsnapshot log file. If this is defined, a log file
+Full filesystem path to the rsnapshot log file. If this is defined, a log file
 will be written, with the amount of data being controlled by B<loglevel>. If
 this is commented out, no log file will be written.
 
@@ -6292,7 +6292,7 @@ B<rsync_long_args     --delete --numeric-ids --relative --delete-excluded>
 
 =over 4
 
-List of long arguments to pass to rsync. Beginning with arrsnapshot 1.2.0, this
+List of long arguments to pass to rsync. Beginning with rsnapshot 1.2.0, this
 default has changed. In previous versions, the default values were
 
     --delete --numeric-ids
@@ -6334,20 +6334,20 @@ features.
 
 =back
 
-B<lockfile    /var/run/arrsnapshot.pid>
+B<lockfile    /var/run/rsnapshot.pid>
 
 B<stop_on_stale_lockfile	0>
 
 =over 4
 
-Lockfile to use when arrsnapshot is run. This prevents a second invocation
+Lockfile to use when rsnapshot is run. This prevents a second invocation
 from clobbering the first one. If not specified, no lock file is used.
 Make sure to use a directory that is not world writeable for security
 reasons.  Use of a lock file is strongly recommended.
 
-If a lockfile exists when arrsnapshot starts, it will try to read the file
+If a lockfile exists when rsnapshot starts, it will try to read the file
 and stop with an error if it can't.  If it *can* read the file, it sees if
-a process exists with the PID noted in the file.  If it does, arrsnapshot
+a process exists with the PID noted in the file.  If it does, rsnapshot
 stops with an error message.  If there is no process with that PID, then
 we assume that the lockfile is stale and ignore it *unless*
 stop_on_stale_lockfile is set to 1 in which case we stop.
@@ -6370,13 +6370,13 @@ B<use_lazy_deletes    1>
 
 =over 4
 
-Changes default behavior of arrsnapshot and does not initially remove the 
+Changes default behavior of rsnapshot and does not initially remove the 
 oldest snapshot. Instead it moves that directory to _delete.[processid] and
 continues as normal. Once the backup has been completed, the lockfile will
-be removed before arrsnapshot starts deleting the directory.
+be removed before rsnapshot starts deleting the directory.
 
 Enabling this means that snapshots get taken sooner (since the delete doesn't
-come first), and any other arrsnapshot processes are allowed to start while the
+come first), and any other rsnapshot processes are allowed to start while the
 final delete is happening. This benefit comes at the cost of using more
 disk space. The default is 0 (off).
 
@@ -6396,7 +6396,7 @@ LVM snapshot(s) size (lvcreate --size option).
 
 =back
 
-B<linux_lvm_snapshotname  arrsnapshot>
+B<linux_lvm_snapshotname  rsnapshot>
 
 =over 4
 
@@ -6425,7 +6425,7 @@ B<UPGRADE NOTICE:>
 
 =over 4
 
-If you have used an older version of arrsnapshot, you might notice that the
+If you have used an older version of rsnapshot, you might notice that the
 destination paths on the backup points have changed. Please read the INSTALL
 file in the source distribution for upgrade options.
 
@@ -6522,11 +6522,11 @@ B<backup_script      /usr/local/bin/backup_database.sh   db_backup/>
 =over 4
 
 In this example, we specify a script or program to run. This script should simply
-create files and/or directories in its current working directory. arrsnapshot will
+create files and/or directories in its current working directory. rsnapshot will
 then take that output and move it into the directory specified in the third column.
 
 Please note that whatever is in the destination directory will be completely
-deleted and recreated. For this reason, arrsnapshot prevents you from specifying
+deleted and recreated. For this reason, rsnapshot prevents you from specifying
 a destination directory for a backup_script that will clobber other backups.
 
 So in this example, say the backup_database.sh script simply runs a command like:
@@ -6541,9 +6541,9 @@ chmod u=r,go= mydatabase.sql	# r-------- (0400)
 
 =back
 
-arrsnapshot will take the generated "mydatabase.sql" file and move it into the
+rsnapshot will take the generated "mydatabase.sql" file and move it into the
 <snapshot_root>/<retain>.0/db_backup/ directory. On subsequent runs,
-arrsnapshot checks the differences between the files created against the
+rsnapshot checks the differences between the files created against the
 previous files. If the backup script generates the same output on the next
 run, the files will be hard linked against the previous ones, and no
 additional disk space will be taken up.
@@ -6581,7 +6581,7 @@ Putting it all together (an example file):
     linux_lvm_cmd_umount          /bin/umount
 
     linux_lvm_snapshotsize    2G
-    linux_lvm_snapshotname    arrsnapshot
+    linux_lvm_snapshotname    rsnapshot
     linux_lvm_vgpath          /dev
     linux_lvm_mountpath       /mnt/lvm-snapshot
 
@@ -6604,7 +6604,7 @@ Putting it all together (an example file):
 
 =head1 USAGE
 
-B<arrsnapshot> can be used by any user, but for system-wide backups
+B<rsnapshot> can be used by any user, but for system-wide backups
 you will probably want to run it as root.
 
 Since backups usually get neglected if human intervention is
@@ -6615,17 +6615,17 @@ also want to run it from the command line once or twice to get
 a feel for what it's doing.
 
 Here is an example crontab entry, assuming that backup levels B<hourly>,
-B<daily>, B<weekly> and B<monthly> have been defined in B</etc/arrsnapshot.conf>
+B<daily>, B<weekly> and B<monthly> have been defined in B</etc/rsnapshot.conf>
 
 =over 4
 
-B<0 */4 * * *         /usr/local/bin/arrsnapshot hourly>
+B<0 */4 * * *         /usr/local/bin/rsnapshot hourly>
 
-B<50 23 * * *         /usr/local/bin/arrsnapshot daily>
+B<50 23 * * *         /usr/local/bin/rsnapshot daily>
 
-B<40 23 * * 6         /usr/local/bin/arrsnapshot weekly>
+B<40 23 * * 6         /usr/local/bin/rsnapshot weekly>
 
-B<30 23 1 * *         /usr/local/bin/arrsnapshot monthly>
+B<30 23 1 * *         /usr/local/bin/rsnapshot monthly>
 
 =back
 
@@ -6652,7 +6652,7 @@ which is more efficient.  A secondary reason is that it is harder to
 predict how long the lowest backup level will take, since it needs to actually
 do an rsync of the source as well as the rotate that all backups do.
 
-If arrsnapshot takes longer than 10 minutes to do the "daily" rotate
+If rsnapshot takes longer than 10 minutes to do the "daily" rotate
 (which usually includes deleting the oldest daily snapshot), then you
 should increase the time between the backup levels.
 Otherwise (assuming you have set the B<lockfile> parameter, as is recommended)
@@ -6660,15 +6660,15 @@ your hourly snapshot will fail sometimes because the daily still has the lock.
 
 Remember that these are just the times that the program runs.
 To set the number of backups stored, set the B<retain> numbers in
-B</etc/arrsnapshot.conf>
+B</etc/rsnapshot.conf>
 
-To check the disk space used by arrsnapshot, you can call it with the "du" argument.
+To check the disk space used by rsnapshot, you can call it with the "du" argument.
 
 For example:
 
 =over 4
 
-B<arrsnapshot du>
+B<rsnapshot du>
 
 =back
 
@@ -6683,7 +6683,7 @@ on a particular file or subdirectory.
 
 =over 4
 
-B<arrsnapshot du localhost/home/>
+B<rsnapshot du localhost/home/>
 
 =back
 
@@ -6691,41 +6691,41 @@ The GNU version of "du" is preferred. The BSD version works well also, but does
 not support the -h flag (use -k instead, to see the totals in kilobytes). Other
 versions of "du", such as Solaris, may not work at all.
 
-To check the differences between two directories, call arrsnapshot with the "diff"
+To check the differences between two directories, call rsnapshot with the "diff"
 argument, followed by two backup levels or directory paths.
 
 For example:
 
 =over 4
 
-B<arrsnapshot diff daily.0 daily.1>
+B<rsnapshot diff daily.0 daily.1>
 
-B<arrsnapshot diff daily.0/localhost/etc daily.1/localhost/etc>
+B<rsnapshot diff daily.0/localhost/etc daily.1/localhost/etc>
 
-B<arrsnapshot diff /.snapshots/daily.0 /.snapshots/daily.1>
+B<rsnapshot diff /.snapshots/daily.0 /.snapshots/daily.1>
 
 =back
 
-This will call the arrsnapshot-diff program, which will scan both directories
+This will call the rsnapshot-diff program, which will scan both directories
 looking for differences (based on hard links).
 
-B<arrsnapshot sync>
+B<rsnapshot sync>
 
 =over 4
 
-When B<sync_first> is enabled, arrsnapshot must first be called with the B<sync>
+When B<sync_first> is enabled, rsnapshot must first be called with the B<sync>
 argument, followed by the other usual cron entries. The sync should happen as
 the lowest, most frequent backup level, and right before. For example:
 
 =over 4
 
-B<0 */4 * * *         /usr/local/bin/arrsnapshot sync && /usr/local/bin/arrsnapshot hourly>
+B<0 */4 * * *         /usr/local/bin/rsnapshot sync && /usr/local/bin/rsnapshot hourly>
 
-B<50 23 * * *         /usr/local/bin/arrsnapshot daily>
+B<50 23 * * *         /usr/local/bin/rsnapshot daily>
 
-B<40 23 1,8,15,22 * * /usr/local/bin/arrsnapshot weekly>
+B<40 23 1,8,15,22 * * /usr/local/bin/rsnapshot weekly>
 
-B<30 23 1 * *         /usr/local/bin/arrsnapshot monthly>
+B<30 23 1 * *         /usr/local/bin/rsnapshot monthly>
 
 =back
 
@@ -6734,7 +6734,7 @@ calls simply rotate directories, even the lowest backup level.
 
 =back
 
-B<arrsnapshot sync [dest]>
+B<rsnapshot sync [dest]>
 
 =over 4
 
@@ -6748,14 +6748,14 @@ of your backup points.
 
 =over 4
 
-arrsnapshot sync example.com
+rsnapshot sync example.com
 
 =back
 
 This command will only sync the files that normally get backed up into example.com.
 It will NOT get any other backup points with slightly different values (like
 example.com/etc/, for example). In order to sync example.com/etc, you would need to
-run arrsnapshot again, using example.com/etc as the optional parameter.
+run rsnapshot again, using example.com/etc as the optional parameter.
 
 =back
 
@@ -6773,7 +6773,7 @@ B<2>  Some warnings occurred, but the backup still finished
 
 =head1 FILES
 
-/etc/arrsnapshot.conf
+/etc/rsnapshot.conf
 
 =head1 SEE ALSO
 
@@ -6782,7 +6782,7 @@ rsync(1), ssh(1), logger(1), sshd(1), ssh-keygen(1), perl(1), cp(1), du(1), cron
 =head1 DIAGNOSTICS
 
 Use the B<-t> flag to see what commands would have been executed. This will show
-you the commands arrsnapshot would try to run. There are a few minor differences
+you the commands rsnapshot would try to run. There are a few minor differences
 (for example, not showing an attempt to remove the lockfile because it wasn't
 really created in the test), but should give you a very good idea what will happen.
 
@@ -6796,14 +6796,14 @@ permissions and ssh authentication issues.
 
 =head1 BUGS
 
-Please report bugs (and other comments) to the arrsnapshot-discuss mailing list:
+Please report bugs (and other comments) to the rsnapshot-discuss mailing list:
 
-B<http://lists.sourceforge.net/lists/listinfo/arrsnapshot-discuss>
+B<http://lists.sourceforge.net/lists/listinfo/rsnapshot-discuss>
 
 =head1 NOTES
 
-Make sure your /etc/arrsnapshot.conf file has all elements separated by tabs.
-See /etc/arrsnapshot.conf.default for a working example file.
+Make sure your /etc/rsnapshot.conf file has all elements separated by tabs.
+See /etc/rsnapshot.conf.default for a working example file.
 
 Make sure you put a trailing slash on the end of all directory references.
 If you don't, you may have extra directories created in your snapshots.
@@ -6819,7 +6819,7 @@ If you would like regular users to be able to restore their own backups,
 there are a number of ways this can be accomplished. One such scenario
 would be:
 
-Set B<snapshot_root> to B</.private/.snapshots> in B</etc/arrsnapshot.conf>
+Set B<snapshot_root> to B</.private/.snapshots> in B</etc/rsnapshot.conf>
 
 Set the file permissions on these directories as follows:
 
@@ -6834,7 +6834,7 @@ drwxr-xr-x    /.private/.snapshots
 Export the /.private/.snapshots directory over read-only NFS, a read-only
 Samba share, etc.
 
-See the arrsnapshot HOWTO for more information on making backups
+See the rsnapshot HOWTO for more information on making backups
 accessible to non-privileged users.
 
 For ssh to work unattended through cron, you will probably want to use
@@ -6843,7 +6843,7 @@ install the public key on each machine you want to backup. If you are
 backing up system files from remote machines, this probably means
 unattended root logins. Another possibility is to create a second user
 on the machine just for backups. Give the user a different name such
-as "arrsnapshot", but keep the UID and GID set to 0, to give root
+as "rsnapshot", but keep the UID and GID set to 0, to give root
 privileges. However, make logins more restrictive, either through ssh
 configuration, or using an alternate shell.
 
@@ -6851,13 +6851,13 @@ BE CAREFUL! If the private key is obtained by an attacker, they will
 have free run of all the systems involved. If you are unclear on how
 to do this, see B<ssh(1)>, B<sshd(1)>, and B<ssh-keygen(1)>.
 
-Backup scripts are run as the same user that arrsnapshot is running as.
+Backup scripts are run as the same user that rsnapshot is running as.
 Typically this is root. Make sure that all of your backup scripts are
 only writable by root, and that they don't call any other programs
 that aren't owned by root. If you fail to do this, anyone who can
 write to the backup script or any program it calls can fully take
 over the machine. Of course, this is not a situation unique to
-arrsnapshot.
+rsnapshot.
 
 By default, rsync transfers are done using the --numeric-ids option.
 This means that user names and group names are ignored during transfers,
@@ -6901,12 +6901,12 @@ Created the original shell scripts on which this project is based
 
 =back
 
-Nathan Rosenquist (B<nathan@arrsnapshot.org>)
+Nathan Rosenquist (B<nathan@rsnapshot.org>)
 
 =over 4
 
 =item -
-Primary author and previous maintainer of arrsnapshot.
+Primary author and previous maintainer of rsnapshot.
 
 =back
 
@@ -6915,10 +6915,10 @@ David Cantrell (B<david@cantrell.org.uk>)
 =over 4
 
 =item -
-Current co-maintainer of arrsnapshot
+Current co-maintainer of rsnapshot
 
 =item -
-Wrote the arrsnapshot-diff utility
+Wrote the rsnapshot-diff utility
 
 =item -
 Improved how use_lazy_deletes work so slow deletes don't screw up the next
@@ -6968,7 +6968,7 @@ Ralf van Dooren (B<r.vdooren@snow.nl>)
 =over 4
 
 =item -
-Added and maintains the arrsnapshot entry in the FreeBSD ports tree.
+Added and maintains the rsnapshot entry in the FreeBSD ports tree.
 
 =back
 
@@ -7004,7 +7004,7 @@ Christoph Wegscheider (B<christoph.wegscheider@wegi.net>)
 =over 4
 
 =item -
-Added (and previously maintained) the Debian arrsnapshot package.
+Added (and previously maintained) the Debian rsnapshot package.
 
 =back
 
@@ -7134,7 +7134,7 @@ Nicolas Kaiser, David Cantrell, Chris Petersen, Robert Jackson, Justin Grote,
 David Keegel, Alan Batie, Dieter Bloms, Henning Moll, Ben Low, Anthony
 Ettinger
 
-This man page is distributed under the same license as arrsnapshot:
+This man page is distributed under the same license as rsnapshot:
 the GPL (see below).
 
 This program is free software; you can redistribute it and/or modify
