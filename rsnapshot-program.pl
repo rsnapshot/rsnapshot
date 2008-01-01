@@ -26,7 +26,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.374 2007/09/20 11:07:06 drhyde Exp $
+# $Id: rsnapshot-program.pl,v 1.375 2008/01/01 02:24:30 dgrant Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -160,6 +160,9 @@ my $default_du_args				= '-csh';
 
 # set default for use_lazy_deletes
 my $use_lazy_deletes = 0;	# do not delete the oldest archive until after backup
+
+# set default for number of tries
+my $rsync_numtries = 1; # by default, try once
 
 # exactly how the program was called, with all arguments
 # this is set before getopts() modifies @ARGV
@@ -1404,6 +1407,23 @@ sub parse_config_file {
 			$line_syntax_ok = 1;
 			next;
 		}
+		# RSYNC NUMBER OF TRIES
+		if ($var eq 'rsync_numtries') {
+			if (!defined($value)) {
+				config_err($file_line_num, "$line - rsync_numtries can not be blank");
+				next;
+			}
+			if (!is_valid_rsync_numtries($value)) {
+				config_err(
+					$file_line_num, "$line - \"$value\" is not a legal value for rsync_numtries, must be greater than or equal to 0"
+				);
+				next;
+			}
+		
+			$rsync_numtries = int($value);
+			$line_syntax_ok = 1;
+			next;
+               }
 				
 		# make sure we understood this line
 		# if not, warn the user, and prevent the program from executing
@@ -2564,6 +2584,19 @@ sub is_valid_loglevel {
 	return (0);
 }
 
+# accepts a positive number formatted as string
+# returns 1 if it's valid, 0 otherwise
+sub is_valid_rsync_numtries {
+	my $value   = shift(@_);
+	if (!defined($value)) { return (0); }
+
+	if ($value =~ m/^\d+$/) {
+		if (($value >= 0)) {
+			return (1);
+		}
+	}
+}
+
 # accepts one argument
 # checks to see if that argument is set to 1 or 0
 # returns 1 on success, 0 on failure
@@ -3603,10 +3636,16 @@ sub rsync_backup_point {
 	# RUN THE RSYNC COMMAND FOR THIS BACKUP POINT BASED ON THE @cmd_stack VARS
 	print_cmd(@cmd_stack);
 	
+
+	my $tryCount = 0;
+	$result = 1;
 	if (0 == $test) {
-                # join is Michael Ashley's fix for some filter/space problems
-		$result = system(join(' ', @cmd_stack));
-		
+		while ($tryCount < $rsync_numtries && $result !=0) {
+			# join is Michael Ashley's fix for some filter/space problems		
+			$result = system(join(' ', @cmd_stack));
+			$tryCount += 1;
+		}
+
 		# now we see if rsync ran successfully, and what to do about it
 		if ($result != 0) {
 			# bitmask return value

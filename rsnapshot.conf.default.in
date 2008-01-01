@@ -181,6 +181,13 @@ lockfile	/var/run/rsnapshot.pid
 #
 #use_lazy_deletes	0
 
+# Number of rsync re-tries. If you experience any network problems or
+# network card issues that tend to cause ssh to crap-out with
+# "Corrupted MAC on input" errors, for example, set this to a non-zero
+# value to have the rsync operation re-tried
+#
+#rsync_numtries 0
+
 ###############################
 ### BACKUP POINTS / SCRIPTS ###
 ###############################

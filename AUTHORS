@@ -80,3 +80,6 @@ Henning Moll <newsScott@gmx.de>
 
 Ben Low <ben@bdlow.net>
     - Added support for Linux LVM snapshots
+
+David Grant <davidgrant@gmail.com>
+    - Added support for retrying rsync "rsync_numtries" number of times
