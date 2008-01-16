@@ -26,7 +26,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.375 2008/01/01 02:24:30 dgrant Exp $
+# $Id: rsnapshot-program.pl,v 1.376 2008/01/16 23:08:41 drhyde Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -3401,7 +3401,7 @@ sub rsync_backup_point {
 		
 		# if we have any args for SSH, add them
 		if ( defined($ssh_args) ) {
-			push( @rsync_long_args_stack, "--rsh=$config_vars{'cmd_ssh'} $ssh_args" );
+			push( @rsync_long_args_stack, "--rsh=\"$config_vars{'cmd_ssh'} $ssh_args\"" );
 			
 		# no arguments is the default
 		} else {
