@@ -3,8 +3,20 @@ rsnapshot changelog
 http://www.rsnapshot.org/
 ------------------------------------------------------------------------------
 
-VERSION 1.3.1  (??? ?? 2007)
+VERSION 1.3.1  (??? ?? 2008)
 ------------------------------------------------------------------------------
+- Patch from Adam Greenbaum to allow passing of ssh arguments correctly.
+- David Grant added rsync_numtries to rsnapshot.conf.
+- Applied Ben Low's Linux LVM patch.
+- Added stop_on_stale_lockfile, thanks to Henning Moll.
+- Michael Ashley's fix for filter/space problems on the rsync command line.
+- Remove trailing whitespace from command names in rsnapshot.conf.
+- Warn about extra spaces between tab and argument.
+- Added multi-line config options, thanks to Dieter Bloms.
+- The 'interval' config option is now called 'retain'.
+- chdir to avoid an obscure bug in some versions of GNU rm.
+- Changed use_lazy_deletes option to use _delete.$$ directories.
+- Added note about -H and hard links to docs for rsync_short_args.
 - Include rsnapshot-diff.1 in rpm.
 - Fix bug with rsnapshot sync the first time (when .sync does not exist)
   trying to copy hourly.0 to .sync, even if hourly.0 doesn't exist.
