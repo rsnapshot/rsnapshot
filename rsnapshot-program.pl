@@ -26,7 +26,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.376 2008/01/16 23:08:41 drhyde Exp $
+# $Id: rsnapshot-program.pl,v 1.377 2008/02/02 22:47:36 djk20 Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -2870,17 +2870,19 @@ sub handle_interval {
 			# create the sync root if it doesn't exist
 			if ( ! -d "$config_vars{'snapshot_root'}/.sync" ) {
 				
-				# cp_al() will create the directory for us
+				# If .sync does not exist but lowest.0 does, then copy that.
 				
 				# call generic cp_al() subroutine
 				my $interval_0	= "$config_vars{'snapshot_root'}/" . $intervals[0]->{'interval'} . ".0";
 				my $sync_dir	= "$config_vars{'snapshot_root'}/.sync";
 				
-				display_cp_al( "$interval_0", "$sync_dir" );
-				if (0 == $test) {
-					$result = cp_al( "$interval_0", "$sync_dir" );
-					if (! $result) {
-						bail("Error! cp_al(\"$interval_0\", \"$sync_dir\")");
+				if ( -d $interval_0 ) {
+					display_cp_al( "$interval_0", "$sync_dir" );
+					if (0 == $test) {
+						$result = cp_al( "$interval_0", "$sync_dir" );
+						if (! $result) {
+							bail("Error! cp_al(\"$interval_0\", \"$sync_dir\")");
+						}
 					}
 				}
 			}
