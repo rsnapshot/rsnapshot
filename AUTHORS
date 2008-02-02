@@ -2,18 +2,18 @@ Mike Rubel - http://www.mikerubel.org/computers/rsync_snapshots/
     - Created the original shell scripts on which this project is based
 
 Nathan Rosenquist <nathan@rsnapshot.org>
-    - Primary author and ex-maintainer of rsnapshot.
+    - Primary author and ex-maintainer of rsnapshot (until 2005).
 
 David Cantrell <david@cantrell.org.uk>
-    - Current co-maintainer of rsnapshot
+    - ex-maintainer of rsnapshot (2005-2007)
     - Wrote the rsnapshot-diff utility
 
 David Keegel <djk@cybersource.com.au>
-    - Co-maintainer, with particular responsibility for release management
+    - Current maintainer of rsnapshot (2008-)
     - Allowed remote ssh directory paths starting with "~/" as well as "/"
     - Fixed race condition in lock file creation, improved error reporting
     - Fixed a number of other bugs and buglets
-    - Release management for rsnapshot 1.2.9
+    - Release management for rsnapshot 1.2.9, 1.3.0
 
 Carl Wilhelm Soderstrom <chrome@real-time.com>
     - Created the RPM .spec file which allowed the RPM package to be built,
