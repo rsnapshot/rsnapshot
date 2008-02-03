@@ -26,7 +26,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.377 2008/02/02 22:47:36 djk20 Exp $
+# $Id: rsnapshot-program.pl,v 1.378 2008/02/03 00:34:26 djk20 Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -3514,7 +3514,7 @@ sub rsync_backup_point {
 			if ( -d "$config_vars{'snapshot_root'}/$interval_link_dest.$interval_num_link_dest/$$bp_ref{'dest'}" ) {
 				
 				# we don't use link_dest if we already synced once to this directory
-				if ($sync_dir_was_present) {
+				if (0 && $sync_dir_was_present) { # always false
 					
 					# skip --link-dest, this is the second time the sync has been run, because the .sync directory already exists
 					
