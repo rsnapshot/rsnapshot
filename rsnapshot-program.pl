@@ -26,7 +26,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.378 2008/02/03 00:34:26 djk20 Exp $
+# $Id: rsnapshot-program.pl,v 1.379 2008/02/03 22:57:56 djk20 Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -107,6 +107,7 @@ my @reserved_words = qw(
 	help
 	history
 	list
+	print-config
 	restore
 	rollback
 	sync
@@ -843,8 +844,9 @@ sub parse_config_file {
 		# refer to 'retain'.  The old 'interval' will be kept as an
 		# alias.
 		if ($var eq 'interval' || $var eq 'retain') {
+			my $retain = $var;	# either 'interval' or 'retain'
 			# check if interval is blank
-			if (!defined($value)) { config_err($file_line_num, "$line - Retain can not be blank"); }
+			if (!defined($value)) { config_err($file_line_num, "$line - $retain can not be blank"); }
 			
 			foreach my $word (@reserved_words) {
 				if ($value eq $word) {
@@ -857,7 +859,7 @@ sub parse_config_file {
 			# make sure interval is alpha-numeric
 			if ($value !~ m/^[\w\d]+$/) {
 				config_err($file_line_num,
-					"$line - \"$value\" is not a valid backup name, must be alphanumeric characters only");
+					"$line - \"$value\" is not a valid $retain name, must be alphanumeric characters only");
 				next;
 			}
 			
@@ -869,7 +871,7 @@ sub parse_config_file {
 			
 			# check if number is valid
 			if ($value2 !~ m/^\d+$/) {
-				config_err($file_line_num, "$line - \"$value2\" is not a legal value for an backup level's retention count");
+				config_err($file_line_num, "$line - \"$value2\" is not a legal value for a retention count");
 				next;
 			# ok, it's a number. is it positive?
 			} else {
@@ -6151,7 +6153,7 @@ B<linux_lvm_cmd_umount>
 
 =over 4
 
-Paths to lvcreate, lvremove, mou ntand umount commands, for use with Linux
+Paths to lvcreate, lvremove, mount and umount commands, for use with Linux
 LVMs.  The lvcreate, lvremove, mount and umount commands are required for
 managing snapshots of LVM volumes and are otherwise optional.
 
