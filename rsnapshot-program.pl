@@ -26,7 +26,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.379 2008/02/03 22:57:56 djk20 Exp $
+# $Id: rsnapshot-program.pl,v 1.380 2008/02/05 19:47:32 drhyde Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -790,7 +790,7 @@ sub parse_config_file {
 			
 			# make sure script exists and is executable
 			if (((! -f "$script") or (! -x "$script")) or !is_real_local_abs_path($script)) {
-				config_err($file_line_num, "$line - cmd_preexec \"$script\" is not executable or does not exist");
+				config_err($file_line_num, "$line - \"$script\" is not executable or can't be found.".($script !~ m{^/} ? " Please use an absolute path.":""));
 				next;
 			}
 			
@@ -812,7 +812,7 @@ sub parse_config_file {
 			
 			# make sure script exists and is executable
 			if (((! -f "$script") or (! -x "$script")) or !is_real_local_abs_path($script)) {
-				config_err($file_line_num, "$line - cmd_postexec \"$script\" is not executable or does not exist");
+				config_err($file_line_num, "$line - \"$script\" is not executable or can't be found.".($script !~ m{^/} ? " Please use an absolute path.":""));
 				next;
 			}
 			
@@ -1153,7 +1153,7 @@ sub parse_config_file {
 			
 			# make sure script exists and is executable
 			if (((! -f "$script") or (! -x "$script")) or !is_real_local_abs_path($script)) {
-				config_err($file_line_num, "$line - Backup script \"$script\" is not executable or does not exist");
+				config_err($file_line_num, "$line - \"$script\" is not executable or can't be found.".($script !~ m{^/} ? " Please use an absolute path.":""));
 				next;
 			}
 			
