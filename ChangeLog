@@ -5,6 +5,7 @@ http://www.rsnapshot.org/
 
 VERSION 1.3.1  (??? ?? 2008)
 ------------------------------------------------------------------------------
+- Apply fix-sync_first-rollback.diff patch from Matt McCutchen (02 Apr 2008).
 - hopefully fix bug with link_dest not being used on second and later backups 
   when you have link_dest 1 and sync_first 1. (Ignore $sync_dir_was_present)
 - Patch from Adam Greenbaum to allow passing of ssh arguments correctly.

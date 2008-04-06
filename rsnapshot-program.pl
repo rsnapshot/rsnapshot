@@ -26,7 +26,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.380 2008/02/05 19:47:32 drhyde Exp $
+# $Id: rsnapshot-program.pl,v 1.381 2008/04/06 10:11:32 djk20 Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -4116,7 +4116,7 @@ sub rollback_failed_backups {
 	# rollback failed backups (if we're using link_dest)
 	foreach my $rollback_point (@rollback_points) {
 		# make sure there's something to rollback from
-		if ( ! -e "$config_vars{'snapshot_root'}/$interval.1/$rollback_point" ) {
+		if ( ! -e "$config_vars{'snapshot_root'}/$interval_src/$rollback_point" ) {
 			next;
 		}
 	
