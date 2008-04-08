@@ -26,7 +26,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.381 2008/04/06 10:11:32 djk20 Exp $
+# $Id: rsnapshot-program.pl,v 1.382 2008/04/08 15:20:17 drhyde Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -493,8 +493,14 @@ sub parse_config_file {
 	
 	# open the config file
 	my $config_file = shift() || $config_file;
-	my $CONFIG = IO::File->new($config_file)
+	my $CONFIG;
+	if($config_file =~ /^`.*`$/) {
+	    open($CONFIG, "$config_file|") ||
+	        bail("Couldn't execute \"$config_file\" to get config information\nAre you sure you have permission?");
+	} else {
+	    $CONFIG = IO::File->new($config_file)
 		or bail("Could not open config file \"$config_file\"\nAre you sure you have permission?");
+        }
 	
 	# read it line by line
 	@configs = <$CONFIG>;
@@ -549,7 +555,11 @@ sub parse_config_file {
 		
 		# INCLUDEs
 		if($var eq 'include_conf') {
-			if(defined($value) && -f $value && -r $value) {
+			$value =~ /^`(.*)`$/;
+			if(
+			    (defined($value) && -f $value && -r $value) ||
+			    (defined($1) && -x $1)
+			) {
 				$line_syntax_ok = 1;
 				parse_config_file($value);
 			} else {
@@ -6088,7 +6098,9 @@ B<include_conf>       Include another file in the configuration at this point.
 This is recursive, but you may need to be careful about paths when specifying
 which file to include.  We check to see if the file you have specified is
 readable, and will yell an error if it isn't.  We recommend using a full
-path.
+path.  As a special case, include_conf's value may be enclosed in `backticks`
+in which case the file will be executed and whatever it spits to STDOUT will
+be included in the configuration.
 
 =back
 
