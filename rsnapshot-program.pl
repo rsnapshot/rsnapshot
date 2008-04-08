@@ -26,7 +26,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.382 2008/04/08 15:20:17 drhyde Exp $
+# $Id: rsnapshot-program.pl,v 1.383 2008/04/08 15:25:15 drhyde Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -6099,8 +6099,9 @@ This is recursive, but you may need to be careful about paths when specifying
 which file to include.  We check to see if the file you have specified is
 readable, and will yell an error if it isn't.  We recommend using a full
 path.  As a special case, include_conf's value may be enclosed in `backticks`
-in which case the file will be executed and whatever it spits to STDOUT will
-be included in the configuration.
+in which case it will be executed and whatever it spits to STDOUT will
+be included in the configuration.  Note that shell meta-characters may be
+interpreted.
 
 =back
 
