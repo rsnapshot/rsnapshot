@@ -4,7 +4,7 @@
 #                                                                      #
 # rsnapshot                                                            #
 # by Nathan Rosenquist                                                 #
-# now maintained by David Cantrell                                     #
+# now maintained by David Keegel                                       #
 #                                                                      #
 # The official rsnapshot website is located at                         #
 # http://www.rsnapshot.org/                                            #
@@ -26,7 +26,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.383 2008/04/08 15:25:15 drhyde Exp $
+# $Id: rsnapshot-program.pl,v 1.384 2008/04/08 22:45:23 djk20 Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
