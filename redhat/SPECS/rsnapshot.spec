@@ -1,8 +1,8 @@
-# $Id: rsnapshot.spec,v 1.54 2006/10/27 22:59:59 djk20 Exp $
+# $Id: rsnapshot.spec,v 1.55 2008/04/25 01:11:35 djk20 Exp $
 
 Name: rsnapshot
 Summary: Local and remote filesystem snapshot utility
-Version: 1.3.0
+Version: 1.3.1
 Release: 1
 BuildArch: noarch
 License: GPL
@@ -12,6 +12,7 @@ Source: http://www.rsnapshot.org/downloads/rsnapshot-%{version}.tar.gz
 Patch: rsnapshot.patch
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 Requires: perl, rsync
+BuildRequires: rsync
 AutoReqProv: no
 
 %description
