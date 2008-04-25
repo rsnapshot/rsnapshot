@@ -1,6 +1,14 @@
 The scripts in this folder are mostly quick and dirty examples of things that
 you may or may not find useful in conjunction with rsnapshot.
 
+rsnapshot-copy
+------------------------------------------------------------------------------
+    rsnapshot-copy copies an rsnapshot snapshot root, preserving the
+    intersnapshot hard links for unchanged files.  You can use this if
+    you want to copy/move your snapshot root to another place but find
+    that rsync -aH on the lot is too slow (uses too much RAM).  It
+    copies intervals in chronological order using rsync --link-dest.
+
 rsnaptar
 ------------------------------------------------------------------------------
     A script that can automatically tar up your latest snapshots and send you

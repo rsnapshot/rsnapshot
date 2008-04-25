@@ -1,0 +1,78 @@
+#!/bin/bash
+
+function usage {
+	cat <<'EOM' >&2
+
+Usage: rsnapshot-copy [--test] RSYNC-OPTION... SRC-SNAPSHOT-ROOT DEST-SNAPSHOT-ROOT
+
+rsnapshot-copy copies an rsnapshot snapshot root, preserving the intersnapshot
+hard links for unchanged files.  It does so by copying one snapshot at a time
+with rsync, each time giving a --link-dest option for the previous snapshot.
+This technique uses less memory than others (such as plain rsync -H) that hold
+a list of all the files in the snapshot root in memory in order to preserve
+arbitrary hard links.
+
+As with an ordinary rsync command, either the source or the destination can be
+remote, but not both.  The destination should be empty or nonexistent;
+rsnapshot-copy currently is not designed for incremental mirroring of a snapshot
+root (though an incremental mode may be added in the future).
+
+Each snapshot is copied using `rsync RSYNC-OPTION...', so you should probably
+pass -a and any other relevant rsync options used by your ordinary rsnapshot
+runs, such as --numeric-ids.
+
+--test: show the shell commands to be executed instead of executing them
+
+Written and maintained by Matt McCutchen <matt@mattmccutchen.net>.
+
+EOM
+}
+
+# To support remote src or dest, we must perform all filesystem access via rsync.
+
+set -e
+trap 'echo "Command failed!: $BASH_COMMAND" >&2' ERR
+set -o errtrace
+set -o pipefail
+
+testmode=
+if [ "$1" = "--test" ]; then
+	testmode=1
+	shift
+fi
+# Test or execute a command as appropriate.
+function do_cmd {
+	if [ $testmode ]; then
+		(set -x; : "$@")
+	else
+		"$@"
+	fi
+}
+
+if [ $# -lt 3 ]; then
+	usage
+	exit 1
+fi
+
+rsync_opts=("${@:1:$#-2}")
+src="${@: -2:1}"
+dest="${@: -1:1}"
+
+# Ensure that the destination dir exists.  (--exclude=* excludes everything else.)
+do_cmd rsync "${rsync_opts[@]}" --exclude=* "$src/" "$dest/"
+
+# Obtain a list of snapshot names in newest to oldest order.
+# List the src -> filter to `2008/04/09T17:59:43 hourly.0' format
+# -> sort newest to oldest -> read each line, ignoring the time.
+rsync "${rsync_opts[@]}" --list-only --no-r -d --no-l "$src/" \
+	| sed -nre 's,^d[^ ]+ +[^ ]+ (..../../..) (..:..:..) (.*\.[0-9]+)$,\1T\2 \3,p' \
+	| LC_ALL=C sort -r --key=1,1 | {
+	# --link-dest option to use, if any
+	ldo=()
+	# Copy each snapshot
+	while read st sn; do
+		do_cmd rsync "${rsync_opts[@]}" "${ldo[@]}" "$src/$sn/" "$dest/$sn/"
+		# The next snapshot should link from this one.
+		ldo=(--link-dest="../$sn/")
+	done
+}

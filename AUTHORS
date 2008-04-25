@@ -83,3 +83,7 @@ Ben Low <ben@bdlow.net>
 
 David Grant <davidgrant@gmail.com>
     - Added support for retrying rsync "rsync_numtries" number of times
+
+Matt McCutchen <matt@mattmccutchen.net>
+    - Wrote rsnapshot-copy
+
