@@ -1,8 +1,9 @@
 rsnapshot 1.3.0
 http://www.rsnapshot.org/
 
-rsnapshot is a filesystem snapshot utility. It can take incremental
-snapshots of local and remote filesystems for any number of machines.
+rsnapshot is a filesystem snapshot utility. It uses rsync to take
+snapshots of local and remote filesystems for any number of machines,
+and then rotates the snapshots according to your rsnapshot.conf.
 
 rsnapshot comes with ABSOLUTELY NO WARRANTY.  This is free software,
 and you are welcome to redistribute it under certain conditions.
