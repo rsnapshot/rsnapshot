@@ -26,7 +26,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.384 2008/04/08 22:45:23 djk20 Exp $
+# $Id: rsnapshot-program.pl,v 1.385 2008/04/27 10:23:58 djk20 Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -63,7 +63,7 @@ my $have_lchown = 0;
 $| = 1;
 
 # version of rsnapshot
-my $VERSION = '1.3.0';
+my $VERSION = '1.3.1';
 
 # command or interval to execute (first cmd line arg)
 my $cmd;

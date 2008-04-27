@@ -1,7 +1,7 @@
-# $Id: Makefile.am,v 1.85 2006/11/03 23:44:00 djk20 Exp $ #
+# $Id: Makefile.am,v 1.86 2008/04/27 10:23:58 djk20 Exp $ #
 
 # rsnapshot version
-VERSION = 1.3.0
+VERSION = 1.3.1
 
 # Where RPM files are built on this system
 RPM_BASE_DIR = /usr/src/redhat
