@@ -1,4 +1,4 @@
-# $Id: rsnapshot.spec,v 1.55 2008/04/25 01:11:35 djk20 Exp $
+# $Id: rsnapshot.spec,v 1.56 2008/04/27 20:25:54 djk20 Exp $
 
 Name: rsnapshot
 Summary: Local and remote filesystem snapshot utility
@@ -88,6 +88,9 @@ rm -rf $RPM_BUILD_DIR/%{name}-%{version}/
 %{_mandir}/man1/rsnapshot*.1*
 
 %changelog
+* Mon Apr 28 2008 David Keegel <djk@cybersource.com.au> - 1.3.1-1
+- Add "BuildRequires: rsync" as sugggested by Erik Logtenberg 28 Feb 2008.
+
 * Sat Oct 28 2006 David Keegel <djk@cybersource.com.au> - 1.3.0-2
 - Include rsnapshot-diff.1, by using rsnapshot*.1* for man page files.
 
