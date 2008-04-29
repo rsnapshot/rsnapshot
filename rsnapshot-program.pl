@@ -26,7 +26,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.385 2008/04/27 10:23:58 djk20 Exp $
+# $Id: rsnapshot-program.pl,v 1.386 2008/04/29 12:13:01 djk20 Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -369,6 +369,16 @@ sub show_version {
 sub show_version_only {
 	print "$VERSION\n";
 	exit(0);
+}
+
+# For Getopt::Std
+sub VERSION_MESSAGE {
+	show_version;
+}
+
+# For Getopt::Std
+sub HELP_MESSAGE {
+	show_help;
 }
 
 # accepts no arguments
