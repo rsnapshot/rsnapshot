@@ -97,6 +97,8 @@ for details on the commands.
     cd rsnapshot-x.y.z
     ./configure
     make rpm
+or
+    make RPM_BASE_DIR=/path/to/rpmbuild rpm
 
 The Debian package was maintained by Christoph Wegscheider
 <christoph.wegscheider@wegi.net>. I'm honestly not sure exactly what he
