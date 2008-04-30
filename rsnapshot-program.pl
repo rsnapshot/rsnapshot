@@ -26,7 +26,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.386 2008/04/29 12:13:01 djk20 Exp $
+# $Id: rsnapshot-program.pl,v 1.387 2008/04/30 20:46:37 djk20 Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -6088,7 +6088,7 @@ B</etc/rsnapshot.conf>, and then modify B</etc/rsnapshot.conf> to suit
 your needs.
 
 Long lines may be split over several lines.  "Continuation" lines
-*must* begind with a space or a tab character.  Continuation lines will
+B<must> begin with a space or a tab character.  Continuation lines will
 have all leading and trailing whitespace stripped off, and then be appended
 with an intervening tab character to the previous line when the configuation
 file is parsed.
