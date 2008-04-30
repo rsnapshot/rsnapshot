@@ -129,7 +129,7 @@
 .\" ========================================================================
 .\"
 .IX Title "rsnapshot 1"
-.TH rsnapshot 1 "2006-10-21" "" ""
+.TH rsnapshot 1 "2008-05-01" "" ""
 .SH "NAME"
 rsnapshot \- remote filesystem snapshot utility
 .SH "SYNOPSIS"
@@ -187,6 +187,12 @@ It is recommended that you copy \fB/etc/rsnapshot.conf.default\fR to
 \&\fB/etc/rsnapshot.conf\fR, and then modify \fB/etc/rsnapshot.conf\fR to suit
 your needs.
 .PP
+Long lines may be split over several lines.  \*(L"Continuation\*(R" lines
+\&\fBmust\fR begin with a space or a tab character.  Continuation lines will
+have all leading and trailing whitespace stripped off, and then be appended
+with an intervening tab character to the previous line when the configuation
+file is parsed.
+.PP
 Here is a list of allowed parameters:
 .Sp
 .RS 4
@@ -200,7 +206,10 @@ Here is a list of allowed parameters:
 This is recursive, but you may need to be careful about paths when specifying
 which file to include.  We check to see if the file you have specified is
 readable, and will yell an error if it isn't.  We recommend using a full
-path.
+path.  As a special case, include_conf's value may be enclosed in `backticks`
+in which case it will be executed and whatever it spits to \s-1STDOUT\s0 will
+be included in the configuration.  Note that shell meta-characters may be
+interpreted.
 .RE
 .RE
 .RS 4
@@ -256,15 +265,34 @@ rotations).
 .RE
 .RS 4
 .Sp
-\&\fBinterval\fR           [name]   [number]
+\&\fBlinux_lvm_cmd_lvcreate\fR
+.Sp
+\&\fBlinux_lvm_cmd_lvremove\fR
+.Sp
+\&\fBlinux_lvm_cmd_mount\fR
+.Sp
+\&\fBlinux_lvm_cmd_umount\fR
 .Sp
 .RS 4
-\&\*(L"name\*(R" refers to the name of this interval (e.g., hourly, daily). \*(L"number\*(R"
-is the number of snapshots for this type of interval that will be stored.
+Paths to lvcreate, lvremove, mount and umount commands, for use with Linux
+LVMs.  The lvcreate, lvremove, mount and umount commands are required for
+managing snapshots of \s-1LVM\s0 volumes and are otherwise optional.
+.RE
+.RE
+.RS 4
+.Sp
+\&\fBretain\fR             [name]   [number]
+.Sp
+.RS 4
+\&\*(L"name\*(R" refers to the name of this backup level (e.g., hourly, daily,
+so also called the 'interval'). \*(L"number\*(R"
+is the number of snapshots for this type of interval that will be retained.
 The value of \*(L"name\*(R" will be the command passed to \fBrsnapshot\fR to perform
 this type of backup.
 .Sp
-Example: \fBinterval hourly 6\fR
+A deprecated alias for 'retain' is 'interval'.
+.Sp
+Example: \fBretain hourly 6\fR
 .Sp
 [root@localhost]# \fBrsnapshot hourly\fR
 .Sp
@@ -280,20 +308,20 @@ using hard links.
 Each backup point (explained below) will then be rsynced to the
 corresponding directories in <snapshot_root>/hourly.0/
 .Sp
-Intervals must be specified in the config file in order, from most
+Backup levels must be specified in the config file in order, from most
 frequent to least frequent. The first entry is the one which will be
-synced with the backup points. The subsequent intervals (e.g., daily,
-weekly, etc) simply rotate, with each higher interval pulling from the
+synced with the backup points. The subsequent backup levels (e.g., daily,
+weekly, etc) simply rotate, with each higher backup level pulling from the
 one below it for its .0 directory.
 .Sp
 Example:
 .Sp
 .RS 4
-\&\fBinterval  hourly 6\fR
+\&\fBretain  hourly 6\fR
 .Sp
-\&\fBinterval  daily  7\fR
+\&\fBretain  daily  7\fR
 .Sp
-\&\fBinterval  weekly 4\fR
+\&\fBretain  weekly 4\fR
 .RE
 .RE
 .RS 4
@@ -320,7 +348,7 @@ branch, but it's the best way to support special files on non-Linux systems.
 .Sp
 .RS 4
 sync_first changes the behaviour of rsnapshot. When this is enabled, all calls
-to rsnapshot with various intervals simply rotate files. All backups are handled
+to rsnapshot with various backup levels simply rotate files. All backups are handled
 by calling rsnapshot with the \*(L"sync\*(R" argument. The synced files are stored in
 a \*(L".sync\*(R" directory under the snapshot_root.
 .Sp
@@ -417,6 +445,12 @@ This gets passed directly to rsync using the \-\-exclude\-from directive. See th
 List of short arguments to pass to rsync. If not specified,
 \&\*(L"\-a\*(R" is the default. Please note that these must be all next to each other.
 For example, \*(L"\-az\*(R" is valid, while \*(L"\-a \-z\*(R" is not.
+.Sp
+\&\*(L"\-a\*(R" is rsync's \*(L"archive mode\*(R" which tells it to copy as much of the
+filesystem metadata as it can for each file.  This specifically does *not*
+include information about hard links, as that would greatly increase rsync's
+memory usage and slow it down.  If you need to preserve hard links in your
+backups, then add \*(L"H\*(R" to this.
 .RE
 .RE
 .RS 4
@@ -473,6 +507,8 @@ features.
 .Sp
 \&\fBlockfile    /var/run/rsnapshot.pid\fR
 .Sp
+\&\fBstop_on_stale_lockfile	0\fR
+.Sp
 .RS 4
 Lockfile to use when rsnapshot is run. This prevents a second invocation
 from clobbering the first one. If not specified, no lock file is used.
@@ -483,7 +519,10 @@ If a lockfile exists when rsnapshot starts, it will try to read the file
 and stop with an error if it can't.  If it *can* read the file, it sees if
 a process exists with the \s-1PID\s0 noted in the file.  If it does, rsnapshot
 stops with an error message.  If there is no process with that \s-1PID\s0, then
-we assume that the lockfile is stale and ignore it.
+we assume that the lockfile is stale and ignore it *unless*
+stop_on_stale_lockfile is set to 1 in which case we stop.
+.Sp
+stop_on_stale_lockfile defaults to 0.
 .RE
 .RE
 .RS 4
@@ -502,14 +541,52 @@ The default is 0 (off).
 .Sp
 .RS 4
 Changes default behavior of rsnapshot and does not initially remove the 
-oldest snapshot. Instead it moves that directory to \*(L"interval\*(R".delete, and 
+oldest snapshot. Instead it moves that directory to _delete.[processid] and
 continues as normal. Once the backup has been completed, the lockfile will
 be removed before rsnapshot starts deleting the directory.
 .Sp
 Enabling this means that snapshots get taken sooner (since the delete doesn't
 come first), and any other rsnapshot processes are allowed to start while the
-final delete is happening. This benefit comes at the cost of one more
-snapshot worth of disk space. The default is 0 (off).
+final delete is happening. This benefit comes at the cost of using more
+disk space. The default is 0 (off).
+.Sp
+The details of how this works have changed from the original implementation.
+Originally you could only ever have one .delete directory per backup level.
+Now you can have many, so if your next (eg) hourly backup kicks off while the
+previous one is still doing a lazy delete you may temporarily have extra
+_delete directories hanging around.
+.RE
+.RE
+.RS 4
+.Sp
+\&\fBlinux_lvm_snapshotsize    2G\fR
+.Sp
+.RS 4
+\&\s-1LVM\s0 snapshot(s) size (lvcreate \-\-size option).
+.RE
+.RE
+.RS 4
+.Sp
+\&\fBlinux_lvm_snapshotname  rsnapshot\fR
+.Sp
+.RS 4
+Name to be used when creating the \s-1LVM\s0 logical volume snapshot(s) (lvcreate \-\-name option).
+.RE
+.RE
+.RS 4
+.Sp
+\&\fBlinux_lvm_vgpath		/dev\fR
+.Sp
+.RS 4
+Path to the \s-1LVM\s0 Volume Groups.
+.RE
+.RE
+.RS 4
+.Sp
+\&\fBlinux_lvm_mountpath		/mnt/lvm\-snapshot\fR
+.Sp
+.RS 4
+Mount point to use to temporarily mount the snapshot(s). 
 .RE
 .RE
 .RS 4
@@ -532,6 +609,8 @@ file in the source distribution for upgrade options.
 .Sp
 \&\fBbackup\fR  /var/                       localhost/      one_fs=1
 .Sp
+\&\fBbackup\fR  lvm://vg0/home/path2/       lvm\-vg0/
+.Sp
 \&\fBbackup_script\fR   /usr/local/bin/backup_pgsql.sh    pgsql_backup/
 .Sp
 .RS 4
@@ -540,7 +619,7 @@ Examples:
 \&\fBbackup   /etc/        localhost/\fR
 .Sp
 .RS 4
-Backs up /etc/ to <snapshot_root>/<interval>.0/localhost/etc/ using rsync on
+Backs up /etc/ to <snapshot_root>/<retain>.0/localhost/etc/ using rsync on
 the local filesystem
 .RE
 .RE
@@ -549,7 +628,7 @@ the local filesystem
 \&\fBbackup   /usr/local/  localhost/\fR
 .Sp
 .RS 4
-Backs up /usr/local/ to <snapshot_root>/<interval>.0/localhost/usr/local/
+Backs up /usr/local/ to <snapshot_root>/<retain>.0/localhost/usr/local/
 using rsync on the local filesystem
 .RE
 .RE
@@ -558,7 +637,7 @@ using rsync on the local filesystem
 \&\fBbackup   root@example.com:/etc/       example.com/\fR
 .Sp
 .RS 4
-Backs up root@example.com:/etc/ to <snapshot_root>/<interval>.0/example.com/etc/
+Backs up root@example.com:/etc/ to <snapshot_root>/<retain>.0/example.com/etc/
 using rsync over ssh
 .RE
 .RE
@@ -568,7 +647,7 @@ using rsync over ssh
 .Sp
 .RS 4
 Backs up root@example.com:/usr/local/ to
-<snapshot_root>/<interval>.0/example.com/usr/local/ using rsync over ssh
+<snapshot_root>/<retain>.0/example.com/usr/local/ using rsync over ssh
 .RE
 .RE
 .RS 4
@@ -576,7 +655,7 @@ Backs up root@example.com:/usr/local/ to
 \&\fBbackup   rsync://example.com/pub/      example.com/pub/\fR
 .Sp
 .RS 4
-Backs up rsync://example.com/pub/ to <snapshot_root>/<interval>.0/example.com/pub/
+Backs up rsync://example.com/pub/ to <snapshot_root>/<retain>.0/example.com/pub/
 using an anonymous rsync server. Please note that unlike backing up local paths
 and using rsync over ssh, rsync servers have \*(L"modules\*(R", which are top level
 directories that are exported. Therefore, the module should also be specified in
@@ -592,6 +671,16 @@ end).
 This is the same as the other examples, but notice how the fourth parameter
 is passed. This sets this backup point to not span filesystem partitions.
 If the global one_fs has been set, this will override it locally.
+.RE
+.RE
+.RS 4
+.Sp
+\&\fBbackup  lvm://vg0/home/path2/       lvm\-vg0/\fR
+.Sp
+.RS 4
+Backs up the \s-1LVM\s0 logical volume called home, of volume group vg0, to 
+<snapshot_root>/<interval>.0/lvm\-vg0/. Will create, mount, backup, unmount and remove an \s-1LVM\s0 
+snapshot for each lvm:// entry.
 .RE
 .RE
 .RS 4
@@ -620,7 +709,7 @@ chmod u=r,go= mydatabase.sql	# r\-\-\-\-\-\-\-\- (0400)
 .RS 4
 .Sp
 rsnapshot will take the generated \*(L"mydatabase.sql\*(R" file and move it into the
-<snapshot_root>/<interval>.0/db_backup/ directory. On subsequent runs,
+<snapshot_root>/<retain>.0/db_backup/ directory. On subsequent runs,
 rsnapshot checks the differences between the files created against the
 previous files. If the backup script generates the same output on the next
 run, the files will be hard linked against the previous ones, and no
@@ -653,32 +742,47 @@ Putting it all together (an example file):
 .Ve
 .Sp
 .Vb 6
-\&    cmd_rsync       /usr/bin/rsync
-\&    cmd_ssh         /usr/bin/ssh
-\&    #cmd_cp         /bin/cp
-\&    cmd_rm          /bin/rm
-\&    cmd_logger      /usr/bin/logger
-\&    cmd_du          /usr/bin/du
+\&    cmd_rsync           /usr/bin/rsync
+\&    cmd_ssh             /usr/bin/ssh
+\&    #cmd_cp             /bin/cp
+\&    cmd_rm              /bin/rm
+\&    cmd_logger          /usr/bin/logger
+\&    cmd_du              /usr/bin/du
 .Ve
 .Sp
 .Vb 4
-\&    interval        hourly  6
-\&    interval        daily   7
-\&    interval        weekly  7
-\&    interval        monthly 3
+\&    linux_lvm_cmd_lvcreate        /sbin/lvcreate
+\&    linux_lvm_cmd_lvremove        /sbin/lvremove
+\&    linux_lvm_cmd_mount           /bin/mount
+\&    linux_lvm_cmd_umount          /bin/umount
+.Ve
+.Sp
+.Vb 4
+\&    linux_lvm_snapshotsize    2G
+\&    linux_lvm_snapshotname    rsnapshot
+\&    linux_lvm_vgpath          /dev
+\&    linux_lvm_mountpath       /mnt/lvm-snapshot
+.Ve
+.Sp
+.Vb 4
+\&    retain              hourly  6
+\&    retain              daily   7
+\&    retain              weekly  7
+\&    retain              monthly 3
 .Ve
 .Sp
 .Vb 3
-\&    backup          /etc/                     localhost/
-\&    backup          /home/                    localhost/
-\&    backup_script   /usr/local/bin/backup_mysql.sh  mysql_backup/
+\&    backup              /etc/                     localhost/
+\&    backup              /home/                    localhost/
+\&    backup_script       /usr/local/bin/backup_mysql.sh  mysql_backup/
 .Ve
 .Sp
-.Vb 4
-\&    backup          root@foo.com:/etc/        foo.com/
-\&    backup          root@foo.com:/home/       foo.com/
-\&    backup          root@mail.foo.com:/home/  mail.foo.com/
-\&    backup          rsync://example.com/pub/  example.com/pub/
+.Vb 5
+\&    backup              root@foo.com:/etc/        foo.com/
+\&    backup              root@foo.com:/home/       foo.com/
+\&    backup              root@mail.foo.com:/home/  mail.foo.com/
+\&    backup              rsync://example.com/pub/  example.com/pub/
+\&    backup              lvm://vg0/xen-home/       lvm-vg0/xen-home/
 .Ve
 .RE
 .RS 4
@@ -694,7 +798,7 @@ When you are first setting up your backups, you will probably
 also want to run it from the command line once or twice to get
 a feel for what it's doing.
 .Sp
-Here is an example crontab entry, assuming that intervals \fBhourly\fR,
+Here is an example crontab entry, assuming that backup levels \fBhourly\fR,
 \&\fBdaily\fR, \fBweekly\fR and \fBmonthly\fR have been defined in \fB/etc/rsnapshot.conf\fR
 .Sp
 .RS 4
@@ -723,23 +827,23 @@ This example will do the following:
 .RE
 .RS 4
 .Sp
-It is usually a good idea to schedule the larger intervals to run a bit before the
+It is usually a good idea to schedule the larger backup levels to run a bit before the
 lower ones. For example, in the crontab above, notice that \*(L"daily\*(R" runs 10 minutes
 before \*(L"hourly\*(R".  The main reason for this is that the daily rotate will
 pull out the oldest hourly and make that the youngest daily (which means
 that the next hourly rotate will not need to delete the oldest hourly),
 which is more efficient.  A secondary reason is that it is harder to
-predict how long the lowest interval will take, since it needs to actually
-do an rsync of the source as well as the rotate that all intervals do.
+predict how long the lowest backup level will take, since it needs to actually
+do an rsync of the source as well as the rotate that all backups do.
 .Sp
 If rsnapshot takes longer than 10 minutes to do the \*(L"daily\*(R" rotate
 (which usually includes deleting the oldest daily snapshot), then you
-should increase the time between the intervals.
+should increase the time between the backup levels.
 Otherwise (assuming you have set the \fBlockfile\fR parameter, as is recommended)
 your hourly snapshot will fail sometimes because the daily still has the lock.  
 .Sp
 Remember that these are just the times that the program runs.
-To set the number of backups stored, set the \fBinterval\fR numbers in
+To set the number of backups stored, set the \fBretain\fR numbers in
 \&\fB/etc/rsnapshot.conf\fR
 .Sp
 To check the disk space used by rsnapshot, you can call it with the \*(L"du\*(R" argument.
@@ -772,7 +876,7 @@ not support the \-h flag (use \-k instead, to see the totals in kilobytes). Othe
 versions of \*(L"du\*(R", such as Solaris, may not work at all.
 .Sp
 To check the differences between two directories, call rsnapshot with the \*(L"diff\*(R"
-argument, followed by two intervals or directory paths.
+argument, followed by two backup levels or directory paths.
 .Sp
 For example:
 .Sp
@@ -794,7 +898,7 @@ looking for differences (based on hard links).
 .RS 4
 When \fBsync_first\fR is enabled, rsnapshot must first be called with the \fBsync\fR
 argument, followed by the other usual cron entries. The sync should happen as
-the lowest, most frequent interval, and right before. For example:
+the lowest, most frequent backup level, and right before. For example:
 .Sp
 .RS 4
 \&\fB0 */4 * * *         /usr/local/bin/rsnapshot sync && /usr/local/bin/rsnapshot hourly\fR
@@ -809,7 +913,7 @@ the lowest, most frequent interval, and right before. For example:
 .RS 4
 .Sp
 The sync operation simply runs rsync and all backup scripts. In this scenario, all
-interval calls simply rotate directories, even the lowest interval.
+calls simply rotate directories, even the lowest backup level.
 .RE
 .RE
 .RS 4
@@ -947,10 +1051,10 @@ If you remove backup points in the config file, the previously archived
 files under those points will permanently stay in the snapshots directory
 unless you remove the files yourself. If you want to conserve disk space,
 you will need to go into the <snapshot_root> directory and manually
-remove the files from the smallest interval's \*(L".0\*(R" directory.
+remove the files from the smallest backup level's \*(L".0\*(R" directory.
 .Sp
 For example, if you were previously backing up /home/ with a destination
-of localhost/, and hourly is your smallest interval, you would need to do
+of localhost/, and hourly is your smallest backup level, you would need to do
 the following to reclaim that disk space:
 .Sp
 .RS 4
@@ -983,6 +1087,8 @@ David Cantrell (\fBdavid@cantrell.org.uk\fR)
 .PD 0
 .IP "\- Wrote the rsnapshot-diff utility" 4
 .IX Item "- Wrote the rsnapshot-diff utility"
+.IP "\- Improved how use_lazy_deletes work so slow deletes don't screw up the next backup at that backup level." 4
+.IX Item "- Improved how use_lazy_deletes work so slow deletes don't screw up the next backup at that backup level."
 .RE
 .RS 4
 .PD
@@ -1125,14 +1231,39 @@ Bug fixes for include_conf
 .RE
 .RE
 .RS 4
+.Sp
+Dieter Bloms (\fBdieter@bloms.de\fR)
+.Sp
+.RS 4
+Multi-line configuration options
+.RE
+.RE
+.RS 4
+.Sp
+Henning Moll (\fBnewsScott@gmx.de\fR)
+.Sp
+.RS 4
+stop_on_stale_lockfile
+.RE
+.RE
+.RS 4
+.Sp
+Ben Low (\fBben@bdlow.net\fR)
+.Sp
+.RS 4
+Linux \s-1LVM\s0 snapshot support
+.RE
+.RE
+.RS 4
 .SH "COPYRIGHT"
 .IX Header "COPYRIGHT"
 Copyright (C) 2003\-2005 Nathan Rosenquist
 .Sp
-Portions Copyright (C) 2002\-2006 Mike Rubel, Carl Wilhelm Soderstrom,
+Portions Copyright (C) 2002\-2007 Mike Rubel, Carl Wilhelm Soderstrom,
 Ted Zlatanov, Carl Boe, Shane Liebling, Bharat Mediratta, Peter Palfrader,
 Nicolas Kaiser, David Cantrell, Chris Petersen, Robert Jackson, Justin Grote,
-David Keegel, Alan Batie
+David Keegel, Alan Batie, Dieter Bloms, Henning Moll, Ben Low, Anthony
+Ettinger
 .Sp
 This man page is distributed under the same license as rsnapshot:
 the \s-1GPL\s0 (see below).

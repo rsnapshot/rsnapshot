@@ -14,7 +14,7 @@
 
 @SET_MAKE@
 
-# $Id: Makefile.in,v 1.106 2006/11/03 23:47:22 djk20 Exp $ #
+# $Id: Makefile.in,v 1.107 2008/04/30 20:48:40 djk20 Exp $ #
 
 
 srcdir = @srcdir@
@@ -141,7 +141,7 @@ TEST_RM = @TEST_RM@
 TEST_SSH = @TEST_SSH@
 
 # rsnapshot version
-VERSION = 1.3.0
+VERSION = 1.3.1
 ac_ct_STRIP = @ac_ct_STRIP@
 am__leading_dot = @am__leading_dot@
 am__tar = @am__tar@
