@@ -1,4 +1,4 @@
-# $Id: Makefile.am,v 1.86 2008/04/27 10:23:58 djk20 Exp $ #
+# $Id: Makefile.am,v 1.87 2008/05/05 02:24:38 djk20 Exp $ #
 
 # rsnapshot version
 VERSION = 1.3.1
@@ -7,7 +7,7 @@ VERSION = 1.3.1
 RPM_BASE_DIR = /usr/src/redhat
 
 # update of spec file, within this rsnapshot version
-RPM_RELEASE = 1
+RPM_RELEASE = 0.5.pre5
 
 doc: man html
 	@echo "Documentation $(man_MANS) and rsnapshot.html are now up to date."

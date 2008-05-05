@@ -1,9 +1,9 @@
-# $Id: rsnapshot.spec,v 1.56 2008/04/27 20:25:54 djk20 Exp $
+# $Id: rsnapshot.spec,v 1.57 2008/05/05 02:24:38 djk20 Exp $
 
 Name: rsnapshot
 Summary: Local and remote filesystem snapshot utility
 Version: 1.3.1
-Release: 1
+Release: 0.5.pre5
 BuildArch: noarch
 License: GPL
 URL: http://www.rsnapshot.org/
