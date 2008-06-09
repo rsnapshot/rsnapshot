@@ -26,7 +26,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.387 2008/04/30 20:46:37 djk20 Exp $
+# $Id: rsnapshot-program.pl,v 1.388 2008/06/09 04:55:27 djk20 Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -1375,7 +1375,7 @@ sub parse_config_file {
 			} elsif (1 == is_directory_traversal($value)) {
 				config_err($file_line_num, "$line - Directory traversal attempted in $value");
 				next;
-			} elsif (( -e "$value" ) && ( ! -f "$value" )) {
+			} elsif (( -e "$value" ) && ( ! -f "$value" ) && ( ! -p "$value" ) ) {
 				config_err($file_line_num, "$line - logfile $value exists, but is not a file");
 				next;
 			} else {
