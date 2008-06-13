@@ -26,7 +26,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.388 2008/06/09 04:55:27 djk20 Exp $
+# $Id: rsnapshot-program.pl,v 1.389 2008/06/13 21:50:01 djk20 Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -2377,6 +2377,8 @@ sub remove_lockfile {
 				exit(1);
 			}
 		}
+	} else {
+		print_msg("No need to remove non-existent lock $lockfile", 5);
 	}
 	
 	return (1);
@@ -2971,6 +2973,8 @@ sub handle_interval {
 				bail("Error! rm_rf(\"$config_vars{'snapshot_root'}/_delete.$$\")\n");
 			}
 		}
+	} else {
+		print_msg("No directory to delete: $config_vars{'snapshot_root'}/_delete.$$", 5);
 	}
 }
 
@@ -3678,6 +3682,8 @@ sub rsync_backup_point {
 			# print warnings, and set this backup point to rollback if we're using --link-dest
 			#
 			handle_rsync_error($retval, $bp_ref);
+		} else {
+			print_msg("rsync succeeded", 5);
 		}
 	}
 	
