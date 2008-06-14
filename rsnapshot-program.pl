@@ -26,7 +26,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.389 2008/06/13 21:50:01 djk20 Exp $
+# $Id: rsnapshot-program.pl,v 1.390 2008/06/14 12:55:52 djk20 Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -800,21 +800,15 @@ sub parse_config_file {
 		
 		# CHECK FOR cmd_preexec (optional)
 		if ($var eq 'cmd_preexec') {
-			my $full_script	= $value;	# backup script to run (including args)
-			my $script;					# script file (no args)
-			my @script_argv;			# all script arguments
-			
-			# get the base name of the script, not counting any arguments to it
-			@script_argv = split(/\s+/, $full_script);
-			$script = $script_argv[0];
+			my $script;			# script file (no args)
 			
 			# make sure script exists and is executable
-			if (((! -f "$script") or (! -x "$script")) or !is_real_local_abs_path($script)) {
+			if ( ! is_valid_script($value, \$script) ) {
 				config_err($file_line_num, "$line - \"$script\" is not executable or can't be found.".($script !~ m{^/} ? " Please use an absolute path.":""));
 				next;
 			}
 			
-			$config_vars{'cmd_preexec'} = $full_script;
+			$config_vars{$var} = $value;
 			
 			$line_syntax_ok = 1;
 			next;
@@ -822,21 +816,15 @@ sub parse_config_file {
 		
 		# CHECK FOR cmd_postexec (optional)
 		if ($var eq 'cmd_postexec') {
-			my $full_script	= $value;	# backup script to run (including args)
-			my $script;					# script file (no args)
-			my @script_argv;			# all script arguments
-			
-			# get the base name of the script, not counting any arguments to it
-			@script_argv = split(/\s+/, $full_script);
-			$script = $script_argv[0];
+			my $script;			# script file (no args)
 			
 			# make sure script exists and is executable
-			if (((! -f "$script") or (! -x "$script")) or !is_real_local_abs_path($script)) {
+			if ( ! is_valid_script($value, \$script) ) {
 				config_err($file_line_num, "$line - \"$script\" is not executable or can't be found.".($script !~ m{^/} ? " Please use an absolute path.":""));
 				next;
 			}
 			
-			$config_vars{'cmd_postexec'} = $full_script;
+			$config_vars{$var} = $value;
 			
 			$line_syntax_ok = 1;
 			next;
@@ -858,7 +846,7 @@ sub parse_config_file {
 		# INTERVALS
 		# 'retain' is the new name for this parameter, although for
 		# Laziness reasons (plus the fact that I'm making this change
-		# at 10 minutes to midnight and so an wary of making changes
+		# at 10 minutes to midnight and so am wary of making changes
 		# throughout the code and getting it wrong) the code will
 		# still call it 'interval'.  Documentation and messages should
 		# refer to 'retain'.  The old 'interval' will be kept as an
@@ -1341,7 +1329,7 @@ sub parse_config_file {
 		# SSH ARGS
 		if ($var eq 'ssh_args') {
 			if (!defined($default_ssh_args) && defined($config_vars{'ssh_args'})) {
-				config_err($file_line_num, "$line - global ssh_args can only be set once, but is already set.  Perhaps you wanted to use a per-backup ssh_args instead.");
+				config_err($file_line_num, "$line - global ssh_args can only be set once, but is already set.  Perhaps you wanted to use a per-backup-point ssh_args instead.");
 				next;
 			} else {
 				$config_vars{'ssh_args'} = $value;
@@ -1820,7 +1808,14 @@ sub parse_backup_opts {
 			}
 			
 			delete($parsed_opts{'exclude_file'});
-			
+
+		# Not (yet?) implemented as per-backup-point options
+		} elsif ( $name eq 'cmd_preexec' || $name eq 'cmd_postexec' 
+			|| $name eq 'cmd_ssh' || $name eq 'cmd_rsync') {
+			|| $name eq 'verbose' || $name eq 'loglevel') {
+			print_err("$name is not implemented as a per-backup-point option in this version of rsnapshot", 2);
+			return (undef);
+
 		# if we don't know about it, it doesn't exist
 		} else {
 			return (undef);
@@ -2806,6 +2801,27 @@ sub is_directory {
 	}
 	
 	return (0);
+}
+
+# accepts a string with a script file and optional arguments
+# returns 1 if it the script file exists, is executable and has absolute path.
+# returns 0 otherwise
+sub is_valid_script {
+	my $full_script	= shift(@_);	# script to run (including args)
+	my $script_ref	= shift(@_);	# reference to script file name
+	my $script;			# script file (no args)
+	my @script_argv;		# all script arguments
+	
+	# get the base name of the script, not counting any arguments to it
+	@script_argv = split(/\s+/, $full_script);
+	$script = $script_argv[0];
+	$$script_ref = $script;		# Output $script in case caller wants it
+	
+	# make sure script exists and is executable
+	if ( -f "$script" && -x "$script" && is_real_local_abs_path($script)) {
+		return 1;
+	}
+	return 0;
 }
 
 # accepts string
@@ -6452,7 +6468,7 @@ come first), and any other rsnapshot processes are allowed to start while the
 final delete is happening. This benefit comes at the cost of using more
 disk space. The default is 0 (off).
 
-The details of how this works have changed from the original implementation.
+The details of how this works have changed in rsnapshot version 1.3.1.
 Originally you could only ever have one .delete directory per backup level.
 Now you can have many, so if your next (eg) hourly backup kicks off while the
 previous one is still doing a lazy delete you may temporarily have extra
