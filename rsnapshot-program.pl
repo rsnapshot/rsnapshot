@@ -26,7 +26,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.391 2008/06/17 13:26:03 drhyde Exp $
+# $Id: rsnapshot-program.pl,v 1.392 2008/06/17 13:36:56 scubaninja Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -6278,7 +6278,7 @@ a ".sync" directory under the snapshot_root.
 
 This allows better recovery in the event that rsnapshot is interrupted in the
 middle of a sync operation, since the sync step and rotation steps are
-seperated. This also means that you can easily run "rsnapshot sync" on the
+separated. This also means that you can easily run "rsnapshot sync" on the
 command line without fear of forcing all the other directories to rotate up.
 This benefit comes at the cost of one more snapshot worth of disk space.
 The default is 0 (off).
@@ -6590,7 +6590,7 @@ B<backup   /var/     localhost/   one_fs=1>
 
 This is the same as the other examples, but notice the fourth column.
 This is how you specify per-backup-point options to over-ride global
-settings.  This extra parameter can take several options, seperated
+settings.  This extra parameter can take several options, separated
 by B<commas>.
 
 It is most useful when specifying per-backup rsync excludes thus:
