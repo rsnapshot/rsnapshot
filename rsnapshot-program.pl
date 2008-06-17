@@ -26,7 +26,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.392 2008/06/17 13:36:56 scubaninja Exp $
+# $Id: rsnapshot-program.pl,v 1.393 2008/06/17 13:41:54 scubaninja Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -1811,7 +1811,7 @@ sub parse_backup_opts {
 
 		# Not (yet?) implemented as per-backup-point options
 		} elsif ( $name eq 'cmd_preexec' || $name eq 'cmd_postexec' 
-			|| $name eq 'cmd_ssh' || $name eq 'cmd_rsync') {
+			|| $name eq 'cmd_ssh' || $name eq 'cmd_rsync'
 			|| $name eq 'verbose' || $name eq 'loglevel') {
 			print_err("$name is not implemented as a per-backup-point option in this version of rsnapshot", 2);
 			return (undef);
