@@ -26,7 +26,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.390 2008/06/14 12:55:52 djk20 Exp $
+# $Id: rsnapshot-program.pl,v 1.391 2008/06/17 13:26:03 drhyde Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -6588,9 +6588,17 @@ B<backup   /var/     localhost/   one_fs=1>
 
 =over 4
 
-This is the same as the other examples, but notice how the fourth parameter
-is passed. This sets this backup point to not span filesystem partitions.
-If the global one_fs has been set, this will override it locally.
+This is the same as the other examples, but notice the fourth column.
+This is how you specify per-backup-point options to over-ride global
+settings.  This extra parameter can take several options, seperated
+by B<commas>.
+
+It is most useful when specifying per-backup rsync excludes thus:
+
+B<backup  root@somehost:/  somehost   +rsync_long_args=--exclude=/var/spool/>
+
+Note the + sign.  That tells rsnapshot to I<add> to the list of arguments
+to pass to rsync instead of replacing the list.
 
 =back
 
