@@ -26,7 +26,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.393 2008/06/17 13:41:54 scubaninja Exp $
+# $Id: rsnapshot-program.pl,v 1.394 2008/06/28 12:37:13 drhyde Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -4663,6 +4663,16 @@ sub rsync_cleanup_after_native_cp_al {
 	my $dest	= shift(@_);
 	
 	my $local_rsync_short_args = '-a';
+        # if the user asked for -E, we should use it here too.
+        # should we check for OS X?  Dunno, but for now that extra
+        # check is in here as we know we need it there, and so
+        # this is the smallest change for the smallest number of
+        # people
+        $local_rsync_short_args .= 'E' if(
+             $config_vars{'rsync_short_args'} =~ /E/ &&
+             $^O eq 'darwin'
+        );
+
 	my @cmd_stack = ();
 	
 	# make sure we were passed two arguments
