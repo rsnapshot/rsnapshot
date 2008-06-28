@@ -1,4 +1,4 @@
-# $Id: Makefile.am,v 1.87 2008/05/05 02:24:38 djk20 Exp $ #
+# $Id: Makefile.am,v 1.88 2008/06/28 02:02:14 djk20 Exp $ #
 
 # rsnapshot version
 VERSION = 1.3.1
@@ -7,7 +7,7 @@ VERSION = 1.3.1
 RPM_BASE_DIR = /usr/src/redhat
 
 # update of spec file, within this rsnapshot version
-RPM_RELEASE = 0.5.pre5
+RPM_RELEASE = 1
 
 doc: man html
 	@echo "Documentation $(man_MANS) and rsnapshot.html are now up to date."
@@ -108,7 +108,8 @@ rsnapshot-$(VERSION).tar.gz: $(man_MANS) rpm-patch Makefile $(bin_SCRIPTS) $(sys
 	
 	@# utils
 	mkdir rsnapshot-$(VERSION)/utils/
-	cp -p utils/{rsnaptar,*.sh,*.pl,README} rsnapshot-$(VERSION)/utils/
+	cp -p utils/{*.sh,*.pl,README} rsnapshot-$(VERSION)/utils/
+	cp -p utils/{rsnaptar,rsnapshot-copy} rsnapshot-$(VERSION)/utils/
 	mkdir rsnapshot-$(VERSION)/utils/rsnapshotdb
 	cp -p --parents utils/rsnapshotdb/*.* rsnapshot-$(VERSION)/
 	
