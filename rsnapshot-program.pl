@@ -26,7 +26,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.394 2008/06/28 12:37:13 drhyde Exp $
+# $Id: rsnapshot-program.pl,v 1.395 2008/06/29 20:56:32 djk20 Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -3143,6 +3143,8 @@ sub rotate_lowest_snapshots {
 	
 	# rotate the middle ones
 	if ($interval_max > 0) {
+		# Have we rotated a directory for this interval?
+		my $dir_rotated = 0;
 		for (my $i=($interval_max-1); $i>0; $i--) {
 			if ( -d "$config_vars{'snapshot_root'}/$interval.$i" ) {
 				print_cmd("mv",
@@ -3162,6 +3164,11 @@ sub rotate_lowest_snapshots {
 						bail($errstr);
 					}
 				}
+				$dir_rotated = 1;
+			} elsif ($dir_rotated) {
+				# We have rotated a directory for this interval, but $i
+				# does not exist - that probably means a hole.
+				print_msg("Note: $config_vars{'snapshot_root'}/$interval.$i missing, cannot rotate it", 4);
 			}
 		}
 	}
