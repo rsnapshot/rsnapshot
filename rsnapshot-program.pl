@@ -26,7 +26,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.395 2008/06/29 20:56:32 djk20 Exp $
+# $Id: rsnapshot-program.pl,v 1.396 2008/06/29 21:05:10 djk20 Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -4676,6 +4676,7 @@ sub rsync_cleanup_after_native_cp_al {
         # this is the smallest change for the smallest number of
         # people
         $local_rsync_short_args .= 'E' if(
+             defined($config_vars{'rsync_short_args'}) &&
              $config_vars{'rsync_short_args'} =~ /E/ &&
              $^O eq 'darwin'
         );
