@@ -26,7 +26,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.396 2008/06/29 21:05:10 djk20 Exp $
+# $Id: rsnapshot-program.pl,v 1.397 2008/08/09 00:25:52 djk20 Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -3461,13 +3461,13 @@ sub rsync_backup_point {
 		
 	# anonymous rsync
 	} elsif ( is_anon_rsync_path($$bp_ref{'src'}) ) {
-		# make rsync quiet if we're not running EXTRA verbose
-		if ($verbose < 4) { $rsync_short_args .= 'q'; }
+		# make rsync quiet if we're running in quiet mode
+		if ($verbose < 2) { $rsync_short_args .= 'q'; }
 		
 	# cwrsync path
 	} elsif ( is_cwrsync_path($$bp_ref{'src'}) ) {
-		# make rsync quiet if we're not running EXTRA verbose
-		if ($verbose < 4) { $rsync_short_args .= 'q'; }
+		# make rsync quiet if we're running in quiet mode
+		if ($verbose < 2) { $rsync_short_args .= 'q'; }
 		
 	# LVM path
 	} elsif ( is_linux_lvm_path($$bp_ref{'src'}) ) {
