@@ -26,7 +26,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.397 2008/08/09 00:25:52 djk20 Exp $
+# $Id: rsnapshot-program.pl,v 1.398 2008/08/09 02:15:49 djk20 Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -326,9 +326,9 @@ See the GNU General Public License for details.
 Options:
     -v verbose       - Show equivalent shell commands being executed.
     -t test          - Show verbose output, but don't touch anything.
-    -c [file]        - Specify alternate config file (-c /path/to/file)
                        This will be similar, but not always exactly the same
                        as the real output from a live run.
+    -c [file]        - Specify alternate config file (-c /path/to/file)
     -q quiet         - Suppress non-fatal warnings.
     -V extra verbose - The same as -v, but with more detail.
     -D debug         - A firehose of diagnostic information.
