@@ -1,10 +1,9 @@
 #!/usr/bin/perl
 
 
-=head
+=head1
 
 Author: Anthony Ettinger
-Contact: apwebdesign@yahoo.com
 
 License: GPL 2.0
 URL: http://www.gnu.org/licenses/gpl.txt
