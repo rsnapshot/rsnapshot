@@ -14,22 +14,22 @@
 		<hostPair>
 			<databaseHost>
 				<dbType>mysql</dbType>
-				<dbhostname>db.host.com</dbhostname>
+				<dbhostname>db.example.com</dbhostname>
 				<dbusername>user</dbusername>
 				<dbpassword>pass</dbpassword>
 			</databaseHost>
 			<defaultSSHHost>
 				<hostType>ssh2</hostType>
-				<hostname>foo.isp.com</hostname>
-				<username>me</username>
-				<password>StrongEncrypt</password>
+				<hostname>foo.example.net</hostname>
+				<username>admin</username>
+				<password>StronglyEncryptedHash</password>
 			</defaultSSHHost>
 
 		</hostPair>
 		<hostPair>
 			<databaseHost>
 				<dbType>mysql</dbType>
-				<dbhostname>db.host2.com</dbhostname>
+				<dbhostname>db.example.org</dbhostname>
 				<dbusername>user2</dbusername>
 				<dbpassword>#F0oB4r!</dbpassword>
 			</databaseHost>
@@ -40,13 +40,13 @@
 		<hostPair>
 			<databaseHost>
 				<dbType>mysql</dbType>
-				<dbhostname>db.vacation.com</dbhostname>
+				<dbhostname>db.example.com</dbhostname>
 				<dbusername>me</dbusername>
-				<dbpassword>pw</dbpassword>
+				<dbpassword>plain-text-password</dbpassword>
 			</databaseHost>
 			<defaultSSHHost>
 				<hostType>ssh2</hostType>
-				<hostname>www.vacation.com</hostname>
+				<hostname>www.example.com</hostname>
 				<username>user</username>
 				<password>optional</password>
 			</defaultSSHHost>

@@ -1,5 +1,7 @@
 #!/usr/bin/perl
 
+=pod
+
 =head
 
 APPLICATION INFO: 
@@ -10,11 +12,10 @@ Web: http://www.rsnapshot.org
 
 Author: Anthony Ettinger
 Email: aettinger<--at-->sdsualumni<--dot-->org
-Blog: http://www.chovy.com
+Blog: http://anthony.ettinger.name
 
 
-
-NOTES:
+DESCRIPTION:
 
 This script was originally written to function as a MySQL database backup script in conjunction with the open source Perl/rsync backup program "rsnapshot".  rsnapshot can be found at: http://www.rsnapshot.org/
 
@@ -89,6 +90,7 @@ type 'which <db-dumper>' to find the path (ie - 'which mysqldump')
 Note: the hash key here must match 'dbtype' field in $dbpasswd file.
 
 =cut
+
 my $dbApp = {
 	'mysql'	=> {
 		'dumper' => {
@@ -172,6 +174,9 @@ sub read_dbpasswd
 		die "flat list is deprecated, please see INSTALL.txt";
 	}
 }
+
+=pod
+
 =head
 
 END OF THE LINE:
@@ -183,6 +188,8 @@ Check the $localTmpDir or your /backups/.snapshot/foo/wherever you put your data
 =cut
 
 package rsnapshotDB;
+
+=pod
 
 =head
 
@@ -234,8 +241,12 @@ sub validateXML
 
 }
 
+=pod
+
 =head
+
 Utitility to parse our XML file for values
+
 =cut
 
 sub parseXML
@@ -286,6 +297,8 @@ sub parseXML
 
 	return $self;
 }
+
+=pod
 
 =head
 
@@ -354,6 +367,8 @@ sub showDB
 	return $self;
 }
 
+=pod
+
 =head
 
 DUMP DATABASE:
@@ -393,10 +408,10 @@ sub dumbDB
 	$self->v("SET: remote temp dir... '$remoteTmpDir'", 1);
 
 	#dumper arguments
-        my $dumpOptsArg = $dbApp->{$dbType}->{'dumper'}->{'opts'};
-        my $dumpHostArg = $dbApp->{$dbType}->{'dumper'}->{'host'};
-        my $dumpUserArg = $dbApp->{$dbType}->{'dumper'}->{'user'};
-        my $dumpPassArg = $dbApp->{$dbType}->{'dumper'}->{'pass'};
+	my $dumpOptsArg = $dbApp->{$dbType}->{'dumper'}->{'opts'};
+	my $dumpHostArg = $dbApp->{$dbType}->{'dumper'}->{'host'};
+	my $dumpUserArg = $dbApp->{$dbType}->{'dumper'}->{'user'};
+	my $dumpPassArg = $dbApp->{$dbType}->{'dumper'}->{'pass'};
 
 	foreach my $dbName (@{$dbNames})
 	{
@@ -425,7 +440,7 @@ sub dumbDB
 		}
 	
 		#the actual .sql.gz remote file creation!
-                my $cmdRemoteDump = "ssh $sshOption $user\@$host 'umask 0077;nice --adjustment=$niceness $dumper \ $dumpOptsArg $dumpUserArg $dbuser $dumpPassArg" . "$dbpass $dumpHostArg $dbhost \ $dbName > $remoteTmpDir/$file.sql'";
+		my $cmdRemoteDump = "ssh $sshOption $user\@$host 'umask 0077;nice --adjustment=$niceness $dumper \ $dumpOptsArg $dumpUserArg $dbuser $dumpPassArg" . "$dbpass $dumpHostArg $dbhost \ $dbName > $remoteTmpDir/$file.sql'";
 
 		$self->v("WAITING: remote dump...", 1);
 		$out = qx/$cmdRemoteDump/;
@@ -458,7 +473,10 @@ sub dumbDB
 	}
 }
 
+=pod
+
 =head
+
 SECURE COPY:
 
 At this point it's necessary to use ssh-keygen to connect to the server, the local command is using SSH tunneling.
@@ -584,8 +602,12 @@ sub _verbose
 
 1;
 
+=pod
+
 =head
+
 MORE INFO:
 
 see README.txt
+
 =cut

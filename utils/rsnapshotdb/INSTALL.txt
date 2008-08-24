@@ -41,7 +41,9 @@ backup_script	/usr/local/bin/rsnapshotDB.pl     database/
 
 SECURITY:
 
-The best option is to use ssh keys and network-authenticated database users. ie (only connect from localhost or 192.168.x.x -> db server without password). This avoids having to store our db passwords in /etc/rsnapshotDB.conf
+The best option is to use ssh keys and network-authenticated database users.
+ie (only connect from localhost or 192.168.x.x -> db server without password).
+This avoids having to store your db passwords in /etc/rsnapshotDB.conf
 
 NOTE:
 If you have not logged in via ssh and keys before, you will have to do so manually as the rsnapshot user (typically root). This is necessary in order to accept the host as an authorized host. Once you say "yes" to accepting the key/host, you should be able to login automatically.
