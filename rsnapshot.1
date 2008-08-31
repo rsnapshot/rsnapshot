@@ -129,7 +129,7 @@
 .\" ========================================================================
 .\"
 .IX Title "rsnapshot 1"
-.TH rsnapshot 1 "2008-05-01" "" ""
+.TH rsnapshot 1 "2008-08-31" "" ""
 .SH "NAME"
 rsnapshot \- remote filesystem snapshot utility
 .SH "SYNOPSIS"
@@ -354,7 +354,7 @@ a \*(L".sync\*(R" directory under the snapshot_root.
 .Sp
 This allows better recovery in the event that rsnapshot is interrupted in the
 middle of a sync operation, since the sync step and rotation steps are
-seperated. This also means that you can easily run \*(L"rsnapshot sync\*(R" on the
+separated. This also means that you can easily run \*(L"rsnapshot sync\*(R" on the
 command line without fear of forcing all the other directories to rotate up.
 This benefit comes at the cost of one more snapshot worth of disk space.
 The default is 0 (off).
@@ -550,7 +550,7 @@ come first), and any other rsnapshot processes are allowed to start while the
 final delete is happening. This benefit comes at the cost of using more
 disk space. The default is 0 (off).
 .Sp
-The details of how this works have changed from the original implementation.
+The details of how this works have changed in rsnapshot version 1.3.1.
 Originally you could only ever have one .delete directory per backup level.
 Now you can have many, so if your next (eg) hourly backup kicks off while the
 previous one is still doing a lazy delete you may temporarily have extra
@@ -668,9 +668,17 @@ end).
 \&\fBbackup   /var/     localhost/   one_fs=1\fR
 .Sp
 .RS 4
-This is the same as the other examples, but notice how the fourth parameter
-is passed. This sets this backup point to not span filesystem partitions.
-If the global one_fs has been set, this will override it locally.
+This is the same as the other examples, but notice the fourth column.
+This is how you specify per-backup-point options to over-ride global
+settings.  This extra parameter can take several options, separated
+by \fBcommas\fR.
+.Sp
+It is most useful when specifying per-backup rsync excludes thus:
+.Sp
+\&\fBbackup  root@somehost:/  somehost   +rsync_long_args=\-\-exclude=/var/spool/\fR
+.Sp
+Note the + sign.  That tells rsnapshot to \fIadd\fR to the list of arguments
+to pass to rsync instead of replacing the list.
 .RE
 .RE
 .RS 4
