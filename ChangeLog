@@ -3,8 +3,12 @@ rsnapshot changelog
 http://www.rsnapshot.org/
 ------------------------------------------------------------------------------
 
-VERSION 1.3.1  (May 03 2008)
+VERSION 1.3.1  (Aug 31 2008)
 ------------------------------------------------------------------------------
+- Fix help message mixup in lines between -c and -t.
+- Add more specific error messages for not currently implemented potential 
+  per backup point options, like cmd_preexec.
+- Allow named pipe as logfile - suggested by Patrice Levesque.
 - Include rsnapshot-copy script written by Matt McCutchen.
 - Allow `backticks` in include_conf.
 - Apply fix-sync_first-rollback.diff patch from Matt McCutchen (02 Apr 2008).
