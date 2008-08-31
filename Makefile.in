@@ -14,7 +14,7 @@
 
 @SET_MAKE@
 
-# $Id: Makefile.in,v 1.108 2008/05/05 02:32:35 djk20 Exp $ #
+# $Id: Makefile.in,v 1.109 2008/08/31 10:48:47 djk20 Exp $ #
 
 
 srcdir = @srcdir@
@@ -171,7 +171,7 @@ target_alias = @target_alias@
 RPM_BASE_DIR = /usr/src/redhat
 
 # update of spec file, within this rsnapshot version
-RPM_RELEASE = 0.5.pre5
+RPM_RELEASE = 1
 bin_SCRIPTS = rsnapshot rsnapshot-diff
 man_MANS = rsnapshot.1 rsnapshot-diff.1
 sysconf_DATA = rsnapshot.conf.default
@@ -641,7 +641,8 @@ rsnapshot-$(VERSION).tar.gz: $(man_MANS) rpm-patch Makefile $(bin_SCRIPTS) $(sys
 
 	@# utils
 	mkdir rsnapshot-$(VERSION)/utils/
-	cp -p utils/{rsnaptar,*.sh,*.pl,README} rsnapshot-$(VERSION)/utils/
+	cp -p utils/{*.sh,*.pl,README} rsnapshot-$(VERSION)/utils/
+	cp -p utils/{rsnaptar,rsnapshot-copy} rsnapshot-$(VERSION)/utils/
 	mkdir rsnapshot-$(VERSION)/utils/rsnapshotdb
 	cp -p --parents utils/rsnapshotdb/*.* rsnapshot-$(VERSION)/
 
