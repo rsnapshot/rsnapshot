@@ -6,6 +6,7 @@ http://www.rsnapshot.org/
 VERSION 1.3.x
 ------------------------------------------------------------------------------
 - Allow linux_lvm_cmd_* in config file to have options also.
+- Allow `backticks with options` in include_conf.
 
 VERSION 1.3.1  (Aug 31 2008)
 ------------------------------------------------------------------------------
