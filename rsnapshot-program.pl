@@ -26,7 +26,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.400 2008/09/05 10:55:56 djk20 Exp $
+# $Id: rsnapshot-program.pl,v 1.401 2008/09/05 11:02:35 djk20 Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -568,7 +568,7 @@ sub parse_config_file {
 			$value =~ /^`(.*)`$/;
 			if(
 			    (defined($value) && -f $value && -r $value) ||
-			    (defined($1) && -x $1)
+			    (defined($1) && is_valid_script($1))
 			) {
 				$line_syntax_ok = 1;
 				parse_config_file($value);
