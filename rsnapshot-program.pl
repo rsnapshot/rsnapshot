@@ -26,7 +26,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.398 2008/08/09 02:15:49 djk20 Exp $
+# $Id: rsnapshot-program.pl,v 1.399 2008/09/05 10:52:12 djk20 Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -755,45 +755,45 @@ sub parse_config_file {
 		
 		# CHECK FOR lvcreate (optional)
 		if ($var eq 'linux_lvm_cmd_lvcreate') {
-			if ((-f "$value") && (-x "$value") && (1 == is_real_local_abs_path($value))) {
+			if (is_valid_script($value)) {
 				$config_vars{'linux_lvm_cmd_lvcreate'} = $value;
 				$line_syntax_ok = 1;
 				next;
 			} else {
-				config_err($file_line_num, "$line - $value is not executable");
+				config_err($file_line_num, "$line - $value is not a valid executable");
 				next;
 			}
 		}
 		# CHECK FOR lvremove (optional)
 		if ($var eq 'linux_lvm_cmd_lvremove') {
-			if ((-f "$value") && (-x "$value") && (1 == is_real_local_abs_path($value))) {
+			if (is_valid_script($value)) {
 				$config_vars{'linux_lvm_cmd_lvremove'} = $value;
 				$line_syntax_ok = 1;
 				next;
 			} else {
-				config_err($file_line_num, "$line - $value is not executable");
+				config_err($file_line_num, "$line - $value is not a valid executable");
 				next;
 			}
 		}
 		# CHECK FOR mount (optional)
 		if ($var eq 'linux_lvm_cmd_mount') {
-			if ((-f "$value") && (-x "$value") && (1 == is_real_local_abs_path($value))) {
+			if (is_valid_script($value))) {
 				$config_vars{'linux_lvm_cmd_mount'} = $value;
 				$line_syntax_ok = 1;
 				next;
 			} else {
-				config_err($file_line_num, "$line - $value is not executable");
+				config_err($file_line_num, "$line - $value is not a valid executable");
 				next;
 			}
 		}
 		# CHECK FOR umount (optional)
 		if ($var eq 'linux_lvm_cmd_umount') {
-			if ((-f "$value") && (-x "$value") && (1 == is_real_local_abs_path($value))) {
+			if (is_valid_script($value)) {
 				$config_vars{'linux_lvm_cmd_umount'} = $value;
 				$line_syntax_ok = 1;
 				next;
 			} else {
-				config_err($file_line_num, "$line - $value is not executable");
+				config_err($file_line_num, "$line - $value is not a valid executable");
 				next;
 			}
 		}
@@ -3495,7 +3495,7 @@ sub rsync_backup_point {
         
         # assemble and execute LVM snapshot command
         @cmd_stack = ();
-        push(@cmd_stack, $config_vars{'linux_lvm_cmd_lvcreate'});
+        push(@cmd_stack, split(' ',$config_vars{'linux_lvm_cmd_lvcreate'}));
         push(@cmd_stack, '--snapshot');
 
         push(@cmd_stack, '--size');
@@ -3518,7 +3518,7 @@ sub rsync_backup_point {
         
         # mount the snapshot
         @cmd_stack = ();
-        push(@cmd_stack, $config_vars{'linux_lvm_cmd_mount'});
+        push(@cmd_stack, split(' ', $config_vars{'linux_lvm_cmd_mount'}));
 
         $linux_lvm_snapshotname = join('/', $config_vars{'linux_lvm_vgpath'}, $linux_lvmvgname, $config_vars{'linux_lvm_snapshotname'});
         push(@cmd_stack, $linux_lvm_snapshotname);
@@ -3722,7 +3722,7 @@ sub rsync_backup_point {
         }
 
         @cmd_stack = ();
-        push(@cmd_stack, $config_vars{'linux_lvm_cmd_umount'});
+        push(@cmd_stack, split(' ', $config_vars{'linux_lvm_cmd_umount'}));
 
         push(@cmd_stack, $config_vars{'linux_lvm_mountpath'});
         
@@ -6217,7 +6217,8 @@ B<linux_lvm_cmd_umount>
 =over 4
 
 Paths to lvcreate, lvremove, mount and umount commands, for use with Linux
-LVMs.  The lvcreate, lvremove, mount and umount commands are required for
+LVMs.  You may include options to the commands also. 
+The lvcreate, lvremove, mount and umount commands are required for
 managing snapshots of LVM volumes and are otherwise optional.
 
 =back
