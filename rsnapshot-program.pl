@@ -26,7 +26,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.399 2008/09/05 10:52:12 djk20 Exp $
+# $Id: rsnapshot-program.pl,v 1.400 2008/09/05 10:55:56 djk20 Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -777,7 +777,7 @@ sub parse_config_file {
 		}
 		# CHECK FOR mount (optional)
 		if ($var eq 'linux_lvm_cmd_mount') {
-			if (is_valid_script($value))) {
+			if (is_valid_script($value)) {
 				$config_vars{'linux_lvm_cmd_mount'} = $value;
 				$line_syntax_ok = 1;
 				next;
