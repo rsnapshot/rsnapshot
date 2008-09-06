@@ -26,7 +26,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.401 2008/09/05 11:02:35 djk20 Exp $
+# $Id: rsnapshot-program.pl,v 1.402 2008/09/06 00:36:41 djk20 Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -6399,21 +6399,10 @@ B<rsync_long_args     --delete --numeric-ids --relative --delete-excluded>
 
 =over 4
 
-List of long arguments to pass to rsync. Beginning with rsnapshot 1.2.0, this
-default has changed. In previous versions, the default values were
-
-    --delete --numeric-ids
-
-Starting with version 1.2.0, the default values are
-
+List of long arguments to pass to rsync.  The default values are
     --delete --numeric-ids --relative --delete-excluded
-
-This directly affects how the destination paths in your backup points are
-constructed. Depending on what behaviour you want, you can explicitly set
-the values to make the program behave like the old version or the current
-version. The newer settings are recommended if you're just starting. If
-you are upgrading, read the upgrade guide in the INSTALL file in the
-source distribution for more information.
+This means that the directory structure in each backup point destination 
+will match that in the backup point source.
 
 Quotes are permitted in rsync_long_args, eg --rsync-path="sudo /usr/bin/rsync".
 You may use either single (') or double (") quotes, but nested quotes (including
@@ -6524,17 +6513,6 @@ B<linux_lvm_mountpath		/mnt/lvm-snapshot>
 =over 4
 
 Mount point to use to temporarily mount the snapshot(s). 
-
-=back
-
-
-B<UPGRADE NOTICE:>
-
-=over 4
-
-If you have used an older version of rsnapshot, you might notice that the
-destination paths on the backup points have changed. Please read the INSTALL
-file in the source distribution for upgrade options.
 
 =back
 
