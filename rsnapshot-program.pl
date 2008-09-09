@@ -26,7 +26,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.402 2008/09/06 00:36:41 djk20 Exp $
+# $Id: rsnapshot-program.pl,v 1.403 2008/09/09 11:58:39 drhyde Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -2989,7 +2989,10 @@ sub handle_interval {
 				bail("Error! rm_rf(\"$config_vars{'snapshot_root'}/_delete.$$\")\n");
 			}
 		}
-	} else {
+	} elsif($use_lazy_deletes) {
+	        # only spit this out if lazy deletes are turned on.
+		# Still need to suppress this if they're turned on but we've
+		# not done enough backups to yet need to delete anything
 		print_msg("No directory to delete: $config_vars{'snapshot_root'}/_delete.$$", 5);
 	}
 }
