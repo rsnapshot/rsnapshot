@@ -26,7 +26,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.403 2008/09/09 11:58:39 drhyde Exp $
+# $Id: rsnapshot-program.pl,v 1.404 2008/10/02 02:14:44 djk20 Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -7002,7 +7002,7 @@ Nathan Rosenquist (B<nathan@rsnapshot.org>)
 =over 4
 
 =item -
-Primary author and previous maintainer of rsnapshot.
+Primary author and original maintainer of rsnapshot.
 
 =back
 
@@ -7011,7 +7011,7 @@ David Cantrell (B<david@cantrell.org.uk>)
 =over 4
 
 =item -
-Current co-maintainer of rsnapshot
+Previous maintainer of rsnapshot
 
 =item -
 Wrote the rsnapshot-diff utility
@@ -7027,7 +7027,7 @@ David Keegel <djk@cybersource.com.au>
 =over 4
 
 =item -
-Co-maintainer, with responsibility for release management since 1.2.9
+Current rsnapshot maintainer
 
 =item -
 Fixed race condition in lock file creation, improved error reporting
