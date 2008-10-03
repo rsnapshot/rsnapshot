@@ -5,6 +5,8 @@ http://www.rsnapshot.org/
 
 VERSION 1.3.x
 ------------------------------------------------------------------------------
+- Update current maintainer status in Authors section of man page.
+  (David Cantrell stepped down between 1.3.0 and 1.3.1.) 
 - Remove some old (1.1.x -> 1.2.0) upgrade notices from man page.
 - Allow linux_lvm_cmd_* in config file to have options also.
 - Allow `backticks with options` in include_conf.
