@@ -26,7 +26,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.404 2008/10/02 02:14:44 djk20 Exp $
+# $Id: rsnapshot-program.pl,v 1.405 2008/10/13 21:00:35 djk20 Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -3731,9 +3731,7 @@ sub rsync_backup_point {
         
         print_cmd(@cmd_stack);
         if (0 == $test) {
-            # silence gratuitous lvremove output
-            #$result = system(@cmd_stack);
-            $result = system(join " ", @cmd_stack, ">/dev/null");
+            $result = system(@cmd_stack);
             
             if ($result != 0) {
                 bail("Unmount LVM snapshot failed: $result");
@@ -3748,7 +3746,9 @@ sub rsync_backup_point {
         
         print_cmd(@cmd_stack);
         if (0 == $test) {
-            $result = system(@cmd_stack);
+            # silence gratuitous lvremove output
+            #$result = system(@cmd_stack);
+            $result = system(join " ", @cmd_stack, ">/dev/null");
             
             if ($result != 0) {
                 bail("Removal of LVM snapshot failed: $result");
