@@ -5,6 +5,8 @@ http://www.rsnapshot.org/
 
 VERSION 1.3.x
 ------------------------------------------------------------------------------
+- include_conf `command` now strips backticks before execution (bug fix
+  based on suggestion from David Osborn).
 - Ignore extraneous output from lvremove command.  (patch by Tim Connors) 
 - Update current maintainer status in Authors section of man page.
   (David Cantrell stepped down between 1.3.0 and 1.3.1.) 
