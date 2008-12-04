@@ -26,7 +26,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.407 2008/12/04 22:18:15 djk20 Exp $
+# $Id: rsnapshot-program.pl,v 1.408 2008/12/04 23:54:58 djk20 Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -1553,7 +1553,21 @@ sub validate_config_file {
 				if ( -e "$config_vars{'snapshot_root'}" ) {
 					print_err ("$config_vars{'snapshot_root'} is not a directory.", 1);
 				} else {
-					print_err ("$config_vars{'snapshot_root'} does not exist.", 1);
+					my $snapshot_root = $config_vars{'snapshot_root'};
+					# Check parent directories until we find one that exists
+					while (! -e $snapshot_root) { 
+						print_err ("$snapshot_root does not exist.", 1);
+						$snapshot_root =~ m%(.*)/[^/]*%;
+						if (defined($1) && $1 ne $snapshot_root) {
+							$snapshot_root = $1;
+						} else {
+							last;
+						}
+					}
+					if (-e $snapshot_root && ! -d $snapshot_root) {
+						print_err ("$snapshot_root is not a directory.", 1);
+						syslog_err("$snapshot_root is not a directory.");
+					}
 				}
 				print_err ("rsnapshot refuses to create snapshot_root when no_create_root is enabled", 1);
 				syslog_err("rsnapshot refuses to create snapshot_root when no_create_root is enabled");
