@@ -26,7 +26,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.406 2008/12/04 16:02:09 drhyde Exp $
+# $Id: rsnapshot-program.pl,v 1.407 2008/12/04 22:18:15 djk20 Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -505,8 +505,8 @@ sub parse_config_file {
 	my $config_file = shift() || $config_file;
 	my $CONFIG;
 	if($config_file =~ /^`(.*)`$/) {
-	    open($CONFIG, "$1|") ||
-	        bail("Couldn't execute \"$config_file\" to get config information\nAre you sure you have permission?");
+	    open($CONFIG, "$1 |") 
+	        or bail("Couldn't execute \"$1\" to get config information\n");
 	} else {
 	    $CONFIG = IO::File->new($config_file)
 		or bail("Could not open config file \"$config_file\"\nAre you sure you have permission?");
