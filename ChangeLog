@@ -5,6 +5,7 @@ http://www.rsnapshot.org/
 
 VERSION 1.3.x
 ------------------------------------------------------------------------------
+- When snapshot_root does not exist, check existence of parent directories.
 - include_conf `command` now strips backticks before execution (bug fix
   based on suggestion from David Osborn).
 - Ignore extraneous output from lvremove command.  (patch by Tim Connors) 
