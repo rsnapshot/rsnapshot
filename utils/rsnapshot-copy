@@ -62,7 +62,7 @@ dest="${@: -1:1}"
 do_cmd rsync "${rsync_opts[@]}" --exclude=* "$src/" "$dest/"
 
 # Obtain a list of snapshot names in newest to oldest order.
-# List the src -> filter to `2008/04/09T17:59:43 hourly.0' format
+# List the src -> filter to `2008/04/09T17:59:43 alpha.0' format
 # -> sort newest to oldest -> read each line, ignoring the time.
 rsync "${rsync_opts[@]}" --list-only --no-r -d --no-l "$src/" \
 	| sed -nre 's,^d[^ ]+ +[^ ]+ (..../../..) (..:..:..) (.*\.[0-9]+)$,\1T\2 \3,p' \

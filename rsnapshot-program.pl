@@ -26,7 +26,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.408 2008/12/04 23:54:58 djk20 Exp $
+# $Id: rsnapshot-program.pl,v 1.409 2009/01/21 21:14:18 drhyde Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -81,7 +81,7 @@ my @backup_points;
 # array of backup points to rollback, in the event of failure
 my @rollback_points;
 
-# "intervals" are user defined time periods (e.g., hourly, daily)
+# "intervals" are user defined time periods (e.g., alpha, beta)
 # this array holds hash_refs containing the name of the interval,
 # and the number of snapshots to keep of it
 #
@@ -344,7 +344,7 @@ Commands:
     diff             - Front-end interface to the rsnapshot-diff program.
                        Accepts two optional arguments which can be either
                        filesystem paths or backup directories within the
-                       snapshot_root (e.g., /etc/ daily.0/etc/). The default
+                       snapshot_root (e.g., /etc/ beta.0/etc/). The default
                        is to compare the two most recent snapshots.
     du               - Show disk usage in the snapshot_root.
                        Accepts an optional destination path for comparison
@@ -458,7 +458,7 @@ sub parse_cmd_line_opts {
 			for (my $i=1; $i<scalar(@ARGV); $i++) {
 				print STDERR "Unknown option: $ARGV[$i]\n";
 				print STDERR "Please make sure all switches come before commands\n";
-				print STDERR "(e.g., 'rsnapshot -v hourly', not 'rsnapshot hourly -v')\n";
+				print STDERR "(e.g., 'rsnapshot -v alpha', not 'rsnapshot alpha -v')\n";
 				exit(1);
 			}
 			
@@ -2450,27 +2450,27 @@ sub get_interval_data {
 	my %hash;
 	
 	# which of the intervals are we operating on?
-	# if we defined hourly, daily, weekly ... hourly = 0, daily = 1, weekly = 2
+	# if we defined alpha, beta, gamma ... alpha = 0, beta = 1, gamma = 2
 	my $interval_num;
 	
 	# the highest possible number for the current interval context
-	# if we are working on hourly, and hourly is set to 6, this would be
+	# if we are working on alpha, and alpha is set to 6, this would be
 	# equal to 5 (since we start at 0)
 	my $interval_max;
 	
 	# this is the name of the previous interval, in relation to the one we're
-	# working on. e.g., if we're operating on weekly, this should be "daily"
+	# working on. e.g., if we're operating on gamma, this should be "beta"
 	my $prev_interval;
 	
 	# same as $interval_max, except for the previous interval.
 	# this is used to determine which of the previous snapshots to pull from
-	# e.g., cp -al hourly.$prev_interval_max/ daily.0/
+	# e.g., cp -al alpha.$prev_interval_max/ beta.0/
 	my $prev_interval_max;
 	
 	# FIGURE OUT WHICH INTERVAL WE'RE RUNNING, AND HOW IT RELATES TO THE OTHERS
 	# THEN RUN THE ACTION FOR THE CHOSEN INTERVAL
 	# remember, in each hashref in this loop:
-	#   "interval" is something like "daily", "weekly", etc.
+	#   "interval" is something like "beta", "gamma", etc.
 	#   "number" is the number of these intervals to keep on the filesystem
 	
 	my $i = 0;
@@ -2499,7 +2499,7 @@ sub get_interval_data {
 		
 		# which of the previous interval's numbered directories should we pull from
 		# for the interval we're currently set to run?
-		# e.g., daily.0/ might get pulled from hourly.6/
+		# e.g., beta.0/ might get pulled from alpha.6/
 		#
 		$prev_interval_max = $$i_ref{'number'} - 1;
 		
@@ -2882,8 +2882,8 @@ sub handle_interval {
 	
 	# here we used to check for interval.delete directories.  This was
 	# removed when we switched to using _delete.$$ directories.  This
-	# was done so that you can run another (eg) rsnapshot hourly, while
-	# the .delete directory from the previous hourly backup was still
+	# was done so that you can run another (eg) rsnapshot alpha, while
+	# the .delete directory from the previous alpha backup was still
 	# going.  Potentially you may have several parallel deletes going on
 	# with the new scheme, but I'm pretty sure that you'll catch up
 	# eventually and not hopelessly wedge the machine -- DRC
@@ -3012,8 +3012,8 @@ sub handle_interval {
 }
 
 # accepts an interval_data_ref
-# acts on the interval defined as $$id_ref{'interval'} (e.g., hourly)
-# this should be the smallest interval (e.g., hourly, not daily)
+# acts on the interval defined as $$id_ref{'interval'} (e.g., alpha)
+# this should be the smallest interval (e.g., alpha, not beta)
 #
 # rotates older dirs within this interval, hard links .0 to .1,
 # and rsync data over to .0
@@ -4253,7 +4253,7 @@ sub touch_interval_dir {
 
 # accepts an interval_data_ref
 # looks at $$id_ref{'interval'} as the interval to act on,
-# and the previous interval $$id_ref{'prev_interval'} to pull up the directory from (e.g., daily, hourly)
+# and the previous interval $$id_ref{'prev_interval'} to pull up the directory from (e.g., beta, alpha)
 # the interval being acted upon should not be the lowest one.
 #
 # rotates older dirs within this interval, and hard links
@@ -4350,7 +4350,7 @@ sub rotate_higher_interval {
 		# or if the previous interval isn't the smallest one,
 		# move the last one up a level
 		if (($prev_interval_max >= 1) or ($interval_num >= 2)) {
-			# mv hourly.5 to daily.0 (or whatever intervals we're using)
+			# mv alpha.5 to beta.0 (or whatever intervals we're using)
 			print_cmd(
 				"mv $config_vars{'snapshot_root'}/$prev_interval.$prev_interval_max/ ",
 				"$config_vars{'snapshot_root'}/$interval.0/"
@@ -4946,7 +4946,7 @@ sub show_disk_usage {
 	exit(1);
 }
 
-# accept two args from $ARGV[1] and [2], like "daily.0" "daily.1" etc.
+# accept two args from $ARGV[1] and [2], like "beta.0" "beta.1" etc.
 # stick the full snapshot_root path on the beginning, and call rsnapshot-diff with these args
 # NOTE: since this is a read-only operation, we're not concerned with directory traversals and relative paths
 sub show_rsnapshot_diff {
@@ -6244,7 +6244,7 @@ B<retain>             [name]   [number]
 
 =over 4
 
-"name" refers to the name of this backup level (e.g., hourly, daily,
+"name" refers to the name of this backup level (e.g., alpha, beta,
 so also called the 'interval'). "number"
 is the number of snapshots for this type of interval that will be retained.
 The value of "name" will be the command passed to B<rsnapshot> to perform
@@ -6252,43 +6252,43 @@ this type of backup.
 
 A deprecated alias for 'retain' is 'interval'.
 
-Example: B<retain hourly 6>
+Example: B<retain alpha 6>
 
-[root@localhost]# B<rsnapshot hourly>
+[root@localhost]# B<rsnapshot alpha>
 
 For this example, every time this is run, the following will happen:
 
-<snapshot_root>/hourly.5/ will be deleted, if it exists.
+<snapshot_root>/alpha.5/ will be deleted, if it exists.
 
-<snapshot_root>/hourly.{1,2,3,4} will all be rotated +1, if they exist.
+<snapshot_root>/alpha.{1,2,3,4} will all be rotated +1, if they exist.
 
-<snapshot_root>/hourly.0/ will be copied to <snapshot_root>/hourly.1/
+<snapshot_root>/alpha.0/ will be copied to <snapshot_root>/alpha.1/
 using hard links.
 
 Each backup point (explained below) will then be rsynced to the
-corresponding directories in <snapshot_root>/hourly.0/
+corresponding directories in <snapshot_root>/alpha.0/
 
 Backup levels must be specified in the config file in order, from most
 frequent to least frequent. The first entry is the one which will be
-synced with the backup points. The subsequent backup levels (e.g., daily,
-weekly, etc) simply rotate, with each higher backup level pulling from the
+synced with the backup points. The subsequent backup levels (e.g., beta,
+gamma, etc) simply rotate, with each higher backup level pulling from the
 one below it for its .0 directory.
 
 Example:
 
 =over 4
 
-B<retain  hourly 6>
+B<retain  alpha 6>
 
-B<retain  daily  7>
+B<retain  beta  7>
 
-B<retain  weekly 4>
+B<retain  gamma 4>
 
 =back
 
-daily.0/ will be copied from hourly.5/, and weekly.0/ will be copied from daily.6/
+beta.0/ will be copied from alpha.5/, and gamma.0/ will be copied from beta.6/
 
-hourly.0/ will be rsynced directly from the filesystem.
+alpha.0/ will be rsynced directly from the filesystem.
 
 =back
 
@@ -6495,7 +6495,7 @@ disk space. The default is 0 (off).
 
 The details of how this works have changed in rsnapshot version 1.3.1.
 Originally you could only ever have one .delete directory per backup level.
-Now you can have many, so if your next (eg) hourly backup kicks off while the
+Now you can have many, so if your next (eg) alpha backup kicks off while the
 previous one is still doing a lazy delete you may temporarily have extra
 _delete directories hanging around.
 
@@ -6695,10 +6695,10 @@ Putting it all together (an example file):
     linux_lvm_vgpath          /dev
     linux_lvm_mountpath       /mnt/lvm-snapshot
 
-    retain              hourly  6
-    retain              daily   7
-    retain              weekly  7
-    retain              monthly 3
+    retain              alpha  6
+    retain              beta   7
+    retain              gamma  7
+    retain              delta 3
 
     backup              /etc/                     localhost/
     backup              /home/                    localhost/
@@ -6709,6 +6709,8 @@ Putting it all together (an example file):
     backup              root@mail.foo.com:/home/  mail.foo.com/
     backup              rsync://example.com/pub/  example.com/pub/
     backup              lvm://vg0/xen-home/       lvm-vg0/xen-home/
+
+=back
 
 =back
 
@@ -6724,18 +6726,18 @@ When you are first setting up your backups, you will probably
 also want to run it from the command line once or twice to get
 a feel for what it's doing.
 
-Here is an example crontab entry, assuming that backup levels B<hourly>,
-B<daily>, B<weekly> and B<monthly> have been defined in B</etc/rsnapshot.conf>
+Here is an example crontab entry, assuming that backup levels B<alpha>,
+B<beta>, B<gamma> and B<delta> have been defined in B</etc/rsnapshot.conf>
 
 =over 4
 
-B<0 */4 * * *         /usr/local/bin/rsnapshot hourly>
+B<0 */4 * * *         /usr/local/bin/rsnapshot alpha>
 
-B<50 23 * * *         /usr/local/bin/rsnapshot daily>
+B<50 23 * * *         /usr/local/bin/rsnapshot beta>
 
-B<40 23 * * 6         /usr/local/bin/rsnapshot weekly>
+B<40 23 * * 6         /usr/local/bin/rsnapshot gamma>
 
-B<30 23 1 * *         /usr/local/bin/rsnapshot monthly>
+B<30 23 1 * *         /usr/local/bin/rsnapshot delta>
 
 =back
 
@@ -6743,30 +6745,30 @@ This example will do the following:
 
 =over 4
 
-6 hourly backups a day (once every 4 hours, at 0,4,8,12,16,20)
+6 alpha backups a day (once every 4 hours, at 0,4,8,12,16,20)
 
-1 daily backup every day, at 11:50PM
+1 beta backup every day, at 11:50PM
 
-1 weekly backup every week, at 11:40PM, on Saturdays (6th day of week)
+1 gamma backup every week, at 11:40PM, on Saturdays (6th day of week)
 
-1 monthly backup every month, at 11:30PM on the 1st day of the month
+1 delta backup every month, at 11:30PM on the 1st day of the month
 
 =back
 
 It is usually a good idea to schedule the larger backup levels to run a bit before the
-lower ones. For example, in the crontab above, notice that "daily" runs 10 minutes
-before "hourly".  The main reason for this is that the daily rotate will
-pull out the oldest hourly and make that the youngest daily (which means
-that the next hourly rotate will not need to delete the oldest hourly),
+lower ones. For example, in the crontab above, notice that "beta" runs 10 minutes
+before "alpha".  The main reason for this is that the beta rotate will
+pull out the oldest alpha and make that the youngest beta (which means
+that the next alpha rotate will not need to delete the oldest alpha),
 which is more efficient.  A secondary reason is that it is harder to
 predict how long the lowest backup level will take, since it needs to actually
 do an rsync of the source as well as the rotate that all backups do.
 
-If rsnapshot takes longer than 10 minutes to do the "daily" rotate
-(which usually includes deleting the oldest daily snapshot), then you
+If rsnapshot takes longer than 10 minutes to do the "beta" rotate
+(which usually includes deleting the oldest beta snapshot), then you
 should increase the time between the backup levels.
 Otherwise (assuming you have set the B<lockfile> parameter, as is recommended)
-your hourly snapshot will fail sometimes because the daily still has the lock.  
+your alpha snapshot will fail sometimes because the beta still has the lock.  
 
 Remember that these are just the times that the program runs.
 To set the number of backups stored, set the B<retain> numbers in
@@ -6808,11 +6810,11 @@ For example:
 
 =over 4
 
-B<rsnapshot diff daily.0 daily.1>
+B<rsnapshot diff beta.0 beta.1>
 
-B<rsnapshot diff daily.0/localhost/etc daily.1/localhost/etc>
+B<rsnapshot diff beta.0/localhost/etc beta.1/localhost/etc>
 
-B<rsnapshot diff /.snapshots/daily.0 /.snapshots/daily.1>
+B<rsnapshot diff /.snapshots/beta.0 /.snapshots/beta.1>
 
 =back
 
@@ -6829,13 +6831,13 @@ the lowest, most frequent backup level, and right before. For example:
 
 =over 4
 
-B<0 */4 * * *         /usr/local/bin/rsnapshot sync && /usr/local/bin/rsnapshot hourly>
+B<0 */4 * * *         /usr/local/bin/rsnapshot sync && /usr/local/bin/rsnapshot alpha>
 
-B<50 23 * * *         /usr/local/bin/rsnapshot daily>
+B<50 23 * * *         /usr/local/bin/rsnapshot beta>
 
-B<40 23 1,8,15,22 * * /usr/local/bin/rsnapshot weekly>
+B<40 23 1,8,15,22 * * /usr/local/bin/rsnapshot gamma>
 
-B<30 23 1 * *         /usr/local/bin/rsnapshot monthly>
+B<30 23 1 * *         /usr/local/bin/rsnapshot delta>
 
 =back
 
@@ -6986,17 +6988,17 @@ you will need to go into the <snapshot_root> directory and manually
 remove the files from the smallest backup level's ".0" directory.
 
 For example, if you were previously backing up /home/ with a destination
-of localhost/, and hourly is your smallest backup level, you would need to do
+of localhost/, and alpha is your smallest backup level, you would need to do
 the following to reclaim that disk space:
 
 =over 4
 
-rm -rf <snapshot_root>/hourly.0/localhost/home/
+rm -rf <snapshot_root>/alpha.0/localhost/home/
 
 =back
 
 Please note that the other snapshots previously made of /home/ will still
-be using that disk space, but since the files are flushed out of hourly.0/,
+be using that disk space, but since the files are flushed out of alpha.0/,
 they will no longer be copied to the subsequent directories, and will thus
 be removed in due time as the rotations happen.
 

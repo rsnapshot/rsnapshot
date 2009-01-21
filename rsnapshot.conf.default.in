@@ -83,13 +83,13 @@ snapshot_root	/.snapshots/
 #########################################
 #           BACKUP INTERVALS            #
 # Must be unique and in ascending order #
-# i.e. hourly, daily, weekly, etc.      #
+# i.e. alpha, beta, gamma, etc.      #
 #########################################
 
-interval	hourly	6
-interval	daily	7
-interval	weekly	4
-#interval	monthly	3
+interval	alpha	6
+interval	beta	7
+interval	gamma	4
+#interval	delta	3
 
 ############################################
 #              GLOBAL OPTIONS              #
@@ -168,7 +168,7 @@ lockfile	/var/run/rsnapshot.pid
 
 # When sync_first is enabled, it changes the default behaviour of rsnapshot.
 # Normally, when rsnapshot is called with its lowest interval
-# (i.e.: "rsnapshot hourly"), it will sync files AND rotate the lowest
+# (i.e.: "rsnapshot alpha"), it will sync files AND rotate the lowest
 # intervals. With sync_first enabled, "rsnapshot sync" handles the file sync,
 # and all interval calls simply rotate files. See the man page for more
 # details. The default is 0 (off).
