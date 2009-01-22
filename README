@@ -107,8 +107,8 @@ This means that every time "rsnapshot alpha" is run, it will make a
 new snapshot, rotate the old ones, and retain the most recent six
 (alpha.0 - alpha.5).
 
-If you prefer instead to have beta, gamma and delta backups,
-you might set up cron like this:
+If you prefer instead to have three levels of backups (which we'll
+call beta, gamma and delta), you might set up cron like this:
     00 00 * * *     /usr/local/bin/rsnapshot beta
     00 23 * * 6     /usr/local/bin/rsnapshot gamma
     00 22 1 * *     /usr/local/bin/rsnapshot delta
