@@ -26,7 +26,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.409 2009/01/21 21:14:18 drhyde Exp $
+# $Id: rsnapshot-program.pl,v 1.410 2009/02/26 23:29:58 djk20 Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -4425,6 +4425,27 @@ sub cp_al {
 	return ($result);
 }
 
+# This is to test whether cp -al seems to work in a simple case
+# return 0  if cp -al succeeds
+# return 1  if cp -al fails
+# return -1 if something else failed - test inconclusive
+sub test_cp_al {
+	my $s = "/tmp/cp_al1";
+	my $d = "/tmp/cp_al2";
+	-d $s || mkdir($s) || return (-1);
+	open(TT1, ">>$s/tt1") || return (-1);
+	close(TT1) || return (-1);
+	$result = system( $config_vars{'cmd_cp'}, '-al', "$s", "$d" );
+	if ($result != 0) {
+		return (1);
+	}
+	unlink("$d/tt1");
+	unlink("$s/tt1");
+	rmdir($d);
+	rmdir($s);
+	return (0);
+}
+
 # this is a wrapper to call the GNU version of "cp"
 # it might fail in mysterious ways if you have a different version of "cp"
 #
@@ -4451,7 +4472,10 @@ sub gnu_cp_al {
 	$result = system( $config_vars{'cmd_cp'}, '-al', "$src", "$dest" );
 	if ($result != 0) {
 		$status = $result >> 8;
-		print_err("$config_vars{'cmd_cp'} -al $src $dest failed (result $result, exit status $status).  Perhaps your cp does not support -al options?", 2);
+		print_err("$config_vars{'cmd_cp'} -al $src $dest failed (result $result, exit status $status).", 2);
+		if (test_cp_al() > 0 ) {
+			print_err("Perhaps your cp does not support -al options?", 2);
+		}
 		return (0);
 	}
 	

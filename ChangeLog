@@ -5,6 +5,8 @@ http://www.rsnapshot.org/
 
 VERSION 1.3.x
 ------------------------------------------------------------------------------
+- if gnu_cp_al fails, test out a simple cp -al command before suggesting
+  that the cp does not support -al.
 - When snapshot_root does not exist, check existence of parent directories.
 - include_conf `command` now strips backticks before execution (bug fix
   based on suggestion from David Osborn).
