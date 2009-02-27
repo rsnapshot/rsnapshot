@@ -26,7 +26,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.410 2009/02/26 23:29:58 djk20 Exp $
+# $Id: rsnapshot-program.pl,v 1.411 2009/02/27 01:09:50 djk20 Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -4432,6 +4432,8 @@ sub cp_al {
 sub test_cp_al {
 	my $s = "/tmp/cp_al1";
 	my $d = "/tmp/cp_al2";
+	my $result;
+
 	-d $s || mkdir($s) || return (-1);
 	open(TT1, ">>$s/tt1") || return (-1);
 	close(TT1) || return (-1);
