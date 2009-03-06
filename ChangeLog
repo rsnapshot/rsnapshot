@@ -18,6 +18,8 @@ VERSION 1.3.x
 - Allow `backticks with options` in include_conf.
 - Fix inaccurate omission of --link-dest in test-mode output:
   http://sourceforge.net/mailarchive/forum.php?thread_name=4986E5A4.3090002%40Media-Brokers.com&forum_name=rsnapshot-discuss
+- rsnapshot-diff: Add -s option to show size of each file.
+  http://sourceforge.net/mailarchive/forum.php?thread_name=20080128082704.03568f0c%40szpak&forum_name=rsnapshot-discuss
 
 VERSION 1.3.1  (Aug 31 2008)
 ------------------------------------------------------------------------------

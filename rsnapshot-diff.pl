@@ -13,7 +13,7 @@
 # http://www.rsnapshot.org/
 ##############################################################################
 
-# $Id: rsnapshot-diff.pl,v 1.3 2006/05/31 19:51:03 drhyde Exp $
+# $Id: rsnapshot-diff.pl,v 1.4 2009/03/06 13:40:04 hashproduct Exp $
 
 =head1 NAME
 
@@ -32,8 +32,9 @@ my $program_name = 'rsnapshot-diff';
 my %opts;
 my $verbose = 0;
 my $ignore = 0;
+my $show_size = 0;
 
-my $result = getopts('vVhi', \%opts);
+my $result = getopts('vVhis', \%opts);
 
 # help
 if ($opts{'h'}) {
@@ -45,6 +46,7 @@ if ($opts{'h'}) {
     -h    show this help
     -v    be verbose
     -V    be more verbose (mutter about unchanged files)
+    -s    show the size of each changed file
     -i    ignore symlinks, directories, and special files in verbose output
     dir1  the first directory to look at
     dir2  the second directory to look at
@@ -94,6 +96,11 @@ as well as the summary at the end.
 Be more verbose - as well as listed changes, unchanged files will be listed
 too.
 
+=item -s (show size)
+
+Show the size of each changed file after the + or - sign.  To sort the files by
+decreasing size, use this option and run the output through "sort -k 2 -rn".
+
 =item -i (ignore)
 
 If verbosity is turned on, -i suppresses information about symlinks,
@@ -120,6 +127,8 @@ if ($opts{'V'}) { $verbose = 2; }
 # ignore
 if ($opts{'i'}) { $ignore = 1; }
 
+# size
+if ($opts{'s'}) { $show_size = 1; }
 
 if(!exists($ARGV[1]) || !-d $ARGV[0] || !-d $ARGV[1]) {
     die("$program_name\nUsage: $program_name [-vVhi] dir1 dir2\nType $program_name -h for details\n");
@@ -176,10 +185,11 @@ sub add {
     print "Adding ".join(', ', @added)."\n" if(DEBUG && @added);
     foreach(grep { !-d } @added) {
         $addedfiles++;
-        $addedspace += (mystat($_))[7];
+        my $size = (mystat($_))[7];
+        $addedspace += $size;
         # if ignore is on, only print files
         unless ($ignore && (-l || !-f)) {
-            print "+ $_\n" if($verbose);
+            print ($show_size ? "+ $size $_\n" : "+ $_\n") if($verbose);
         }
     }
     foreach my $dir (grep { !-l && -d } @added) {
@@ -193,10 +203,11 @@ sub remove {
     print "Removing ".join(', ', @removed)."\n" if(DEBUG && @removed);
     foreach(grep { !-d } @removed) {
         $deletedfiles++;
-        $deletedspace += (mystat($_))[7];
+        my $size = (mystat($_))[7];
+        $deletedspace += $size;
         # if ignore is on, only print files
         unless ($ignore && (-l || !-f)) {
-            print "- $_\n" if($verbose);
+            print ($show_size ? "- $size $_\n" : "- $_\n") if($verbose);
         }
     }
     foreach my $dir (grep { !-l && -d } @removed) {
