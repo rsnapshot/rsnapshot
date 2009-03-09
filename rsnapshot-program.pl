@@ -26,7 +26,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.412 2009/03/06 03:15:12 hashproduct Exp $
+# $Id: rsnapshot-program.pl,v 1.413 2009/03/09 05:38:23 hashproduct Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -4434,8 +4434,8 @@ sub cp_al {
 # return 1  if cp -al fails
 # return -1 if something else failed - test inconclusive
 sub test_cp_al {
-	my $s = "/tmp/cp_al1";
-	my $d = "/tmp/cp_al2";
+	my $s = "$config_vars{'snapshot_root'}/cp_al1";
+	my $d = "$config_vars{'snapshot_root'}/cp_al2";
 	my $result;
 
 	-d $s || mkdir($s) || return (-1);
