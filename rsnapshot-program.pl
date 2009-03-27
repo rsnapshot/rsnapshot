@@ -26,7 +26,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.413 2009/03/09 05:38:23 hashproduct Exp $
+# $Id: rsnapshot-program.pl,v 1.414 2009/03/27 21:54:02 djk20 Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -3713,8 +3713,7 @@ sub rsync_backup_point {
 	$result = 1;
 	if (0 == $test) {
 		while ($tryCount < $rsync_numtries && $result !=0) {
-			# join is Michael Ashley's fix for some filter/space problems		
-			$result = system(join(' ', @cmd_stack));
+			$result = system(@cmd_stack);
 			$tryCount += 1;
 		}
 
@@ -4775,8 +4774,7 @@ sub rsync_cleanup_after_native_cp_al {
 	print_cmd(@cmd_stack);
 	
 	if (0 == $test) {
-                # join is Michael Ashley's fix for some filter/space problems
-		my $result = system(join(' ', @cmd_stack));
+		my $result = system(@cmd_stack);
 		
 		if ($result != 0) {
 			# bitmask return value
