@@ -14,7 +14,7 @@
 
 @SET_MAKE@
 
-# $Id: Makefile.in,v 1.110 2009/03/13 23:53:26 djk20 Exp $ #
+# $Id: Makefile.in,v 1.111 2009/03/27 21:36:34 djk20 Exp $ #
 
 
 srcdir = @srcdir@
@@ -45,12 +45,14 @@ DIST_COMMON = README $(am__configure_deps) $(srcdir)/Makefile.am \
 	$(top_srcdir)/t/configtest.t.in $(top_srcdir)/t/gnu_cp.t.in \
 	$(top_srcdir)/t/relative_delete_bugfix.t.in \
 	$(top_srcdir)/t/rsync.t.in \
+	$(top_srcdir)/t/snapshot_root_with_space.t.in \
 	$(top_srcdir)/t/support/etc/configtest.conf.in \
 	$(top_srcdir)/t/support/etc/gnu_cp.conf.in \
 	$(top_srcdir)/t/support/etc/relative_delete_bugfix.conf.in \
-	$(top_srcdir)/t/support/etc/rsync.conf.in AUTHORS COPYING \
-	ChangeLog INSTALL NEWS TODO config.guess config.sub install-sh \
-	missing mkinstalldirs
+	$(top_srcdir)/t/support/etc/rsync.conf.in \
+	$(top_srcdir)/t/support/etc/snapshot_root_with_space.conf.in \
+	AUTHORS COPYING ChangeLog INSTALL NEWS TODO config.guess \
+	config.sub install-sh missing mkinstalldirs
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
@@ -61,8 +63,10 @@ mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_CLEAN_FILES = rsnapshot rsnapshot-diff rsnapshot.conf.default \
 	t/support/etc/configtest.conf t/support/etc/rsync.conf \
 	t/support/etc/gnu_cp.conf \
-	t/support/etc/relative_delete_bugfix.conf t/configtest.t \
-	t/rsync.t t/gnu_cp.t t/relative_delete_bugfix.t
+	t/support/etc/relative_delete_bugfix.conf \
+	t/support/etc/snapshot_root_with_space.conf t/configtest.t \
+	t/rsync.t t/gnu_cp.t t/relative_delete_bugfix.t \
+	t/snapshot_root_with_space.t
 am__installdirs = "$(DESTDIR)$(bindir)" "$(DESTDIR)$(man1dir)" \
 	"$(DESTDIR)$(sysconfdir)"
 binSCRIPT_INSTALL = $(INSTALL_SCRIPT)
@@ -225,6 +229,8 @@ t/support/etc/gnu_cp.conf: $(top_builddir)/config.status $(top_srcdir)/t/support
 	cd $(top_builddir) && $(SHELL) ./config.status $@
 t/support/etc/relative_delete_bugfix.conf: $(top_builddir)/config.status $(top_srcdir)/t/support/etc/relative_delete_bugfix.conf.in
 	cd $(top_builddir) && $(SHELL) ./config.status $@
+t/support/etc/snapshot_root_with_space.conf: $(top_builddir)/config.status $(top_srcdir)/t/support/etc/snapshot_root_with_space.conf.in
+	cd $(top_builddir) && $(SHELL) ./config.status $@
 t/configtest.t: $(top_builddir)/config.status $(top_srcdir)/t/configtest.t.in
 	cd $(top_builddir) && $(SHELL) ./config.status $@
 t/rsync.t: $(top_builddir)/config.status $(top_srcdir)/t/rsync.t.in
@@ -232,6 +238,8 @@ t/rsync.t: $(top_builddir)/config.status $(top_srcdir)/t/rsync.t.in
 t/gnu_cp.t: $(top_builddir)/config.status $(top_srcdir)/t/gnu_cp.t.in
 	cd $(top_builddir) && $(SHELL) ./config.status $@
 t/relative_delete_bugfix.t: $(top_builddir)/config.status $(top_srcdir)/t/relative_delete_bugfix.t.in
+	cd $(top_builddir) && $(SHELL) ./config.status $@
+t/snapshot_root_with_space.t: $(top_builddir)/config.status $(top_srcdir)/t/snapshot_root_with_space.t.in
 	cd $(top_builddir) && $(SHELL) ./config.status $@
 install-binSCRIPTS: $(bin_SCRIPTS)
 	@$(NORMAL_INSTALL)
