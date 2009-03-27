@@ -1,0 +1,12 @@
+#!/usr/bin/perl -w
+
+use strict;
+use Test::More tests => 1;
+
+print "Starting space test.\n";
+my $snap_root="t/support/files/snapshot root";
+#mkdir($snap_root)		unless -d $snap_root;
+
+ok(! `@PERL@ ./rsnapshot -c t/support/etc/snapshot_root_with_space.conf hourly`);
+
+`rm -f $snap_root`;

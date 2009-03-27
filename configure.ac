@@ -1,4 +1,4 @@
-dnl $Id: configure.ac,v 1.50 2009/02/26 23:28:26 djk20 Exp $
+dnl $Id: configure.ac,v 1.51 2009/03/27 21:32:54 djk20 Exp $
 
 AC_INIT(rsnapshot, 1.3.1.1, rsnapshot-discuss@lists.sourceforge.net)
 AM_INIT_AUTOMAKE
@@ -261,12 +261,14 @@ AC_CONFIG_FILES(t/support/etc/configtest.conf:t/support/etc/configtest.conf.in)
 AC_CONFIG_FILES(t/support/etc/rsync.conf:t/support/etc/rsync.conf.in)
 AC_CONFIG_FILES(t/support/etc/gnu_cp.conf:t/support/etc/gnu_cp.conf.in)
 AC_CONFIG_FILES(t/support/etc/relative_delete_bugfix.conf:t/support/etc/relative_delete_bugfix.conf.in)
+AC_CONFIG_FILES(t/support/etc/snapshot_root_with_space.conf:t/support/etc/snapshot_root_with_space.conf.in)
 
 dnl regression test scripts
 AC_CONFIG_FILES(t/configtest.t:t/configtest.t.in)
 AC_CONFIG_FILES(t/rsync.t:t/rsync.t.in)
 AC_CONFIG_FILES(t/gnu_cp.t:t/gnu_cp.t.in)
 AC_CONFIG_FILES(t/relative_delete_bugfix.t:t/relative_delete_bugfix.t.in)
+AC_CONFIG_FILES(t/snapshot_root_with_space.t:t/snapshot_root_with_space.t.in)
 
 
 AC_OUTPUT
