@@ -1,12 +1,20 @@
 #!/usr/bin/perl -w
 
 use strict;
-use Test::More tests => 1;
+use Test::More tests => 5;
 
-print "Starting space test.\n";
-my $snap_root="t/support/files/snapshot root";
-#mkdir($snap_root)		unless -d $snap_root;
+my $snap_root="t/support/snapshot root";
 
-ok(! `@PERL@ ./rsnapshot -c t/support/etc/snapshot_root_with_space.conf hourly`);
+# Make sure snap_root directory does not exist before we start 
+ok(! -d "$snap_root" || ! `rm -rf "$snap_root"`,
+	" snapshot root does not exist before testing starts");
 
-`rm -f $snap_root`;
+ok(! `@PERL@ ./rsnapshot -c t/support/etc/snapshot_root_with_space.conf hourly`,
+	" first rsnapshot ran");
+ok(! `@PERL@ ./rsnapshot -c t/support/etc/snapshot_root_with_space.conf hourly`,
+	" second rsnapshot ran");
+ok(-d "$snap_root/hourly.0" && -d "$snap_root/hourly.1",
+	" hourly.0 and hourly.1 directories exist afterward");
+
+ok(! `rm -rf "$snap_root"`,
+	" Removed snapshot root to clean up");
