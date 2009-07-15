@@ -13,7 +13,7 @@
 # http://www.rsnapshot.org/
 ##############################################################################
 
-# $Id: rsnapshot-diff.pl,v 1.4 2009/03/06 13:40:04 hashproduct Exp $
+# $Id: rsnapshot-diff.pl,v 1.5 2009/07/15 21:58:28 drhyde Exp $
 
 =head1 NAME
 
@@ -45,7 +45,7 @@ if ($opts{'h'}) {
 
     -h    show this help
     -v    be verbose
-    -V    be more verbose (mutter about unchanged files)
+    -V    be more verbose (mutter about unchanged files and about symlinks)
     -s    show the size of each changed file
     -i    ignore symlinks, directories, and special files in verbose output
     dir1  the first directory to look at
@@ -89,12 +89,12 @@ Displays help information
 =item -v (verbose)
 
 Be verbose.  This will spit out a list of all changes as they are encountered,
-as well as the summary at the end.
+apart from symlink, as well as the summary at the end.
 
 =item -V (more verbose)
 
-Be more verbose - as well as listed changes, unchanged files will be listed
-too.
+Be more verbose - as well as listing changed files, unchanged files and
+symlinks will be listed too.
 
 =item -s (show size)
 
@@ -189,7 +189,10 @@ sub add {
         $addedspace += $size;
         # if ignore is on, only print files
         unless ($ignore && (-l || !-f)) {
-            print ($show_size ? "+ $size $_\n" : "+ $_\n") if($verbose);
+            print ''.($show_size ? "+ $size $_" : "+ $_").
+	          (-l $_ ? ' (symlink)' : '').
+		  "\n"
+	        if($verbose == 2 || ($verbose == 1 && !-l $_));
         }
     }
     foreach my $dir (grep { !-l && -d } @added) {
@@ -207,7 +210,10 @@ sub remove {
         $deletedspace += $size;
         # if ignore is on, only print files
         unless ($ignore && (-l || !-f)) {
-            print ($show_size ? "- $size $_\n" : "- $_\n") if($verbose);
+            print ''.($show_size ? "- $size $_" : "+ $_").
+	          (-l $_ ? ' (symlink)' : '').
+		  "\n"
+	        if($verbose == 2 || ($verbose == 1 && !-l $_));
         }
     }
     foreach my $dir (grep { !-l && -d } @removed) {
