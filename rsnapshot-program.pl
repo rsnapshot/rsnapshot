@@ -26,7 +26,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.414 2009/03/27 21:54:02 djk20 Exp $
+# $Id: rsnapshot-program.pl,v 1.415 2009/10/16 23:24:40 djk20 Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -915,15 +915,8 @@ sub parse_config_file {
 				next;
 			}
 			
-			if (!defined($dest))	{
+			if (!defined($dest) || $dest eq "")	{
 				config_err($file_line_num, "$line - no destination path specified for backup point");
-				next;
-			}
-			
-			# make sure we have a local path for the destination
-			# (we do NOT want an absolute path)
-			if ( is_valid_local_abs_path($dest) ) {
-				config_err($file_line_num, "$line - Backup destination $dest must be a local, relative path");
 				next;
 			}
 			
@@ -1005,8 +998,9 @@ sub parse_config_file {
 			
 			# validate destination path
 			#
-			if ( is_valid_local_abs_path($dest) ) {
-				config_err($file_line_num, "$line - Full paths not allowed for backup destinations");
+			# make sure we have a local NON absolute path for dest
+			if ( ! is_valid_local_non_abs_path($dest) ) {
+				config_err($file_line_num, "$line - Backup destination $dest must be a local, relative path");
 				next;
 			}
 			
@@ -1147,8 +1141,8 @@ sub parse_config_file {
 			@script_argv = split(/\s+/, $full_script);
 			$script = $script_argv[0];
 			
-			# make sure the destination is a full path
-			if (1 == is_valid_local_abs_path($dest)) {
+			# make sure the destination is a relative path
+			if (0 == is_valid_local_non_abs_path($dest)) {
 				config_err($file_line_num, "$line - Backup destination $dest must be a local, relative path");
 				next;
 			}
@@ -2769,6 +2763,26 @@ sub is_valid_local_abs_path {
 	}
 	
 	return (0);
+}
+
+# accepts path
+# returns 1 if it's a syntactically valid non-absolute (relative) path
+# returns 0 otherwise
+# does not check for directory traversal, since we want to use 
+# a different error message if there is ".." in the path
+sub is_valid_local_non_abs_path {
+	my $path	= shift(@_);
+	
+	if (!defined($path)) { return (0); }
+	if ($path =~ m/^\//) {
+		return (0);		# Absolute path => bad
+	}
+	
+	if ($path =~ m/^\S/) {
+		 return (1);		# Starts with a non-whitespace => good
+	} else {
+		 return (0);		# Empty or starts with whitespace => bad
+	}
 }
 
 # accepts path
@@ -4912,7 +4926,7 @@ sub show_disk_usage {
 			print STDERR "ERROR: Directory traversal is not allowed\n";
 			exit(1);
 		}
-		if (is_valid_local_abs_path($dest_path)) {
+		if (! is_valid_local_non_abs_path($dest_path)) {
 			print STDERR "ERROR: Full paths are not allowed\n";
 			exit(1);
 		}
