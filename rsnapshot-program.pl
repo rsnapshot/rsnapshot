@@ -26,7 +26,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.415 2009/10/16 23:24:40 djk20 Exp $
+# $Id: rsnapshot-program.pl,v 1.416 2009/11/20 23:35:09 djk20 Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -3356,16 +3356,9 @@ sub rsync_backup_point {
 	# start looking for link_dest targets at interval.$start_num
 	my $start_num = 1;
 	
-	my $sync_dir_was_present = 0;
-	
 	# if we're doing a sync, we'll start looking at [lowest-interval].0 for a link_dest target
 	if ($interval eq 'sync') {
 		$start_num = 0;
-		
-		# remember now if the .sync directory exists
-		if ( -d "$config_vars{'snapshot_root'}/.sync" ) {
-			$sync_dir_was_present = 1;
-		}
 	}
 	
 	# look for the most recent link_dest target directory
@@ -3597,19 +3590,11 @@ sub rsync_backup_point {
 	if (1 == $link_dest) {
 		# bp_ref{'dest'} and snapshot_root have already been validated, but these might be blank
 		if (defined($interval_link_dest) && defined($interval_num_link_dest)) {
-			
-			# we don't use link_dest if we already synced once to this directory
-			if (0 && $sync_dir_was_present) { # always false
-				
-				# skip --link-dest, this is the second time the sync has been run, because the .sync directory already exists
-				
-			# default: push link_dest arguments onto cmd stack
-			} else {
-				push(
-					@rsync_long_args_stack,
-					"--link-dest=$config_vars{'snapshot_root'}/$interval_link_dest.$interval_num_link_dest/$$bp_ref{'dest'}"
-				);
-			}
+			# push link_dest arguments onto cmd stack
+			push(
+				@rsync_long_args_stack,
+				"--link-dest=$config_vars{'snapshot_root'}/$interval_link_dest.$interval_num_link_dest/$$bp_ref{'dest'}"
+			);
 		}
 	}
 	
