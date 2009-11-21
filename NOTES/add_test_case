@@ -18,6 +18,9 @@ vi configure.ac
 
 ./configure
 # To generate t/XYZ.t from t/XYZ.t.in etc
+# Note that starting 2009-11-21, "make test" will automatically generate
+# t/ABC.t from t/ABC.t.in, if needed.  This means you should not need to
+# run ./configure.
 
 make test
 # Verify that test works as expected - if not use vi and make test.
