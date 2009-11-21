@@ -1,4 +1,4 @@
-# $Id: Makefile.am,v 1.90 2009/11/21 06:02:31 djk20 Exp $ #
+# $Id: Makefile.am,v 1.91 2009/11/21 06:57:00 djk20 Exp $ #
 
 # rsnapshot version
 VERSION = 1.3.1.1
@@ -127,7 +127,10 @@ rsnapshot-$(VERSION).tar.gz: $(man_MANS) rpm-patch Makefile $(bin_SCRIPTS) $(sys
 	rm -rf rsnapshot-$(VERSION)/
 	@echo
 
-test: rsnapshot t/*.t
+# If you lack GNU make, you could use "test_cases = t/*.t" as an approximation.
+test_cases_in := $(wildcard t/*.t.in)
+test_cases := $(test_cases_in:%.in=%)
+test: rsnapshot $(test_cases)
 	@PERL@ -MTest::Harness -e 'runtests(glob "t/*.t")';
 
 bin_SCRIPTS = rsnapshot rsnapshot-diff
