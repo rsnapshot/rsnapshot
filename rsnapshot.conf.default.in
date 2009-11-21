@@ -2,13 +2,9 @@
 # rsnapshot.conf - rsnapshot configuration file #
 #################################################
 #                                               #
-# PLEASE BE AWARE OF THE FOLLOWING RULES:       #
+# PLEASE BE AWARE OF THE FOLLOWING RULE:        #
 #                                               #
 # This file requires tabs between elements      #
-#                                               #
-# Directories require a trailing slash:         #
-#   right: /home/                               #
-#   wrong: /home                                #
 #                                               #
 #################################################
 
@@ -160,7 +156,7 @@ lockfile	/var/run/rsnapshot.pid
 #include_file	/path/to/include/file
 #exclude_file	/path/to/exclude/file
 
-# If your version of rsync supports --link-dest, consider enable this.
+# If your version of rsync supports --link-dest, consider enabling this.
 # This is the best way to support special files (FIFOs, etc) cross-platform.
 # The default is 0 (off).
 #
@@ -182,9 +178,9 @@ lockfile	/var/run/rsnapshot.pid
 #use_lazy_deletes	0
 
 # Number of rsync re-tries. If you experience any network problems or
-# network card issues that tend to cause ssh to crap-out with
-# "Corrupted MAC on input" errors, for example, set this to a non-zero
-# value to have the rsync operation re-tried
+# network card issues that tend to cause ssh to fail with errors like
+# "Corrupted MAC on input", for example, set this to a non-zero value
+# to have the rsync operation re-tried.
 #
 #rsync_numtries 0
 
