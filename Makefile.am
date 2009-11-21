@@ -1,4 +1,4 @@
-# $Id: Makefile.am,v 1.89 2009/02/26 23:28:26 djk20 Exp $ #
+# $Id: Makefile.am,v 1.90 2009/11/21 06:02:31 djk20 Exp $ #
 
 # rsnapshot version
 VERSION = 1.3.1.1
@@ -127,7 +127,7 @@ rsnapshot-$(VERSION).tar.gz: $(man_MANS) rpm-patch Makefile $(bin_SCRIPTS) $(sys
 	rm -rf rsnapshot-$(VERSION)/
 	@echo
 
-test: rsnapshot
+test: rsnapshot t/*.t
 	@PERL@ -MTest::Harness -e 'runtests(glob "t/*.t")';
 
 bin_SCRIPTS = rsnapshot rsnapshot-diff
