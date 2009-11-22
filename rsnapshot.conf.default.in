@@ -77,15 +77,15 @@ snapshot_root	/.snapshots/
 #cmd_postexec	/path/to/postexec/script
 
 #########################################
-#           BACKUP INTERVALS            #
+#     BACKUP LEVELS / INTERVALS         #
 # Must be unique and in ascending order #
-# i.e. alpha, beta, gamma, etc.      #
+# e.g. alpha, beta, gamma, etc.         #
 #########################################
 
-interval	alpha	6
-interval	beta	7
-interval	gamma	4
-#interval	delta	3
+retain	alpha	6
+retain	beta	7
+retain	gamma	4
+#retain	delta	3
 
 ############################################
 #              GLOBAL OPTIONS              #
