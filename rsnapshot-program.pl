@@ -26,7 +26,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.416 2009/11/20 23:35:09 djk20 Exp $
+# $Id: rsnapshot-program.pl,v 1.417 2010/03/06 21:56:06 hashproduct Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -3798,8 +3798,9 @@ sub split_long_args_with_quotes {
         # in quotes and got a close quote
 	    } elsif($thischar eq $inquotes) {
 	        $inquotes = '';
-            }
-	    $stack[-1] .= $thischar;
+            } else {
+	        $stack[-1] .= $thischar;
+	    }
 	}
 	if($inquotes) {
 	    print_err("Unbalanced quotes in $argname", 1);
