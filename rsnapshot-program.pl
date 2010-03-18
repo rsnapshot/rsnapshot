@@ -26,7 +26,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.418 2010/03/18 02:26:29 hashproduct Exp $
+# $Id: rsnapshot-program.pl,v 1.419 2010/03/18 02:26:44 hashproduct Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -4877,7 +4877,7 @@ sub cmd_rm_rf {
 # that's why the print_* subroutines aren't used here.
 #
 sub show_disk_usage {
-	my $intervals_str = '';
+	my @du_dirs = ();
 	my $cmd_du	= 'du';
 	my $du_args	= $default_du_args;
 	my $dest_path = '';
@@ -4924,7 +4924,7 @@ sub show_disk_usage {
 		# if we have a .sync directory, that will have the most recent files, and should be first
 		if (-d "$config_vars{'snapshot_root'}/.sync") {
 			if (-r "$config_vars{'snapshot_root'}/.sync") {
-				$intervals_str .= "$config_vars{'snapshot_root'}/.sync ";
+				push(@du_dirs, "$config_vars{'snapshot_root'}/.sync");
 			}
 		}
 		
@@ -4935,22 +4935,24 @@ sub show_disk_usage {
 			
 			for (my $i=0; $i < $max_interval_num; $i++) {
 				if (-r "$config_vars{'snapshot_root'}/$interval.$i/$dest_path") {
-					$intervals_str .= "$config_vars{'snapshot_root'}/$interval.$i/$dest_path ";
+					push(@du_dirs, "$config_vars{'snapshot_root'}/$interval.$i/$dest_path");
 				}
 			}
 		}
 	}
-	chop($intervals_str);
 	
 	# if we can see any of the intervals, find out how much space they're taking up
 	# most likely we can either see all of them or none at all
-	if ('' ne $intervals_str) {
+	if (scalar(@du_dirs) > 0) {
+		my @cmd_stack = ($cmd_du,
+			split_long_args_with_quotes('du_args', $du_args),
+			@du_dirs);
 		if (defined($verbose) && ($verbose >= 3)) {
-			print wrap_cmd("$cmd_du $du_args $intervals_str"), "\n\n";
+			print wrap_cmd(join(' ', @cmd_stack)), "\n\n";
 		}
 		
 		if (0 == $test) {
-			$retval = system("$cmd_du $du_args $intervals_str");
+			$retval = system(@cmd_stack);
 			if (0 == $retval) {
 				# exit showing success
 				exit(0);
