@@ -26,7 +26,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.417 2010/03/06 21:56:06 hashproduct Exp $
+# $Id: rsnapshot-program.pl,v 1.418 2010/03/18 02:26:29 hashproduct Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -4879,7 +4879,7 @@ sub cmd_rm_rf {
 sub show_disk_usage {
 	my $intervals_str = '';
 	my $cmd_du	= 'du';
-	my $du_args	= '-csh';
+	my $du_args	= $default_du_args;
 	my $dest_path = '';
 	my $retval;
 	
