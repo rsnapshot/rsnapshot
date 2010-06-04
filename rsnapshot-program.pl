@@ -26,7 +26,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.419 2010/03/18 02:26:44 hashproduct Exp $
+# $Id: rsnapshot-program.pl,v 1.420 2010/06/04 04:45:08 hashproduct Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -1585,6 +1585,7 @@ sub validate_config_file {
 			my $tmp_dest_path = $$bp_ref{'dest'};
 			
 			# normalize multiple slashes, and strip trailing slash
+			# FIXME: Decide whether to allow an empty destination path, and reject or handle such paths accordingly.
 			$tmp_dest_path =~ s/\/+/\//g;
 			$tmp_dest_path =~ s/\/$//;
 			
@@ -1616,7 +1617,7 @@ sub validate_config_file {
 					$tmp_b  .= '/';
 					$tmp_bs .= '/';
 					
-					if ("$b_dest" =~ m/^$bs_dest/) {
+					if ("$tmp_b" =~ m/^$tmp_bs/) {
 						# duplicate entries, stop here
 						print_err (
 							"destination conflict between \"$tmp_b\" and \"$tmp_bs\" in backup / backup_script entries",
@@ -1646,7 +1647,7 @@ sub validate_config_file {
 					$path1 .= '/';
 					$path2 .= '/';
 					
-					if (("$path1" =~ m/$path2/) or ("$path2" =~ m/$path1/)) {
+					if (("$path1" =~ m/^$path2/) or ("$path2" =~ m/^$path1/)) {
 						print_err (
 							"destination conflict between \"$path1\" and \"$path2\" in multiple backup_script entries", 1
 						);
