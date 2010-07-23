@@ -26,7 +26,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.423 2010/07/23 09:39:09 hashproduct Exp $
+# $Id: rsnapshot-program.pl,v 1.424 2010/07/23 09:39:25 hashproduct Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -3261,7 +3261,6 @@ sub rsync_backup_point {
 	my @cmd_stack				= undef;
 	my $src						= $$bp_ref{'src'};
 	my $result					= undef;
-	my $using_relative			= 0;
 	
 	my $linux_lvm                     = 0;
 	my $linux_lvm_oldpwd              = undef;
@@ -3555,35 +3554,9 @@ sub rsync_backup_point {
 		}
 	}
 	
-	# figure out if we're using the --relative flag to rsync.
-	# this influences how the source paths are constructed below.
-	foreach my $rsync_long_arg (@rsync_long_args_stack) {
-		if (defined($rsync_long_arg)) {
-			if ('--relative' eq $rsync_long_arg) {
-				$using_relative = 1;
-			}
-		}
-	}
-	
-	if (defined($src)) {
-		# make sure that the source path doesn't have a trailing slash if we're using the --relative flag
-		# this is to work around a bug in most versions of rsync that don't properly delete entries
-		# when the --relative flag is set.
-		#
-		if (1 == $using_relative) {
-			$src = remove_trailing_slash( "$src" );
-			$src = add_slashdot_if_root( "$src" );
-			
-		# no matter what, we need a source path
-		} else {
-			# put a trailing slash on it if we know it's a directory and it doesn't have one
-			if ((-d "$src") && ($$bp_ref{'src'} !~ /\/$/)) {
-				$src .= '/';
-				
-			} else {
-				# just use it as-is
-			}
-		}
+	# put a trailing slash on the source if we know it's a directory and it doesn't have one
+	if ((-d "$src") && ($$bp_ref{'src'} !~ /\/$/)) {
+		$src .= '/';
 	}
 	
 	# BEGIN RSYNC COMMAND ASSEMBLY
