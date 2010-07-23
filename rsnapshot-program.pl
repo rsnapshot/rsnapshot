@@ -26,7 +26,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.422 2010/07/23 09:38:51 hashproduct Exp $
+# $Id: rsnapshot-program.pl,v 1.423 2010/07/23 09:39:09 hashproduct Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -3259,7 +3259,7 @@ sub rsync_backup_point {
 	
 	# other misc variables
 	my @cmd_stack				= undef;
-	my $src						= undef;
+	my $src						= $$bp_ref{'src'};
 	my $result					= undef;
 	my $using_relative			= 0;
 	
@@ -3267,11 +3267,6 @@ sub rsync_backup_point {
 	my $linux_lvm_oldpwd              = undef;
 	my $linux_lvm_snapshotname        = undef;
 
-	if (defined($$bp_ref{'src'})) {
-		$src = remove_trailing_slash( "$$bp_ref{'src'}" );
-		$src = add_slashdot_if_root( "$src" );
-	}
-	
 	# if we're using link-dest later, that target depends on whether we're doing a 'sync' or a regular interval
 	# if we're doing a "sync", then look at [lowest-interval].0 instead of [cur-interval].1
 	my $interval_link_dest;
@@ -3326,8 +3321,8 @@ sub rsync_backup_point {
 			$tmp_rollback_point	= remove_trailing_slash($tmp_rollback_point);
 			
 			if ("$tmp_dest" eq "$tmp_rollback_point") {
-				print_warn ("$$bp_ref{'src'} skipped due to rollback plan", 2);
-				syslog_warn("$$bp_ref{'src'} skipped due to rollback plan");
+				print_warn ("$src skipped due to rollback plan", 2);
+				syslog_warn("$src skipped due to rollback plan");
 				return (undef);
 			}
 		}
@@ -3400,11 +3395,11 @@ sub rsync_backup_point {
 	# SEE WHAT KIND OF SOURCE WE'RE DEALING WITH
 	#
 	# local filesystem
-	if ( is_real_local_abs_path($$bp_ref{'src'}) ) {
+	if ( is_real_local_abs_path($src) ) {
 		# no change
 		
 	# if this is a user@host:/path, use ssh
-	} elsif ( is_ssh_path($$bp_ref{'src'}) ) {
+	} elsif ( is_ssh_path($src) ) {
 		
 		# if we have any args for SSH, add them
 		if ( defined($ssh_args) ) {
@@ -3416,17 +3411,17 @@ sub rsync_backup_point {
 		}
 		
 	# anonymous rsync
-	} elsif ( is_anon_rsync_path($$bp_ref{'src'}) ) {
+	} elsif ( is_anon_rsync_path($src) ) {
 		# make rsync quiet if we're running in quiet mode
 		if ($verbose < 2) { $rsync_short_args .= 'q'; }
 		
 	# cwrsync path
-	} elsif ( is_cwrsync_path($$bp_ref{'src'}) ) {
+	} elsif ( is_cwrsync_path($src) ) {
 		# make rsync quiet if we're running in quiet mode
 		if ($verbose < 2) { $rsync_short_args .= 'q'; }
 		
 	# LVM path
-	} elsif ( is_linux_lvm_path($$bp_ref{'src'}) ) {
+	} elsif ( is_linux_lvm_path($src) ) {
 		# take LVM snapshot and mount, reformat src into local path
 
         unless (defined($config_vars{'linux_lvm_snapshotsize'})) {
@@ -3443,10 +3438,10 @@ sub rsync_backup_point {
         }
 
         # parse LVM src ('lvm://vgname/volname/path')
-        my ($linux_lvmvgname,$linux_lvmvolname, $linux_lvmpath) = ($$bp_ref{'src'} =~ m|^lvm://([^/]+)/([^/]+)/(.*)$|);
+        my ($linux_lvmvgname,$linux_lvmvolname, $linux_lvmpath) = ($src =~ m|^lvm://([^/]+)/([^/]+)/(.*)$|);
         # lvmvolname and/or path could be the string "0", so test for 'defined':
         unless (defined($linux_lvmvgname) and defined($linux_lvmvolname) and defined($linux_lvmpath)) {
-            bail("Could not understand LVM source \"$$bp_ref{'src'}\" in backup_lowest_interval()");
+            bail("Could not understand LVM source \"$src\" in backup_lowest_interval()");
         }
         
         # assemble and execute LVM snapshot command
@@ -3501,12 +3496,12 @@ sub rsync_backup_point {
             }
         }
 
-        $$bp_ref{'src'} = './' .  $linux_lvmpath;
+        $src = './' .  $linux_lvmpath;
         $linux_lvm = 1;
 		
 	# this should have already been validated once, but better safe than sorry
 	} else {
-		bail("Could not understand source \"$$bp_ref{'src'}\" in backup_lowest_interval()");
+		bail("Could not understand source \"$src\" in backup_lowest_interval()");
 	}
 	
 	# if we're using --link-dest, we'll need to specify the link-dest directory target
@@ -3530,7 +3525,7 @@ sub rsync_backup_point {
 	#
 	if (
 		(1 == $link_dest) &&
-		(is_file($$bp_ref{'src'})) &&
+		(is_file($src)) &&
 		defined($interval_link_dest) &&
 		defined($interval_num_link_dest) &&
 		(-f "$config_vars{'snapshot_root'}/$interval_link_dest.$interval_num_link_dest/$$bp_ref{'dest'}")
@@ -3570,24 +3565,23 @@ sub rsync_backup_point {
 		}
 	}
 	
-	if (defined($$bp_ref{'src'})) {
+	if (defined($src)) {
 		# make sure that the source path doesn't have a trailing slash if we're using the --relative flag
 		# this is to work around a bug in most versions of rsync that don't properly delete entries
 		# when the --relative flag is set.
 		#
 		if (1 == $using_relative) {
-			$src = remove_trailing_slash( "$$bp_ref{'src'}" );
+			$src = remove_trailing_slash( "$src" );
 			$src = add_slashdot_if_root( "$src" );
 			
 		# no matter what, we need a source path
 		} else {
 			# put a trailing slash on it if we know it's a directory and it doesn't have one
-			if ((-d "$$bp_ref{'src'}") && ($$bp_ref{'src'} !~ /\/$/)) {
-				$src = $$bp_ref{'src'} . '/';
+			if ((-d "$src") && ($$bp_ref{'src'} !~ /\/$/)) {
+				$src .= '/';
 				
-			# just use it as-is
 			} else {
-				$src = $$bp_ref{'src'};
+				# just use it as-is
 			}
 		}
 	}
