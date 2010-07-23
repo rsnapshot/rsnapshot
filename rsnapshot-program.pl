@@ -26,7 +26,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.420 2010/06/04 04:45:08 hashproduct Exp $
+# $Id: rsnapshot-program.pl,v 1.421 2010/07/23 09:35:55 hashproduct Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -2674,8 +2674,11 @@ sub is_ssh_path {
 	if ($path =~ m/^\s/)				{ return (undef); }
 	if ($path =~ m/\s$/)				{ return (undef); }
 	
-	# must have user@host:[~]/path syntax for ssh
-	if ($path =~ m/^.*?\@.*?:~?\/.*$/)	{ return (1); }
+	# don't match paths that look like URIs (rsync://, etc.)
+	if ($path =~ m,://,)				{ return (undef); }
+	
+	# must have [user@]host:[~]/path syntax for ssh
+	if ($path =~ m/^(.*?\@)?.*?:~?\/.*$/)	{ return (1); }
 	
 	return (0);
 }
@@ -6604,6 +6607,15 @@ B<backup   root@example.com:/etc/       example.com/>
 
 Backs up root@example.com:/etc/ to <snapshot_root>/<retain>.0/example.com/etc/
 using rsync over ssh
+
+=back
+
+B<backup   example.com:/etc/       example.com/>
+
+=over 4
+
+Same thing but let ssh choose the remote username (as specified in
+~/.ssh/config, otherwise the same as the local username)
 
 =back
 
