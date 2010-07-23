@@ -26,7 +26,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.421 2010/07/23 09:35:55 hashproduct Exp $
+# $Id: rsnapshot-program.pl,v 1.422 2010/07/23 09:38:51 hashproduct Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -1016,106 +1016,26 @@ sub parse_config_file {
 			}
 			
 			# remember src/dest
-			# also, first check to see that we're not backing up the snapshot directory
-			#
-			# there are now two methods of making sure the user doesn't accidentally backup their snapshot_root
-			# recursively in a backup point: the good way, and the old way.
-			#
-			# in the old way, when rsnapshot detects the snapshot_root is under a backup point, the files and
-			# directories under that backup point are enumerated and get turned into several distinct rsync calls.
-			# for example, if you tried to back up "/", it would do a separate rsync invocation for "/bin/", "/etc/",
-			# and so on. this wouldn't be so bad except that it makes certain rsync options like one_fs and the
-			# include/exclude rules act funny since rsync isn't starting where the user expects (and there is no
-			# really good way to provide a workaround, either automatically or manually). however, changing this
-			# behaviour that users have come to rely on would not be very nice, so the old code path is left here
-			# for those that specifically enable the rsync_long_args parameter but don't set the --relative option.
-			#
-			# the new way is much nicer, but relies on the --relative option to rsync, which only became the default
-			# in rsnapshot 1.2.0 (primarily for this feature). basically, rsnapshot dynamically constructs an exclude
-			# path to avoid backing up the snapshot_root. clean and simple. many thanks to bharat mediratta for coming
-			# up with this solution!!!
-			#
-			# we only need to do any of this if the user IS trying to backup the snapshot_root
-			if ((is_real_local_abs_path("$src")) && ($config_vars{'snapshot_root'} =~ m/^$src/)) {
-				
-				# old, less good, backward compatibility method
-				if ( defined($config_vars{'rsync_long_args'}) && ($config_vars{'rsync_long_args'} !~ m/--relative/) ) {
-					# remove trailing slashes from source and dest, since we will be using our own
-					$src    = remove_trailing_slash($src);
-					$dest   = remove_trailing_slash($dest);
-					
-					opendir(SRC, "$src") or bail("Could not open $src");
-					
-					while (my $node = readdir(SRC)) {
-						next if ($node =~ m/^\.\.?$/o); # skip '.' and '..'
-						
-						# avoid double slashes from root filesystem
-						if ($src eq '/') {
-							$src = '';
-						}
-						
-						# if this directory is in the snapshot_root, skip it
-						# otherwise, back it up
-						#
-						if ("$config_vars{'snapshot_root'}" !~ m/^$src\/$node/) {
-							my %hash;
-							
-							$hash{'src'}    = "$src/$node";
-							$hash{'dest'}   = "$dest/$node";
-							
-							if (defined($opts_ref)) {
-								$hash{'opts'} = $opts_ref;
-							}
-							push(@backup_points, \%hash);
-						}
-					}
-					closedir(SRC);
-					
-				# new, shiny, preferred method. the way of the future.
-				} else {
-					my %hash;
-					my $exclude_path;
-					
-					$hash{'src'}	= $src;
-					$hash{'dest'}	= $dest;
-					if (defined($opts_ref)) {
-						$hash{'opts'} = $opts_ref;
-					}
-					
-					# dynamically generate an exclude path to avoid backing up the snapshot root.
-					# depending on the backup point and the snapshot_root location, this could be
-					# almost anything. it's tempting to think that just using the snapshot_root as
-					# the exclude path will work, but it doesn't. instead, this an exclude path that
-					# starts relative to the backup point. for example, if snapshot_root is set to
-					# /backup/private/snapshots/, and the backup point is /backup/, the exclude path
-					# will be private/snapshots/. the trailing slash does not appear to matter.
-					#
-					# it's also worth noting that this doesn't work at all without the --relative
-					# flag being passed to rsync (which is now the default).
-					#
-					# this method was added by bharat mediratta, and replaces my older, less elegant
-					# attempt to run multiple invocations of rsync instead.
-					#
-					$exclude_path = $config_vars{'snapshot_root'};
-					$exclude_path =~ s/^$src//;
-					
-					# pass it to rsync on this backup point only
-					$hash{'opts'}{'extra_rsync_long_args'} .= sprintf(' --exclude=%s', $exclude_path);
-					
-					push(@backup_points, \%hash);
-				}
-				
-			# the user is NOT trying to backup the snapshot_root. no workarounds required at all.
-			} else {
-				my %hash;
-				$hash{'src'}	= $src;
-				$hash{'dest'}	= $dest;
-				if (defined($opts_ref)) {
-					$hash{'opts'} = $opts_ref;
-				}
-				push(@backup_points, \%hash);
+			my %hash;
+			$hash{'src'}	= $src;
+			$hash{'dest'}	= $dest;
+			if (defined($opts_ref)) {
+				$hash{'opts'} = $opts_ref;
 			}
 			
+			# If this backup point contains the snapshot root, add an exclude to avoid
+			# backing up the snapshot root recursively.  The exclude is anchored (by virtue
+			# of the leading slash of $config_vars{'snapshot_root'}) and applies to absolute
+			# paths (the "/" modifier), so it should match the snapshot root and nothing else
+			# regardless of --relative.
+			#
+			# This should work in any version of rsync since 2.6.4 except for 2.6.7, due to a bug:
+			# http://lists.samba.org/archive/rsync/2006-March/014953.html
+			if ((is_real_local_abs_path("$src")) && ($config_vars{'snapshot_root'} =~ m/^$src/)) {
+				$hash{'opts'}{'extra_rsync_long_args'} .= sprintf(' --filter=-/_%s', $config_vars{'snapshot_root'});
+			}
+			
+			push(@backup_points, \%hash);
 			next;
 		}
 		
