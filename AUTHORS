@@ -87,3 +87,5 @@ David Grant <davidgrant@gmail.com>
 Matt McCutchen <matt@mattmccutchen.net>
     - Wrote rsnapshot-copy (to copy snapshot roots using rsync --link-dest)
 
+Imran Chaudhry <ichaudhry@gmail.com>
+    - added -H to rsnapshot-diff
