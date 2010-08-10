@@ -13,7 +13,7 @@
 # http://www.rsnapshot.org/
 ##############################################################################
 
-# $Id: rsnapshot-diff.pl,v 1.5 2009/07/15 21:58:28 drhyde Exp $
+# $Id: rsnapshot-diff.pl,v 1.6 2010/08/10 13:00:15 drhyde Exp $
 
 =head1 NAME
 
@@ -34,20 +34,21 @@ my $verbose = 0;
 my $ignore = 0;
 my $show_size = 0;
 
-my $result = getopts('vVhis', \%opts);
+my $result = getopts('vVhHis', \%opts);
 
 # help
 if ($opts{'h'}) {
     print qq{
-    $program_name [-vVhi] dir1 dir2
+    $program_name [-vVHhi] dir1 dir2
 
     $program_name shows the differences between two 'rsnapshot' backups.
 
     -h    show this help
+    -H    also show "human" sizes - MB and GB as well as just bytes
+    -i    ignore symlinks, directories, and special files in verbose output
+    -s    show the size of each changed file
     -v    be verbose
     -V    be more verbose (mutter about unchanged files and about symlinks)
-    -s    show the size of each changed file
-    -i    ignore symlinks, directories, and special files in verbose output
     dir1  the first directory to look at
     dir2  the second directory to look at
 
@@ -86,6 +87,21 @@ and added.
 
 Displays help information
 
+=item -H (human)
+
+Display more human-friendly numbers - as well as showing the number of
+bytes changed, also show MB and GB.
+
+=item -i (ignore)
+
+If verbosity is turned on, -i suppresses information about symlinks,
+directories, and special files.
+
+=item -s (show size)
+
+Show the size of each changed file after the + or - sign.  To sort the files by
+decreasing size, use this option and run the output through "sort -k 2 -rn".
+
 =item -v (verbose)
 
 Be verbose.  This will spit out a list of all changes as they are encountered,
@@ -95,16 +111,6 @@ apart from symlink, as well as the summary at the end.
 
 Be more verbose - as well as listing changed files, unchanged files and
 symlinks will be listed too.
-
-=item -s (show size)
-
-Show the size of each changed file after the + or - sign.  To sort the files by
-decreasing size, use this option and run the output through "sort -k 2 -rn".
-
-=item -i (ignore)
-
-If verbosity is turned on, -i suppresses information about symlinks,
-directories, and special files.
 
 =item dir1 and dir2
 
@@ -135,16 +141,26 @@ if(!exists($ARGV[1]) || !-d $ARGV[0] || !-d $ARGV[1]) {
 }
 
 my($dirold, $dirnew) = @ARGV;
+my($addedfiles, $addedspace, $deletedfiles, $deletedspace) = (0, 0, 0, 0);
+my($addedspace_mb, $addedspace_gb, $deletedspace_mb, $deletedspace_gb) = (0, 0, 0, 0);
+
 ($dirold, $dirnew) = ($dirnew, $dirold) if(-M $dirold < -M $dirnew);
 print "Comparing $dirold to $dirnew\n";
 
-my($addedfiles, $addedspace, $deletedfiles, $deletedspace) = (0, 0, 0, 0);
-
 compare_dirs($dirold, $dirnew);
 
+$addedspace_mb = sprintf("%.2f", $addedspace / (1024 * 1024));
+$addedspace_gb = sprintf("%.2f", $addedspace_mb / 1024);
+$deletedspace_mb = sprintf("%.2f", $deletedspace / (1024 * 1024));
+$deletedspace_gb = sprintf("%.2f", $deletedspace_mb / 1024);
+
 print "Between $dirold and $dirnew:\n";
-print "  $addedfiles were added, taking $addedspace bytes;\n";
-print "  $deletedfiles were removed, saving $deletedspace bytes;\n";
+print "  $addedfiles were added, taking $addedspace bytes".
+  ($opts{H} ? " ($addedspace_mb MB, $addedspace_gb GB)" : '').
+  "\n";
+print "  $deletedfiles were removed, saving $deletedspace bytes".
+  ($opts{H} ? " ($deletedspace_mb MB, $deletedspace_gb GB)" : '').
+  "\n";
 
 sub compare_dirs {
     my($old, $new) = @_;
@@ -254,7 +270,7 @@ David Cantrell E<lt>david@cantrell.org.ukE<gt>
 
 =head1 COPYRIGHT
 
-Copyright 2005 David Cantrell
+Copyright 2005-2010 David Cantrell
 
 =head1 LICENCE
 
