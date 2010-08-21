@@ -26,7 +26,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.424 2010/07/23 09:39:25 hashproduct Exp $
+# $Id: rsnapshot-program.pl,v 1.425 2010/08/21 10:52:51 drhyde Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -3679,10 +3679,12 @@ sub split_long_args_with_quotes {
 		$#stack++;
 	        next;
             # not in quotes and got a quote? remember that we're in quotes
-            } elsif($thischar =~ /['"]/ && !$inquotes) {
+	    # NB the unnecessary \ are to appease emacs
+            } elsif($thischar =~ /[\'\"]/ && !$inquotes) {
 	        $inquotes = $thischar;
             # in quotes and got a different quote? no nesting allowed
-            } elsif($thischar =~ /['"]/ && $inquotes ne $thischar) {
+	    #   more emacs appeasement
+            } elsif($thischar =~ /[\'\"]/ && $inquotes ne $thischar) {
 	        print_err("Nested quotes not allowed in $argname", 1);
 	        syslog_err("Nested quotes not allowed in $argname");
 		exit(1);
@@ -7195,3 +7197,8 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 =cut
 
+# more emacs-appeasement
+######################################################################
+### Local Variables:
+### tab-width: 4
+### End:
