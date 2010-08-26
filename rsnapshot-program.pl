@@ -26,7 +26,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.425 2010/08/21 10:52:51 drhyde Exp $
+# $Id: rsnapshot-program.pl,v 1.426 2010/08/26 14:45:28 drhyde Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -224,7 +224,7 @@ if ($cmd eq 'configtest') {
 }
 
 # parse config file (if it exists)
-if (defined($config_file) && (-f "$config_file") && (-r "$config_file")) {
+if (defined($config_file) && -r $config_file) {
 	# if there is a problem, this subroutine will exit the program and notify the user of the error
 	parse_config_file();
 	validate_config_file();
