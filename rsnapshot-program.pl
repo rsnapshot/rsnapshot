@@ -26,7 +26,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.426 2010/08/26 14:45:28 drhyde Exp $
+# $Id: rsnapshot-program.pl,v 1.427 2011/01/08 11:50:05 djk20 Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -529,8 +529,8 @@ sub parse_config_file {
 		# ignore blank lines
 		if (is_blank($line)) { next; }
 
-		# if the next line begins with space or tab it belongs to this line
-		while (defined ($configs[$file_line_num]) && $configs[$file_line_num] =~ /^(\t|\s)/) {
+		# if the next line begins with space or tab and also has a non-space character, then it belongs to this line as a continuation.
+		while (defined ($configs[$file_line_num]) && $configs[$file_line_num] =~ /^[\t ]+\S/) {
 			(my $newline = $configs[$file_line_num]) =~ s/^\s+|\s+$//g;
 			$line = $line . "\t" . $newline;
 			$file_line_num++;
