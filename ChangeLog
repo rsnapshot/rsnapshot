@@ -5,6 +5,9 @@ http://www.rsnapshot.org/
 
 VERSION 1.3.x
 ------------------------------------------------------------------------------
+- check for SIGPIPE, mainly in case cron fails when trying to mail
+  (this is probably why rsnapshot dies mysteriously if it outputs when
+  called by cron on a system which does not have mail working).
 - add test case for -t showing --link-dest when there is only one snapshot
 - if gnu_cp_al fails, test out a simple cp -al command before suggesting
   that the cp does not support -al.

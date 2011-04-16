@@ -26,7 +26,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.427 2011/01/08 11:50:05 djk20 Exp $
+# $Id: rsnapshot-program.pl,v 1.428 2011/04/16 10:54:06 djk20 Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -187,6 +187,8 @@ $SIG{'INT'}		= sub { bail('rsnapshot was sent INT signal... cleaning up');  };
 $SIG{'QUIT'}	= sub { bail('rsnapshot was sent QUIT signal... cleaning up'); };
 $SIG{'ABRT'}	= sub { bail('rsnapshot was sent ABRT signal... cleaning up'); };
 $SIG{'TERM'}	= sub { bail('rsnapshot was sent TERM signal... cleaning up'); };
+# For a PIPE error, we dont want any more output so set $verbose less than 1.
+$SIG{'PIPE'}	= sub { $verbose = 0; bail('rsnapshot was sent PIPE signal... Hint: if rsnapshot is running from cron, check that mail is installed on this system, or redirect stdout and stderr in cron job'); };
 
 ########################################
 ###      CORE PROGRAM STRUCTURE      ###
