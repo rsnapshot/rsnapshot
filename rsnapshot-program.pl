@@ -26,7 +26,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.428 2011/04/16 10:54:06 djk20 Exp $
+# $Id: rsnapshot-program.pl,v 1.429 2011/04/19 15:37:28 drhyde Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -285,7 +285,10 @@ chdir($config_vars{'snapshot_root'});
 handle_interval( $cmd );
 
 # if we have a lockfile, remove it
-remove_lockfile();
+# however, this will have already been done if use_lazy_deletes is turned
+#   on, and there may be a lockfile from another process now in place,
+#   so in that case don't just blindly delete!
+remove_lockfile() unless($use_lazy_deletes);
 
 # if we got this far, the program is done running
 # write to the log and syslog with the status of the outcome
@@ -2278,9 +2281,12 @@ sub add_lockfile {
 }
 
 # accepts no arguments
-# accepts the path to a lockfile and tries to remove it
-# returns undef if lockfile isn't defined in the config file, and 1 upon success
-# also, it can exit the program with a value of 1 if it can't remove the lockfile
+#
+# returns undef if lockfile isn't defined in the config file
+# return 1 upon success or if there's no lockfile to remove
+# warn if the PID in the lockfile is not the same as the PID of this process
+# exit with a value of 1 if it can't read the lockfile
+# exit with a value of 1 if it can't remove the lockfile
 #
 # we don't use bail() to exit on error, because that would call
 # this subroutine twice in the event of a failure
@@ -2294,6 +2300,17 @@ sub remove_lockfile {
 	my $result = undef;
 	
 	if ( -e "$lockfile" ) {
+	        if(open(LOCKFILE, $lockfile)) {
+		  chomp(my $locked_pid = <LOCKFILE>);
+		  close(LOCKFILE);
+		  if($locked_pid != $$) {
+		    print_warn("About to remove lockfile $lockfile which belongs to a different process (this is OK if it's a stale lock)");
+		  }
+		} else {
+		  print_err ("Could not read lockfile $lockfile: $!", 0);
+		  syslog_err("Error! Could not read lockfile $lockfile: $!");
+		  exit(1);
+		}
 		print_cmd("rm -f $lockfile");
 		if (0 == $test) {
 			$result = unlink($lockfile);
