@@ -26,7 +26,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.429 2011/04/19 15:37:28 drhyde Exp $
+# $Id: rsnapshot-program.pl,v 1.430 2011/05/09 13:19:24 drhyde Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -624,7 +624,7 @@ sub parse_config_file {
 					next;
 				}
 				# make sure it's writable
-				if ( ! -w "$value" ) {
+				if ( $cmd ne 'du' && ! -w "$value" ) {
 					config_err($file_line_num, "$line - snapshot_root exists but is not writable");
 					next;
 				}
