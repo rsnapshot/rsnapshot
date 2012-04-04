@@ -26,7 +26,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.430 2011/05/09 13:19:24 drhyde Exp $
+# $Id: rsnapshot-program.pl,v 1.431 2012/04/04 12:09:07 drhyde Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -4288,7 +4288,7 @@ sub rotate_higher_interval {
 			exit(1);
 		}
 	} else {
-		print_msg("$config_vars{'snapshot_root'}/$prev_interval.$prev_interval_max not present (yet), nothing to copy", 3);
+		print_msg("$config_vars{'snapshot_root'}/$prev_interval.$prev_interval_max not present (yet), nothing to copy", 2);
 	}
 }
 
