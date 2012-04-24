@@ -26,7 +26,7 @@
 #                                                                      #
 ########################################################################
 
-# $Id: rsnapshot-program.pl,v 1.431 2012/04/04 12:09:07 drhyde Exp $
+# $Id: rsnapshot-program.pl,v 1.432 2012/04/24 21:37:11 drhyde Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -2167,33 +2167,19 @@ sub get_current_date {
 	# 4 = month + 1
 	# 5 = year + 1900
 	
-	# example date format (just like Apache logs)
-	# 28/Feb/2004:23:45:59
-	
-	my @months = ('Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec');
-	
+	# example date format (ISO 8601)
+	# 2012-04-24T22:30:13 (used to be 28/Feb/2004:23:45:59, like Apache)
 	my @fields = localtime(time());
 	
-	my $datestr =
-					# day of month
-					sprintf("%02i", $fields[3]) .
-					'/' .
-					# name of month
-					$months[$fields[4]] .
-					'/' .
-					# year
-					($fields[5]+1900) .
-					':' .
-					# hours (24 hour clock)
-					sprintf("%02i", $fields[2]) .
-					':' .
-					# minutes
-					sprintf("%02i", $fields[1]) .
-					':' .
-					# seconds
-					sprintf("%02i", $fields[0]);
-	
-	return ($datestr);
+	return sprintf(
+	    "%04i-%02i-%02iT%02i:%02i:%02i",
+	    $fields[5] + 1900,
+	    $fields[4] + 1,
+	    $fields[3],
+	    $fields[2],
+	    $fields[1],
+	    $fields[0]
+	);
 }
 
 # accepts no arguments
