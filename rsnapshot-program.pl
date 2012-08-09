@@ -1094,6 +1094,19 @@ sub parse_config_file {
 			next;
 		}
 		
+		# BACKUP EXEC - just run a simple command
+		if ($var eq 'backup_exec') {
+			my %hash;
+			if (!defined($value)) {
+				config_err($file_line_num, "$line - a command to be executed must be provided");
+				next;
+			}
+			$hash{'cmd'} = $value;
+			$line_syntax_ok = 1;
+			push(@backup_points, \%hash);
+			next;
+		}
+
 		# GLOBAL OPTIONS from the config file
 		# ALL ARE OPTIONAL
 		#
@@ -1507,6 +1520,9 @@ sub validate_config_file {
 		
 		# remember where the destination paths are...
 		foreach my $bp_ref (@backup_points) {
+			# skip for backup_exec since it uses no destination
+			next if (defined($$bp_ref{'cmd'}));
+
 			my $tmp_dest_path = $$bp_ref{'dest'};
 			
 			# normalize multiple slashes, and strip trailing slash
@@ -2985,7 +3001,7 @@ sub backup_lowest_interval {
 	}
 	
 	# sync live filesystem data and backup script output to $interval.0
-	# loop through each backup point and backup script
+	# loop through each backup point, backup exec, and backup script
 	foreach my $bp_ref (@backup_points) {
 		
 		# rsync the given backup point into the snapshot root
@@ -3024,6 +3040,10 @@ sub backup_lowest_interval {
 				}
 			}
 			
+		# run a simple command
+		} elsif (defined($$bp_ref{'cmd'})) {
+			exec_cmd($$bp_ref{'cmd'});
+
 		# this should never happen
 		} else {
 			bail('invalid backup point data in backup_lowest_interval()');
