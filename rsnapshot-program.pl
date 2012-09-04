@@ -5414,6 +5414,11 @@ sub copy_symlink {
 	# This is done in two steps:
 	# Reading/dereferencing the link, and creating a new one
 	#
+	# Why not just hard link the symlink?
+	# see http://www.rsnapshot.org/security/2005/001.html
+	# and also msgid <5036B23B.3000606@scubaninja.com> on
+	# rsnapshot-discuss, on 2012-08-23
+	#
 	# Step 1: READ THE LINK
 	if (($verbose > 4) or ($loglevel > 4)) {
 		my $cmd_string = "readlink(\"$src\")\n";
