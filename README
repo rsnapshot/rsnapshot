@@ -7,6 +7,8 @@ and you are welcome to redistribute it under certain conditions.
 See the GNU General Public Licence for details.
 
 For installation or upgrade instructions, read INSTALL
+
+If you want to work on improving rsnapshot, please see README.developers
 ------------------------------------------------------------------------------
 
 rsnapshot is a filesystem snapshot utility based on rsync.
