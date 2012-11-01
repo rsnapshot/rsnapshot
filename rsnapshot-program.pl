@@ -1094,7 +1094,7 @@ sub parse_config_file {
 			next;
 		}
 		
-		# BACKUP EXEC - just run a simple command
+		# BACKUP EXEC - just run a unix command
     if ($var eq 'backup_exec') {
       my %hash;
       my $cmd = $value;
