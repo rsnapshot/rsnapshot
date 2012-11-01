@@ -1,0 +1,8 @@
+#!/usr/bin/perl
+
+use strict;
+use Test::More tests => 1;
+
+# check for backup_exec behavior
+# the last line in the config file is supposed to fail
+ok(! `@PERL@ ./rsnapshot -c t/support/etc/backup_exec.conf hourly`);

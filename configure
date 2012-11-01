@@ -2339,6 +2339,7 @@ CMD_DU="cmd_du		$DU"
 
           ac_config_files="$ac_config_files t/snapshot_root_with_space.t:t/snapshot_root_with_space.t.in"
 
+          ac_config_files="$ac_config_files t/backup_exec.t:t/backup_exec.t.in"
 
 
 cat >confcache <<\_ACEOF

@@ -1095,17 +1095,28 @@ sub parse_config_file {
 		}
 		
 		# BACKUP EXEC - just run a simple command
-		if ($var eq 'backup_exec') {
-			my %hash;
-			if (!defined($value)) {
-				config_err($file_line_num, "$line - a command to be executed must be provided");
-				next;
-			}
-			$hash{'cmd'} = $value;
-			$line_syntax_ok = 1;
-			push(@backup_points, \%hash);
-			next;
-		}
+    if ($var eq 'backup_exec') {
+      my %hash;
+      my $cmd = $value;
+      my $importance = $value2;
+      if (!defined($cmd)) {
+        config_err($file_line_num, "$line - a command to be executed must be provided");
+        next;
+      }
+      # Valid importance level options: 'optional', 'required'.
+      # Default value if not specified: 'optional'
+      if (!defined($importance)) {
+        $importance = 'optional';
+      } elsif ($importance ne 'optional' && $importance ne 'required') {
+        config_err($file_line_num, "$line - requirement level \"$importance\" is invalid");
+        next;
+      }
+      $hash{'cmd'} = $cmd;
+      $hash{'importance'} = $importance;
+      $line_syntax_ok = 1;
+      push(@backup_points, \%hash);
+      next;
+    }
 
 		# GLOBAL OPTIONS from the config file
 		# ALL ARE OPTIONAL
@@ -3041,8 +3052,15 @@ sub backup_lowest_interval {
 			}
 			
 		# run a simple command
-		} elsif (defined($$bp_ref{'cmd'})) {
-			exec_cmd($$bp_ref{'cmd'});
+    } elsif (defined($$bp_ref{'cmd'})) {
+      my $rc = exec_cmd($$bp_ref{'cmd'});
+      if ($rc != 0) {
+        if ($$bp_ref{'importance'} eq 'required') {
+          bail("Fatal! \"$$bp_ref{'cmd'}\" returned \"$rc\"");
+        } else {
+          print_err("Warning! \"$$bp_ref{'cmd'}\" returned \"$rc\"", 2);
+        }
+      } 
 
 		# this should never happen
 		} else {
@@ -6617,6 +6635,23 @@ additional disk space will be taken up.
 
 =back
 
+B<backup_exec      ssh root@1.2.3.4 "du -sh /.offsite_backup"                     optional/>
+B<backup_exec      rsync -az /.snapshots/daily.0 root@1.2.3.4:/.offsite_backup/   required/>
+B<backup_exec      /bin/true/>
+
+=over 4
+
+backup_exec simply runs the command listed. The second argument is not
+required and defaults to a value of 'optional'. It specifies the importance
+that the command return 0. Valid values are 'optional' and 'required'. If the
+command is specified as optional, a non-zero exit status from the command will
+result in a warning message being output. If the command is specified as
+'required', a non-zero exit status from the command will result in an error
+message being output and rsnapshot itself will exit with a non-zero exit
+status.
+
+=back
+
 =back
 
 Remember that tabs must separate all elements, and that
@@ -6666,6 +6701,7 @@ Putting it all together (an example file):
     backup              root@mail.foo.com:/home/  mail.foo.com/
     backup              rsync://example.com/pub/  example.com/pub/
     backup              lvm://vg0/xen-home/       lvm-vg0/xen-home/
+    backup_exec         echo "backup finished!"
 
 =back
 
