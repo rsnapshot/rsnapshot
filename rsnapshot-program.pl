@@ -4726,7 +4726,7 @@ sub rm_rf {
 	
 	# extra bonus safety feature!
 	# confirm that whatever we're deleting must be inside the snapshot_root
-	if ("$path" !~ m/^$config_vars{'snapshot_root'}/o) {
+	if (index($path, $config_vars{'snapshot_root'}) != 0) { 
 		bail("rm_rf() tried to delete something outside of $config_vars{'snapshot_root'}! Quitting now!");
 	}
 	
