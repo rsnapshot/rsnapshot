@@ -943,7 +943,7 @@ sub parse_config_file {
 				
 			# syntactically valid remote ssh?
 			} elsif ( is_ssh_path($src) ) {
-				# if it's an absolute ssh path, make sure we have ssh
+				# if it's an ssh path, make sure we have ssh
 				if (!defined($config_vars{'cmd_ssh'})) {
 					config_err($file_line_num, "$line - Cannot handle $src, cmd_ssh not defined in $config_file");
 					next;
@@ -2588,7 +2588,7 @@ sub is_blank {
 }
 
 # accepts path
-# returns 1 if it's a valid ssh absolute path
+# returns 1 if it's a valid ssh path
 # returns 0 otherwise
 sub is_ssh_path {
 	my $path = shift(@_);
@@ -2602,8 +2602,8 @@ sub is_ssh_path {
 	# don't match paths that look like URIs (rsync://, etc.)
 	if ($path =~ m,://,)				{ return (undef); }
 	
-	# must have [user@]host:[~]/path syntax for ssh
-	if ($path =~ m/^(.*?\@)?.*?:~?\/.*$/)	{ return (1); }
+	# must have [user@]host:[~.]/path syntax for ssh
+	if ($path =~ m/^(.*?\@)?.*?:[~.]?\/.*$/)	{ return (1); }
 	
 	return (0);
 }
@@ -3402,7 +3402,7 @@ sub rsync_backup_point {
 	if ( is_real_local_abs_path($src) ) {
 		# no change
 		
-	# if this is a user@host:/path, use ssh
+	# if this is a user@host:/path (or ...:./path, or ...:~/...), use ssh
 	} elsif ( is_ssh_path($src) ) {
 		
 		# if we have any args for SSH, add them
