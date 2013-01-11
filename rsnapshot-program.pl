@@ -1060,23 +1060,18 @@ sub parse_config_file {
 				next;
 			}
 			
-			if (!defined($dest)) {
-				config_err($file_line_num, "$line - no destination path specified");
-				next;
-			}
-			
 			# get the base name of the script, not counting any arguments to it
 			@script_argv = split(/\s+/, $full_script);
 			$script = $script_argv[0];
 			
-			# make sure the destination is a relative path
-			if (0 == is_valid_local_non_abs_path($dest)) {
+			# make sure the destination is a full path
+			if (defined($dest) && 0 == is_valid_local_non_abs_path($dest)) {
 				config_err($file_line_num, "$line - Backup destination $dest must be a local, relative path");
 				next;
 			}
 			
 			# make sure we aren't traversing directories (exactly 2 dots can't be next to each other)
-			if (1 == is_directory_traversal($dest)) {
+			if (defined($dest) && 1 == is_directory_traversal($dest)) {
 				config_err($file_line_num, "$line - Directory traversal attempted in $dest");
 				next;
 			}
@@ -1088,7 +1083,9 @@ sub parse_config_file {
 			}
 			
 			$hash{'script'}	= $full_script;
-			$hash{'dest'}	= $dest;
+			if (defined($dest)) {
+				$hash{'dest'}	= $dest;
+			}
 			
 			$line_syntax_ok = 1;
 			
@@ -1510,26 +1507,29 @@ sub validate_config_file {
 		
 		# remember where the destination paths are...
 		foreach my $bp_ref (@backup_points) {
-			my $tmp_dest_path = $$bp_ref{'dest'};
-			
-			# normalize multiple slashes, and strip trailing slash
-			# FIXME: Decide whether to allow an empty destination path, and reject or handle such paths accordingly.
-			$tmp_dest_path =~ s/\/+/\//g;
-			$tmp_dest_path =~ s/\/$//;
-			
-			# backup
-			if (defined($$bp_ref{'src'})) {
-				push(@backup_dest, $tmp_dest_path);
+			# if $$bp_ref{'dest'} id configured
+			if (defined($$bp_ref{'dest'})) {
+				my $tmp_dest_path = $$bp_ref{'dest'};
 				
-			# backup_script
-			} elsif (defined($$bp_ref{'script'})) {
-				push(@backup_script_dest, $tmp_dest_path);
+				# normalize multiple slashes, and strip trailing slash
+				# FIXME: Decide whether to allow an empty destination path, and reject or handle such paths accordingly.
+				$tmp_dest_path =~ s/\/+/\//g;
+				$tmp_dest_path =~ s/\/$//;
 				
-			# something else is wrong
-			} else {
-				print_err ("logic error in parse_config_file(): a backup point has no src and no script", 1);
-				syslog_err("logic error in parse_config_file(): a backup point has no src and no script");
-				exit(1);
+				# backup
+				if (defined($$bp_ref{'src'})) {
+					push(@backup_dest, $tmp_dest_path);
+					
+				# backup_script
+				} elsif (defined($$bp_ref{'script'})) {
+					push(@backup_script_dest, $tmp_dest_path);
+					
+				# something else is wrong
+				} else {
+					print_err ("logic error in parse_config_file(): a backup point has no src and no script", 1);
+					syslog_err("logic error in parse_config_file(): a backup point has no src and no script");
+					exit(1);
+				}
 			}
 		}
 		
@@ -3072,6 +3072,10 @@ sub backup_lowest_interval {
 				}
 			}
 			
+		# execute backup script without destination
+		} elsif ( !defined($$bp_ref{'dest'}) && defined($$bp_ref{'script'}) ) {
+			exec_backup_script( $$id_ref{'interval'}, $bp_ref );
+			
 		# this should never happen
 		} else {
 			bail('invalid backup point data in backup_lowest_interval()');
@@ -3825,8 +3829,10 @@ sub exec_backup_script {
 	my $cwd = cwd();
 	
 	# create $interval.0/$$bp_ref{'dest'} directory if it doesn't exist
-	#
-	create_backup_point_dir($interval, $bp_ref);
+	# if $$bp_ref{'dest'} configured
+	if (defined($$bp_ref{'dest'})) {
+		create_backup_point_dir($interval, $bp_ref);
+	}
 	
 	# work in a temp dir, and make this the source for the rsync operation later
 	# not having a trailing slash is a subtle distinction. it allows us to use
@@ -3891,8 +3897,10 @@ sub exec_backup_script {
 			print_err ("backup_script $$bp_ref{'script'} returned $retval", 2);
 			syslog_err("backup_script $$bp_ref{'script'} returned $retval");
 			
-			# if the backup script failed, roll back to the last good data
-			push(@rollback_points, $$bp_ref{'dest'} );
+			# if the backup script failed, roll back to the last good data if $$bp_ref{'dest'} configured
+			if (defined($$bp_ref{'dest'})) {
+				push(@rollback_points, $$bp_ref{'dest'} );
+		   }
 		}
 	}
 	
@@ -3908,68 +3916,71 @@ sub exec_backup_script {
 		chdir($cwd);
 	}
 	
-	# if we're using link_dest, pull back the previous files (as links) that were moved up if any.
-	# this is because in this situation, .0 will always be empty, so we'll pull select things
-	# from .1 back to .0 if possible. these will be used as a baseline for diff comparisons by
-	# sync_if_different() down below.
-	if (1 == $link_dest) {
-		my $lastdir;
-		my $curdir;
-		
-		if ($interval eq 'sync') {
-			$lastdir	= "$config_vars{'snapshot_root'}/" . $intervals[0]->{'interval'} . ".0/$$bp_ref{'dest'}";
-			$curdir		= "$config_vars{'snapshot_root'}/.sync/$$bp_ref{'dest'}";
-		} else {
-			$lastdir	= "$config_vars{'snapshot_root'}/$interval.1/$$bp_ref{'dest'}";
-			$curdir		= "$config_vars{'snapshot_root'}/$interval.0/$$bp_ref{'dest'}";
-		}
-		
-		# make sure we have a slash at the end
-		if ($lastdir !~ m/\/$/) {
-			$lastdir .= '/';
-		}
-		if ($curdir !~ m/\/$/) {
-			$curdir .= '/';
-		}
-		
-		# if we even have files from last time
-		if ( -e "$lastdir" ) {
+	# synchronize $$bp_ref{'dest'} if configured with script output in $tmpdir
+	if (defined($$bp_ref{'dest'})) {
+		# if we're using link_dest, pull back the previous files (as links) that were moved up if any.
+		# this is because in this situation, .0 will always be empty, so we'll pull select things
+		# from .1 back to .0 if possible. these will be used as a baseline for diff comparisons by
+		# sync_if_different() down below.
+		if (1 == $link_dest) {
+			my $lastdir;
+			my $curdir;
 			
-			# and we're not somehow clobbering an existing directory (shouldn't happen)
-			if ( ! -e "$curdir" ) {
+			if ($interval eq 'sync') {
+				$lastdir	= "$config_vars{'snapshot_root'}/" . $intervals[0]->{'interval'} . ".0/$$bp_ref{'dest'}";
+				$curdir		= "$config_vars{'snapshot_root'}/.sync/$$bp_ref{'dest'}";
+			} else {
+				$lastdir	= "$config_vars{'snapshot_root'}/$interval.1/$$bp_ref{'dest'}";
+				$curdir		= "$config_vars{'snapshot_root'}/$interval.0/$$bp_ref{'dest'}";
+			}
+			
+			# make sure we have a slash at the end
+			if ($lastdir !~ m/\/$/) {
+				$lastdir .= '/';
+			}
+			if ($curdir !~ m/\/$/) {
+				$curdir .= '/';
+			}
+			
+			# if we even have files from last time
+			if ( -e "$lastdir" ) {
 				
-				# call generic cp_al() subroutine
-				display_cp_al( "$lastdir", "$curdir" );
-				if (0 == $test) {
-					$result = cp_al( "$lastdir", "$curdir" );
-					if (! $result) {
-						print_err("Warning! cp_al(\"$lastdir\", \"$curdir/\")", 2);
+				# and we're not somehow clobbering an existing directory (shouldn't happen)
+				if ( ! -e "$curdir" ) {
+					
+					# call generic cp_al() subroutine
+					display_cp_al( "$lastdir", "$curdir" );
+					if (0 == $test) {
+						$result = cp_al( "$lastdir", "$curdir" );
+						if (! $result) {
+							print_err("Warning! cp_al(\"$lastdir\", \"$curdir/\")", 2);
+						}
 					}
 				}
 			}
 		}
-	}
+		
+		# sync the output of the backup script into this snapshot interval
+		# this is using a native function since rsync doesn't quite do what we want
+		#
+		# rsync doesn't work here because it sees that the timestamps are different, and
+		# insists on changing things even if the files are bit for bit identical on content.
+		#
+		# check to see where we're syncing to
+		my $target_dir;
+		if ($interval eq 'sync') {
+			$target_dir = "$config_vars{'snapshot_root'}/.sync/$$bp_ref{'dest'}";
+		} else {
+			$target_dir = "$config_vars{'snapshot_root'}/$interval.0/$$bp_ref{'dest'}";
+		}
+		
+		print_cmd("sync_if_different(\"$tmpdir\", \"$target_dir\")");
 	
-	# sync the output of the backup script into this snapshot interval
-	# this is using a native function since rsync doesn't quite do what we want
-	#
-	# rsync doesn't work here because it sees that the timestamps are different, and
-	# insists on changing things even if the files are bit for bit identical on content.
-	#
-	# check to see where we're syncing to
-	my $target_dir;
-	if ($interval eq 'sync') {
-		$target_dir = "$config_vars{'snapshot_root'}/.sync/$$bp_ref{'dest'}";
-	} else {
-		$target_dir = "$config_vars{'snapshot_root'}/$interval.0/$$bp_ref{'dest'}";
-	}
-	
-	print_cmd("sync_if_different(\"$tmpdir\", \"$target_dir\")");
-	
-	if (0 == $test) {
-		$result = sync_if_different("$tmpdir", "$target_dir");
-		if (!defined($result)) {
-			print_err("Warning! sync_if_different(\"$tmpdir\", \"$$bp_ref{'dest'}\") returned undef", 2);
+		if (0 == $test) {
+			$result = sync_if_different("$tmpdir", "$target_dir");
+			if (!defined($result)) {
+				print_err("Warning! sync_if_different(\"$tmpdir\", \"$$bp_ref{'dest'}\") returned undef", 2);
+			}
 		}
 	}
 	
@@ -6617,6 +6628,17 @@ snapshot for each lvm:// entry.
 =back
 
 
+B<backup_script       /bin/date "+ backup ended at %c"/>
+
+=over 4
+
+In this example, we specify a script or program to run. This script will be
+executed in a temporary location in case it output files. Those files would not
+be backuped.
+
+=back
+
+
 B<backup_script      /usr/local/bin/backup_database.sh   db_backup/>
 
 =over 4
@@ -6693,6 +6715,7 @@ Putting it all together (an example file):
     backup              /etc/                     localhost/
     backup              /home/                    localhost/
     backup_script       /usr/local/bin/backup_mysql.sh  mysql_backup/
+    backup_script       /bin/date "+ backup ended at %c"
 
     backup              root@foo.com:/etc/        foo.com/
     backup              root@foo.com:/home/       foo.com/
