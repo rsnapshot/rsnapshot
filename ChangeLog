@@ -5,6 +5,7 @@ http://www.rsnapshot.org/
 
 VERSION 1.3.x
 ------------------------------------------------------------------------------
+- rsnapshot-diff: Fixed removed files reported as addition (+ mark)
 - check for SIGPIPE, mainly in case cron fails when trying to mail
   (this is probably why rsnapshot dies mysteriously if it outputs when
   called by cron on a system which does not have mail working).
