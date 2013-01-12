@@ -226,7 +226,7 @@ sub remove {
         $deletedspace += $size;
         # if ignore is on, only print files
         unless ($ignore && (-l || !-f)) {
-            print ''.($show_size ? "- $size $_" : "+ $_").
+            print ''.($show_size ? "- $size $_" : "- $_").
 	          (-l $_ ? ' (symlink)' : '').
 		  "\n"
 	        if($verbose == 2 || ($verbose == 1 && !-l $_));
