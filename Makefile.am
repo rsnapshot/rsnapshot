@@ -16,11 +16,11 @@ doc: man html
 man: $(man_MANS)
 rsnapshot.1 : rsnapshot
 	@# perl 5.8 for this
-	/usr/bin/pod2man -c '' -n 'rsnapshot' -r '' rsnapshot > rsnapshot.1
+	pod2man -c '' -n 'rsnapshot' -r '' rsnapshot > rsnapshot.1
 	
 rsnapshot-diff.1 : rsnapshot-diff
 	@# perl 5.8 for this
-	/usr/bin/pod2man -c '' -n 'rsnapshot-diff' -r '' rsnapshot-diff > rsnapshot-diff.1
+	pod2man -c '' -n 'rsnapshot-diff' -r '' rsnapshot-diff > rsnapshot-diff.1
 	
 html: rsnapshot.html
 rsnapshot.html: rsnapshot
