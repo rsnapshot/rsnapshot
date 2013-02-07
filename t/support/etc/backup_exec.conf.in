@@ -1,7 +1,7 @@
 config_version	1.2
 snapshot_root	@CWD@/t/support/snapshots/
 cmd_rsync		@RSYNC@
-interval		hourly	6
+interval		hourly	2
 backup_exec		ls -ld /* | grep "/u"
 backup_exec		echo "hello world!"
 backup_exec		echo 'hello world!'

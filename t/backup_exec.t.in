@@ -4,8 +4,15 @@ use strict;
 use Test::More tests => 2;
 
 # Ensure passing behavior
-ok(`@PERL@ ./rsnapshot -c t/support/etc/backup_exec.conf hourly`);
-# Uncomment the line that should fail
+system("@PERL@ ./rsnapshot -c t/support/etc/backup_exec.conf hourly");
+# Shift bits 8 places to get the Unix return code 
+my $rc = $? >> 8;
+ok($rc == 2);
+
+# Uncomment the line that should fail in the test config file
 `sed -i s/#backup_exec/backup_exec/ t/support/etc/backup_exec.conf`;
 # Ensure failing behavior
-not ok(`@PERL@ ./rsnapshot -c t/support/etc/backup_exec.conf hourly`);
+system("@PERL@ ./rsnapshot -c t/support/etc/backup_exec.conf hourly");
+$rc = $? >> 8;
+ok($rc == 1);
+

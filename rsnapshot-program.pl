@@ -3056,9 +3056,9 @@ sub backup_lowest_interval {
       my $rc = exec_cmd($$bp_ref{'cmd'});
       if ($rc != 0) {
         if ($$bp_ref{'importance'} eq 'required') {
-          bail("Fatal! \"$$bp_ref{'cmd'}\" returned \"$rc\"");
+          bail("\"$$bp_ref{'cmd'}\" returned \"$rc\". Exiting.");
         } else {
-          print_err("Warning! \"$$bp_ref{'cmd'}\" returned \"$rc\"", 2);
+          print_warn("\"$$bp_ref{'cmd'}\" returned \"$rc\"", 2);
         }
       } 
 
@@ -4182,7 +4182,7 @@ sub touch_interval_dir {
 	# update mtime of $interval.0 to reflect the time this snapshot was taken
 	print_cmd("touch $config_vars{'snapshot_root'}/$interval_dir/");
 	
-	if (0 == $test) {
+	if (0 == $test && -e "$config_vars{'snapshot_root'}/$interval_dir/") {
 		my $result = utime(time(), time(), "$config_vars{'snapshot_root'}/$interval_dir/");
 		if (0 == $result) {
 			bail("Could not utime(time(), time(), \"$config_vars{'snapshot_root'}/$interval_dir/\");");
