@@ -147,9 +147,6 @@ my $loglevel	= undef;
 my $default_verbose		= 2;
 my $default_loglevel	= 3;
 
-# keep track of whether the configured logger is from busybox
-my $use_busybox_logger = 0;
-
 # assume the config file is valid until we find an error
 my $config_perfect = 1;
 
@@ -1588,10 +1585,6 @@ sub validate_config_file {
 			}
 		}
 	}
-	# CHECK FOR POTENTIAL BUSYBOX LOGGER
-	if ($config_vars{'cmd_logger'}) {
-		$use_busybox_logger = is_busybox_logger($config_vars{'cmd_logger'});
-	}
 }
 
 # accepts a string of options
@@ -2105,28 +2098,15 @@ sub syslog_msg {
 	if (defined($config_vars{'cmd_logger'})) {
 		# print out our call to syslog
 		if (defined($verbose) && ($verbose >= 4)) {
-			if (1 == $use_busybox_logger) {
-				print_cmd("$config_vars{'cmd_logger'} -p $facility.$level -t rsnapshot $msg");
-			} else {
-				print_cmd("$config_vars{'cmd_logger'} -i -p $facility.$level -t rsnapshot $msg");
-			}
+			print_cmd("$config_vars{'cmd_logger'} -i -p $facility.$level -t rsnapshot $msg");
 		}
 		
 		# log to syslog
 		if (0 == $test) {
-			if (1 == $use_busybox_logger) {
-				$result = system($config_vars{'cmd_logger'}, '-p', "$facility.$level", '-t', 'rsnapshot', $msg);
-			} else {
-				$result = system($config_vars{'cmd_logger'}, '-i', '-p', "$facility.$level", '-t', 'rsnapshot', $msg);
-			}
-			
+			$result = system($config_vars{'cmd_logger'}, '-i', '-p', "$facility.$level", '-t', 'rsnapshot', $msg);
 			if (0 != $result) {
 				print_warn("Could not log to syslog:", 2);
-				if (1 == $use_busybox_logger) {
-					print_warn("$config_vars{'cmd_logger'} -p $facility.$level -t rsnapshot $msg", 2);
-				} else {
-					print_warn("$config_vars{'cmd_logger'} -i -p $facility.$level -t rsnapshot $msg", 2);
-				}
+				print_warn("$config_vars{'cmd_logger'} -i -p $facility.$level -t rsnapshot $msg", 2);
 			}
 		}
 	}
@@ -2798,34 +2778,6 @@ sub is_valid_script {
 	if ( -f "$script" && -x "$script" && is_real_local_abs_path($script)) {
 		return 1;
 	}
-	return 0;
-}
-
-# accepts a string with the logger
-# checks to see if the logger is from busybox
-# returns 1 if busybox, 0 otherwise
-sub is_busybox_logger {
-	my $logger = shift(@_);
-	
-	# if $logger is a symlink
-	if ( -l "$logger") {
-		if (($verbose > 4) or ($loglevel > 4)) {
-			my $cmd_string = "readlink(\"$logger\")\n";
-			
-			if ($verbose > 4) {
-				print_cmd($cmd_string);
-			} elsif ($loglevel > 4) {
-				log_msg($cmd_string, 4);
-			}
-		}
-		
-		# if $logger is a symlink to busybox command
-		if ( readlink($logger) =~ m/busybox/ ) {
-			log_msg("configured logger \"$logger\" is link to busybox", 5);
-			return 1;
-		}
-	}
-	
 	return 0;
 }
 
