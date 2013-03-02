@@ -180,6 +180,9 @@ my $have_printed_run_string = 0;
 my $rsync_include_args		= undef;
 my $rsync_include_file_args	= undef;
 
+# default is to exit immediately when the lockfile is taken
+$config_vars{'lockfile_wait'} = 0;
+
 ########################################
 ###         SIGNAL HANDLERS          ###
 ########################################
@@ -269,7 +272,7 @@ log_startup();
 set_posix_locale();
 
 # if we're using a lockfile, try to add it
-# (the program will bail if one exists and it's not stale)
+# (the program will bail or wait if one exists and it's not stale)
 add_lockfile();
 
 # create snapshot_root if it doesn't exist (and no_create_root != 1)
@@ -1162,6 +1165,21 @@ sub parse_config_file {
 			$line_syntax_ok = 1;
 			next;
 		}
+        # LOCKFILE_WAIT
+        if ($var eq 'lockfile_wait') {
+            if (!defined($value)) {
+                config_err($file_line_num, "$line - lockfile_wait can not be blank");
+                next;
+            }
+            if (!is_nonnegative_integer($value)) {
+                config_err(
+                    $file_line_num, "$line - \"$value\" is not a legal value for lockfile_wait, must be nonnegative integer"
+                );
+            }
+            $config_vars{'lockfile_wait'} = $value;
+            $line_syntax_ok = 1;
+            next;
+        }
 		# INCLUDE
 		if ($var eq 'include') {
 			if (!defined($rsync_include_args)) {
@@ -2210,14 +2228,14 @@ sub log_startup {
 }
 
 # accepts no arguments
+# waits until it can create a lockfile or exits with 1 as the return value
 # returns undef if lockfile isn't defined in the config file, and 1 upon success
-# also, it can make the program exit with 1 as the return value if it can't create the lockfile
 #
 # we don't use bail() to exit on error, because that would remove the
 # lockfile that may exist from another invocation
 #
-# if a lockfile exists, we try to read it (and stop if we can't) to get a PID,
-# then see if that PID exists.  If it does, we stop, otherwise we assume it's
+# if a lockfile exists, we try to read it (and wait if we can't) to get a PID,
+# then see if that PID exists.  If it does, we wait, otherwise we assume it's
 # a stale lock and remove it first.
 sub add_lockfile {
 	# if we don't have a lockfile defined, just return undef
@@ -2233,34 +2251,46 @@ sub add_lockfile {
 		syslog_err("Lockfile $lockfile is not a valid file name");
 		exit(1);
 	}
-	
-	# does a lockfile already exist?
-        if (1 == is_real_local_abs_path($lockfile)) {
-            if(!open(LOCKFILE, $lockfile)) {
-                print_err ("Lockfile $lockfile exists and can't be read, can not continue!", 1);
-                syslog_err("Lockfile $lockfile exists and can't be read, can not continue");
-                exit(1);
-            }
-            my $pid = <LOCKFILE>;
-            chomp($pid);
-            close(LOCKFILE);
-            if(kill(0, $pid)) {
-                print_err ("Lockfile $lockfile exists and so does its process, can not continue");
-                syslog_err("Lockfile $lockfile exists and so does its process, can not continue");
-                exit(1);
-            } else {
-		if(1 == $stop_on_stale_lockfile) {
-		    print_err ("Stale lockfile $lockfile detected. You need to remove it manually to continue", 1);
-		    syslog_err("Stale lockfile $lockfile detected. Exiting.");
-		    exit(1);
-	        } else {
-	            print_warn("Removing stale lockfile $lockfile", 1);
-		    syslog_warn("Removing stale lockfile $lockfile");
-		    remove_lockfile();
-	        }
-            }
-        }
 
+	my $lockfile_wait = $config_vars{'lockfile_wait'};
+
+	# does a lockfile already exist?
+	while (1 == is_real_local_abs_path($lockfile)) {
+		if(open(LOCKFILE, $lockfile)) {
+			my $pid = <LOCKFILE>;
+			chomp($pid);
+			close(LOCKFILE);
+			if (!kill(0, $pid)) {
+				if(1 == $stop_on_stale_lockfile) {
+					print_err ("Stale lockfile $lockfile detected. You need to remove it manually to continue", 1);
+					syslog_err("Stale lockfile $lockfile detected. Exiting.");
+					exit(1);
+				} else {
+					print_warn("Removing stale lockfile $lockfile", 1);
+					syslog_warn("Removing stale lockfile $lockfile");
+					remove_lockfile();
+					last;
+				}
+			} else {
+				print_msg ("Lockfile $lockfile exists and so does its process", 5);
+			}
+		} else {
+			print_warn("Lockfile $lockfile exists but it can't be read", 1);
+			syslog_warn("Lockfile $lockfile exists but it can't be read");
+		}
+
+		if ($lockfile_wait <= 0) {
+			print_err ("Lockfile $lockfile exists, and the lockfile_wait timeout has been reached.", 1);
+			syslog_err("Lockfile $lockfile exists, and the lockfile_wait timeout has been reached.");
+			exit(1);
+		}
+
+		# wait to see if the situation improves
+		print_msg ("Waiting $lockfile_wait minutes for lockfile $lockfile", 4);
+		syslog_msg("Waiting $lockfile_wait minutes for lockfile $lockfile");
+		sleep(60);
+		$lockfile_wait--;
+	}
 	
 	# create the lockfile
 	print_cmd("echo $$ > $lockfile");
@@ -2582,6 +2612,19 @@ sub is_boolean {
 	if (1 == $var)	{ return (1); }
 	if (0 == $var)	{ return (1); }
 	
+	return (0);
+}
+
+# accepts one argument
+# checks to see if that argument is set to a nonnegative integer
+# returns 1 on success, 0 on failure
+sub is_nonnegative_integer {
+	my $var = shift(@_);
+
+	if (!defined($var))		{ return (0); }
+	if ($var !~ m/^\d+$/)	{ return (0); }
+	if (0 <= $var)			{ return (1); }
+
 	return (0);
 }
 
@@ -6432,6 +6475,8 @@ B<lockfile    /var/run/rsnapshot.pid>
 
 B<stop_on_stale_lockfile	0>
 
+B<lockfile_wait 0>
+
 =over 4
 
 Lockfile to use when rsnapshot is run. This prevents a second invocation
@@ -6440,10 +6485,10 @@ Make sure to use a directory that is not world writeable for security
 reasons.  Use of a lock file is strongly recommended.
 
 If a lockfile exists when rsnapshot starts, it will try to read the file
-and stop with an error if it can't.  If it *can* read the file, it sees if
-a process exists with the PID noted in the file.  If it does, rsnapshot
-stops with an error message.  If there is no process with that PID, then
-we assume that the lockfile is stale and ignore it *unless*
+and wait if it can't.  If it *can* read the file, it sees if a process 
+exists with the PID noted in the file.  If it does, rsnapshot waits for up 
+to lockfile_wait minutes. If there is no process with that PID, then we 
+assume that the lockfile is stale and ignore it *unless* 
 stop_on_stale_lockfile is set to 1 in which case we stop.
 
 stop_on_stale_lockfile defaults to 0.
