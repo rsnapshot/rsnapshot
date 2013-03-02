@@ -118,6 +118,12 @@ loglevel	3
 #
 lockfile	/var/run/rsnapshot.pid
 
+# Time (in minutes) to wait for the lockfile to be freed. If it is set
+# to 0 (the default), rsnapshot will exit immediately if there is
+# another instance running.
+#
+#lockfile_wait   0
+
 # Default rsync args. All rsync commands have at least these options set.
 #
 #rsync_short_args	-a
