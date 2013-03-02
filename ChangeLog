@@ -5,6 +5,7 @@ http://www.rsnapshot.org/
 
 VERSION 1.3.x
 ------------------------------------------------------------------------------
+- Print rnspashot's PID when logging to syslog, instead of the logger's PID.
 - make script uses pod2man instead of /usr/bin/pod2man
 - rsnapshot-diff: Fixed removed files reported as addition (+ mark)
 - check for SIGPIPE, mainly in case cron fails when trying to mail

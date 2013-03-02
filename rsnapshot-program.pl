@@ -2098,15 +2098,15 @@ sub syslog_msg {
 	if (defined($config_vars{'cmd_logger'})) {
 		# print out our call to syslog
 		if (defined($verbose) && ($verbose >= 4)) {
-			print_cmd("$config_vars{'cmd_logger'} -i -p $facility.$level -t rsnapshot $msg");
+			print_cmd("$config_vars{'cmd_logger'} -p $facility.$level -t rsnapshot[$$] $msg");
 		}
 		
 		# log to syslog
 		if (0 == $test) {
-			$result = system($config_vars{'cmd_logger'}, '-i', '-p', "$facility.$level", '-t', 'rsnapshot', $msg);
+			$result = system($config_vars{'cmd_logger'}, '-p', "$facility.$level", '-t', "rsnapshot[$$]", $msg);
 			if (0 != $result) {
 				print_warn("Could not log to syslog:", 2);
-				print_warn("$config_vars{'cmd_logger'} -i -p $facility.$level -t rsnapshot $msg", 2);
+				print_warn("$config_vars{'cmd_logger'} -p $facility.$level -t rsnapshot[$$] $msg", 2);
 			}
 		}
 	}
