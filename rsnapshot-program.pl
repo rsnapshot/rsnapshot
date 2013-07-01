@@ -1967,7 +1967,7 @@ sub print_warn {
 	}
 	
 	# write to log
-	log_msg($str, $level);
+	log_warn($str, $level);
 }
 
 # accepts string, and level
