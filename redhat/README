@@ -11,3 +11,7 @@ rpm -ivh /path/to/your/RPMS/noarch/rsnapshot-1.x.x-0.noarch.rpm
 
 If you don't want to make an RPM, you can download the latest version at
 http://www.rsnapshot.org/
+
+Fedora includes a rsnapshot RPM directly in its repositories.  And for RedHat
+Enterprise Linux and its derivatives there is a rsnapshot RPM available in
+EPEL (http://fedoraproject.org/wiki/EPEL).
