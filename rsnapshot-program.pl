@@ -2241,7 +2241,7 @@ sub add_lockfile {
 	        } else {
 	            print_warn("Removing stale lockfile $lockfile", 1);
 		    syslog_warn("Removing stale lockfile $lockfile");
-		    		remove_lockfile();
+		    remove_lockfile();
 	        }
             }
         }
@@ -2295,7 +2295,7 @@ sub remove_lockfile {
 		  my $locked_pid = <LOCKFILE> || "";
 		  chomp($locked_pid);
 		  close(LOCKFILE);
-		  if( $locked_pid && $locked_pid != $$) {
+		  if($locked_pid && $locked_pid != $$) {
 		    print_warn("About to remove lockfile $lockfile which belongs to a different process (this is OK if it's a stale lock)");
 		  }
 		} else {
