@@ -145,6 +145,11 @@ my($addedfiles, $addedspace, $deletedfiles, $deletedspace) = (0, 0, 0, 0);
 my($addedspace_mb, $addedspace_gb, $deletedspace_mb, $deletedspace_gb) = (0, 0, 0, 0);
 
 ($dirold, $dirnew) = ($dirnew, $dirold) if(-M $dirold < -M $dirnew);
+
+# remove trailing slahes, if any
+$dirold =~ s/\/+$//;
+$dirnew =~ s/\/+$//;
+
 print "Comparing $dirold to $dirnew\n";
 
 compare_dirs($dirold, $dirnew);
