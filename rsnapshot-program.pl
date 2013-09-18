@@ -176,6 +176,7 @@ my $have_printed_run_string = 0;
 # local to parse_config_file and validate_config_file
 my $rsync_include_args		= undef;
 my $rsync_include_file_args	= undef;
+my $rsync_filter_args		= undef;
 
 ########################################
 ###         SIGNAL HANDLERS          ###
@@ -1232,6 +1233,30 @@ sub parse_config_file {
 				next;
 			}
 		}
+		# FILTER FILE
+		if ($var eq 'filter_file') {
+			if (0 == is_real_local_abs_path($value)) {
+				config_err($file_line_num, "$line - filter_file $value must be a valid absolute path");
+				next;
+			} elsif (1 == is_directory_traversal($value)) {
+				config_err($file_line_num, "$line - Directory traversal attempted in $value");
+				next;
+			} elsif (( -e "$value" ) && ( ! -f "$value" )) {
+				config_err($file_line_num, "$line - filter_file $value exists, but is not a file");
+				next;
+			} elsif ( ! -r "$value" ) {
+				config_err($file_line_num, "$line - filter_file $value exists, but is not readable");
+				next;
+			} else {
+				if (!defined($rsync_filter_args)) {
+					$rsync_filter_args = "--filter=\"merge $value\"";
+				} else {
+					$rsync_filter_args .= " --filter=\"merge $value\"";
+				}
+				$line_syntax_ok = 1;
+				next;
+			}
+		}
 		# RSYNC SHORT ARGS
 		if ($var eq 'rsync_short_args') {
 			# must be in the format '-abcde'
@@ -1398,6 +1423,13 @@ sub validate_config_file {
 			$config_vars{'rsync_long_args'} = $default_rsync_long_args;
 		}
 		$config_vars{'rsync_long_args'} .= " $rsync_include_file_args";
+	}
+	# assemble rsync filter args
+	if (defined($rsync_filter_args)) {
+		if (!defined($config_vars{'rsync_long_args'})) {
+			$config_vars{'rsync_long_args'} = $default_rsync_long_args;
+		}
+		$config_vars{'rsync_long_args'} .= " $rsync_filter_args";
 	}
 	
 	###############################################
@@ -1605,6 +1637,7 @@ sub parse_backup_opts {
 	# pre-buffer extra rsync arguments
 	my $rsync_include_args		= undef;
 	my $rsync_include_file_args	= undef;
+	my $rsync_filter_args	= undef;
 	
 	# make sure we got something (it's quite likely that we didn't)
 	if (!defined($opts_str))	{ return (undef); }
@@ -1748,6 +1781,33 @@ sub parse_backup_opts {
 			
 			delete($parsed_opts{'exclude_file'});
 
+		# filter_file
+		} elsif ( $name eq 'filter_file' ) {
+			# verify that this file exists and is readable
+			if (0 == is_real_local_abs_path($value)) {
+				print_err("filter_file $value must be a valid absolute path", 2);
+				return (undef);
+			} elsif (1 == is_directory_traversal($value)) {
+				print_err("Directory traversal attempted in $value", 2);
+				return (undef);
+			} elsif (( -e "$value" ) && ( ! -f "$value" )) {
+				print_err("filter_file $value exists, but is not a file", 2);
+				return (undef);
+			} elsif ( ! -r "$value" ) {
+				print_err("filter_file $value exists, but is not readable", 2);
+				return (undef);
+			}
+			
+			# coerce into rsync_filter_args
+			# then remove the "filter_file" key/value pair
+			if (!defined($rsync_filter_args)) {
+				$rsync_filter_args = "--filter=\"merge $parsed_opts{'filter_file'}\"";
+			} else {
+				$rsync_filter_args .= " --filter=\"merge $parsed_opts{'filter_file'}\"";
+			}
+			
+			delete($parsed_opts{'filter_file'});
+
 		# Not (yet?) implemented as per-backup-point options
 		} elsif ( $name eq 'cmd_preexec' || $name eq 'cmd_postexec' 
 			|| $name eq 'cmd_ssh' || $name eq 'cmd_rsync'
@@ -1763,7 +1823,7 @@ sub parse_backup_opts {
 	
 	# merge rsync_include_args and rsync_file_include_args in with either $default_rsync_long_args
 	# or $parsed_opts{'rsync_long_args'}
-	if (defined($rsync_include_args) or defined($rsync_include_file_args)) {
+	if (defined($rsync_include_args) or defined($rsync_include_file_args) or defined($rsync_filter_args)) {
 		# if we never defined rsync_long_args, populate it with the global default
 		if (!defined($parsed_opts{'rsync_long_args'})) {
 			if (defined($config_vars{'rsync_long_args'})) {
@@ -1780,6 +1840,9 @@ sub parse_backup_opts {
 		}
 		if (defined($rsync_include_file_args)) {
 			$parsed_opts{'rsync_long_args'} .= " $rsync_include_file_args";
+		}
+		if (defined($rsync_filter_args)) {
+			$parsed_opts{'rsync_long_args'} .= " " . $rsync_filter_args;
 		}
 	}
 	
@@ -6331,6 +6394,16 @@ B<exclude_file        /path/to/exclude/file>
 
 This gets passed directly to rsync using the --exclude-from directive. See the
 rsync(1) man page for the syntax.
+
+=back
+
+B<filter_file         /path/to/filter/file>
+
+=over 4
+
+The filename specified with this option is passed to rsync using 
+--filter="merge /path/to/filter/file". See the rsync(1) man page for the
+syntax.
 
 =back
 
