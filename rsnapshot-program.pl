@@ -3496,7 +3496,7 @@ sub rsync_backup_point {
         
         # rewrite src to point to mount path
         # - to avoid including the mountpath in the snapshot, change the working directory and use a relative source
-        $linux_lvm_oldpwd = $ENV{PWD};
+        $linux_lvm_oldpwd = cwd();
         print_cmd("chdir($config_vars{'linux_lvm_mountpath'})");
         if (0 == $test) {
             $result = chdir($config_vars{'linux_lvm_mountpath'});
