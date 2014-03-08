@@ -77,3 +77,7 @@ sign_packages.sh
 ------------------------------------------------------------------------------
     The shell script used to automate package signing for releases.
 
+rsnapshot_mount_wrapper
+------------------------------------------------------------------------------
+    A wrapper script that mounts the configured rsnapshot_root, runs
+    rsnapshot, and then umounts the rsnapshot_root again, for safety reasons.

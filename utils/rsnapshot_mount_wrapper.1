@@ -1,0 +1,28 @@
+.TH rsnapshot_mount_wrapper 1 "08 Mar 2014" "" "rsnapshot mount wrapper"
+.\" -----------------------------------------------------------------
+.SH "NAME"
+.\" -----------------------------------------------------------------
+rsnapshot_mount_wrapper \- Mount wrapper for rsnapshot
+.\" -----------------------------------------------------------------
+.SH "SYNOPSIS"
+.\" -----------------------------------------------------------------
+.SY rsnapshot_mount_wrapper
+.OP options...
+.YS
+.\" -----------------------------------------------------------------
+.SH "DESCRIPTION"
+.\" -----------------------------------------------------------------
+\fBrsnapshot_mount_wrapper\fR is a wrapper script that is called instead of \fBrsnapshot\fR itself, taking all of its command line arguments. It will mount the 
+configured \fIsnapshot_root\fR, call \fBrsnapshot\fR, passing on any options it was passed itself, and umount the \fIrsnapshot_root\fR after the \fBrsnapshot\fR run..
+
+The idea is that you do not want your backup filesystem permanently mounted, in order to reduce the potential risk of damage. For example, a misguided script that walks 
+from \fI/\fR downwards removing files would also walk down the mounted backup filesystem, causing even greater damage. With \fBrsnapshot_mount_wrapper\fR, the time 
+window for such potential damage is reduced to the time the backup actually takes.
+.\" -----------------------------------------------------------------
+.SH "SEE ALSO"
+.\" -----------------------------------------------------------------
+\fBrsnapshot (1)\fR
+.\" -----------------------------------------------------------------
+.SH AUTHOR
+.\" -----------------------------------------------------------------
+Pieter Hollants <pieter@hollants.com>
