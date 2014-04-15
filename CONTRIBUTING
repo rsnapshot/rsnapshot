@@ -1,0 +1,56 @@
+Source code control
+-------------------
+
+The rsnapshot source code lives on Github:
+
+    https://github.com/DrHyde/rsnapshot
+
+The 'master' branch should be complete, by which we mean that there should
+be no half-completed features in it.  This means that anything which
+requires more than one commit should be done in a branch.
+
+Trivial changes (such as correcting spalling mistooks, or which change
+just one or two lines of code) can go straight into master.  Non-trivial
+changes should be reviewed by another developer, by raising a github
+"pull request".
+
+Please note that rsnapshot is currently very stable software. No major changes 
+to the way rsnapshot works are planned. Incompatible changes to the semantics of
+how backup rotation works are often proposed but will not be accepted. Only bug 
+fixes and (generally minor) backward compatible enhancements are considered.
+Also, before committing a change please ensure the existing tests pass, 
+and consider adding new tests where appropriate.
+
+Coding standards
+----------------
+Changes that do not conform to the coding standard will not be accepted. 
+Please note:
+
+  * The current coding standard is primarily encapsulated in the code itself.
+  * Use tabs not white space.
+  * There should be no trailing white space on any lines.
+  * Line length should be limited to 80 characters.
+  
+Testing
+-------
+You first need to configure the source to run the tests. See `INSTALL` for notes
+on configuring the source, but in general to run the test cases:
+
+    ./configure --sysconfdir=/etc
+    make tests  
+
+Releases and versions
+---------------------
+
+Releases should be done from branches, named for the release version,
+eg release-1.4.  The first release of that version should be tagged '1.4.0'.
+Subsequent releases of that version, which should contain no changes other
+than bug fixes and security fixes, should also be tagged as, eg, '1.4.1'.
+
+Bug tracker
+-----------
+
+The bug tracker and mailing lists are on Sourceforge:
+
+    https://sourceforge.net/projects/rsnapshot/
+  
