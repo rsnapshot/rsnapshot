@@ -2306,6 +2306,10 @@ if test "$DU" = "no"; then
 fi
 CMD_DU="cmd_du		$DU"
 
+if test "x$TEST_SSH_USER" = "x"; then
+	TEST_SSH_USER="$USER"
+fi
+
 
 
 
@@ -2327,6 +2331,8 @@ CMD_DU="cmd_du		$DU"
           ac_config_files="$ac_config_files t/support/etc/relative_delete_bugfix.conf:t/support/etc/relative_delete_bugfix.conf.in"
 
           ac_config_files="$ac_config_files t/support/etc/snapshot_root_with_space.conf:t/support/etc/snapshot_root_with_space.conf.in"
+          
+          ac_config_files="$ac_config_files t/support/etc/ssh_args.conf:t/support/etc/ssh_args.conf.in"
 
 
           ac_config_files="$ac_config_files t/configtest.t:t/configtest.t.in"
@@ -2339,7 +2345,8 @@ CMD_DU="cmd_du		$DU"
 
           ac_config_files="$ac_config_files t/snapshot_root_with_space.t:t/snapshot_root_with_space.t.in"
 
-
+          ac_config_files="$ac_config_files t/ssh_args.t:t/ssh_args.t.in"
+          
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -2901,11 +2908,13 @@ do
   "t/support/etc/gnu_cp.conf" ) CONFIG_FILES="$CONFIG_FILES t/support/etc/gnu_cp.conf:t/support/etc/gnu_cp.conf.in" ;;
   "t/support/etc/relative_delete_bugfix.conf" ) CONFIG_FILES="$CONFIG_FILES t/support/etc/relative_delete_bugfix.conf:t/support/etc/relative_delete_bugfix.conf.in" ;;
   "t/support/etc/snapshot_root_with_space.conf" ) CONFIG_FILES="$CONFIG_FILES t/support/etc/snapshot_root_with_space.conf:t/support/etc/snapshot_root_with_space.conf.in" ;;
+  "t/support/etc/ssh_args.conf" ) CONFIG_FILES="$CONFIG_FILES t/support/etc/ssh_args.conf:t/support/etc/ssh_args.conf.in" ;;
   "t/configtest.t" ) CONFIG_FILES="$CONFIG_FILES t/configtest.t:t/configtest.t.in" ;;
   "t/rsync.t" ) CONFIG_FILES="$CONFIG_FILES t/rsync.t:t/rsync.t.in" ;;
   "t/gnu_cp.t" ) CONFIG_FILES="$CONFIG_FILES t/gnu_cp.t:t/gnu_cp.t.in" ;;
   "t/relative_delete_bugfix.t" ) CONFIG_FILES="$CONFIG_FILES t/relative_delete_bugfix.t:t/relative_delete_bugfix.t.in" ;;
   "t/snapshot_root_with_space.t" ) CONFIG_FILES="$CONFIG_FILES t/snapshot_root_with_space.t:t/snapshot_root_with_space.t.in" ;;
+  "t/ssh_args.t" ) CONFIG_FILES="$CONFIG_FILES t/ssh_args.t:t/ssh_args.t.in" ;;
   *) { { echo "$as_me:$LINENO: error: invalid argument: $ac_config_target" >&5
 echo "$as_me: error: invalid argument: $ac_config_target" >&2;}
    { (exit 1); exit 1; }; };;
@@ -3030,6 +3039,7 @@ s,@CMD_LOGGER@,$CMD_LOGGER,;t t
 s,@DU@,$DU,;t t
 s,@TEST_DU@,$TEST_DU,;t t
 s,@CMD_DU@,$CMD_DU,;t t
+s,@TEST_SSH_USER@,$TEST_SSH_USER,;t t
 s,@LIBOBJS@,$LIBOBJS,;t t
 s,@LTLIBOBJS@,$LTLIBOBJS,;t t
 CEOF
