@@ -9,7 +9,7 @@ my $snap_root="t/support/snapshots/link-dest_t";
 ok(! -d "$snap_root" || ! `rm -rf "$snap_root"`,
 	" snapshot root does not exist before testing starts");
 
-ok(! `@PERL@ ./rsnapshot -c t/support/etc/link-dest_-t_when_only_one_snapshot.conf daily`,
+ok(! `@PERL@ ./rsnapshot -c t/support/etc/link-dest_-t_when_only_one_snapshot.conf daily 2>&1`,
 	" first rsnapshot ran");
 
 ok(-d "$snap_root/daily.0" && ! -d "$snap_root/daily.1",
