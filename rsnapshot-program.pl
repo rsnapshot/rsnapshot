@@ -119,18 +119,22 @@ my @reserved_words = qw(
 my %booleans = (
 	"sync_first"             => 1,
 	"no_create_root"         => 1,
+	"link_dest"              => 1,
+	"one_fs"                 => 1,
+	"stop_on_stale_lockfile" => 1,
+	"use_lazy_deletes"       => 1,
 );
 
 # global flags that change the outcome of the program,
 # and are configurable by both cmd line and config flags
 #
-my $test			= 0; # turn verbose on, but don't execute
-                                     # any filesystem commands
-my $do_configtest		= 0; # parse config file and exit
-my $one_fs			= 0; # one file system (don't cross
-                                     # partitions within a backup point)
-my $link_dest			= 0; # use the --link-dest option to rsync
-my $stop_on_stale_lockfile	= 0; # stop if there is a stale lockfile
+my $test                               = 0; # turn verbose on, but don't execute
+                                            # any filesystem commands
+my $do_configtest                      = 0; # parse config file and exit
+$config_vars{'one_fs'}                 = 0; # one file system (don't cross
+                                            # partitions within a backup point)
+$config_vars{'link_dest'}              = 0; # use the --link-dest option to rsync
+$config_vars{'stop_on_stale_lockfile'} = 0; # stop if there is a stale lockfile
 
 # how much noise should we make? the default is 2
 #
@@ -165,7 +169,7 @@ my $default_ssh_args			= undef;
 my $default_du_args				= '-csh';
 
 # set default for use_lazy_deletes
-my $use_lazy_deletes = 0;	# do not delete the oldest archive until after backup
+$config_vars{'use_lazy_deletes'} = 0;	# do not delete the oldest archive until after backup
 
 # set default for number of tries
 my $rsync_numtries = 1; # by default, try once
@@ -293,7 +297,7 @@ handle_interval( $cmd );
 # however, this will have already been done if use_lazy_deletes is turned
 #   on, and there may be a lockfile from another process now in place,
 #   so in that case don't just blindly delete!
-remove_lockfile() unless($use_lazy_deletes);
+remove_lockfile() unless($config_vars{'use_lazy_deletes'});
 
 # if we got this far, the program is done running
 # write to the log and syslog with the status of the outcome
@@ -498,7 +502,7 @@ sub parse_cmd_line_opts {
 	if (defined($opts{'D'}))	{ $verbose = 5; }
 	
 	# one file system? (don't span partitions with rsync)
-	if (defined($opts{'x'}))	{ $one_fs = 1; }
+	if (defined($opts{'x'}))	{ $config_vars{'one_fs'} = 1; }
 }
 
 # accepts an optional argument - no arg means to parse the default file,
@@ -1076,40 +1080,6 @@ sub parse_config_file {
 		# GLOBAL OPTIONS from the config file
 		# ALL ARE OPTIONAL
 		#
-		# LINK_DEST
-		if ($var eq 'link_dest') {
-			if (!defined($value)) {
-				config_err($file_line_num, "$line - link_dest can not be blank");
-				next;
-			}
-			if (!is_boolean($value)) {
-				config_err(
-					$file_line_num, "$line - \"$value\" is not a legal value for link_dest, must be 0 or 1 only"
-				);
-				next;
-			}
-			
-			$link_dest = $value;
-			$line_syntax_ok = 1;
-			next;
-		}
-		# ONE_FS
-		if ($var eq 'one_fs') {
-			if (!defined($value)) {
-				config_err($file_line_num, "$line - one_fs can not be blank");
-				next;
-			}
-			if (!is_boolean($value)) {
-				config_err(
-					$file_line_num, "$line - \"$value\" is not a legal value for one_fs, must be 0 or 1 only"
-				);
-				next;
-			}
-			
-			$one_fs = $value;
-			$line_syntax_ok = 1;
-			next;
-		}
 		# LOCKFILE
 		if ($var eq 'lockfile') {
 			if (!defined($value)) { config_err($file_line_num, "$line - lockfile can not be blank"); }
@@ -1118,23 +1088,6 @@ sub parse_config_file {
 				next;
 			}
 			$config_vars{'lockfile'} = $value;
-			$line_syntax_ok = 1;
-			next;
-		}
-		#STOP_ON_STALE_LOCKFILE
-		if ($var eq 'stop_on_stale_lockfile') {
-			if (!defined($value)) {
-				config_err($file_line_num, "$line - stop_on_stale_lockfile can not be blank");
-				next;
-			}
-			if (!is_boolean($value)) {
-				config_err(
-					$file_line_num, "$line - \"$value\" is not a legal value for stop_on_stale_lockfile, must be 0 or 1 only"
-				);
-				next;
-			}
-
-			$stop_on_stale_lockfile = $value;
 			$line_syntax_ok = 1;
 			next;
 		}
@@ -1297,23 +1250,6 @@ sub parse_config_file {
 				config_err($file_line_num, "$line - loglevel must be a value between 1 and 5");
 				next;
 			}
-		}
-		# USE LAZY DELETES
-		if ($var eq 'use_lazy_deletes') {
-			if (!defined($value)) {
-				config_err($file_line_num, "$line - use_lazy_deletes can not be blank");
-				next;
-			}
-			if (!is_boolean($value)) {
-				config_err(
-					$file_line_num, "$line - \"$value\" is not a legal value for use_lazy_deletes, must be 0 or 1 only"
-				);
-				next;
-			}
-			
-			if (1 == $value) { $use_lazy_deletes = 1; }
-			$line_syntax_ok = 1;
-			next;
 		}
 		# RSYNC NUMBER OF TRIES
 		if ($var eq 'rsync_numtries') {
@@ -1804,7 +1740,7 @@ sub bail {
 	}
 	
 	# get rid of the lockfile, if it exists
-	if(0 == $stop_on_stale_lockfile) {
+	if(0 == $config_vars{'stop_on_stale_lockfile'}) {
 	        remove_lockfile();
 	}
 	
@@ -2208,7 +2144,7 @@ sub add_lockfile {
                 syslog_err("Lockfile $lockfile exists and so does its process, can not continue");
                 exit(1);
             } else {
-		if(1 == $stop_on_stale_lockfile) {
+		if(1 == $config_vars{'stop_on_stale_lockfile'}) {
 		    print_err ("Stale lockfile $lockfile detected. You need to remove it manually to continue", 1);
 		    syslog_err("Stale lockfile $lockfile detected. Exiting.");
 		    exit(1);
@@ -2810,7 +2746,7 @@ sub handle_interval {
 	# handle toggling between sync_first being enabled and disabled
 	
 	# link_dest is enabled
-	if (1 == $link_dest) {
+	if (1 == $config_vars{'link_dest'}) {
 		
 		# sync_first is enabled
 		if ($config_vars{'sync_first'}) {
@@ -2922,7 +2858,7 @@ sub handle_interval {
 				bail("Error! rm_rf(\"$config_vars{'snapshot_root'}/_delete.$$\")\n");
 			}
 		}
-	} elsif($use_lazy_deletes) {
+	} elsif($config_vars{'use_lazy_deletes'}) {
 	        # only spit this out if lazy deletes are turned on.
 		# Still need to suppress this if they're turned on but we've
 		# not done enough backups to yet need to delete anything
@@ -3045,7 +2981,7 @@ sub rotate_lowest_snapshots {
 	# remove oldest directory
 	if ( (-d "$config_vars{'snapshot_root'}/$interval.$interval_max") && ($interval_max > 0) ) {
 		# if use_lazy_deletes is set move the oldest directory to _delete.$$
-		if (1 == $use_lazy_deletes) {
+		if (1 == $config_vars{'use_lazy_deletes'}) {
 			print_cmd("mv",
 				"$config_vars{'snapshot_root'}/$interval.$interval_max/",
 				"$config_vars{'snapshot_root'}/_delete.$$/"
@@ -3136,7 +3072,7 @@ sub rotate_lowest_snapshots {
 		}				
 			
 		# if we're using rsync --link-dest, we need to mv sync to .0 now
-		if (1 == $link_dest) {
+		if (1 == $config_vars{'link_dest'}) {
 			# mv sync .0
 			
 			if ( -d "$config_vars{'snapshot_root'}/.sync" ) {
@@ -3178,7 +3114,7 @@ sub rotate_lowest_snapshots {
 	} elsif ( (-d "$config_vars{'snapshot_root'}/$interval.0") && ($interval_max > 0) ) {
 		
 		# if we're using rsync --link-dest, we need to mv .0 to .1 now
-		if (1 == $link_dest) {
+		if (1 == $config_vars{'link_dest'}) {
 			# move .0 to .1
 			
 			if ( -d "$config_vars{'snapshot_root'}/$interval.0/" ) {
@@ -3368,7 +3304,7 @@ sub rsync_backup_point {
 		if (1 == $$bp_ref{'opts'}->{'one_fs'}) {
 			$rsync_short_args .= 'x';
 		}
-	} elsif ($one_fs) {
+	} elsif ($config_vars{'one_fs'}) {
 		$rsync_short_args .= 'x';
 	}
 	
@@ -3486,7 +3422,7 @@ sub rsync_backup_point {
 	
 	# if we're using --link-dest, we'll need to specify the link-dest directory target
 	# this varies depending on whether we're operating on the lowest interval or doing a 'sync'
-	if (1 == $link_dest) {
+	if (1 == $config_vars{'link_dest'}) {
 		# bp_ref{'dest'} and snapshot_root have already been validated, but these might be blank
 		if (defined($interval_link_dest) && defined($interval_num_link_dest)) {
 			# push link_dest arguments onto cmd stack
@@ -3504,7 +3440,7 @@ sub rsync_backup_point {
 	#   This is necessary because --link-dest only works on directories
 	#
 	if (
-		(1 == $link_dest) &&
+		(1 == $config_vars{'link_dest'}) &&
 		(is_file($src)) &&
 		defined($interval_link_dest) &&
 		defined($interval_num_link_dest) &&
@@ -3706,7 +3642,7 @@ sub handle_rsync_error {
 	# if we got error 1 and we were attempting --link-dest, there's
 	# a very good chance that this version of rsync is too old.
 	#
-	if ((1 == $link_dest) && (1 == $retval)) {
+	if ((1 == $config_vars{'link_dest'}) && (1 == $retval)) {
 		print_err ("$config_vars{'cmd_rsync'} syntax or usage error. Does this version of rsync support --link-dest?", 2);
 		syslog_err("$config_vars{'cmd_rsync'} syntax or usage error. Does this version of rsync support --link-dest?");
 		
@@ -3727,7 +3663,7 @@ sub handle_rsync_error {
 		
 		# set this directory to rollback if we're using link_dest
 		# (since $interval.0/ will have been moved to $interval.1/ by now)
-		if (1 == $link_dest) {
+		if (1 == $config_vars{'link_dest'}) {
 			push(@rollback_points, $$bp_ref{'dest'});
 		}
 	}
@@ -3840,7 +3776,7 @@ sub exec_backup_script {
 	# this is because in this situation, .0 will always be empty, so we'll pull select things
 	# from .1 back to .0 if possible. these will be used as a baseline for diff comparisons by
 	# sync_if_different() down below.
-	if (1 == $link_dest) {
+	if (1 == $config_vars{'link_dest'}) {
 		my $lastdir;
 		my $curdir;
 		
@@ -4161,7 +4097,7 @@ sub rotate_higher_interval {
 	if ( -d "$config_vars{'snapshot_root'}/$interval.$interval_max" ) {
 		# if use_lazy_deletes is set move the oldest directory to _delete.$$
 		# otherwise preform the default behavior
-		if (1 == $use_lazy_deletes) {
+		if (1 == $config_vars{'use_lazy_deletes'}) {
 			print_cmd("mv ",
 				"$config_vars{'snapshot_root'}/$interval.$interval_max/ ",
 				"$config_vars{'snapshot_root'}/_delete.$$/"
