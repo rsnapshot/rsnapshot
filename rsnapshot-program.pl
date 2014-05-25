@@ -135,6 +135,15 @@ my %commands = (
 	"cmd_rsnapshot_diff" => 1, #optional
 );
 
+my %scripts = (
+	"linux_lvm_cmd_lvcreate" => 1, #optional
+	"linux_lvm_cmd_lvremove" => 1, #optional
+	"linux_lvm_cmd_mount"    => 1, #optional
+	"linux_lvm_cmd_umount"   => 1, #optional
+	"cmd_preexec"            => 1, #optional
+	"cmd_postexec"           => 1, #optional
+);
+
 # global flags that change the outcome of the program,
 # and are configurable by both cmd line and config flags
 #
@@ -684,80 +693,16 @@ sub parse_config_file {
 			next;
 		}
 		
-		# CHECK FOR lvcreate (optional)
-		if ($var eq 'linux_lvm_cmd_lvcreate') {
-			if (is_valid_script($value)) {
-				$config_vars{'linux_lvm_cmd_lvcreate'} = $value;
-				$line_syntax_ok = 1;
-				next;
-			} else {
-				config_err($file_line_num, "$line - $value is not a valid executable");
-				next;
-			}
-		}
-		# CHECK FOR lvremove (optional)
-		if ($var eq 'linux_lvm_cmd_lvremove') {
-			if (is_valid_script($value)) {
-				$config_vars{'linux_lvm_cmd_lvremove'} = $value;
-				$line_syntax_ok = 1;
-				next;
-			} else {
-				config_err($file_line_num, "$line - $value is not a valid executable");
-				next;
-			}
-		}
-		# CHECK FOR mount (optional)
-		if ($var eq 'linux_lvm_cmd_mount') {
-			if (is_valid_script($value)) {
-				$config_vars{'linux_lvm_cmd_mount'} = $value;
-				$line_syntax_ok = 1;
-				next;
-			} else {
-				config_err($file_line_num, "$line - $value is not a valid executable");
-				next;
-			}
-		}
-		# CHECK FOR umount (optional)
-		if ($var eq 'linux_lvm_cmd_umount') {
-			if (is_valid_script($value)) {
-				$config_vars{'linux_lvm_cmd_umount'} = $value;
-				$line_syntax_ok = 1;
-				next;
-			} else {
-				config_err($file_line_num, "$line - $value is not a valid executable");
-				next;
-			}
-		}
-		
-		# CHECK FOR cmd_preexec (optional)
-		if ($var eq 'cmd_preexec') {
+		if ($scripts{$var}) {
 			my $script;			# script file (no args)
 			
-			# make sure script exists and is executable
-			if ( ! is_valid_script($value, \$script) ) {
+			if (is_valid_script($value, \$script)) {
+				$config_vars{$var} = $value;
+				$line_syntax_ok = 1;
+			} else {
 				config_err($file_line_num, "$line - \"$script\" is not executable or can't be found.".($script !~ m{^/} ? " Please use an absolute path.":""));
-				next;
 			}
 			
-			$config_vars{$var} = $value;
-			
-			$line_syntax_ok = 1;
-			next;
-		}
-		
-		# CHECK FOR cmd_postexec (optional)
-		if ($var eq 'cmd_postexec') {
-			my $script;			# script file (no args)
-			
-			# make sure script exists and is executable
-			if ( ! is_valid_script($value, \$script) ) {
-				config_err($file_line_num, "$line - \"$script\" is not executable or can't be found.".($script !~ m{^/} ? " Please use an absolute path.":""));
-				next;
-			}
-			
-			$config_vars{$var} = $value;
-			
-			$line_syntax_ok = 1;
 			next;
 		}
 		
