@@ -116,6 +116,11 @@ my @reserved_words = qw(
 	version-only
 );
 
+my %booleans = (
+	"sync_first"             => 1,
+	"no_create_root"         => 1,
+);
+
 # global flags that change the outcome of the program,
 # and are configurable by both cmd line and config flags
 #
@@ -643,46 +648,15 @@ sub parse_config_file {
 			next;
 		}
 		
-		# SYNC_FIRST
-		# if this is enabled, rsnapshot syncs data to a staging directory with the "rsnapshot sync" command,
-		# and all "interval" runs will simply rotate files. this changes the behaviour of the lowest interval.
-		# when a sync occurs, no directories are rotated. the sync directory is kind of like a staging area for data transfers.
-		# the files in the sync directory will be hard linked with the others in the other snapshot directories.
-		# the sync directory lives at: /<snapshot_root>/.sync/
-		#
-		if ($var eq 'sync_first') {
-			if (defined($value)) {
-				if ('1' eq $value) {
-					$config_vars{'sync_first'} = 1;
-					$line_syntax_ok = 1;
-					next;
-				} elsif ('0' eq $value) {
-					$config_vars{'sync_first'} = 0;
-					$line_syntax_ok = 1;
-					next;
-				} else {
-					config_err($file_line_num, "$line - sync_first must be set to either 1 or 0");
-					next;
-				}
-			}
-		}
 		
-		# NO_CREATE_ROOT
-		if ($var eq 'no_create_root') {
-			if (defined($value)) {
-				if ('1' eq $value) {
-					$config_vars{'no_create_root'} = 1;
-					$line_syntax_ok = 1;
-					next;
-				} elsif ('0' eq $value) {
-					$config_vars{'no_create_root'} = 0;
-					$line_syntax_ok = 1;
-					next;
-				} else {
-					config_err($file_line_num, "$line - no_create_root must be set to either 1 or 0");
-					next;
-				}
+		if ($booleans{$var}) {
+			$line_syntax_ok = is_boolean($value);
+			if ($line_syntax_ok) {
+				$config_vars{$var} = $value;
+			} else {
+				config_err($file_line_num, "$line - $var must be set to either 1 or 0");
 			}
+			next;
 		}
 		
 		# CHECK FOR RSYNC (required)
@@ -2562,11 +2536,8 @@ sub is_boolean {
 	my $var = shift(@_);
 	
 	if (!defined($var))		{ return (0); }
-	if ($var !~ m/^\d+$/)	{ return (0); }
-	
-	if (1 == $var)	{ return (1); }
-	if (0 == $var)	{ return (1); }
-	
+	if ($var =~ m/^[01]$/)	{ return (1); }
+
 	return (0);
 }
 
