@@ -125,6 +125,16 @@ my %booleans = (
 	"use_lazy_deletes"       => 1,
 );
 
+my %commands = (
+	"cmd_rsync"          => 1, #required
+	"cmd_ssh"            => 1, #optional
+	"cmd_cp"             => 1, #optional
+	"cmd_rm"             => 1, #optional
+	"cmd_logger"         => 1, #optional
+	"cmd_du"             => 1, #optional
+	"cmd_rsnapshot_diff" => 1, #optional
+);
+
 # global flags that change the outcome of the program,
 # and are configurable by both cmd line and config flags
 #
@@ -663,82 +673,15 @@ sub parse_config_file {
 			next;
 		}
 		
-		# CHECK FOR RSYNC (required)
-		if ($var eq 'cmd_rsync') {
-                        $value =~ s/\s+$//;
+		if ($commands{$var}) {
+			$value =~ s/\s+$//;
 			if ((-f "$value") && (-x "$value") && (1 == is_real_local_abs_path($value))) {
-				$config_vars{'cmd_rsync'} = $value;
+				$config_vars{$var} = $value;
 				$line_syntax_ok = 1;
-				next;
 			} else {
 				config_err($file_line_num, "$line - $value is not executable");
-				next;
 			}
-		}
-		
-		# CHECK FOR SSH (optional)
-		if ($var eq 'cmd_ssh') {
-                        $value =~ s/\s+$//;
-			if ((-f "$value") && (-x "$value") && (1 == is_real_local_abs_path($value))) {
-				$config_vars{'cmd_ssh'} = $value;
-				$line_syntax_ok = 1;
-				next;
-			} else {
-				config_err($file_line_num, "$line - $value is not executable");
-				next;
-			}
-		}
-		
-		# CHECK FOR GNU cp (optional)
-		if ($var eq 'cmd_cp') {
-                        $value =~ s/\s+$//;
-			if ((-f "$value") && (-x "$value") && (1 == is_real_local_abs_path($value))) {
-				$config_vars{'cmd_cp'} = $value;
-				$line_syntax_ok = 1;
-				next;
-			} else {
-				config_err($file_line_num, "$line - $value is not executable");
-				next;
-			}
-		}
-		
-		# CHECK FOR rm (optional)
-		if ($var eq 'cmd_rm') {
-                        $value =~ s/\s+$//;
-			if ((-f "$value") && (-x "$value") && (1 == is_real_local_abs_path($value))) {
-				$config_vars{'cmd_rm'} = $value;
-				$line_syntax_ok = 1;
-				next;
-			} else {
-				config_err($file_line_num, "$line - $value is not executable");
-				next;
-			}
-		}
-		
-		# CHECK FOR LOGGER (syslog program) (optional)
-		if ($var eq 'cmd_logger') {
-                        $value =~ s/\s+$//;
-			if ((-f "$value") && (-x "$value") && (1 == is_real_local_abs_path($value))) {
-				$config_vars{'cmd_logger'} = $value;
-				$line_syntax_ok = 1;
-				next;
-			} else {
-				config_err($file_line_num, "$line - $value is not executable");
-				next;
-			}
-		}
-		
-		# CHECK FOR du (optional)
-		if ($var eq 'cmd_du') {
-                        $value =~ s/\s+$//;
-			if ((-f "$value") && (-x "$value") && (1 == is_real_local_abs_path($value))) {
-				$config_vars{'cmd_du'} = $value;
-				$line_syntax_ok = 1;
-				next;
-			} else {
-				config_err($file_line_num, "$line - $value is not executable");
-				next;
-			}
+			next;
 		}
 		
 		# CHECK FOR lvcreate (optional)
@@ -816,19 +759,6 @@ sub parse_config_file {
 			
 			$line_syntax_ok = 1;
 			next;
-		}
-		
-		# CHECK FOR rsnapshot-diff (optional)
-		if ($var eq 'cmd_rsnapshot_diff') {
-                        $value =~ s/\s+$//;
-			if ((-f "$value") && (-x "$value") && (1 == is_real_local_abs_path($value))) {
-				$config_vars{'cmd_rsnapshot_diff'} = $value;
-				$line_syntax_ok = 1;
-				next;
-			} else {
-				config_err($file_line_num, "$line - $value is not executable");
-				next;
-			}
 		}
 		
 		# INTERVALS
