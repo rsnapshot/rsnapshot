@@ -693,12 +693,10 @@ sub parse_config_file {
 		}
 		
 		if ($commands{$var}) {
-			$value =~ s/\s+$//;
-			if ((-f "$value") && (-x "$value") && (1 == is_real_local_abs_path($value))) {
+			$value =~ s/\s+$//; # strip trailing whitespace
+			if (is_valid_executable($value, $file_line_num, $line)) {
 				$config_vars{$var} = $value;
 				$line_syntax_ok = 1;
-			} else {
-				config_err($file_line_num, "$line - $value is not executable");
 			}
 			next;
 		}
@@ -2552,41 +2550,49 @@ sub is_directory {
 	return (0);
 }
 
+# accepts a string with a file path/name
+# returns 1 if the file exists, is executable and has absolute path.
+# returns 0 otherwise
+sub is_valid_executable {
+	my $executable    = shift(@_); # executable to run
+	my $file_line_num = shift(@_); # line number in the config file
+	my $line          = shift(@_); # line text from the config file
+	
+	if (!defined($executable)) {
+		config_err($file_line_num, "$line - you must provide a script.");
+		return 0;
+	}
+	
+	# make sure script exists
+	if (! -f "$executable") {
+		config_err($file_line_num, "$line - file '$executable' does not exist.");
+		return 0;
+	}
+	# make sure script is executable
+	if (! -x "$executable") {
+		config_err($file_line_num, "$line - file '$executable' is not executable.");
+		return 0;
+	}
+	# make sure script is an absolute path
+	if (!is_real_local_abs_path($executable)) {
+		config_err($file_line_num, "$line - file '$executable' is not an absolute path.");
+		return 0;
+	}
+	return 1;
+}
+
 # accepts a string with a script file and optional arguments
-# returns 1 if it the script file exists, is executable and has absolute path.
+# returns 1 if the script file exists, is executable and has absolute path.
 # returns 0 otherwise
 sub is_valid_script {
 	my $full_script   = shift(@_); # script to run (including args)
 	my $file_line_num = shift(@_); # line number in the config file
 	my $line          = shift(@_); # line text from the config file
-	my $script;                    # script file (no args)
-	my @script_argv;               # all script arguments
 	
-	if (!defined($full_script)) {
-		config_err($file_line_num, "$line - you must provide a script.");
-		return 0;
-	}
+	# split the script from its arguments
+	my @script_argv = split(/\s+/, $full_script);
 	
-	# get the base name of the script, not counting any arguments to it
-	@script_argv = split(/\s+/, $full_script);
-	$script = $script_argv[0];
-	
-	# make sure script exists
-	if (! -f "$script") {
-		config_err($file_line_num, "$line - file '$script' does not exist.");
-		return 0;
-	}
-	# make sure script is executable
-	if (! -x "$script") {
-		config_err($file_line_num, "$line - file '$script' is not executable.");
-		return 0;
-	}
-	# make sure script is an absolute path
-	if (!is_real_local_abs_path($script)) {
-		config_err($file_line_num, "$line - file '$script' is not an absolute path.");
-		return 0;
-	}
-	return 1;
+	return is_valid_executable($script_argv[0], $file_line_num, $line);
 }
 
 # accepts string
