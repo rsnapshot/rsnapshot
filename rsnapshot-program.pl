@@ -65,7 +65,7 @@ $| = 1;
 # version of rsnapshot
 my $VERSION = '1.3.1';
 
-# command or interval to execute (first cmd line arg)
+# command or backup level to execute (first cmd line arg)
 my $cmd;
 
 # default configuration file
@@ -81,21 +81,21 @@ my @backup_points;
 # array of backup points to rollback, in the event of failure
 my @rollback_points;
 
-# "intervals" are user defined time periods (e.g., alpha, beta)
-# this array holds hash_refs containing the name of the interval,
+# "retains" are user defined backup levels (e.g., alpha, beta)
+# this array holds hash_refs containing the name of the backup level,
 # and the number of snapshots to keep of it
 #
-# NB, intervals and now called backup levels, and the config parameter
-# is 'retain'
+# NB, backup levels used to be called intervals, and the config parameter
+# is 'retain' (with 'interval' also allowed for backwards compatibility)
 
-my @intervals;
+my @backup_levels;
 
-# store interval data (mostly info about which one we're on, what was before, etc.)
-# this is a convenient reference to some of the data from and metadata about @intervals
-my $interval_data_ref;
+# store backup level data (mostly info about which one we're on, what was before, etc.)
+# this is a convenient reference to some of the data from and metadata about @backup_levels
+my $backup_level_data_ref;
 
-# intervals can't have these values, because they're either taken by other commands
-# or reserved for future use
+# backup levels can't have these values, because they're either taken by other
+# commands or reserved for future use
 my @reserved_words = qw(
 	archive
 	check-config-version
@@ -309,8 +309,8 @@ create_snapshot_root();
 chdir($config_vars{'snapshot_root'});
 
 # actually run the backup job
-# $cmd should store the name of the interval we'll run against
-handle_interval( $cmd );
+# $cmd should store the name of the backup level we'll run against
+handle_backup_level( $cmd );
 
 # if we have a lockfile, remove it
 # however, this will have already been done if use_lazy_deletes is turned
@@ -709,28 +709,24 @@ sub parse_config_file {
 			next;
 		}
 		
-		# INTERVALS
-		# 'retain' is the new name for this parameter, although for
-		# Laziness reasons (plus the fact that I'm making this change
-		# at 10 minutes to midnight and so am wary of making changes
-		# throughout the code and getting it wrong) the code will
-		# still call it 'interval'.  Documentation and messages should
-		# refer to 'retain'.  The old 'interval' will be kept as an
-		# alias.
+		# BACKUP LEVELS
+		# 'retain' is the new name for this parameter.  Documentation and
+		# messages should refer to 'retain'.  The old 'interval' will be kept
+		# as an alias.
 		if ($var eq 'interval' || $var eq 'retain') {
 			my $retain = $var;	# either 'interval' or 'retain'
-			# check if interval is blank
+			# check if backup level is blank
 			if (!defined($value)) { config_err($file_line_num, "$line - $retain can not be blank"); }
 			
 			foreach my $word (@reserved_words) {
 				if ($value eq $word) {
 					config_err($file_line_num,
-						"$line - \"$value\" is not a valid interval name, reserved word conflict");
+						"$line - \"$value\" is not a valid $retain name, reserved word conflict");
 					next;
 				}
 			}
 			
-			# make sure interval is alpha-numeric
+			# make sure backup level is alpha-numeric
 			if ($value !~ m/^[\w\d]+$/) {
 				config_err($file_line_num,
 					"$line - \"$value\" is not a valid $retain name, must be alphanumeric characters only");
@@ -757,9 +753,9 @@ sub parse_config_file {
 			}
 			
 			my %hash;
-			$hash{'interval'}	= $value;
-			$hash{'number'}		= $value2;
-			push(@intervals, \%hash);
+			$hash{'backup_level'} = $value;
+			$hash{'number'}       = $value2;
+			push(@backup_levels, \%hash);
 			$line_syntax_ok = 1;
 			next;
 		}
@@ -1231,8 +1227,8 @@ sub validate_config_file {
 		syslog_err("snapshot_root was not defined. rsnapshot can not continue.");
 		exit(1);
 	}
-	# make sure we have at least one interval
-	if (0 == scalar(@intervals)) {
+	# make sure we have at least one backup level
+	if (0 == scalar(@backup_levels)) {
 		print_err ("At least one backup level must be set. rsnapshot can not continue.", 1);
 		syslog_err("At least one backup level must be set. rsnapshot can not continue.");
 		exit(1);
@@ -1247,11 +1243,11 @@ sub validate_config_file {
 	# SINS OF CONFUSION
 	# (various, specific, undesirable interactions)
 	#
-	# make sure that we don't have only one copy of the first interval,
-	# yet expect rotations on the second interval
-	if (scalar(@intervals) > 1) {
-		if (defined($intervals[0]->{'number'})) {
-			if (1 == $intervals[0]->{'number'}) {
+	# make sure that we don't have only one copy of the first backup level,
+	# yet expect rotations on the second backup level
+	if (scalar(@backup_levels) > 1) {
+		if (defined($backup_levels[0]->{'number'})) {
+			if (1 == $backup_levels[0]->{'number'}) {
 				print_err ("Can not have first backup level's retention count set to 1, and have a second backup level", 1);
 				syslog_err("Can not have first backup level's retention count set to 1, and have a second backup level");
 				exit(1);
@@ -2150,86 +2146,86 @@ sub create_snapshot_root {
 	}
 }
 
-# accepts current interval
-# returns a hash_ref containing information about the intervals
+# accepts current backup level
+# returns a hash_ref containing information about the backup levels
 # exits the program if we don't have good data to work with
-sub get_interval_data {
-	my $cur_interval = shift(@_);
+sub get_backup_level_data {
+	my $cur_backup_level = shift(@_);
 	
-	# make sure we were passed an interval
-	if (!defined($cur_interval)) { bail("cur_interval not specified in get_interval_data()\n"); }
+	# make sure we were passed a backup level
+	if (!defined($cur_backup_level)) { bail("cur_backup_level not specified in get_backup_level_data()\n"); }
 	
 	# the hash to return
 	my %hash;
 	
-	# which of the intervals are we operating on?
+	# which of the backup levels are we operating on?
 	# if we defined alpha, beta, gamma ... alpha = 0, beta = 1, gamma = 2
-	my $interval_num;
+	my $backup_level_num;
 	
-	# the highest possible number for the current interval context
+	# the highest possible number for the current backup level context
 	# if we are working on alpha, and alpha is set to 6, this would be
 	# equal to 5 (since we start at 0)
-	my $interval_max;
+	my $backup_level_max;
 	
-	# this is the name of the previous interval, in relation to the one we're
-	# working on. e.g., if we're operating on gamma, this should be "beta"
-	my $prev_interval;
+	# this is the name of the previous backup level, in relation to the one
+	# we're working on. e.g., if we're operating on gamma, this should be "beta"
+	my $prev_backup_level;
 	
-	# same as $interval_max, except for the previous interval.
+	# same as $backup_level_max, except for the previous backup_level.
 	# this is used to determine which of the previous snapshots to pull from
-	# e.g., cp -al alpha.$prev_interval_max/ beta.0/
-	my $prev_interval_max;
+	# e.g., cp -al alpha.$prev_backup_level_max/ beta.0/
+	my $prev_backup_level_max;
 	
-	# FIGURE OUT WHICH INTERVAL WE'RE RUNNING, AND HOW IT RELATES TO THE OTHERS
-	# THEN RUN THE ACTION FOR THE CHOSEN INTERVAL
+	# FIGURE OUT WHICH BACKUP LEVEL WE'RE RUNNING, AND HOW IT RELATES TO THE
+	# OTHERS THEN RUN THE ACTION FOR THE CHOSEN BACKUP LEVEL
 	# remember, in each hashref in this loop:
-	#   "interval" is something like "beta", "gamma", etc.
-	#   "number" is the number of these intervals to keep on the filesystem
+	#   "backup_level" is something like "beta", "gamma", etc.
+	#   "number" is the number of backups at this level to keep on the filesystem
 	
 	my $i = 0;
-	foreach my $i_ref (@intervals) {
+	foreach my $i_ref (@backup_levels) {
 		
-		# this is the interval we're set to run
-		if ($$i_ref{'interval'} eq $cur_interval) {
-			$interval_num = $i;
+		# this is the backup level we're set to run
+		if ($$i_ref{'backup_level'} eq $cur_backup_level) {
+			$backup_level_num = $i;
 			
-			# how many of these intervals should we keep?
+			# how many of the backups at this level should we keep?
 			# we start counting from 0, so subtract one
-			# e.g., 6 intervals == interval.0 .. interval.5
-			$interval_max = $$i_ref{'number'} - 1;
+			# e.g., 6 backups == level.0 .. level.5
+			$backup_level_max = $$i_ref{'number'} - 1;
 			
-			# we found our interval, exit the foreach loop
+			# we found our backup level, exit the foreach loop
 			last;
 		}
 		
 		# since the "last" command above breaks from this entire block,
-		# and since we loop through the intervals in order, if we got this
-		# far in the first place it means that we're looking at an interval
-		# which isn't selected to run, and that there will be more intervals in the loop.
-		# therefore, this WILL be the previous interval's information, the next time through.
+		# and since we loop through the backup levels in order, if we got this
+		# far in the first place it means that we're looking at a backup level
+		# which isn't selected to run, and that there will be more backup levels in the loop.
+		# therefore, this WILL be the previous backup level's information, the next time through.
 		#
-		$prev_interval = $$i_ref{'interval'};
+		$prev_backup_level = $$i_ref{'backup_level'};
 		
-		# which of the previous interval's numbered directories should we pull from
-		# for the interval we're currently set to run?
+		# which of the previous backup level's numbered directories should we
+		# pull from for the backup level we're currently set to run?
 		# e.g., beta.0/ might get pulled from alpha.6/
 		#
-		$prev_interval_max = $$i_ref{'number'} - 1;
+		$prev_backup_level_max = $$i_ref{'number'} - 1;
 		
 		$i++;
 	}
 	
 	# make sure we got something that makes sense
-	if ($cur_interval ne 'sync') {
-		if (!defined($interval_num)) { bail("Interval \"$cur_interval\" unknown, check $config_file"); }
+	if ($cur_backup_level ne 'sync') {
+		if (!defined($backup_level_num)) { bail("Backup level \"$cur_backup_level\" unknown, check $config_file"); }
 	}
 	
 	# populate our hash
-	$hash{'interval'}			= $cur_interval;
-	$hash{'interval_num'}		= $interval_num;
-	$hash{'interval_max'}		= $interval_max;
-	$hash{'prev_interval'}		= $prev_interval;
-	$hash{'prev_interval_max'}	= $prev_interval_max;
+	$hash{'backup_level'}          = $cur_backup_level;
+	$hash{'backup_level_num'}      = $backup_level_num;
+	$hash{'backup_level_max'}      = $backup_level_max;
+	$hash{'prev_backup_level'}     = $prev_backup_level;
+	$hash{'prev_backup_level_max'} = $prev_backup_level_max;
 	
 	# and return the values
 	return (\%hash);
@@ -2240,11 +2236,11 @@ sub get_interval_data {
 # this is for use with the get-latest-snapshot command line argument
 sub show_latest_snapshot {
 	# this should only be called after parse_config_file(), but just in case...
-	if (! @intervals)	{ bail("Error! intervals not defined in show_latest_snapshot()"); }
+	if (! @backup_levels)	{ bail("Error! backup levels not defined in show_latest_snapshot()"); }
 	if (! %config_vars) { bail("Error! config_vars not defined in show_latest_snapshot()"); }
 	
 	# regardless of .sync, this is the latest "real" snapshot
-	print $config_vars{'snapshot_root'} . '/' . $intervals[0]->{'interval'} . '.0/' . "\n";
+	print $config_vars{'snapshot_root'} . '/' . $backup_levels[0]->{'backup_level'} . '.0/' . "\n";
 	
 	exit(0);
 }
@@ -2623,21 +2619,21 @@ sub add_slashdot_if_root {
 	return ($str);
 }
 
-# accepts the interval (cmd) to run against
+# accepts the backup level (cmd) to run against
 # returns nothing
-# calls the appropriate subroutine, depending on whether this is the lowest interval or a higher one
-# also calls preexec/postexec scripts if we're working on the lowest interval
+# calls the appropriate subroutine, depending on whether this is the lowest backup level or a higher one
+# also calls preexec/postexec scripts if we're working on the lowest backup level
 #
-sub handle_interval {
+sub handle_backup_level {
 	my $cmd = shift(@_);
 	
-	if (!defined($cmd)) { bail('cmd not defined in handle_interval()'); }
+	if (!defined($cmd)) { bail('cmd not defined in handle_backup_level()'); }
 	
-	my $id_ref = get_interval_data( $cmd );
+	my $id_ref = get_backup_level_data( $cmd );
 	
 	my $result = 0;
 	
-	# here we used to check for interval.delete directories.  This was
+	# here we used to check for level.delete directories.  This was
 	# removed when we switched to using _delete.$$ directories.  This
 	# was done so that you can run another (eg) rsnapshot alpha, while
 	# the .delete directory from the previous alpha backup was still
@@ -2684,15 +2680,15 @@ sub handle_interval {
 				# If .sync does not exist but lowest.0 does, then copy that.
 				
 				# call generic cp_al() subroutine
-				my $interval_0	= "$config_vars{'snapshot_root'}/" . $intervals[0]->{'interval'} . ".0";
+				my $backup_level_0	= "$config_vars{'snapshot_root'}/" . $backup_levels[0]->{'backup_level'} . ".0";
 				my $sync_dir	= "$config_vars{'snapshot_root'}/.sync";
 				
-				if ( -d $interval_0 ) {
-					display_cp_al( "$interval_0", "$sync_dir" );
+				if ( -d $backup_level_0 ) {
+					display_cp_al( "$backup_level_0", "$sync_dir" );
 					if (0 == $test) {
-						$result = cp_al( "$interval_0", "$sync_dir" );
+						$result = cp_al( "$backup_level_0", "$sync_dir" );
 						if (! $result) {
-							bail("Error! cp_al(\"$interval_0\", \"$sync_dir\")");
+							bail("Error! cp_al(\"$backup_level_0\", \"$sync_dir\")");
 						}
 					}
 				}
@@ -2717,32 +2713,32 @@ sub handle_interval {
 	# now that the preliminaries are out of the way, the main backups happen here
 	#
 	
-	# backup the lowest interval (or sync content to staging area)
-	# we're not sure yet going in whether we'll be doing an actual backup, or just rotating snapshots for the lowest interval
-	if ((defined($$id_ref{'interval_num'}) && (0 == $$id_ref{'interval_num'})) or ($cmd eq 'sync')) {
+	# backup the lowest backup level (or sync content to staging area)
+	# we're not sure yet going in whether we'll be doing an actual backup, or just rotating snapshots for the lowest backup level
+	if ((defined($$id_ref{'backup_level_num'}) && (0 == $$id_ref{'backup_level_num'})) or ($cmd eq 'sync')) {
 		# if we're doing a sync, run the pre/post exec scripts, and do the backup
 		if ($cmd eq 'sync') {
 			exec_cmd_preexec();
-			backup_lowest_interval( $id_ref );
+			backup_lowest_backup_level( $id_ref );
 			exec_cmd_postexec();
 			
-		# if we're working on the lowest interval, either run the backup and rotate the snapshots, or just rotate them
+		# if we're working on the lowest backup level, either run the backup and rotate the snapshots, or just rotate them
 		# (depending on whether sync_first is enabled
 		} else {
 			if ($config_vars{'sync_first'}) {
-				rotate_lowest_snapshots( $$id_ref{'interval'} );
+				rotate_lowest_snapshots( $$id_ref{'backup_level'} );
 			} else {
 				exec_cmd_preexec();
-				rotate_lowest_snapshots( $$id_ref{'interval'} );
-				backup_lowest_interval( $id_ref );
+				rotate_lowest_snapshots( $$id_ref{'backup_level'} );
+				backup_lowest_backup_level( $id_ref );
 				exec_cmd_postexec();
 			}
 		}
 		
-	# just rotate the higher intervals
+	# just rotate the higher backup levels
 	} else {
 		# this is not the most frequent unit, just rotate
-		rotate_higher_interval( $id_ref );
+		rotate_higher_backup_level( $id_ref );
 	}
 	
 	# if use_lazy_delete is on, delete the _delete.$$ directory
@@ -2768,25 +2764,25 @@ sub handle_interval {
 	}
 }
 
-# accepts an interval_data_ref
-# acts on the interval defined as $$id_ref{'interval'} (e.g., alpha)
-# this should be the smallest interval (e.g., alpha, not beta)
+# accepts an backup_level_data_ref
+# acts on the backup level defined as $$id_ref{'backup_level'} (e.g., alpha)
+# this should be the smallest backup level (e.g., alpha, not beta)
 #
-# rotates older dirs within this interval, hard links .0 to .1,
+# rotates older dirs within this backup level, hard links .0 to .1,
 # and rsync data over to .0
 #
 # does not return a value, it bails instantly if there's a problem
-sub backup_lowest_interval {
+sub backup_lowest_backup_level {
 	my $id_ref = shift(@_);
 	
 	# this should never happen
-	if (!defined($id_ref))				{ bail('backup_lowest_interval() expects an argument'); }
-	if (!defined($$id_ref{'interval'}))	{ bail('backup_lowest_interval() expects an interval'); }
+	if (!defined($id_ref))                  { bail('backup_lowest_backup_level() expects an argument'); }
+	if (!defined($$id_ref{'backup_level'})) { bail('backup_lowest_backup_level() expects a backup level'); }
 	
 	# this also should never happen
-	if ($$id_ref{'interval'} ne 'sync') {
-		if (!defined($$id_ref{'interval_num'}) or (0 != $$id_ref{'interval_num'})) {
-			bail('backup_lowest_interval() can only operate on the lowest interval');
+	if ($$id_ref{'backup_level'} ne 'sync') {
+		if (!defined($$id_ref{'backup_level_num'}) or (0 != $$id_ref{'backup_level_num'})) {
+			bail('backup_lowest_backup_level() can only operate on the lowest backup level');
 		}
 	}
 	
@@ -2798,7 +2794,7 @@ sub backup_lowest_interval {
 		$sync_dest_dir = $ARGV[1];
 	}
 	
-	# sync live filesystem data and backup script output to $interval.0
+	# sync live filesystem data and backup script output to $level.0
 	# loop through each backup point and backup script
 	foreach my $bp_ref (@backup_points) {
 		
@@ -2807,7 +2803,7 @@ sub backup_lowest_interval {
 			
 			# if we're doing a sync and we specified an parameter on the command line (for the destination path),
 			# only sync directories matching the destination path
-			if (($$id_ref{'interval'} eq 'sync') && (defined($sync_dest_dir))) {
+			if (($$id_ref{'backup_level'} eq 'sync') && (defined($sync_dest_dir))) {
 				my $avail_path	= remove_trailing_slash( $$bp_ref{'dest'} );
 				my $req_path	= remove_trailing_slash( $sync_dest_dir );
 				
@@ -2815,134 +2811,134 @@ sub backup_lowest_interval {
 				if ($avail_path eq $req_path) {
 					# rsync
 					if ($$bp_ref{'src'}) {
-						rsync_backup_point( $$id_ref{'interval'}, $bp_ref );
+						rsync_backup_point( $$id_ref{'backup_level'}, $bp_ref );
 						
 					# backup_script
 					} elsif ($$bp_ref{'script'}) {
-						exec_backup_script( $$id_ref{'interval'}, $bp_ref );
+						exec_backup_script( $$id_ref{'backup_level'}, $bp_ref );
 					}
 					
 					# ok, we got at least one dest match
 					$sync_dest_matches++;
 				}
 				
-			# this is a normal operation, either a sync or a lowest interval sync/rotate
+			# this is a normal operation, either a sync or a lowest backup level sync/rotate
 			} else {
 				# rsync
 				if ($$bp_ref{'src'}) {
-					rsync_backup_point( $$id_ref{'interval'}, $bp_ref );
+					rsync_backup_point( $$id_ref{'backup_level'}, $bp_ref );
 					
 				# backup_script
 				} elsif ($$bp_ref{'script'}) {
-					exec_backup_script( $$id_ref{'interval'}, $bp_ref );
+					exec_backup_script( $$id_ref{'backup_level'}, $bp_ref );
 				}
 			}
 			
 		# this should never happen
 		} else {
-			bail('invalid backup point data in backup_lowest_interval()');
+			bail('invalid backup point data in backup_lowest_backup_level()');
 		}
 	}
 	
-	if ($$id_ref{'interval'} eq 'sync') {
+	if ($$id_ref{'backup_level'} eq 'sync') {
 		if (defined($sync_dest_dir) && (0 == $sync_dest_matches)) {
 			bail ("No matches found for \"$sync_dest_dir\"");
 		}
 	}
 	
 	# rollback failed backups
-	rollback_failed_backups( $$id_ref{'interval'} );
+	rollback_failed_backups( $$id_ref{'backup_level'} );
 	
-	# update mtime on $interval.0/ to show when the snapshot completed
-	touch_interval_dir( $$id_ref{'interval'} );
+	# update mtime on $level.0/ to show when the snapshot completed
+	touch_backup_level_dir( $$id_ref{'backup_level'} );
 }
 
-# accepts $interval
+# accepts $backup_level
 # returns nothing
 #
-# operates on directories in the given interval (it should be the lowest one)
-# deletes the highest numbered directory in the interval, and rotates the ones below it
+# operates on directories in the given backup level (it should be the lowest one)
+# deletes the highest numbered directory in the backup level, and rotates the ones below it
 # if link_dest is enabled, .0 gets moved to .1
 # otherwise, we do cp -al .0 .1
 #
 # if we encounter an error, this script will terminate the program with an error condition
 #
 sub rotate_lowest_snapshots {
-	my $interval = shift(@_);
+	my $backup_level = shift(@_);
 	
-	if (!defined($interval)) { bail('interval not defined in rotate_lowest_snapshots()'); }
+	if (!defined($backup_level)) { bail('backup_level not defined in rotate_lowest_snapshots()'); }
 	
-	my $id_ref = get_interval_data($interval);
-	my $interval_num = $$id_ref{'interval_num'};
-	my $interval_max = $$id_ref{'interval_max'};
-	my $prev_interval = $$id_ref{'prev_interval'};
-	my $prev_interval_max = $$id_ref{'prev_interval_max'};
+	my $id_ref = get_backup_level_data($backup_level);
+	my $backup_level_num = $$id_ref{'backup_level_num'};
+	my $backup_level_max = $$id_ref{'backup_level_max'};
+	my $prev_backup_level = $$id_ref{'prev_backup_level'};
+	my $prev_backup_level_max = $$id_ref{'prev_backup_level_max'};
 	
 	my $result;
 	
 	# remove oldest directory
-	if ( (-d "$config_vars{'snapshot_root'}/$interval.$interval_max") && ($interval_max > 0) ) {
+	if ( (-d "$config_vars{'snapshot_root'}/$backup_level.$backup_level_max") && ($backup_level_max > 0) ) {
 		# if use_lazy_deletes is set move the oldest directory to _delete.$$
 		if (1 == $config_vars{'use_lazy_deletes'}) {
 			print_cmd("mv",
-				"$config_vars{'snapshot_root'}/$interval.$interval_max/",
+				"$config_vars{'snapshot_root'}/$backup_level.$backup_level_max/",
 				"$config_vars{'snapshot_root'}/_delete.$$/"
 			);
 			
 			if (0 == $test) {
 				my $result = safe_rename(
-					"$config_vars{'snapshot_root'}/$interval.$interval_max",
+					"$config_vars{'snapshot_root'}/$backup_level.$backup_level_max",
 					"$config_vars{'snapshot_root'}/_delete.$$"
 				);
 				if (0 == $result) {
 					my $errstr = '';
-					$errstr .= "Error! safe_rename(\"$config_vars{'snapshot_root'}/$interval.$interval_max/\", \"";
+					$errstr .= "Error! safe_rename(\"$config_vars{'snapshot_root'}/$backup_level.$backup_level_max/\", \"";
 					$errstr .= "$config_vars{'snapshot_root'}/_delete.$$/\")";
 					bail($errstr);
 				}				
 			}				
 			
-		# otherwise the default is to delete the oldest directory for this interval
+		# otherwise the default is to delete the oldest directory for this backup_level
 		} else {
-			display_rm_rf("$config_vars{'snapshot_root'}/$interval.$interval_max/");
+			display_rm_rf("$config_vars{'snapshot_root'}/$backup_level.$backup_level_max/");
 			
 			if (0 == $test) {
-				my $result = rm_rf( "$config_vars{'snapshot_root'}/$interval.$interval_max/" );
+				my $result = rm_rf( "$config_vars{'snapshot_root'}/$backup_level.$backup_level_max/" );
 				if (0 == $result) {
-					bail("Error! rm_rf(\"$config_vars{'snapshot_root'}/$interval.$interval_max/\")\n");
+					bail("Error! rm_rf(\"$config_vars{'snapshot_root'}/$backup_level.$backup_level_max/\")\n");
 				}
 			}
 		}
 	}
 	
 	# rotate the middle ones
-	if ($interval_max > 0) {
-		# Have we rotated a directory for this interval?
+	if ($backup_level_max > 0) {
+		# Have we rotated a directory for this backup level?
 		my $dir_rotated = 0;
-		for (my $i=($interval_max-1); $i>0; $i--) {
-			if ( -d "$config_vars{'snapshot_root'}/$interval.$i" ) {
+		for (my $i=($backup_level_max-1); $i>0; $i--) {
+			if ( -d "$config_vars{'snapshot_root'}/$backup_level.$i" ) {
 				print_cmd("mv",
-					"$config_vars{'snapshot_root'}/$interval.$i/ ",
-					"$config_vars{'snapshot_root'}/$interval." . ($i+1) . "/"
+					"$config_vars{'snapshot_root'}/$backup_level.$i/ ",
+					"$config_vars{'snapshot_root'}/$backup_level." . ($i+1) . "/"
 				);
 				
 				if (0 == $test) {
 					my $result = safe_rename(
-						"$config_vars{'snapshot_root'}/$interval.$i",
-						("$config_vars{'snapshot_root'}/$interval." . ($i+1))
+						"$config_vars{'snapshot_root'}/$backup_level.$i",
+						("$config_vars{'snapshot_root'}/$backup_level." . ($i+1))
 					);
 					if (0 == $result) {
 						my $errstr = '';
-						$errstr .= "Error! safe_rename(\"$config_vars{'snapshot_root'}/$interval.$i/\", \"";
-						$errstr .= "$config_vars{'snapshot_root'}/$interval." . ($i+1) . '/' . "\")";
+						$errstr .= "Error! safe_rename(\"$config_vars{'snapshot_root'}/$backup_level.$i/\", \"";
+						$errstr .= "$config_vars{'snapshot_root'}/$backup_level." . ($i+1) . '/' . "\")";
 						bail($errstr);
 					}
 				}
 				$dir_rotated = 1;
 			} elsif ($dir_rotated) {
-				# We have rotated a directory for this interval, but $i
+				# We have rotated a directory for this backup level, but $i
 				# does not exist - that probably means a hole.
-				print_msg("Note: $config_vars{'snapshot_root'}/$interval.$i missing, cannot rotate it", 4);
+				print_msg("Note: $config_vars{'snapshot_root'}/$backup_level.$i missing, cannot rotate it", 4);
 			}
 		}
 	}
@@ -2953,21 +2949,21 @@ sub rotate_lowest_snapshots {
 	if ($config_vars{'sync_first'}) {
 		# we move .0 to .1 no matter what (assuming it exists)
 		
-		if ( -d "$config_vars{'snapshot_root'}/$interval.0/" ) {
+		if ( -d "$config_vars{'snapshot_root'}/$backup_level.0/" ) {
 			print_cmd("mv",
-				"$config_vars{'snapshot_root'}/$interval.0/",
-				"$config_vars{'snapshot_root'}/$interval.1/"
+				"$config_vars{'snapshot_root'}/$backup_level.0/",
+				"$config_vars{'snapshot_root'}/$backup_level.1/"
 			);
 			
 			if (0 == $test) {
 				my $result = safe_rename(
-					"$config_vars{'snapshot_root'}/$interval.0",
-					"$config_vars{'snapshot_root'}/$interval.1"
+					"$config_vars{'snapshot_root'}/$backup_level.0",
+					"$config_vars{'snapshot_root'}/$backup_level.1"
 				);
 				if (0 == $result) {
 					my $errstr = '';
-					$errstr .= "Error! safe_rename(\"$config_vars{'snapshot_root'}/$interval.0/\", \"";
-					$errstr .= "$config_vars{'snapshot_root'}/$interval.1/\")";
+					$errstr .= "Error! safe_rename(\"$config_vars{'snapshot_root'}/$backup_level.0/\", \"";
+					$errstr .= "$config_vars{'snapshot_root'}/$backup_level.1/\")";
 					bail($errstr);
 				}				
 			}				
@@ -2980,18 +2976,18 @@ sub rotate_lowest_snapshots {
 			if ( -d "$config_vars{'snapshot_root'}/.sync" ) {
 				print_cmd("mv",
 					"$config_vars{'snapshot_root'}/.sync/",
-					"$config_vars{'snapshot_root'}/$interval.0/"
+					"$config_vars{'snapshot_root'}/$backup_level.0/"
 				);
 				
 				if (0 == $test) {
 					my $result = safe_rename(
 						"$config_vars{'snapshot_root'}/.sync",
-						"$config_vars{'snapshot_root'}/$interval.0"
+						"$config_vars{'snapshot_root'}/$backup_level.0"
 					);
 					if (0 == $result) {
 						my $errstr = '';
 						$errstr .= "Error! safe_rename(\"$config_vars{'snapshot_root'}/.sync/\", \"";
-						$errstr .= "$config_vars{'snapshot_root'}/$interval.0/\")";
+						$errstr .= "$config_vars{'snapshot_root'}/$backup_level.0/\")";
 						bail($errstr);
 					}				
 				}				
@@ -3002,35 +2998,35 @@ sub rotate_lowest_snapshots {
 			# cp -al .sync .0
 			
 			if ( -d "$config_vars{'snapshot_root'}/.sync/" ) {
-				display_cp_al( "$config_vars{'snapshot_root'}/.sync/", "$config_vars{'snapshot_root'}/$interval.0/" );
+				display_cp_al( "$config_vars{'snapshot_root'}/.sync/", "$config_vars{'snapshot_root'}/$backup_level.0/" );
 				if (0 == $test) {
-					$result = cp_al( "$config_vars{'snapshot_root'}/.sync", "$config_vars{'snapshot_root'}/$interval.0" );
+					$result = cp_al( "$config_vars{'snapshot_root'}/.sync", "$config_vars{'snapshot_root'}/$backup_level.0" );
 					if (! $result) {
-						bail("Error! cp_al(\"$config_vars{'snapshot_root'}/.sync\", \"$config_vars{'snapshot_root'}/$interval.0\")");
+						bail("Error! cp_al(\"$config_vars{'snapshot_root'}/.sync\", \"$config_vars{'snapshot_root'}/$backup_level.0\")");
 					}
 				}
 			}
 		}
 		
 	# sync_first disabled (make sure we have a .0 directory and someplace to put it)
-	} elsif ( (-d "$config_vars{'snapshot_root'}/$interval.0") && ($interval_max > 0) ) {
+	} elsif ( (-d "$config_vars{'snapshot_root'}/$backup_level.0") && ($backup_level_max > 0) ) {
 		
 		# if we're using rsync --link-dest, we need to mv .0 to .1 now
 		if (1 == $config_vars{'link_dest'}) {
 			# move .0 to .1
 			
-			if ( -d "$config_vars{'snapshot_root'}/$interval.0/" ) {
-				print_cmd("mv $config_vars{'snapshot_root'}/$interval.0/ $config_vars{'snapshot_root'}/$interval.1/");
+			if ( -d "$config_vars{'snapshot_root'}/$backup_level.0/" ) {
+				print_cmd("mv $config_vars{'snapshot_root'}/$backup_level.0/ $config_vars{'snapshot_root'}/$backup_level.1/");
 				
 				if (0 == $test) {
 					my $result = safe_rename(
-						"$config_vars{'snapshot_root'}/$interval.0",
-						"$config_vars{'snapshot_root'}/$interval.1"
+						"$config_vars{'snapshot_root'}/$backup_level.0",
+						"$config_vars{'snapshot_root'}/$backup_level.1"
 					);
 					if (0 == $result) {
 						my $errstr = '';
-						$errstr .= "Error! safe_rename(\"$config_vars{'snapshot_root'}/$interval.0/\", ";
-						$errstr .= "\"$config_vars{'snapshot_root'}/$interval.1/\")";
+						$errstr .= "Error! safe_rename(\"$config_vars{'snapshot_root'}/$backup_level.0/\", ";
+						$errstr .= "\"$config_vars{'snapshot_root'}/$backup_level.1/\")";
 						bail($errstr);
 					}
 				}
@@ -3038,17 +3034,17 @@ sub rotate_lowest_snapshots {
 		# otherwise, we hard link (except for directories, symlinks, and special files) .0 over to .1
 		} else {
 			# call generic cp_al() subroutine
-			if ( -d "$config_vars{'snapshot_root'}/$interval.0/" ) {
-				display_cp_al( "$config_vars{'snapshot_root'}/$interval.0", "$config_vars{'snapshot_root'}/$interval.1" );
+			if ( -d "$config_vars{'snapshot_root'}/$backup_level.0/" ) {
+				display_cp_al( "$config_vars{'snapshot_root'}/$backup_level.0", "$config_vars{'snapshot_root'}/$backup_level.1" );
 				if (0 == $test) {
 					$result = cp_al(
-						"$config_vars{'snapshot_root'}/$interval.0/",
-						"$config_vars{'snapshot_root'}/$interval.1/"
+						"$config_vars{'snapshot_root'}/$backup_level.0/",
+						"$config_vars{'snapshot_root'}/$backup_level.1/"
 					);
 					if (! $result) {
 						my $errstr = '';
-						$errstr .= "Error! cp_al(\"$config_vars{'snapshot_root'}/$interval.0/\", ";
-						$errstr .= "\"$config_vars{'snapshot_root'}/$interval.1/\")";
+						$errstr .= "Error! cp_al(\"$config_vars{'snapshot_root'}/$backup_level.0/\", ";
+						$errstr .= "\"$config_vars{'snapshot_root'}/$backup_level.1/\")";
 						bail($errstr);
 					}
 				}
@@ -3057,19 +3053,19 @@ sub rotate_lowest_snapshots {
 	}
 }
 
-# accepts interval, backup_point_ref, ssh_rsync_args_ref
+# accepts backup_level, backup_point_ref, ssh_rsync_args_ref
 # returns no args
 # runs rsync on the given backup point
 # this is only run on the lowest points, not for rotations
 sub rsync_backup_point {
-	my $interval	= shift(@_);
-	my $bp_ref		= shift(@_);
+	my $backup_level	= shift(@_);
+	my $bp_ref			= shift(@_);
 	
 	# validate subroutine args
-	if (!defined($interval))		{ bail('interval not defined in rsync_backup_point()'); }
-	if (!defined($bp_ref))			{ bail('bp_ref not defined in rsync_backup_point()'); }
-	if (!defined($$bp_ref{'src'}))	{ bail('src not defined in rsync_backup_point()'); }
-	if (!defined($$bp_ref{'dest'}))	{ bail('dest not defined in rsync_backup_point()'); }
+	if (!defined($backup_level))    { bail('backup_level not defined in rsync_backup_point()'); }
+	if (!defined($bp_ref))          { bail('bp_ref not defined in rsync_backup_point()'); }
+	if (!defined($$bp_ref{'src'}))  { bail('src not defined in rsync_backup_point()'); }
+	if (!defined($$bp_ref{'dest'})) { bail('dest not defined in rsync_backup_point()'); }
 	
 	# set up default args for rsync and ssh
 	my $ssh_args			= $default_ssh_args;
@@ -3085,26 +3081,26 @@ sub rsync_backup_point {
 	my $linux_lvm_oldpwd              = undef;
 	my $linux_lvm_snapshotname        = undef;
 
-	# if we're using link-dest later, that target depends on whether we're doing a 'sync' or a regular interval
-	# if we're doing a "sync", then look at [lowest-interval].0 instead of [cur-interval].1
-	my $interval_link_dest;
-	my $interval_num_link_dest;
+	# if we're using link-dest later, that target depends on whether we're doing a 'sync' or a regular backup level
+	# if we're doing a "sync", then look at [lowest-backup-level].0 instead of [cur-backup-level].1
+	my $backup_level_link_dest;
+	my $backup_level_num_link_dest;
 	
-	# start looking for link_dest targets at interval.$start_num
+	# start looking for link_dest targets at backup_level.$start_num
 	my $start_num = 1;
 	
-	# if we're doing a sync, we'll start looking at [lowest-interval].0 for a link_dest target
-	if ($interval eq 'sync') {
+	# if we're doing a sync, we'll start looking at [lowest-backup_level].0 for a link_dest target
+	if ($backup_level eq 'sync') {
 		$start_num = 0;
 	}
 	
 	# look for the most recent link_dest target directory
 	# loop through all snapshots until we find the first match
-	foreach my $i_ref (@intervals) {
+	foreach my $i_ref (@backup_levels) {
 		if (defined($$i_ref{'number'})) {
 			for (my $i = $start_num; $i < $$i_ref{'number'}; $i++) {
 				my $i_check;
-				if ($test && $interval ne 'sync') {
+				if ($test && $backup_level ne 'sync') {
 					# A real run would already have rotated the snapshots up, but this test run hasn't.
 					# Hence, to know whether $i would exist at this point of a real run, we must check for $i - 1.
 					$i_check = $i - 1;
@@ -3113,10 +3109,10 @@ sub rsync_backup_point {
 				}
 				
 				# once we find a valid link_dest target, the search is over
-				if ( -e "$config_vars{'snapshot_root'}/$$i_ref{'interval'}.$i_check/$$bp_ref{'dest'}" ) {
-					if (!defined($interval_link_dest) && !defined($interval_num_link_dest)) {
-						$interval_link_dest		= $$i_ref{'interval'};
-						$interval_num_link_dest = $i;
+				if ( -e "$config_vars{'snapshot_root'}/$$i_ref{'backup_level'}.$i_check/$$bp_ref{'dest'}" ) {
+					if (!defined($backup_level_link_dest) && !defined($backup_level_num_link_dest)) {
+						$backup_level_link_dest     = $$i_ref{'backup_level'};
+						$backup_level_num_link_dest = $i;
 					}
 					
 					# we'll still loop through the outer loop a few more times, but the defined() check above
@@ -3165,10 +3161,10 @@ sub rsync_backup_point {
 	# only relatively recently gone into core
     my @rsync_long_args_stack = split_long_args_with_quotes('rsync_long_args', $rsync_long_args);
 
-    # create $interval.0/$$bp_ref{'dest'} or .sync/$$bp_ref{'dest'} directory if it doesn't exist
+    # create $level.0/$$bp_ref{'dest'} or .sync/$$bp_ref{'dest'} directory if it doesn't exist
 	# (this may create the .sync dir, which is why we had to check for it above)
 	#
-	create_backup_point_dir($interval, $bp_ref);
+	create_backup_point_dir($backup_level, $bp_ref);
 	
 	# check opts, first unique to this backup point, and then global
 	#
@@ -3259,7 +3255,7 @@ sub rsync_backup_point {
         my ($linux_lvmvgname,$linux_lvmvolname, $linux_lvmpath) = ($src =~ m|^lvm://([^/]+)/([^/]+)/(.*)$|);
         # lvmvolname and/or path could be the string "0", so test for 'defined':
         unless (defined($linux_lvmvgname) and defined($linux_lvmvolname) and defined($linux_lvmpath)) {
-            bail("Could not understand LVM source \"$src\" in backup_lowest_interval()");
+            bail("Could not understand LVM source \"$src\" in backup_lowest_backup_level()");
         }
         
         # assemble and execute LVM snapshot command
@@ -3319,46 +3315,46 @@ sub rsync_backup_point {
 		
 	# this should have already been validated once, but better safe than sorry
 	} else {
-		bail("Could not understand source \"$src\" in backup_lowest_interval()");
+		bail("Could not understand source \"$src\" in backup_lowest_backup_level()");
 	}
 	
 	# if we're using --link-dest, we'll need to specify the link-dest directory target
-	# this varies depending on whether we're operating on the lowest interval or doing a 'sync'
+	# this varies depending on whether we're operating on the lowest backup level or doing a 'sync'
 	if (1 == $config_vars{'link_dest'}) {
 		# bp_ref{'dest'} and snapshot_root have already been validated, but these might be blank
-		if (defined($interval_link_dest) && defined($interval_num_link_dest)) {
+		if (defined($backup_level_link_dest) && defined($backup_level_num_link_dest)) {
 			# push link_dest arguments onto cmd stack
 			push(
 				@rsync_long_args_stack,
-				"--link-dest=$config_vars{'snapshot_root'}/$interval_link_dest.$interval_num_link_dest/$$bp_ref{'dest'}"
+				"--link-dest=$config_vars{'snapshot_root'}/$backup_level_link_dest.$backup_level_num_link_dest/$$bp_ref{'dest'}"
 			);
 		}
 	}
 	
 	# SPECIAL EXCEPTION:
 	#   If we're using --link-dest AND the source is a file AND we have a copy from the last time,
-	#   manually link interval.1/foo to interval.0/foo
+	#   manually link level.1/foo to level.0/foo
 	#
 	#   This is necessary because --link-dest only works on directories
 	#
 	if (
 		(1 == $config_vars{'link_dest'}) &&
 		(is_file($src)) &&
-		defined($interval_link_dest) &&
-		defined($interval_num_link_dest) &&
-		(-f "$config_vars{'snapshot_root'}/$interval_link_dest.$interval_num_link_dest/$$bp_ref{'dest'}")
+		defined($backup_level_link_dest) &&
+		defined($backup_level_num_link_dest) &&
+		(-f "$config_vars{'snapshot_root'}/$backup_level_link_dest.$backup_level_num_link_dest/$$bp_ref{'dest'}")
 	) {
 		
 		# these are both "destination" paths, but we're moving from .1 to .0
 		my $srcpath;
 		my $destpath;
 		
-		$srcpath = "$config_vars{'snapshot_root'}/$interval_link_dest.$interval_num_link_dest/$$bp_ref{'dest'}";
+		$srcpath = "$config_vars{'snapshot_root'}/$backup_level_link_dest.$backup_level_num_link_dest/$$bp_ref{'dest'}";
 		
-		if ($interval eq 'sync') {
+		if ($backup_level eq 'sync') {
 			$destpath = "$config_vars{'snapshot_root'}/.sync/$$bp_ref{'dest'}";
 		} else {
-			$destpath = "$config_vars{'snapshot_root'}/$interval.0/$$bp_ref{'dest'}";
+			$destpath = "$config_vars{'snapshot_root'}/$backup_level.0/$$bp_ref{'dest'}";
 		}
 		
 		print_cmd("ln $srcpath $destpath");
@@ -3405,10 +3401,10 @@ sub rsync_backup_point {
 	push(@cmd_stack, "$src");
 	#
 	# dest
-	if ($interval eq 'sync') {
+	if ($backup_level eq 'sync') {
 		push(@cmd_stack, "$config_vars{'snapshot_root'}/.sync/$$bp_ref{'dest'}");
 	} else {
-		push(@cmd_stack, "$config_vars{'snapshot_root'}/$interval.0/$$bp_ref{'dest'}");
+		push(@cmd_stack, "$config_vars{'snapshot_root'}/$backup_level.0/$$bp_ref{'dest'}");
 	}
 	#
 	# END RSYNC COMMAND ASSEMBLY
@@ -3564,23 +3560,23 @@ sub handle_rsync_error {
 		syslog_err("$config_vars{'cmd_rsync'} returned $retval while processing $$bp_ref{'src'}");
 		
 		# set this directory to rollback if we're using link_dest
-		# (since $interval.0/ will have been moved to $interval.1/ by now)
+		# (since $level.0/ will have been moved to $level.1/ by now)
 		if (1 == $config_vars{'link_dest'}) {
 			push(@rollback_points, $$bp_ref{'dest'});
 		}
 	}
 }
 
-# accepts interval, backup_point_ref, ssh_rsync_args_ref
+# accepts backup_level, backup_point_ref, ssh_rsync_args_ref
 # returns no args
 # runs rsync on the given backup point
 sub exec_backup_script {
-	my $interval	= shift(@_);
-	my $bp_ref		= shift(@_);
+	my $backup_level = shift(@_);
+	my $bp_ref       = shift(@_);
 	
 	# validate subroutine args
-	if (!defined($interval))	{ bail('interval not defined in exec_backup_script()'); }
-	if (!defined($bp_ref))		{ bail('bp_ref not defined in exec_backup_script()'); }
+	if (!defined($backup_level)) { bail('backup_level not defined in exec_backup_script()'); }
+	if (!defined($bp_ref))       { bail('bp_ref not defined in exec_backup_script()'); }
 	
 	# other misc variables
 	my $script	= undef;
@@ -3590,9 +3586,9 @@ sub exec_backup_script {
 	# remember what directory we started in
 	my $cwd = cwd();
 	
-	# create $interval.0/$$bp_ref{'dest'} directory if it doesn't exist
+	# create $level.0/$$bp_ref{'dest'} directory if it doesn't exist
 	#
-	create_backup_point_dir($interval, $bp_ref);
+	create_backup_point_dir($backup_level, $bp_ref);
 	
 	# work in a temp dir, and make this the source for the rsync operation later
 	# not having a trailing slash is a subtle distinction. it allows us to use
@@ -3682,12 +3678,12 @@ sub exec_backup_script {
 		my $lastdir;
 		my $curdir;
 		
-		if ($interval eq 'sync') {
-			$lastdir	= "$config_vars{'snapshot_root'}/" . $intervals[0]->{'interval'} . ".0/$$bp_ref{'dest'}";
-			$curdir		= "$config_vars{'snapshot_root'}/.sync/$$bp_ref{'dest'}";
+		if ($backup_level eq 'sync') {
+			$lastdir = "$config_vars{'snapshot_root'}/" . $backup_levels[0]->{'backup_level'} . ".0/$$bp_ref{'dest'}";
+			$curdir  = "$config_vars{'snapshot_root'}/.sync/$$bp_ref{'dest'}";
 		} else {
-			$lastdir	= "$config_vars{'snapshot_root'}/$interval.1/$$bp_ref{'dest'}";
-			$curdir		= "$config_vars{'snapshot_root'}/$interval.0/$$bp_ref{'dest'}";
+			$lastdir = "$config_vars{'snapshot_root'}/$backup_level.1/$$bp_ref{'dest'}";
+			$curdir  = "$config_vars{'snapshot_root'}/$backup_level.0/$$bp_ref{'dest'}";
 		}
 		
 		# make sure we have a slash at the end
@@ -3716,7 +3712,7 @@ sub exec_backup_script {
 		}
 	}
 	
-	# sync the output of the backup script into this snapshot interval
+	# sync the output of the backup script into this backup level
 	# this is using a native function since rsync doesn't quite do what we want
 	#
 	# rsync doesn't work here because it sees that the timestamps are different, and
@@ -3724,10 +3720,10 @@ sub exec_backup_script {
 	#
 	# check to see where we're syncing to
 	my $target_dir;
-	if ($interval eq 'sync') {
+	if ($backup_level eq 'sync') {
 		$target_dir = "$config_vars{'snapshot_root'}/.sync/$$bp_ref{'dest'}";
 	} else {
-		$target_dir = "$config_vars{'snapshot_root'}/$interval.0/$$bp_ref{'dest'}";
+		$target_dir = "$config_vars{'snapshot_root'}/$backup_level.0/$$bp_ref{'dest'}";
 	}
 	
 	print_cmd("sync_if_different(\"$tmpdir\", \"$target_dir\")");
@@ -3821,27 +3817,27 @@ sub exec_cmd_postexec {
 	return ($retval);
 }
 
-# accepts interval, backup_point_ref
+# accepts backup_level, backup_point_ref
 # returns nothing
 # exits the program if it encounters a fatal error
 sub create_backup_point_dir {
-	my $interval	= shift(@_);
-	my $bp_ref		= shift(@_);
+	my $backup_level = shift(@_);
+	my $bp_ref       = shift(@_);
 	
 	# validate subroutine args
-	if (!defined($interval))	{ bail('interval not defined in create_interval_0()'); }
-	if (!defined($bp_ref))		{ bail('bp_ref not defined in create_interval_0()'); }
+	if (!defined($backup_level)) { bail('backup_level not defined in create_backup_level_0()'); }
+	if (!defined($bp_ref))       { bail('bp_ref not defined in create_backup_level_0()'); }
 	
-	# create missing parent directories inside the $interval.x directory
+	# create missing parent directories inside the $level.x directory
 	my @dirs = split(/\//, $$bp_ref{'dest'});
 	pop(@dirs);
 	
 	# don't mkdir for dest unless we have to
 	my $destpath;
-	if ($interval eq 'sync') {
+	if ($backup_level eq 'sync') {
 		$destpath = "$config_vars{'snapshot_root'}/.sync/" . join('/', @dirs);
 	} else {
-		$destpath = "$config_vars{'snapshot_root'}/$interval.0/" . join('/', @dirs);
+		$destpath = "$config_vars{'snapshot_root'}/$backup_level.0/" . join('/', @dirs);
 	}
 	
 	# make sure we DON'T have a trailing slash (for mkpath)
@@ -3864,7 +3860,7 @@ sub create_backup_point_dir {
 	}
 }
 
-# accepts interval we're operating on
+# accepts backup level we're operating on
 # returns nothing important
 # rolls back failed backups, as defined in the @rollback_points array
 # this is necessary if we're using link_dest, since it moves the .0 to .1 directory,
@@ -3872,23 +3868,23 @@ sub create_backup_point_dir {
 # backup scripts.
 #
 sub rollback_failed_backups {
-	my $interval = shift(@_);
+	my $backup_level = shift(@_);
 	
-	if (!defined($interval)) { bail('interval not defined in rollback_failed_backups()'); }
+	if (!defined($backup_level)) { bail('backup_level not defined in rollback_failed_backups()'); }
 	
 	my $result;
 	my $rsync_short_args	= $default_rsync_short_args;
 	
 	# handle 'sync' case
-	my $interval_src;
-	my $interval_dest;
+	my $backup_level_src;
+	my $backup_level_dest;
 	
-	if ($interval eq 'sync') {
-		$interval_src	= $intervals[0]->{'interval'} . '.0';
-		$interval_dest	= '.sync';
+	if ($backup_level eq 'sync') {
+		$backup_level_src  = $backup_levels[0]->{'backup_level'} . '.0';
+		$backup_level_dest = '.sync';
 	} else {
-		$interval_src	= "$interval.1";
-		$interval_dest	= "$interval.0";
+		$backup_level_src  = "$backup_level.1";
+		$backup_level_dest = "$backup_level.0";
 	}
 	
 	# extra verbose?
@@ -3897,7 +3893,7 @@ sub rollback_failed_backups {
 	# rollback failed backups (if we're using link_dest)
 	foreach my $rollback_point (@rollback_points) {
 		# make sure there's something to rollback from
-		if ( ! -e "$config_vars{'snapshot_root'}/$interval_src/$rollback_point" ) {
+		if ( ! -e "$config_vars{'snapshot_root'}/$backup_level_src/$rollback_point" ) {
 			next;
 		}
 	
@@ -3905,13 +3901,13 @@ sub rollback_failed_backups {
 		syslog_warn("Rolling back \"$rollback_point\"");
 		
 		# using link_dest, this probably won't happen
-		# just in case, we may have to delete the old backup point from interval.0 / .sync
-		if ( -e "$config_vars{'snapshot_root'}/$interval_dest/$rollback_point" ) {
-			display_rm_rf("$config_vars{'snapshot_root'}/$interval_dest/$rollback_point");
+		# just in case, we may have to delete the old backup point from level.0 / .sync
+		if ( -e "$config_vars{'snapshot_root'}/$backup_level_dest/$rollback_point" ) {
+			display_rm_rf("$config_vars{'snapshot_root'}/$backup_level_dest/$rollback_point");
 			if (0 == $test) {
-				$result = rm_rf( "$config_vars{'snapshot_root'}/$interval_dest/$rollback_point" );
+				$result = rm_rf( "$config_vars{'snapshot_root'}/$backup_level_dest/$rollback_point" );
 				if (0 == $result) {
-					bail("Error! rm_rf(\"$config_vars{'snapshot_root'}/$interval_dest/$rollback_point\")\n");
+					bail("Error! rm_rf(\"$config_vars{'snapshot_root'}/$backup_level_dest/$rollback_point\")\n");
 				}
 			}
 		}
@@ -3921,174 +3917,174 @@ sub rollback_failed_backups {
 		#
 		# if we're doing a 'sync', then instead of .1 and .0, it's lowest.0 and .sync
 		display_cp_al(
-			"$config_vars{'snapshot_root'}/$interval_src/$rollback_point",
-			"$config_vars{'snapshot_root'}/$interval_dest/$rollback_point"
+			"$config_vars{'snapshot_root'}/$backup_level_src/$rollback_point",
+			"$config_vars{'snapshot_root'}/$backup_level_dest/$rollback_point"
 		);
 		if (0 == $test) {
 			$result = cp_al(
-				"$config_vars{'snapshot_root'}/$interval_src/$rollback_point",
-				"$config_vars{'snapshot_root'}/$interval_dest/$rollback_point"
+				"$config_vars{'snapshot_root'}/$backup_level_src/$rollback_point",
+				"$config_vars{'snapshot_root'}/$backup_level_dest/$rollback_point"
 			);
 			if (! $result) {
 				my $errstr = '';
-				$errstr .= "Error! cp_al(\"$config_vars{'snapshot_root'}/$interval_src/$rollback_point\", ";
-				$errstr .= "\"$config_vars{'snapshot_root'}/$interval_dest/$rollback_point\")";
+				$errstr .= "Error! cp_al(\"$config_vars{'snapshot_root'}/$backup_level_src/$rollback_point\", ";
+				$errstr .= "\"$config_vars{'snapshot_root'}/$backup_level_dest/$rollback_point\")";
 				bail($errstr);
 			}
 		}
 	}
 }
 
-# accepts interval
+# accepts backup_level
 # returns nothing
-# updates mtime on $interval.0
-sub touch_interval_dir {
-	my $interval = shift(@_);
+# updates mtime on $level.0
+sub touch_backup_level_dir {
+	my $backup_level = shift(@_);
 	
-	if (!defined($interval)) { bail('interval not defined in touch_interval()'); }
+	if (!defined($backup_level)) { bail('backup_level not defined in touch_backup_level()'); }
 	
-	my $interval_dir;
+	my $backup_level_dir;
 	
-	if ($interval eq 'sync') {
-		$interval_dir = '.sync';
+	if ($backup_level eq 'sync') {
+		$backup_level_dir = '.sync';
 	} else {
-		$interval_dir = $interval . '.0';
+		$backup_level_dir = $backup_level . '.0';
 	}
 	
-	# update mtime of $interval.0 to reflect the time this snapshot was taken
-	print_cmd("touch $config_vars{'snapshot_root'}/$interval_dir/");
+	# update mtime of $level.0 to reflect the time this snapshot was taken
+	print_cmd("touch $config_vars{'snapshot_root'}/$backup_level_dir/");
 	
 	if (0 == $test) {
-		my $result = utime(time(), time(), "$config_vars{'snapshot_root'}/$interval_dir/");
+		my $result = utime(time(), time(), "$config_vars{'snapshot_root'}/$backup_level_dir/");
 		if (0 == $result) {
-			bail("Could not utime(time(), time(), \"$config_vars{'snapshot_root'}/$interval_dir/\");");
+			bail("Could not utime(time(), time(), \"$config_vars{'snapshot_root'}/$backup_level_dir/\");");
 		}
 	}
 }
 
-# accepts an interval_data_ref
-# looks at $$id_ref{'interval'} as the interval to act on,
-# and the previous interval $$id_ref{'prev_interval'} to pull up the directory from (e.g., beta, alpha)
-# the interval being acted upon should not be the lowest one.
+# accepts an backup_level_data_ref
+# looks at $$id_ref{'backup_level'} as the backup level to act on,
+# and the previous backup level $$id_ref{'prev_backup_level'} to pull up the directory from (e.g., beta, alpha)
+# the backup level being acted upon should not be the lowest one.
 #
-# rotates older dirs within this interval, and hard links
-# the previous interval's highest numbered dir to this interval's .0,
+# rotates older dirs within this backup level, and hard links
+# the previous backup level's highest numbered dir to this backup level's .0,
 #
 # does not return a value, it bails instantly if there's a problem
-sub rotate_higher_interval {
+sub rotate_higher_backup_level {
 	my $id_ref = shift(@_);
 	
 	# this should never happen
-	if (!defined($id_ref)) { bail('rotate_higher_interval() expects an interval_data_ref'); }
+	if (!defined($id_ref)) { bail('rotate_higher_backup_level() expects a backup_level_data_ref'); }
 	
 	# this also should never happen
-	if (!defined($$id_ref{'interval_num'}) or (0 == $$id_ref{'interval_num'})) {
-		bail('rotate_higher_interval() can only operate on the higher intervals');
+	if (!defined($$id_ref{'backup_level_num'}) or (0 == $$id_ref{'backup_level_num'})) {
+		bail('rotate_higher_backup_level() can only operate on the higher backup levels');
 	}
 	
 	# set up variables for convenience since we refer to them extensively
-	my $interval			= $$id_ref{'interval'};
-	my $interval_num		= $$id_ref{'interval_num'};
-	my $interval_max		= $$id_ref{'interval_max'};
-	my $prev_interval		= $$id_ref{'prev_interval'};
-	my $prev_interval_max	= $$id_ref{'prev_interval_max'};
+	my $backup_level          = $$id_ref{'backup_level'};
+	my $backup_level_num      = $$id_ref{'backup_level_num'};
+	my $backup_level_max      = $$id_ref{'backup_level_max'};
+	my $prev_backup_level     = $$id_ref{'prev_backup_level'};
+	my $prev_backup_level_max = $$id_ref{'prev_backup_level_max'};
 	
 	# ROTATE DIRECTORIES
 	#
 	# delete the oldest one (if we're keeping more than one)
-	if ( -d "$config_vars{'snapshot_root'}/$interval.$interval_max" ) {
+	if ( -d "$config_vars{'snapshot_root'}/$backup_level.$backup_level_max" ) {
 		# if use_lazy_deletes is set move the oldest directory to _delete.$$
 		# otherwise preform the default behavior
 		if (1 == $config_vars{'use_lazy_deletes'}) {
 			print_cmd("mv ",
-				"$config_vars{'snapshot_root'}/$interval.$interval_max/ ",
+				"$config_vars{'snapshot_root'}/$backup_level.$backup_level_max/ ",
 				"$config_vars{'snapshot_root'}/_delete.$$/"
 			);
 			
 			if (0 == $test) {
 				my $result = safe_rename(
-					"$config_vars{'snapshot_root'}/$interval.$interval_max",
+					"$config_vars{'snapshot_root'}/$backup_level.$backup_level_max",
 					("$config_vars{'snapshot_root'}/_delete.$$")
 				);
 				if (0 == $result) {
 					my $errstr = '';
-					$errstr .= "Error! safe_rename(\"$config_vars{'snapshot_root'}/$interval.$interval_max/\", \"";
+					$errstr .= "Error! safe_rename(\"$config_vars{'snapshot_root'}/$backup_level.$backup_level_max/\", \"";
 					$errstr .= "$config_vars{'snapshot_root'}/_delete.$$/\")";
 					bail($errstr);
 				}				
 			}				
 		} else {
-			display_rm_rf("$config_vars{'snapshot_root'}/$interval.$interval_max/");
+			display_rm_rf("$config_vars{'snapshot_root'}/$backup_level.$backup_level_max/");
 			
 			if (0 == $test) {
-				my $result = rm_rf( "$config_vars{'snapshot_root'}/$interval.$interval_max/" );
+				my $result = rm_rf( "$config_vars{'snapshot_root'}/$backup_level.$backup_level_max/" );
 				if (0 == $result) {
-					bail("Could not rm_rf(\"$config_vars{'snapshot_root'}/$interval.$interval_max/\");");
+					bail("Could not rm_rf(\"$config_vars{'snapshot_root'}/$backup_level.$backup_level_max/\");");
 				}
 			}
 		}
 
 	} else {
-		print_msg("$config_vars{'snapshot_root'}/$interval.$interval_max not present (yet), nothing to delete", 4);
+		print_msg("$config_vars{'snapshot_root'}/$backup_level.$backup_level_max not present (yet), nothing to delete", 4);
 	}
 	
 	# rotate the middle ones
-	for (my $i=($interval_max-1); $i>=0; $i--) {
-		if ( -d "$config_vars{'snapshot_root'}/$interval.$i" ) {
+	for (my $i=($backup_level_max-1); $i>=0; $i--) {
+		if ( -d "$config_vars{'snapshot_root'}/$backup_level.$i" ) {
 			print_cmd(
-				"mv $config_vars{'snapshot_root'}/$interval.$i/ ",
-				"$config_vars{'snapshot_root'}/$interval." . ($i+1) . "/"
+				"mv $config_vars{'snapshot_root'}/$backup_level.$i/ ",
+				"$config_vars{'snapshot_root'}/$backup_level." . ($i+1) . "/"
 			);
 			
 			if (0 == $test) {
 				my $result = safe_rename(
-					"$config_vars{'snapshot_root'}/$interval.$i",
-					("$config_vars{'snapshot_root'}/$interval." . ($i+1))
+					"$config_vars{'snapshot_root'}/$backup_level.$i",
+					("$config_vars{'snapshot_root'}/$backup_level." . ($i+1))
 				);
 				if (0 == $result) {
 					my $errstr = '';
-					$errstr .= "Error! safe_rename(\"$config_vars{'snapshot_root'}/$interval.$i/\", \"";
-					$errstr .= "$config_vars{'snapshot_root'}/$interval." . ($i+1) . '/' . "\")";
+					$errstr .= "Error! safe_rename(\"$config_vars{'snapshot_root'}/$backup_level.$i/\", \"";
+					$errstr .= "$config_vars{'snapshot_root'}/$backup_level." . ($i+1) . '/' . "\")";
 					bail($errstr);
 				}
 			}
 		} else {
-			print_msg("$config_vars{'snapshot_root'}/$interval.$i not present (yet), nothing to rotate", 4);
+			print_msg("$config_vars{'snapshot_root'}/$backup_level.$i not present (yet), nothing to rotate", 4);
 		}
 	}
 	
-	# prev.max and interval.0 require more attention
-	if ( -d "$config_vars{'snapshot_root'}/$prev_interval.$prev_interval_max" ) {
+	# prev.max and level.0 require more attention
+	if ( -d "$config_vars{'snapshot_root'}/$prev_backup_level.$prev_backup_level_max" ) {
 		my $result;
 		
-		# if the previous interval has at least 2 snapshots,
-		# or if the previous interval isn't the smallest one,
+		# if the previous backup level has at least 2 snapshots,
+		# or if the previous backup level isn't the smallest one,
 		# move the last one up a level
-		if (($prev_interval_max >= 1) or ($interval_num >= 2)) {
-			# mv alpha.5 to beta.0 (or whatever intervals we're using)
+		if (($prev_backup_level_max >= 1) or ($backup_level_num >= 2)) {
+			# mv alpha.5 to beta.0 (or whatever backup levels we're using)
 			print_cmd(
-				"mv $config_vars{'snapshot_root'}/$prev_interval.$prev_interval_max/ ",
-				"$config_vars{'snapshot_root'}/$interval.0/"
+				"mv $config_vars{'snapshot_root'}/$prev_backup_level.$prev_backup_level_max/ ",
+				"$config_vars{'snapshot_root'}/$backup_level.0/"
 			);
 			
 			if (0 == $test) {
 				$result = safe_rename(
-					"$config_vars{'snapshot_root'}/$prev_interval.$prev_interval_max",
-					"$config_vars{'snapshot_root'}/$interval.0"
+					"$config_vars{'snapshot_root'}/$prev_backup_level.$prev_backup_level_max",
+					"$config_vars{'snapshot_root'}/$backup_level.0"
 				);
 				if (0 == $result) {
 					my $errstr = '';
-					$errstr .= "Error! safe_rename(\"$config_vars{'snapshot_root'}/$prev_interval.$prev_interval_max/\", ";
-					$errstr .= "\"$config_vars{'snapshot_root'}/$interval.0/\")";
+					$errstr .= "Error! safe_rename(\"$config_vars{'snapshot_root'}/$prev_backup_level.$prev_backup_level_max/\", ";
+					$errstr .= "\"$config_vars{'snapshot_root'}/$backup_level.0/\")";
 					bail($errstr);
 				}
 			}
 		} else {
-			print_err("$prev_interval must be above 1 to keep snapshots at the $interval level", 1);
+			print_err("$prev_backup_level must be above 1 to keep snapshots at the $backup_level level", 1);
 			exit(1);
 		}
 	} else {
-		print_msg("$config_vars{'snapshot_root'}/$prev_interval.$prev_interval_max not present (yet), nothing to copy", 2);
+		print_msg("$config_vars{'snapshot_root'}/$prev_backup_level.$prev_backup_level_max not present (yet), nothing to copy", 2);
 	}
 }
 
@@ -4640,20 +4636,20 @@ sub show_disk_usage {
 			}
 		}
 		
-		# loop through the intervals, most recent to oldest
-		foreach my $interval_ref (@intervals) {
-			my $interval			= $$interval_ref{'interval'};
-			my $max_interval_num	= $$interval_ref{'number'};
+		# loop through the backup levels, most recent to oldest
+		foreach my $backup_level_ref (@backup_levels) {
+			my $backup_level         = $$backup_level_ref{'backup_level'};
+			my $max_backup_level_num = $$backup_level_ref{'number'};
 			
-			for (my $i=0; $i < $max_interval_num; $i++) {
-				if (-r "$config_vars{'snapshot_root'}/$interval.$i/$dest_path") {
-					push(@du_dirs, "$config_vars{'snapshot_root'}/$interval.$i/$dest_path");
+			for (my $i=0; $i < $max_backup_level_num; $i++) {
+				if (-r "$config_vars{'snapshot_root'}/$backup_level.$i/$dest_path") {
+					push(@du_dirs, "$config_vars{'snapshot_root'}/$backup_level.$i/$dest_path");
 				}
 			}
 		}
 	}
 	
-	# if we can see any of the intervals, find out how much space they're taking up
+	# if we can see any of the backup levels, find out how much space they're taking up
 	# most likely we can either see all of them or none at all
 	if (scalar(@du_dirs) > 0) {
 		my @cmd_stack = ($cmd_du,
@@ -4720,16 +4716,16 @@ sub show_rsnapshot_diff {
 		exit(1);
 	}
 	
-	# make this automatically pick the two lowest intervals (or .sync dir) for comparison, as the default
+	# make this automatically pick the two lowest backup levels (or .sync dir) for comparison, as the default
 	# we actually want to specify the older directory first, since rsnapshot-diff will flip them around
 	# anyway based on mod times. doing it this way should make both programs consistent, and cause less
 	# surprises.
 	if (!defined($ARGV[1]) && !defined($ARGV[2])) {
 		# sync_first is enabled, and .sync exists
 		if ($config_vars{'sync_first'} && (-d "$config_vars{'snapshot_root'}/.sync/")) {
-			# interval.0
-			if ( -d ("$config_vars{'snapshot_root'}/" . $intervals[0]->{'interval'} . ".0" ) ) {
-				$cmd_args[0] = "$config_vars{'snapshot_root'}/" . $intervals[0]->{'interval'} . ".0";
+			# level.0
+			if ( -d ("$config_vars{'snapshot_root'}/" . $backup_levels[0]->{'backup_level'} . ".0" ) ) {
+				$cmd_args[0] = "$config_vars{'snapshot_root'}/" . $backup_levels[0]->{'backup_level'} . ".0";
 			}
 			
 			# .sync
@@ -4737,13 +4733,13 @@ sub show_rsnapshot_diff {
 			
 		# sync_first is not enabled, or .sync doesn't exist
 		} else {
-			# interval.1
-			if ( -d ("$config_vars{'snapshot_root'}/" . $intervals[0]->{'interval'} . ".1" ) ) {
-				$cmd_args[0] = "$config_vars{'snapshot_root'}/" . $intervals[0]->{'interval'} . ".1";
+			# level.1
+			if ( -d ("$config_vars{'snapshot_root'}/" . $backup_levels[0]->{'backup_level'} . ".1" ) ) {
+				$cmd_args[0] = "$config_vars{'snapshot_root'}/" . $backup_levels[0]->{'backup_level'} . ".1";
 			}
-			# interval.0
-			if ( -d ("$config_vars{'snapshot_root'}/" . $intervals[0]->{'interval'} . ".0" ) ) {
-				$cmd_args[1] = "$config_vars{'snapshot_root'}/" . $intervals[0]->{'interval'} . ".0";
+			# level.0
+			if ( -d ("$config_vars{'snapshot_root'}/" . $backup_levels[0]->{'backup_level'} . ".0" ) ) {
+				$cmd_args[1] = "$config_vars{'snapshot_root'}/" . $backup_levels[0]->{'backup_level'} . ".0";
 			}
 		}
 			
@@ -4753,7 +4749,7 @@ sub show_rsnapshot_diff {
 		$paths_in[1] = $ARGV[2];	# the 2nd path is the 3rd cmd line argument
 	
 		for (my $i=0; $i<2; $i++) {
-			# no interval would start with ../
+			# no backup level would start with ../
 			if (is_directory_traversal( "$paths_in[$i]" )) {
 				$cmd_args[$i] = $paths_in[$i];
 				
@@ -5993,7 +5989,7 @@ B<retain>             [name]   [number]
 
 "name" refers to the name of this backup level (e.g., alpha, beta,
 so also called the 'interval'). "number"
-is the number of snapshots for this type of interval that will be retained.
+is the number of snapshots for this backup level that will be retained.
 The value of "name" will be the command passed to B<rsnapshot> to perform
 this type of backup.
 
@@ -6377,7 +6373,7 @@ B<backup  lvm://vg0/home/path2/       lvm-vg0/>
 =over 4
 
 Backs up the LVM logical volume called home, of volume group vg0, to 
-<snapshot_root>/<interval>.0/lvm-vg0/. Will create, mount, backup, unmount and remove an LVM 
+<snapshot_root>/<backup level>.0/lvm-vg0/. Will create, mount, backup, unmount and remove an LVM 
 snapshot for each lvm:// entry.
 
 =back

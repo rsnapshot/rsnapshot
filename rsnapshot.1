@@ -286,7 +286,7 @@ managing snapshots of \s-1LVM\s0 volumes and are otherwise optional.
 .RS 4
 \&\*(L"name\*(R" refers to the name of this backup level (e.g., alpha, beta,
 so also called the 'interval'). \*(L"number\*(R"
-is the number of snapshots for this type of interval that will be retained.
+is the number of snapshots for this backup level that will be retained.
 The value of \*(L"name\*(R" will be the command passed to \fBrsnapshot\fR to perform
 this type of backup.
 .Sp
@@ -671,7 +671,7 @@ to pass to rsync instead of replacing the list.
 .Sp
 .RS 4
 Backs up the \s-1LVM\s0 logical volume called home, of volume group vg0, to 
-<snapshot_root>/<interval>.0/lvm\-vg0/. Will create, mount, backup, unmount and remove an \s-1LVM\s0 
+<snapshot_root>/<backup level>.0/lvm\-vg0/. Will create, mount, backup, unmount and remove an \s-1LVM\s0 
 snapshot for each lvm:// entry.
 .RE
 .RE
