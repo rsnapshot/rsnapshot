@@ -608,14 +608,20 @@ sub parse_config_file {
 				if (is_valid_script($1, $file_line_num, $line)) {
 					$line_syntax_ok = 1;
 					parse_config_file($value);
-				} else {
-					next;
 				}
-			} elsif(defined($value) && -f $value && -r $value) {
-				$line_syntax_ok = 1;
-				parse_config_file($value);
 			} else {
-				config_err($file_line_num, "$line - can't find or read file '$value'");
+				if (!defined($value)) {
+					config_err($file_line_num, "$line - you must provide a config file.");
+				} elsif (! -f $value) {
+					config_err($file_line_num, "$line - file '$value' does not exist.");
+				} elsif (! -r $value) {
+					config_err($file_line_num, "$line - file '$value' is not readable.");
+				} else {
+					$line_syntax_ok = 1;
+					parse_config_file($value);
+				}
+			}
+			if (!$line_syntax_ok) {
 				next;
 			}
 		}
