@@ -5989,7 +5989,7 @@ B<retain>             [name]   [number]
 
 "name" refers to the name of this backup level (e.g., alpha, beta,
 so also called the 'interval'). "number"
-is the number of snapshots for this backup level that will be retained.
+is the number of snapshots which will be retained for this backup level.
 The value of "name" will be the command passed to B<rsnapshot> to perform
 this type of backup.
 
