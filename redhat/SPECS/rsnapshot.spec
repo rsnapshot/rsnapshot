@@ -22,7 +22,7 @@ For more details see http://www.rsnapshot.org/.
 
 %prep
 
-%setup 
+%setup
 
 %patch
 
@@ -105,7 +105,7 @@ rm -rf $RPM_BUILD_DIR/%{name}-%{version}/
 - Change BuildRoot to format recommended in Fedora Packaging Guidelines
 - Reformat description to fit in 80 columns, and add URL.
 - Add URL (www.rsnapshot.org)
-- Remove %verify on %files (except rsnapshot.conf).  
+- Remove %verify on %files (except rsnapshot.conf).
 - Change rsnapshot.conf to %config(noreplace).
 - Add version numbers to my ChangeLog entries.
 

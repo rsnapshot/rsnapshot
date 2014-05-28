@@ -538,7 +538,7 @@ sub parse_config_file {
 	my $current_config_file = shift() || $config_file;
 	my $CONFIG;
 	if($current_config_file =~ /^`(.*)`$/) {
-	    open($CONFIG, "$1 |") 
+	    open($CONFIG, "$1 |")
 	        or bail("Couldn't execute \"$1\" to get config information\n");
 	} else {
 	    $CONFIG = IO::File->new($current_config_file)
@@ -1263,7 +1263,7 @@ sub validate_config_file {
 				} else {
 					my $snapshot_root = $config_vars{'snapshot_root'};
 					# Check parent directories until we find one that exists
-					while (! -e $snapshot_root) { 
+					while (! -e $snapshot_root) {
 						print_err ("$snapshot_root does not exist.", 1);
 						$snapshot_root =~ m%(.*)/[^/]*%;
 						if (defined($1) && $1 ne $snapshot_root) {
@@ -1533,7 +1533,7 @@ sub parse_backup_opts {
 			delete($parsed_opts{'exclude_file'});
 
 		# Not (yet?) implemented as per-backup-point options
-		} elsif ( $name eq 'cmd_preexec' || $name eq 'cmd_postexec' 
+		} elsif ( $name eq 'cmd_preexec' || $name eq 'cmd_postexec'
 			|| $name eq 'cmd_ssh' || $name eq 'cmd_rsync'
 			|| $name eq 'verbose' || $name eq 'loglevel') {
 			print_err("$name is not implemented as a per-backup-point option in this version of rsnapshot", 2);
@@ -2483,7 +2483,7 @@ sub is_valid_local_abs_path {
 # accepts path
 # returns 1 if it's a syntactically valid non-absolute (relative) path
 # returns 0 otherwise
-# does not check for directory traversal, since we want to use 
+# does not check for directory traversal, since we want to use
 # a different error message if there is ".." in the path
 sub is_valid_local_non_abs_path {
 	my $path	= shift(@_);
@@ -2895,8 +2895,8 @@ sub rotate_lowest_snapshots {
 					$errstr .= "Error! safe_rename(\"$config_vars{'snapshot_root'}/$backup_level.$backup_level_max/\", \"";
 					$errstr .= "$config_vars{'snapshot_root'}/_delete.$$/\")";
 					bail($errstr);
-				}				
-			}				
+				}
+			}
 			
 		# otherwise the default is to delete the oldest directory for this backup_level
 		} else {
@@ -2965,9 +2965,9 @@ sub rotate_lowest_snapshots {
 					$errstr .= "Error! safe_rename(\"$config_vars{'snapshot_root'}/$backup_level.0/\", \"";
 					$errstr .= "$config_vars{'snapshot_root'}/$backup_level.1/\")";
 					bail($errstr);
-				}				
-			}				
-		}				
+				}
+			}
+		}
 			
 		# if we're using rsync --link-dest, we need to mv sync to .0 now
 		if (1 == $config_vars{'link_dest'}) {
@@ -2989,9 +2989,9 @@ sub rotate_lowest_snapshots {
 						$errstr .= "Error! safe_rename(\"$config_vars{'snapshot_root'}/.sync/\", \"";
 						$errstr .= "$config_vars{'snapshot_root'}/$backup_level.0/\")";
 						bail($errstr);
-					}				
-				}				
-			}	
+					}
+				}
+			}
 			
 		# otherwise, we hard link (except for directories, symlinks, and special files) sync to .0
 		} else {
@@ -4011,8 +4011,8 @@ sub rotate_higher_backup_level {
 					$errstr .= "Error! safe_rename(\"$config_vars{'snapshot_root'}/$backup_level.$backup_level_max/\", \"";
 					$errstr .= "$config_vars{'snapshot_root'}/_delete.$$/\")";
 					bail($errstr);
-				}				
-			}				
+				}
+			}
 		} else {
 			display_rm_rf("$config_vars{'snapshot_root'}/$backup_level.$backup_level_max/");
 			
@@ -4536,7 +4536,7 @@ sub rm_rf {
 	
 	# extra bonus safety feature!
 	# confirm that whatever we're deleting must be inside the snapshot_root
-	if (index($path, $config_vars{'snapshot_root'}) != 0) { 
+	if (index($path, $config_vars{'snapshot_root'}) != 0) {
 		bail("rm_rf() tried to delete something outside of $config_vars{'snapshot_root'}! Quitting now!");
 	}
 	
@@ -5902,7 +5902,7 @@ B<config_version>     Config file version (required). Default is 1.2
 B<snapshot_root>      Local filesystem path to save all snapshots
 
 B<include_conf>       Include another file in the configuration at this point.
- 
+
 =over 4
 
 This is recursive, but you may need to be careful about paths when specifying
@@ -5977,7 +5977,7 @@ B<linux_lvm_cmd_umount>
 =over 4
 
 Paths to lvcreate, lvremove, mount and umount commands, for use with Linux
-LVMs.  You may include options to the commands also. 
+LVMs.  You may include options to the commands also.
 The lvcreate, lvremove, mount and umount commands are required for
 managing snapshots of LVM volumes and are otherwise optional.
 
@@ -6161,7 +6161,7 @@ B<rsync_long_args     --delete --numeric-ids --relative --delete-excluded>
 
 List of long arguments to pass to rsync.  The default values are
     --delete --numeric-ids --relative --delete-excluded
-This means that the directory structure in each backup point destination 
+This means that the directory structure in each backup point destination
 will match that in the backup point source.
 
 Quotes are permitted in rsync_long_args, eg --rsync-path="sudo /usr/bin/rsync".
@@ -6226,7 +6226,7 @@ B<use_lazy_deletes    1>
 
 =over 4
 
-Changes default behavior of rsnapshot and does not initially remove the 
+Changes default behavior of rsnapshot and does not initially remove the
 oldest snapshot. Instead it moves that directory to _delete.[processid] and
 continues as normal. Once the backup has been completed, the lockfile will
 be removed before rsnapshot starts deleting the directory.
@@ -6272,7 +6272,7 @@ B<linux_lvm_mountpath     /mnt/lvm-snapshot>
 
 =over 4
 
-Mount point to use to temporarily mount the snapshot(s). 
+Mount point to use to temporarily mount the snapshot(s).
 
 =back
 
@@ -6372,8 +6372,8 @@ B<backup  lvm://vg0/home/path2/       lvm-vg0/>
 
 =over 4
 
-Backs up the LVM logical volume called home, of volume group vg0, to 
-<snapshot_root>/<backup level>.0/lvm-vg0/. Will create, mount, backup, unmount and remove an LVM 
+Backs up the LVM logical volume called home, of volume group vg0, to
+<snapshot_root>/<backup level>.0/lvm-vg0/. Will create, mount, backup, unmount and remove an LVM
 snapshot for each lvm:// entry.
 
 =back
@@ -6520,7 +6520,7 @@ If rsnapshot takes longer than 10 minutes to do the "beta" rotate
 (which usually includes deleting the oldest beta snapshot), then you
 should increase the time between the backup levels.
 Otherwise (assuming you have set the B<lockfile> parameter, as is recommended)
-your alpha snapshot will fail sometimes because the beta still has the lock.  
+your alpha snapshot will fail sometimes because the beta still has the lock.
 
 Remember that these are just the times that the program runs.
 To set the number of backups stored, set the B<retain> numbers in

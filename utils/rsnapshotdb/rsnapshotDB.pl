@@ -153,7 +153,7 @@ sub read_dbpasswd
 				'dbApp' 	=> $dbApp,
 				'tmpDir'	=> $tmpDir,
 				'verbose'	=> $verbose,
-			} );	
+			} );
 
 		my $validity = $xobj->validateXML; #boolean test
 
@@ -248,7 +248,7 @@ sub parseXML
 	my $parser = XML::Simple->new();
 
 	#hardcoded xml tag names
-	my $xmlRef = $parser->XMLin($xml, ForceArray => ['hostGroup', 'hostPair', 'databaseHost', 'defaultSSHHost'] ); 
+	my $xmlRef = $parser->XMLin($xml, ForceArray => ['hostGroup', 'hostPair', 'databaseHost', 'defaultSSHHost'] );
 
 	#count hostGroup tags
 	my $hostGroups = scalar(@{$xmlRef->{'hostGroup'}});
@@ -334,7 +334,7 @@ sub showDB
 	
 
 	$self->v("START: showDB command...", 1);
-	my $cmdShowDB = "ssh $sshOption $user\@$host \"echo -n 'SHOW DATABASES;' | \ $dbApp->{$dbType}->{'prompt'}->{'bin'} \ $dbApp->{$dbType}->{'prompt'}->{'opts'} \ $dbApp->{$dbType}->{'prompt'}->{'user'} $dbuser \ $dbpass_arg \ $dbApp->{$dbType}->{'prompt'}->{'host'} $dbhost\""; 
+	my $cmdShowDB = "ssh $sshOption $user\@$host \"echo -n 'SHOW DATABASES;' | \ $dbApp->{$dbType}->{'prompt'}->{'bin'} \ $dbApp->{$dbType}->{'prompt'}->{'opts'} \ $dbApp->{$dbType}->{'prompt'}->{'user'} $dbuser \ $dbpass_arg \ $dbApp->{$dbType}->{'prompt'}->{'host'} $dbhost\"";
 
 	my $out = qx/$cmdShowDB/ or warn 'SHOW DATABASES failed...';
 	$self->v("CMD: $cmdShowDB -> $out.", 2);

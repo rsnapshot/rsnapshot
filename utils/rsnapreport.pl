@@ -83,10 +83,10 @@ while (my $line = nextLine(\@rsnapout)){
 		#print $source;
 		while($line = nextLine(\@rsnapout)){
   			# this means we are missing stats info
-			if($line =~ /^[\/\w]+\/rsync/){ 
+			if($line =~ /^[\/\w]+\/rsync/){
 				unshift(@rsnapout,$line);
 				push(@errors,"$source NO STATS DATA");
-				last;  
+				last;
 			}
 			# stat record
 			if($line =~ /^total size is\s+\d+/){ last; } # this ends the rsync stats record

@@ -142,8 +142,8 @@ lockfile	/var/run/rsnapshot.pid
 # The include and exclude parameters, if enabled, simply get passed directly
 # to rsync. If you have multiple include/exclude patterns, put each one on a
 # separate line. Please look up the --include and --exclude options in the
-# rsync man page for more details on how to specify file name patterns. 
-# 
+# rsync man page for more details on how to specify file name patterns.
+#
 #include	???
 #include	???
 #exclude	???

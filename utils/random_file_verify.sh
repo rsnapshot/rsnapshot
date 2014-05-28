@@ -19,7 +19,7 @@
 #
 ##############################################################################
 
-#Initialize 
+#Initialize
 
 echo "Started backup script on `date`"> /var/log/localbackup.log
 msubject="Local Backup SUCCESSFUL!"

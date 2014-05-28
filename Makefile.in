@@ -817,7 +817,7 @@ rsnapshot-$(VERSION)-$(RPM_RELEASE).noarch.rpm: tar redhat/SOURCES/rsnapshot.pat
 tar: rsnapshot-$(VERSION).tar.gz
 	@touch tar
 rsnapshot-$(VERSION).tar.gz: $(man_MANS) rpm-patch Makefile $(bin_SCRIPTS) $(sysconf_DATA)
-	@echo building tar file 
+	@echo building tar file
 	@# recommended to run make tar as root for the chown
 	rm -f rsnapshot-$(VERSION).tar.gz
 

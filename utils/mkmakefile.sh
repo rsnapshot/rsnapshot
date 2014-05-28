@@ -13,7 +13,7 @@
 # Inputs:	Makefile.am	configure.ac
 # Outputs:	Makefile	Makefile.in	configure	aclocal.m4
 #
-# This script is executed with the sh -e flag, so that an error from 
+# This script is executed with the sh -e flag, so that an error from
 # executing any command will cause the shell script to abort immediately.
 #
 trap "echo Previous command had error, mkmakefile.sh aborting." ERR
