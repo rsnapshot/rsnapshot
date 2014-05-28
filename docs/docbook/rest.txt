@@ -297,7 +297,7 @@ program on your filesystem. If you are using Linux, be sure to
 uncomment this by removing the octothorpe (#) in front of it. If you
 are using BSD, Solaris, IRIX, or most other UNIX variants, you should
 leave this commented out.
-    
+
 What makes GNU cp so special is that unlike the traditional UNIX
 cp, it has the ability to make recursive "copies" of directories
 as hard links.
@@ -476,7 +476,7 @@ things into account.
   backup. Depending on how much your data changes, subsequent backups
   should go much, much faster since rsync only sends the differences
   between files.
-   
+
 backup_script
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -778,19 +778,19 @@ More resources
 
 Mike Rubel's original shell scripts, upon which this project is based
     http://www.mikerubel.org/computers/rsync_snapshots/
-   
+
 Perl
     http://www.perl.org/
-   
+
 GNU cp and du (coreutils package)
     http://www.gnu.org/software/coreutils/
-   
+
 rsync
     http://rsync.samba.org/
-   
+
 OpenSSH
     http://www.openssh.org/
-   
+
 rsnapshot
     http://www.rsnapshot.org/
 

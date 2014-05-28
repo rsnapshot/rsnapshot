@@ -199,7 +199,7 @@ my $run_string = "$0 " . join(' ', @ARGV);
 
 # if we have any errors, we print the run string once, at the top of the list
 my $have_printed_run_string = 0;
-	
+
 # pre-buffer the include/exclude parameter flags
 # local to parse_config_file and validate_config_file
 my $rsync_include_args      = undef;
@@ -258,7 +258,7 @@ if (defined($config_file) && -r $config_file) {
 	# if there is a problem, this subroutine will exit the program and notify the user of the error
 	parse_config_file();
 	validate_config_file();
-	
+
 # no config file found
 } else {
 	# warn user and exit the program
@@ -336,7 +336,7 @@ rsnapshot $VERSION
 Usage: rsnapshot [-vtxqVD] [-c cfgfile] [command] [args]
 Type \"rsnapshot help\" or \"man rsnapshot\" for more information.
 HERE
-	
+
 	exit(1);
 }
 
@@ -385,7 +385,7 @@ Commands:
     version          - Show the version number for rsnapshot.
     help             - Show this help message.
 HERE
-	
+
 	exit(0);
 }
 
@@ -426,24 +426,24 @@ sub find_config_file {
 	my $autoconf_sysconfdir	= '@sysconfdir@';
 	my $autoconf_prefix		= '@prefix@';
 	my $default_config_file	= '/etc/rsnapshot.conf';
-	
+
 	# consolidate multiple slashes
 	$autoconf_sysconfdir	=~ s/\/+/\//g;
 	$autoconf_prefix		=~ s/\/+/\//g;
-	
+
 	# remove trailing slashes
 	$autoconf_sysconfdir	=~ s/\/$//g;
 	$autoconf_prefix		=~ s/\/$//g;
-	
+
 	# if --sysconfdir was not set explicitly during ./configure, but we did use autoconf
 	if ($autoconf_sysconfdir eq '${prefix}/etc') {
 		$default_config_file = "$autoconf_prefix/etc/rsnapshot.conf";
-		
+
 	# if --sysconfdir was set explicitly at ./configure, overriding the --prefix setting
 	} elsif ($autoconf_sysconfdir ne ('@' . 'sysconfdir' . '@')) {
 		$default_config_file = "$autoconf_sysconfdir/rsnapshot.conf";
 	}
-	
+
 	# set global variable
 	$config_file = $default_config_file;
 }
@@ -455,14 +455,14 @@ sub find_config_file {
 sub parse_cmd_line_opts {
 	my %opts;
 	my $result;
-	
+
 	# get command line options
 	$result = getopts('vtxqVDc:', \%opts);
-	
+
 	#
 	# validate command line args
 	#
-	
+
 	# make sure config file is a file
 	if (defined($opts{'c'})) {
 		if ( ! -r "$opts{'c'}" ) {
@@ -470,21 +470,21 @@ sub parse_cmd_line_opts {
 			$result = undef;
 		}
 	}
-	
+
 	# die if we don't understand all the flags
 	if (!defined($result) or (1 != $result)) {
 		# At this point, getopts() or our @ARGV check will have printed out "Unknown option: -X"
 		print STDERR "Type \"rsnapshot help\" or \"man rsnapshot\" for more information.\n";
 		exit(1);
 	}
-	
+
 	#
 	# with that out of the way, we can go about the business of setting global variables
 	#
-	
+
 	# set command
 	$cmd = $ARGV[0];
-	
+
 	# check for extra bogus arguments that getopts() didn't catch
 	if (defined($cmd) && ('du' ne $cmd) && ('diff' ne $cmd) && ('sync' ne $cmd)) {
 		if (scalar(@ARGV) > 1) {
@@ -494,32 +494,32 @@ sub parse_cmd_line_opts {
 				print STDERR "(e.g., 'rsnapshot -v alpha', not 'rsnapshot alpha -v')\n";
 				exit(1);
 			}
-			
+
 			$result = undef;
 		}
 	}
-	
+
 	# alternate config file?
 	if (defined($opts{'c'})) {
 		$config_file = $opts{'c'};
 	}
-	
+
 	# test? (just show what WOULD be done)
 	if (defined($opts{'t'})) {
 		$test = 1;
 		$verbose = 3;
 	}
-	
+
 	# quiet?
 	if (defined($opts{'q'}))	{ $verbose = 1; }
-	
+
 	# verbose (or extra verbose)?
 	if (defined($opts{'v'}))	{ $verbose = 3; }
 	if (defined($opts{'V'}))	{ $verbose = 4; }
-	
+
 	# debug
 	if (defined($opts{'D'}))	{ $verbose = 5; }
-	
+
 	# one file system? (don't span partitions with rsync)
 	if (defined($opts{'x'}))	{ $config_vars{'one_fs'} = 1; }
 }
@@ -533,7 +533,7 @@ sub parse_config_file {
 	# count the lines in the config file, so the user can pinpoint errors more precisely
 	my $file_line_num = 0;
 	my @configs = ();
-	
+
 	# open the config file
 	my $current_config_file = shift() || $config_file;
 	my $CONFIG;
@@ -544,26 +544,26 @@ sub parse_config_file {
 	    $CONFIG = IO::File->new($current_config_file)
 		or bail("Could not open config file \"$current_config_file\"\nAre you sure you have permission?");
         }
-	
+
 	# read it line by line
 	@configs = <$CONFIG>;
 	while (my $line = $configs[$file_line_num]) {
 		chomp($line);
-		
+
 		# count line numbers
 		$file_line_num++;
-		
+
 		# Ensure the correct filename is reported in error messages.  Setting it on
 		# every iteration ensures it will be reset after recursive calls to this
 		# function.
 		$config_file = $current_config_file;
-		
+
 		# assume the line is formatted incorrectly
 		my $line_syntax_ok = 0;
-		
+
 		# ignore comments
 		if (is_comment($line)) { next; }
-		
+
 		# ignore blank lines
 		if (is_blank($line)) { next; }
 
@@ -573,10 +573,10 @@ sub parse_config_file {
 			$line = $line . "\t" . $newline;
 			$file_line_num++;
 		}
-		
+
 		# parse line
 		my ($var, $value, $value2, $value3) = split(/\t+/, $line, 4);
-		
+
 		# warn about entries we don't understand, and immediately prevent the
 		# program from running or parsing anything else
 		if (!defined($var)) {
@@ -600,7 +600,7 @@ sub parse_config_file {
 		} ($value, $value2, $value3)) {
 		    print_warn("$line - extra space found between tab and $_");
 		}
-		
+
 		# INCLUDEs
 		if($var eq 'include_conf') {
 			$value =~ /^`(.*)`$/;
@@ -643,7 +643,7 @@ sub parse_config_file {
 				next;
 			}
 		}
-		
+
 		# SNAPSHOT_ROOT
 		if ($var eq 'snapshot_root') {
 			# make sure this is a full path
@@ -672,16 +672,16 @@ sub parse_config_file {
 					next;
 				}
 			}
-			
+
 			# remove the trailing slash(es) if present
 			$value = remove_trailing_slash($value);
-			
+
 			$config_vars{'snapshot_root'} = $value;
 			$line_syntax_ok = 1;
 			next;
 		}
-		
-		
+
+
 		if ($booleans{$var}) {
 			$line_syntax_ok = is_boolean($value);
 			if ($line_syntax_ok) {
@@ -691,7 +691,7 @@ sub parse_config_file {
 			}
 			next;
 		}
-		
+
 		if ($commands{$var}) {
 			$value =~ s/\s+$//; # strip trailing whitespace
 			if (is_valid_executable($value, $file_line_num, $line)) {
@@ -700,7 +700,7 @@ sub parse_config_file {
 			}
 			next;
 		}
-		
+
 		if ($scripts{$var}) {
 			if (is_valid_script($value, $file_line_num, $line)) {
 				$config_vars{$var} = $value;
@@ -708,7 +708,7 @@ sub parse_config_file {
 			}
 			next;
 		}
-		
+
 		# BACKUP LEVELS
 		# 'retain' is the new name for this parameter.  Documentation and
 		# messages should refer to 'retain'.  The old 'interval' will be kept
@@ -717,7 +717,7 @@ sub parse_config_file {
 			my $retain = $var;	# either 'interval' or 'retain'
 			# check if backup level is blank
 			if (!defined($value)) { config_err($file_line_num, "$line - $retain can not be blank"); }
-			
+
 			foreach my $word (@reserved_words) {
 				if ($value eq $word) {
 					config_err($file_line_num,
@@ -725,20 +725,20 @@ sub parse_config_file {
 					next;
 				}
 			}
-			
+
 			# make sure backup level is alpha-numeric
 			if ($value !~ m/^[\w\d]+$/) {
 				config_err($file_line_num,
 					"$line - \"$value\" is not a valid $retain name, must be alphanumeric characters only");
 				next;
 			}
-			
+
 			# check if number is blank
 			if (!defined($value2)) {
 				config_err($file_line_num, "$line - \"$value\" number can not be blank");
 				next;
 			}
-			
+
 			# check if number is valid
 			if ($value2 !~ m/^\d+$/) {
 				config_err($file_line_num, "$line - \"$value2\" is not a legal value for a retention count");
@@ -751,7 +751,7 @@ sub parse_config_file {
 					next;
 				}
 			}
-			
+
 			my %hash;
 			$hash{'backup_level'} = $value;
 			$hash{'number'}       = $value2;
@@ -759,29 +759,29 @@ sub parse_config_file {
 			$line_syntax_ok = 1;
 			next;
 		}
-		
+
 		# BACKUP POINTS
 		if ($var eq 'backup') {
 			my $src			= $value;	# source directory
 			my $dest		= $value2;	# dest directory
 			my $opt_str		= $value3;	# option string from this backup point
 			my $opts_ref	= undef;	# array_ref to hold parsed opts
-			
+
 			if ( !defined($config_vars{'snapshot_root'}) ) {
 				config_err($file_line_num, "$line - snapshot_root needs to be defined before backup points");
 				next;
 			}
-			
+
 			if (!defined($src))	{
 				config_err($file_line_num, "$line - no source path specified for backup point");
 				next;
 			}
-			
+
 			if (!defined($dest) || $dest eq "")	{
 				config_err($file_line_num, "$line - no destination path specified for backup point");
 				next;
 			}
-			
+
 			# make sure we aren't traversing directories
 			if ( is_directory_traversal($src) ) {
 				config_err($file_line_num, "$line - Directory traversal attempted in $src");
@@ -791,13 +791,13 @@ sub parse_config_file {
 				config_err($file_line_num, "$line - Directory traversal attempted in $dest");
 				next;
 			}
-			
+
 			# validate source path
 			#
 			# local absolute?
 			if ( is_real_local_abs_path($src) ) {
 				$line_syntax_ok = 1;
-				
+
 			# syntactically valid remote ssh?
 			} elsif ( is_ssh_path($src) ) {
 				# if it's an ssh path, make sure we have ssh
@@ -806,15 +806,15 @@ sub parse_config_file {
 					next;
 				}
 				$line_syntax_ok = 1;
-				
+
 			# if it's anonymous rsync, we're ok
 			} elsif ( is_anon_rsync_path($src) ) {
 				$line_syntax_ok = 1;
-				
+
 			# check for cwrsync
 			} elsif ( is_cwrsync_path($src) ) {
 				$line_syntax_ok = 1;
-				
+
 			# check for lvm
 			} elsif ( is_linux_lvm_path($src) ) {
 				# if it's an lvm path, make sure we have lvm commands and arguments
@@ -857,7 +857,7 @@ sub parse_config_file {
 				config_err($file_line_num, "$line - Source directory \"$src\" doesn't exist");
 				next;
 			}
-			
+
 			# validate destination path
 			#
 			# make sure we have a local NON absolute path for dest
@@ -865,7 +865,7 @@ sub parse_config_file {
 				config_err($file_line_num, "$line - Backup destination $dest must be a local, relative path");
 				next;
 			}
-			
+
 			# if we have special options specified for this backup point, remember them
 			if (defined($opt_str) && $opt_str) {
 				$opts_ref = parse_backup_opts($opt_str);
@@ -876,7 +876,7 @@ sub parse_config_file {
 					next;
 				}
 			}
-			
+
 			# remember src/dest
 			my %hash;
 			$hash{'src'}	= $src;
@@ -884,7 +884,7 @@ sub parse_config_file {
 			if (defined($opts_ref)) {
 				$hash{'opts'} = $opts_ref;
 			}
-			
+
 			# If this backup point contains the snapshot root, add an exclude to avoid
 			# backing up the snapshot root recursively.  The exclude is anchored (by virtue
 			# of the leading slash of $config_vars{'snapshot_root'}) and applies to absolute
@@ -896,11 +896,11 @@ sub parse_config_file {
 			if ((is_real_local_abs_path("$src")) && ($config_vars{'snapshot_root'} =~ m/^$src/)) {
 				$hash{'opts'}{'extra_rsync_long_args'} .= sprintf(' --filter=-/_%s', $config_vars{'snapshot_root'});
 			}
-			
+
 			push(@backup_points, \%hash);
 			next;
 		}
-		
+
 		# BACKUP SCRIPTS
 		if ($var eq 'backup_script') {
 			my $full_script	= $value;	# backup script to run (including args)
@@ -908,49 +908,49 @@ sub parse_config_file {
 			my %hash;					# tmp hash to stick in the backup points array
 			my $script;					# script file (no args)
 			my @script_argv;			# tmp array to help us separate the script from the args
-			
+
 			if ( !defined($config_vars{'snapshot_root'}) ) {
 				config_err($file_line_num, "$line - snapshot_root needs to be defined before backup scripts");
 				next;
 			}
-			
+
 			if (!defined($dest)) {
 				config_err($file_line_num, "$line - no destination path specified");
 				next;
 			}
-			
+
 			# get the base name of the script, not counting any arguments to it
 			@script_argv = split(/\s+/, $full_script);
 			$script = $script_argv[0];
-			
+
 			# make sure the destination is a relative path
 			if (0 == is_valid_local_non_abs_path($dest)) {
 				config_err($file_line_num, "$line - Backup destination $dest must be a local, relative path");
 				next;
 			}
-			
+
 			# make sure we aren't traversing directories (exactly 2 dots can't be next to each other)
 			if (1 == is_directory_traversal($dest)) {
 				config_err($file_line_num, "$line - Directory traversal attempted in $dest");
 				next;
 			}
-			
+
 			# make sure script exists and is executable
 			if (((! -f "$script") or (! -x "$script")) or !is_real_local_abs_path($script)) {
 				config_err($file_line_num, "$line - \"$script\" is not executable or can't be found.".($script !~ m{^/} ? " Please use an absolute path.":""));
 				next;
 			}
-			
+
 			$hash{'script'}	= $full_script;
 			$hash{'dest'}	= $dest;
-			
+
 			$line_syntax_ok = 1;
-			
+
 			push(@backup_points, \%hash);
-			
+
 			next;
 		}
-		
+
 		# GLOBAL OPTIONS from the config file
 		# ALL ARE OPTIONAL
 		#
@@ -1103,7 +1103,7 @@ sub parse_config_file {
 				if (!defined($verbose)) {
 					$verbose = $value;
 				}
-				
+
 				$line_syntax_ok = 1;
 				next;
 			} else {
@@ -1117,7 +1117,7 @@ sub parse_config_file {
 				if (!defined($loglevel)) {
 					$loglevel = $value;
 				}
-				
+
 				$line_syntax_ok = 1;
 				next;
 			} else {
@@ -1137,12 +1137,12 @@ sub parse_config_file {
 				);
 				next;
 			}
-		
+
 			$rsync_numtries = int($value);
 			$line_syntax_ok = 1;
 			next;
                }
-				
+
 		# make sure we understood this line
 		# if not, warn the user, and prevent the program from executing
 		# however, don't bother if the user has already been notified
@@ -1154,12 +1154,12 @@ sub parse_config_file {
 		}
 	}
 }
-	
+
 sub validate_config_file {
 	####################################################################
 	# SET SOME SENSIBLE DEFAULTS FOR VALUES THAT MAY NOT HAVE BEEN SET #
 	####################################################################
-	
+
 	# if we didn't manage to get a verbose level yet, either through the config file
 	# or the command line, use the default
 	if (!defined($verbose)) {
@@ -1183,12 +1183,12 @@ sub validate_config_file {
 		}
 		$config_vars{'rsync_long_args'} .= " $rsync_include_file_args";
 	}
-	
+
 	###############################################
 	# NOW THAT THE CONFIG FILE HAS BEEN READ IN,  #
 	# DO A SANITY CHECK ON THE DATA WE PULLED OUT #
 	###############################################
-	
+
 	# SINS OF COMMISSION
 	# (incorrect entries in config file)
 	if (0 == $config_perfect) {
@@ -1196,16 +1196,16 @@ sub validate_config_file {
 		print_err("Errors were found in $config_file,", 1);
 		print_err("rsnapshot can not continue. If you think an entry looks right, make", 1);
 		print_err("sure you don't have spaces where only tabs should be.", 1);
-		
+
 		# if this wasn't a test, report the error to syslog
 		if (0 == $do_configtest) {
 			syslog_err("Errors were found in $config_file, rsnapshot can not continue.");
 		}
-		
+
 		# exit showing an error
 		exit(1);
 	}
-	
+
 	# SINS OF OMISSION
 	# (things that should be in the config file that aren't)
 	#
@@ -1293,24 +1293,24 @@ sub validate_config_file {
 	{
 		my @backup_dest			= ();
 		my @backup_script_dest	= ();
-		
+
 		# remember where the destination paths are...
 		foreach my $bp_ref (@backup_points) {
 			my $tmp_dest_path = $$bp_ref{'dest'};
-			
+
 			# normalize multiple slashes, and strip trailing slash
 			# FIXME: Decide whether to allow an empty destination path, and reject or handle such paths accordingly.
 			$tmp_dest_path =~ s/\/+/\//g;
 			$tmp_dest_path =~ s/\/$//;
-			
+
 			# backup
 			if (defined($$bp_ref{'src'})) {
 				push(@backup_dest, $tmp_dest_path);
-				
+
 			# backup_script
 			} elsif (defined($$bp_ref{'script'})) {
 				push(@backup_script_dest, $tmp_dest_path);
-				
+
 			# something else is wrong
 			} else {
 				print_err ("logic error in parse_config_file(): a backup point has no src and no script", 1);
@@ -1318,19 +1318,19 @@ sub validate_config_file {
 				exit(1);
 			}
 		}
-		
+
 		# loop through and check for conflicts between backup and backup_script destination paths
 		foreach my $b_dest (@backup_dest) {
 			foreach my $bs_dest (@backup_script_dest) {
 				if (defined($b_dest) && defined($bs_dest)) {
 					my $tmp_b  = $b_dest;
 					my $tmp_bs = $bs_dest;
-					
+
 					# add trailing slashes back in so similarly named directories don't match
 					# e.g., localhost/abc/ and localhost/ab/
 					$tmp_b  .= '/';
 					$tmp_bs .= '/';
-					
+
 					if ("$tmp_b" =~ m/^$tmp_bs/) {
 						# duplicate entries, stop here
 						print_err (
@@ -1355,12 +1355,12 @@ sub validate_config_file {
 				if ($i != $j) {
 					my $path1 = $backup_script_dest[$i];
 					my $path2 = $backup_script_dest[$j];
-					
+
 					# add trailing slashes back in so similarly named directories don't match
 					# e.g., localhost/abc/ and localhost/ab/
 					$path1 .= '/';
 					$path2 .= '/';
-					
+
 					if (("$path1" =~ m/^$path2/) or ("$path2" =~ m/^$path1/)) {
 						print_err (
 							"destination conflict between \"$path1\" and \"$path2\" in multiple backup_script entries", 1
@@ -1385,18 +1385,18 @@ sub parse_backup_opts {
 	my $opts_str = shift(@_);
 	my @pairs;
 	my %parsed_opts;
-	
+
 	# pre-buffer extra rsync arguments
 	my $rsync_include_args		= undef;
 	my $rsync_include_file_args	= undef;
-	
+
 	# make sure we got something (it's quite likely that we didn't)
 	if (!defined($opts_str))	{ return (undef); }
 	if (!$opts_str)				{ return (undef); }
-	
+
 	# split on commas first
 	@pairs = split(/,/, $opts_str);
-	
+
 	# then loop through and split on equals
 	foreach my $pair (@pairs) {
 		my $additive;
@@ -1406,26 +1406,26 @@ sub parse_backup_opts {
 		} else {
 			$additive = 0;
 		}
-		
+
 		my ($name, $value) = split(/=/, $pair, 2);
 		if ( !defined($name) or !defined($value) ) {
 			return (undef);
 		}
-		
+
 		# parameters can't have spaces in them
 		$name =~ s/\s+//go;
-		
+
 		# strip whitespace from both ends
 		$value =~ s/^\s{0,}//o;
 		$value =~ s/\s{0,}$//o;
-		
+
 		# ok, it's a name/value pair and it's ready for more validation
 		if ($additive) {
 			$parsed_opts{'extra_' . $name} = $value;
 		} else {
 			$parsed_opts{$name} = $value;
 		}
-		
+
 		# VALIDATE ARGS
 		# one_fs
 		if ( $name eq 'one_fs' ) {
@@ -1439,19 +1439,19 @@ sub parse_backup_opts {
 				print_err("rsync_short_args \"$value\" not in correct format", 2);
 				return (undef);
 			}
-			
+
 		# rsync_long_args
 		} elsif ( $name eq 'rsync_long_args' ) {
 			# pass unchecked
-			
+
 		# ssh_args
 		} elsif ( $name eq 'ssh_args' ) {
 			# pass unchecked
-			
+
 		# lvm args
 		} elsif ( $name =~ m/^linux_lvm_(vgpath|snapshotname|snapshotsize|mountpath)$/ ) {
 			# pass unchecked
-			
+
 		# include
 		} elsif ( $name eq 'include' ) {
 			# don't validate contents
@@ -1462,9 +1462,9 @@ sub parse_backup_opts {
 			} else {
 				$rsync_include_args .= " --include=$parsed_opts{'include'}";
 			}
-			
+
 			delete($parsed_opts{'include'});
-			
+
 		# exclude
 		} elsif ( $name eq 'exclude' ) {
 			# don't validate contents
@@ -1475,9 +1475,9 @@ sub parse_backup_opts {
 			} else {
 				$rsync_include_args .= " --exclude=$parsed_opts{'exclude'}";
 			}
-			
+
 			delete($parsed_opts{'exclude'});
-			
+
 		# include_file
 		} elsif ( $name eq 'include_file' ) {
 			# verify that this file exists and is readable
@@ -1494,7 +1494,7 @@ sub parse_backup_opts {
 				print_err("include_file $value exists, but is not readable", 2);
 				return (undef);
 			}
-			
+
 			# coerce into rsync_include_file_args
 			# then remove the "include_file" key/value pair
 			if (!defined($rsync_include_file_args)) {
@@ -1502,9 +1502,9 @@ sub parse_backup_opts {
 			} else {
 				$rsync_include_file_args .= " --include-from=$parsed_opts{'include_file'}";
 			}
-			
+
 			delete($parsed_opts{'include_file'});
-			
+
 		# exclude_file
 		} elsif ( $name eq 'exclude_file' ) {
 			# verify that this file exists and is readable
@@ -1521,7 +1521,7 @@ sub parse_backup_opts {
 				print_err("exclude_file $value exists, but is not readable", 2);
 				return (undef);
 			}
-			
+
 			# coerce into rsync_include_file_args
 			# then remove the "exclude_file" key/value pair
 			if (!defined($rsync_include_file_args)) {
@@ -1529,7 +1529,7 @@ sub parse_backup_opts {
 			} else {
 				$rsync_include_file_args .= " --exclude-from=$parsed_opts{'exclude_file'}";
 			}
-			
+
 			delete($parsed_opts{'exclude_file'});
 
 		# Not (yet?) implemented as per-backup-point options
@@ -1544,7 +1544,7 @@ sub parse_backup_opts {
 			return (undef);
 		}
 	}
-	
+
 	# merge rsync_include_args and rsync_file_include_args in with either $default_rsync_long_args
 	# or $parsed_opts{'rsync_long_args'}
 	if (defined($rsync_include_args) or defined($rsync_include_file_args)) {
@@ -1556,7 +1556,7 @@ sub parse_backup_opts {
 				$parsed_opts{'rsync_long_args'} = $default_rsync_long_args;
 			}
 		}
-		
+
 		# now we have something in our local rsync_long_args
 		# let's concatenate the include/exclude/file stuff to it
 		if (defined($rsync_include_args)) {
@@ -1566,12 +1566,12 @@ sub parse_backup_opts {
 			$parsed_opts{'rsync_long_args'} .= " $rsync_include_file_args";
 		}
 	}
-	
+
 	# if we got anything, return it as an array_ref
 	if (%parsed_opts) {
 		return (\%parsed_opts);
 	}
-	
+
 	return (undef);
 }
 
@@ -1581,18 +1581,18 @@ sub parse_backup_opts {
 sub config_err {
 	my $line_num	= shift(@_);
 	my $errstr		= shift(@_);
-	
+
 	if (!defined($line_num))	{ $line_num = -1; }
 	if (!defined($errstr))		{ $errstr = 'config_err() called without an error string!'; }
-	
+
 	# show the user the file and line number
 	print_err("$config_file on line $line_num:", 1);
-	
+
 	# print out the offending line
 	# don't print past 69 columns (because they all start with 'ERROR: ')
 	# similarly, indent subsequent lines 9 spaces to get past the 'ERROR: ' message
 	print_err( wrap_cmd($errstr, 69, 9), 1 );
-	
+
 	# invalidate entire config file
 	$config_perfect = 0;
 }
@@ -1602,22 +1602,22 @@ sub config_err {
 # exits the program safely and consistently
 sub bail {
 	my $str = shift(@_);
-	
+
 	# print out error
 	if ($str) {
 		print_err($str, 1);
 	}
-	
+
 	# write to syslog if we're running for real (and we have a message)
 	if ((0 == $do_configtest) && (0 == $test) && defined($str) && ('' ne $str)) {
 		syslog_err($str);
 	}
-	
+
 	# get rid of the lockfile, if it exists
 	if(0 == $config_vars{'stop_on_stale_lockfile'}) {
 	        remove_lockfile();
 	}
-	
+
 	# exit showing an error
 	exit(1);
 }
@@ -1628,16 +1628,16 @@ sub bail {
 sub print_cmd {
 	# take all arguments and make them into one string
 	my $str = join(' ', @_);
-	
+
 	if (!defined($str)) { return (undef); }
-	
+
 	# remove newline and consolidate spaces
 	chomp($str);
 	$str =~ s/\s+/ /g;
-	
+
 	# write to log (level 3 is where we start showing commands)
 	log_msg($str, 3);
-	
+
 	if (!defined($verbose) or ($verbose >= 3)) {
 		print wrap_cmd($str), "\n";
 	}
@@ -1650,61 +1650,61 @@ sub wrap_cmd {
 	my $str		= shift(@_);
 	my $colmax	= shift(@_);
 	my $indent	= shift(@_);
-	
+
 	my @tokens;
 	my $chars = 0;		# character tally
 	my $outstr = '';	# string to return
-	
+
 	# max chars before wrap (default to 80 column terminal)
 	if (!defined($colmax)) {
 		$colmax = 76;
 	}
-	
+
 	# number of spaces to indent subsequent lines
 	if (!defined($indent)) {
 		$indent = 4;
 	}
-	
+
 	# break up string into individual pieces
 	@tokens = split(/\s+/, $str);
-	
+
 	# stop here if we don't have anything
 	if (0 == scalar(@tokens)) { return (''); }
-	
+
 	# print the first token as a special exception, since we should never start out by line wrapping
 	if (defined($tokens[0])) {
 		$chars = (length($tokens[0]) + 1);
 		$outstr .= $tokens[0];
-		
+
 		# don't forget to put the space back in
 		if (scalar(@tokens) > 1) {
 			$outstr .= ' ';
 		}
 	}
-	
+
 	# loop through the rest of the tokens and print them out, wrapping when necessary
 	for (my $i=1; $i<scalar(@tokens); $i++) {
 		# keep track of where we are (plus a space)
 		$chars += (length($tokens[$i]) + 1);
-		
+
 		# wrap if we're at the edge
 		if ($chars > $colmax) {
 			$outstr .= "\\\n";
 			$outstr .= (' ' x $indent);
-			
+
 			# 4 spaces + string length
 			$chars = $indent + length($tokens[$i]);
 		}
-		
+
 		# print out this token
 		$outstr .= $tokens[$i];
-		
+
 		# print out a space unless this is the last one
 		if ($i < scalar(@tokens)) {
 			$outstr .= ' ';
 		}
 	}
-	
+
 	return ($outstr);
 }
 
@@ -1714,17 +1714,17 @@ sub wrap_cmd {
 sub print_msg {
 	my $str		= shift(@_);
 	my $level	= shift(@_);
-	
+
 	if (!defined($str))		{ return (undef); }
 	if (!defined($level))	{ $level = 0; }
-	
+
 	chomp($str);
-	
+
 	# print to STDOUT
 	if ((!defined($verbose)) or ($verbose >= $level)) {
 		print $str, "\n";
 	}
-	
+
 	# write to log
 	log_msg($str, $level);
 }
@@ -1736,20 +1736,20 @@ sub print_msg {
 sub print_warn {
 	my $str		= shift(@_);
 	my $level	= shift(@_);
-	
+
 	if (!defined($str))		{ return (undef); }
 	if (!defined($level))	{ $level = 0; }
-	
+
 	# we can no longer say the execution of the program has been error free
 	raise_warning();
-	
+
 	chomp($str);
-	
+
 	# print to STDERR
 	if ((!defined($verbose)) or ($level <= $verbose)) {
 		print STDERR 'WARNING: ', $str, "\n";
 	}
-	
+
 	# write to log
 	log_warn($str, $level);
 }
@@ -1761,15 +1761,15 @@ sub print_warn {
 sub print_err {
 	my $str		= shift(@_);
 	my $level	= shift(@_);
-	
+
 	if (!defined($str))		{ return (undef); }
 	if (!defined($level))	{ $level = 0; }
-	
+
 	# we can no longer say the execution of the program has been error free
 	raise_error();
-	
+
 	chomp($str);
-	
+
 	# print the run string once
 	# this way we know where the message came from if it's in an e-mail
 	# but we can still read messages at the console
@@ -1780,16 +1780,16 @@ sub print_err {
 			print STDERR wrap_cmd($run_string), "\n";
 			print STDERR "----------------------------------------------------------------------------\n";
 		}
-		
+
 		$have_printed_run_string = 1;
 	}
-	
+
 	# print to STDERR
 	if ((!defined($verbose)) or ($level <= $verbose)) {
 		#print STDERR $run_string, ": ERROR: ", $str, "\n";
 		print STDERR "ERROR: ", $str, "\n";
 	}
-	
+
 	# write to log
 	log_err($str, $level);
 }
@@ -1800,17 +1800,17 @@ sub log_msg {
 	my $str		= shift(@_);
 	my $level	= shift(@_);
 	my $result	= undef;
-	
+
 	if (!defined($str))		{ return (undef); }
 	if (!defined($level))	{ return (undef); }
-	
+
 	chomp($str);
-	
+
 	# if this is just noise, don't log it
 	if (defined($loglevel) && ($level > $loglevel)) {
 		return (undef);
 	}
-	
+
 	# open logfile, write to it, close it back up
 	# if we fail, don't use the usual print_* functions, since they just call this again
 	if ((0 == $test) && (0 == $do_configtest)) {
@@ -1821,9 +1821,9 @@ sub log_msg {
 				print STDERR "Do you have write permission for this file?\n";
 				exit(1);
 			}
-			
+
 			print LOG '[', get_current_date(), '] ', $str, "\n";
-			
+
 			$result = close(LOG);
 			if (!defined($result)) {
 				print STDERR "Could not close logfile $config_vars{'logfile'}\n";
@@ -1838,15 +1838,15 @@ sub log_msg {
 sub log_warn {
 	my $str		= shift(@_);
 	my $level	= shift(@_);
-	
+
 	if (!defined($str))		{ return (undef); }
 	if (!defined($level))	{ return (undef); }
-	
+
 	# this run is no longer perfect since we have an error
 	raise_warning();
-	
+
 	chomp($str);
-	
+
 	$str = 'WARNING: ' . $str;
 	log_msg($str, $level);
 }
@@ -1857,15 +1857,15 @@ sub log_warn {
 sub log_err {
 	my $str		= shift(@_);
 	my $level	= shift(@_);
-	
+
 	if (!defined($str))		{ return (undef); }
 	if (!defined($level))	{ return (undef); }
-	
+
 	# this run is no longer perfect since we have an error
 	raise_error();
-	
+
 	chomp($str);
-	
+
 	$str = "$run_string: ERROR: " . $str;
 	log_msg($str, $level);
 }
@@ -1879,17 +1879,17 @@ sub syslog_msg {
 	my $facility	= shift(@_);
 	my $level		= shift(@_);
 	my $result		= undef;
-	
+
 	if (!defined($msg))			{ return (undef); }
 	if (!defined($facility))	{ $facility	= 'user'; }
 	if (!defined($level))		{ $level	= 'info'; }
-	
+
 	if (defined($config_vars{'cmd_logger'})) {
 		# print out our call to syslog
 		if (defined($verbose) && ($verbose >= 4)) {
 			print_cmd("$config_vars{'cmd_logger'} -p $facility.$level -t rsnapshot[$$] $msg");
 		}
-		
+
 		# log to syslog
 		if (0 == $test) {
 			$result = system($config_vars{'cmd_logger'}, '-p', "$facility.$level", '-t', "rsnapshot[$$]", $msg);
@@ -1899,7 +1899,7 @@ sub syslog_msg {
 			}
 		}
 	}
-	
+
 	return (1);
 }
 
@@ -1909,10 +1909,10 @@ sub syslog_msg {
 # also raises a warning for the exit code
 sub syslog_warn {
 	my $msg = shift(@_);
-	
+
 	# this run is no longer perfect since we have an error
 	raise_warning();
-	
+
 	return syslog_msg("WARNING: $msg", 'user', 'err');
 }
 
@@ -1922,10 +1922,10 @@ sub syslog_warn {
 # also raises an error for the exit code
 sub syslog_err {
 	my $msg = shift(@_);
-	
+
 	# this run is no longer perfect since we have an error
 	raise_error();
-	
+
 	return syslog_msg("$run_string: ERROR: $msg", 'user', 'err');
 }
 
@@ -1955,11 +1955,11 @@ sub get_current_date {
 	# 3 = day of month
 	# 4 = month + 1
 	# 5 = year + 1900
-	
+
 	# example date format (ISO 8601)
 	# 2012-04-24T22:30:13 (used to be 28/Feb/2004:23:45:59, like Apache)
 	my @fields = localtime(time());
-	
+
 	return sprintf(
 	    "%04i-%02i-%02iT%02i:%02i:%02i",
 	    $fields[5] + 1900,
@@ -1993,16 +1993,16 @@ sub add_lockfile {
 	if (!defined($config_vars{'lockfile'})) {
 		return (undef);
 	}
-	
+
 	my $lockfile = $config_vars{'lockfile'};
-	
+
 	# valid?
 	if (0 == is_valid_local_abs_path($lockfile)) {
 		print_err ("Lockfile $lockfile is not a valid file name", 1);
 		syslog_err("Lockfile $lockfile is not a valid file name");
 		exit(1);
 	}
-	
+
 	# does a lockfile already exist?
         if (1 == is_real_local_abs_path($lockfile)) {
             if(!open(LOCKFILE, $lockfile)) {
@@ -2030,10 +2030,10 @@ sub add_lockfile {
             }
         }
 
-	
+
 	# create the lockfile
 	print_cmd("echo $$ > $lockfile");
-	
+
 	if (0 == $test) {
 		# sysopen() can do exclusive opens, whereas perl open() can not
 		my $result = sysopen(LOCKFILE, $lockfile, O_WRONLY | O_EXCL | O_CREAT, 0644);
@@ -2042,16 +2042,16 @@ sub add_lockfile {
 			syslog_err("Could not write lockfile $lockfile");
 			exit(1);
 		}
-		
+
 		# print PID to lockfile
 		print LOCKFILE $$;
-		
+
 		$result = close(LOCKFILE);
 		if (!defined($result) || 0 == $result) {
 			print_warn("Could not close lockfile $lockfile: $!", 2);
 		}
 	}
-	
+
 	return (1);
 }
 
@@ -2070,10 +2070,10 @@ sub remove_lockfile {
 	if (!defined($config_vars{'lockfile'})) {
 		return (undef);
 	}
-	
+
 	my $lockfile = $config_vars{'lockfile'};
 	my $result = undef;
-	
+
 	if ( -e "$lockfile" ) {
 	        if(open(LOCKFILE, $lockfile)) {
 		  chomp(my $locked_pid = <LOCKFILE>);
@@ -2098,7 +2098,7 @@ sub remove_lockfile {
 	} else {
 		print_msg("No need to remove non-existent lock $lockfile", 5);
 	}
-	
+
 	return (1);
 }
 
@@ -2120,7 +2120,7 @@ sub set_posix_locale {
 sub create_snapshot_root {
 	# attempt to create the directory if it doesn't exist
 	if ( ! -d "$config_vars{'snapshot_root'}" ) {
-		
+
 		# make sure no_create_root == 0
 		if (defined($config_vars{'no_create_root'})) {
 			if (1 == $config_vars{'no_create_root'}) {
@@ -2129,7 +2129,7 @@ sub create_snapshot_root {
 				bail();
 			}
 		}
-		
+
 		# actually create the directory
 		print_cmd("mkdir -m 0700 -p $config_vars{'snapshot_root'}/");
 		if (0 == $test) {
@@ -2151,53 +2151,53 @@ sub create_snapshot_root {
 # exits the program if we don't have good data to work with
 sub get_backup_level_data {
 	my $cur_backup_level = shift(@_);
-	
+
 	# make sure we were passed a backup level
 	if (!defined($cur_backup_level)) { bail("cur_backup_level not specified in get_backup_level_data()\n"); }
-	
+
 	# the hash to return
 	my %hash;
-	
+
 	# which of the backup levels are we operating on?
 	# if we defined alpha, beta, gamma ... alpha = 0, beta = 1, gamma = 2
 	my $backup_level_num;
-	
+
 	# the highest possible number for the current backup level context
 	# if we are working on alpha, and alpha is set to 6, this would be
 	# equal to 5 (since we start at 0)
 	my $backup_level_max;
-	
+
 	# this is the name of the previous backup level, in relation to the one
 	# we're working on. e.g., if we're operating on gamma, this should be "beta"
 	my $prev_backup_level;
-	
+
 	# same as $backup_level_max, except for the previous backup_level.
 	# this is used to determine which of the previous snapshots to pull from
 	# e.g., cp -al alpha.$prev_backup_level_max/ beta.0/
 	my $prev_backup_level_max;
-	
+
 	# FIGURE OUT WHICH BACKUP LEVEL WE'RE RUNNING, AND HOW IT RELATES TO THE
 	# OTHERS THEN RUN THE ACTION FOR THE CHOSEN BACKUP LEVEL
 	# remember, in each hashref in this loop:
 	#   "backup_level" is something like "beta", "gamma", etc.
 	#   "number" is the number of backups at this level to keep on the filesystem
-	
+
 	my $i = 0;
 	foreach my $i_ref (@backup_levels) {
-		
+
 		# this is the backup level we're set to run
 		if ($$i_ref{'backup_level'} eq $cur_backup_level) {
 			$backup_level_num = $i;
-			
+
 			# how many of the backups at this level should we keep?
 			# we start counting from 0, so subtract one
 			# e.g., 6 backups == level.0 .. level.5
 			$backup_level_max = $$i_ref{'number'} - 1;
-			
+
 			# we found our backup level, exit the foreach loop
 			last;
 		}
-		
+
 		# since the "last" command above breaks from this entire block,
 		# and since we loop through the backup levels in order, if we got this
 		# far in the first place it means that we're looking at a backup level
@@ -2205,28 +2205,28 @@ sub get_backup_level_data {
 		# therefore, this WILL be the previous backup level's information, the next time through.
 		#
 		$prev_backup_level = $$i_ref{'backup_level'};
-		
+
 		# which of the previous backup level's numbered directories should we
 		# pull from for the backup level we're currently set to run?
 		# e.g., beta.0/ might get pulled from alpha.6/
 		#
 		$prev_backup_level_max = $$i_ref{'number'} - 1;
-		
+
 		$i++;
 	}
-	
+
 	# make sure we got something that makes sense
 	if ($cur_backup_level ne 'sync') {
 		if (!defined($backup_level_num)) { bail("Backup level \"$cur_backup_level\" unknown, check $config_file"); }
 	}
-	
+
 	# populate our hash
 	$hash{'backup_level'}          = $cur_backup_level;
 	$hash{'backup_level_num'}      = $backup_level_num;
 	$hash{'backup_level_max'}      = $backup_level_max;
 	$hash{'prev_backup_level'}     = $prev_backup_level;
 	$hash{'prev_backup_level_max'} = $prev_backup_level_max;
-	
+
 	# and return the values
 	return (\%hash);
 }
@@ -2238,10 +2238,10 @@ sub show_latest_snapshot {
 	# this should only be called after parse_config_file(), but just in case...
 	if (! @backup_levels)	{ bail("Error! backup levels not defined in show_latest_snapshot()"); }
 	if (! %config_vars) { bail("Error! config_vars not defined in show_latest_snapshot()"); }
-	
+
 	# regardless of .sync, this is the latest "real" snapshot
 	print $config_vars{'snapshot_root'} . '/' . $backup_levels[0]->{'backup_level'} . '.0/' . "\n";
-	
+
 	exit(0);
 }
 
@@ -2252,17 +2252,17 @@ sub exit_with_status {
 		syslog_msg("$run_string: completed successfully");
 		log_msg   ("$run_string: completed successfully", 2);
 		exit ($exit_code);
-		
+
 	} elsif (1 == $exit_code) {
 		syslog_err("$run_string: completed, but with some errors");
 		log_err   ("$run_string: completed, but with some errors", 2);
 		exit ($exit_code);
-		
+
 	} elsif (2 == $exit_code) {
 		syslog_warn("$run_string: completed, but with some warnings");
 		log_warn   ("$run_string: completed, but with some warnings", 2);
 		exit ($exit_code);
-		
+
 	# this should never happen
 	} else {
 		syslog_err("$run_string: completed, but with no definite status");
@@ -2282,7 +2282,7 @@ sub exit_configtest {
 		if (1 == $config_perfect) {
 			print "Syntax OK\n";
 			exit(0);
-			
+
 		# this should never happen, because any errors should have killed the program before now
 		} else {
 			print "Syntax Error\n";
@@ -2300,12 +2300,12 @@ sub exit_no_config_file {
 	if (0 == $do_configtest) {
 		syslog_err("Config file \"$config_file\" does not exist or is not readable.");
 	}
-	
+
 	# if we have the default config from the install, remind the user to create the real config
 	if ((-e "$config_file.default") && (! -e "$config_file")) {
 		print STDERR "Did you copy $config_file.default to $config_file yet?\n";
 	}
-	
+
 	# exit showing an error
 	exit(1);
 }
@@ -2314,15 +2314,15 @@ sub exit_no_config_file {
 # returns 1 if it's valid, 0 otherwise
 sub is_valid_loglevel {
 	my $value	= shift(@_);
-	
+
 	if (!defined($value)) { return (0); }
-	
+
 	if ($value =~ m/^\d$/) {
 		if (($value >= 1) && ($value <= 5)) {
 			return (1);
 		}
 	}
-	
+
 	return (0);
 }
 
@@ -2344,7 +2344,7 @@ sub is_valid_rsync_numtries {
 # returns 1 on success, 0 on failure
 sub is_boolean {
 	my $var = shift(@_);
-	
+
 	if (!defined($var))		{ return (0); }
 	if ($var =~ m/^[01]$/)	{ return (1); }
 
@@ -2356,7 +2356,7 @@ sub is_boolean {
 # returns 0 otherwise
 sub is_comment {
 	my $str = shift(@_);
-	
+
 	if (!defined($str))	{ return (undef); }
 	if ($str =~ m/^#/)	{ return (1); }
 	return (0);
@@ -2367,7 +2367,7 @@ sub is_comment {
 # returns 0 otherwise
 sub is_blank {
 	my $str = shift(@_);
-	
+
 	if (!defined($str))	{ return (undef); }
 	if ($str !~ m/\S/)	{ return (1); }
 	return (0);
@@ -2378,19 +2378,19 @@ sub is_blank {
 # returns 0 otherwise
 sub is_ssh_path {
 	my $path = shift(@_);
-	
+
 	if (!defined($path))				{ return (undef); }
-	
+
 	# make sure we don't have leading/trailing spaces
 	if ($path =~ m/^\s/)				{ return (undef); }
 	if ($path =~ m/\s$/)				{ return (undef); }
-	
+
 	# don't match paths that look like URIs (rsync://, etc.)
 	if ($path =~ m,://,)				{ return (undef); }
-	
+
 	# must have [user@]host:[~.]/path syntax for ssh
 	if ($path =~ m/^(.*?\@)?.*?:[~.]?\/.*$/)	{ return (1); }
-	
+
 	return (0);
 }
 
@@ -2401,7 +2401,7 @@ sub is_cwrsync_path {
 	my $path = shift(@_);
 	if (!defined($path))		{ return (undef); }
 	if ($path =~ m/^[^\/]+::/)	{ return (1); }
-	
+
 	return (0);
 }
 
@@ -2410,10 +2410,10 @@ sub is_cwrsync_path {
 # returns 0 otherwise
 sub is_anon_rsync_path {
 	my $path = shift(@_);
-	
+
 	if (!defined($path))			{ return (undef); }
 	if ($path =~ m/^rsync:\/\/.*$/)	{ return (1); }
-	
+
 	return (0);
 }
 
@@ -2422,10 +2422,10 @@ sub is_anon_rsync_path {
 # returns 0 otherwise
 sub is_linux_lvm_path {
 	my $path = shift(@_);
-	
+
 	if (!defined($path))		{ return (undef); }
 	if ($path =~ m|^lvm://.*$|)	{ return (1); }
-	
+
 	return (0);
 }
 
@@ -2435,15 +2435,15 @@ sub is_linux_lvm_path {
 # returns 1 if it's OK, or 0 otherwise
 sub is_valid_rsync_short_args {
 	my $rsync_short_args = shift(@_);
-	
+
 	if (!defined($rsync_short_args))			{ return (0); }
-	
+
 	# no blank space allowed
 	if ($rsync_short_args =~ m/\s/)				{ return (0); }
-	
+
 	# first character must be a dash, followed by alphanumeric characters
 	if ($rsync_short_args !~ m/^\-{1,1}\w+$/)	{ return (0); }
-	
+
 	return (1);
 }
 
@@ -2452,7 +2452,7 @@ sub is_valid_rsync_short_args {
 # returns 0 otherwise
 sub is_real_local_abs_path {
 	my $path	= shift(@_);
-	
+
 	if (!defined($path)) { return (undef); }
 	if (1 == is_valid_local_abs_path($path)) {
 		# check for symlinks first, since they might not link to a real file
@@ -2460,7 +2460,7 @@ sub is_real_local_abs_path {
 			return (1);
 		}
 	}
-	
+
 	return (0);
 }
 
@@ -2469,14 +2469,14 @@ sub is_real_local_abs_path {
 # returns 0 otherwise
 sub is_valid_local_abs_path {
 	my $path	= shift(@_);
-	
+
 	if (!defined($path)) { return (undef); }
 	if ($path =~ m/^\//) {
 		if (0 == is_directory_traversal($path)) {
 			 return (1);
 		}
 	}
-	
+
 	return (0);
 }
 
@@ -2487,12 +2487,12 @@ sub is_valid_local_abs_path {
 # a different error message if there is ".." in the path
 sub is_valid_local_non_abs_path {
 	my $path	= shift(@_);
-	
+
 	if (!defined($path)) { return (0); }
 	if ($path =~ m/^\//) {
 		return (0);		# Absolute path => bad
 	}
-	
+
 	if ($path =~ m/^\S/) {
 		 return (1);		# Starts with a non-whitespace => good
 	} else {
@@ -2505,12 +2505,12 @@ sub is_valid_local_non_abs_path {
 # returns 0 if it's safe
 sub is_directory_traversal {
 	my $path = shift(@_);
-	
+
 	if (!defined($path)) { return (undef); }
-	
+
 	# /..
 	if ($path =~ m/\/\.\./) { return (1); }
-	
+
 	# ../
 	if ($path =~ m/\.\.\//) { return (1); }
 	return (0);
@@ -2521,13 +2521,13 @@ sub is_directory_traversal {
 # returns 0 otherwise
 sub is_file {
 	my $path = shift(@_);
-	
+
 	if (!defined($path)) { return (undef); }
-	
+
 	if ($path !~ m/\/$/o) {
 		return (1);
 	}
-	
+
 	return (0);
 }
 
@@ -2536,13 +2536,13 @@ sub is_file {
 # returns 0 otherwise
 sub is_directory {
 	my $path = shift(@_);
-	
+
 	if (!defined($path)) { return (undef); }
-	
+
 	if ($path =~ m/\/$/o) {
 		return (1);
 	}
-	
+
 	return (0);
 }
 
@@ -2553,12 +2553,12 @@ sub is_valid_executable {
 	my $executable    = shift(@_); # executable to run
 	my $file_line_num = shift(@_); # line number in the config file
 	my $line          = shift(@_); # line text from the config file
-	
+
 	if (!defined($executable)) {
 		config_err($file_line_num, "$line - you must provide a script.");
 		return 0;
 	}
-	
+
 	# make sure script exists
 	if (! -f "$executable") {
 		config_err($file_line_num, "$line - file '$executable' does not exist.");
@@ -2584,10 +2584,10 @@ sub is_valid_script {
 	my $full_script   = shift(@_); # script to run (including args)
 	my $file_line_num = shift(@_); # line number in the config file
 	my $line          = shift(@_); # line text from the config file
-	
+
 	# split the script from its arguments
 	my @script_argv = split(/\s+/, $full_script);
-	
+
 	return is_valid_executable($script_argv[0], $file_line_num, $line);
 }
 
@@ -2595,14 +2595,14 @@ sub is_valid_script {
 # removes trailing slash, returns the string
 sub remove_trailing_slash {
 	my $str = shift(@_);
-	
+
 	# it's not a trailing slash if it's the root filesystem
 	if ($str eq '/') { return ($str); }
 	# it's not a trailing slash if it's a remote root filesystem
 	if ($str =~ m%:/$% ) { return ($str); }
-	
+
 	$str =~ s/\/+$//;
-	
+
 	return ($str);
 }
 
@@ -2611,11 +2611,11 @@ sub remove_trailing_slash {
 # this is to work around a bug in some versions of rsync
 sub add_slashdot_if_root {
 	my $str = shift(@_);
-	
+
 	if ($str eq '/') {
 		return '/.';
 	}
-	
+
 	return ($str);
 }
 
@@ -2626,13 +2626,13 @@ sub add_slashdot_if_root {
 #
 sub handle_backup_level {
 	my $cmd = shift(@_);
-	
+
 	if (!defined($cmd)) { bail('cmd not defined in handle_backup_level()'); }
-	
+
 	my $id_ref = get_backup_level_data( $cmd );
-	
+
 	my $result = 0;
-	
+
 	# here we used to check for level.delete directories.  This was
 	# removed when we switched to using _delete.$$ directories.  This
 	# was done so that you can run another (eg) rsnapshot alpha, while
@@ -2640,25 +2640,25 @@ sub handle_backup_level {
 	# going.  Potentially you may have several parallel deletes going on
 	# with the new scheme, but I'm pretty sure that you'll catch up
 	# eventually and not hopelessly wedge the machine -- DRC
-	
+
 	# handle toggling between sync_first being enabled and disabled
-	
+
 	# link_dest is enabled
 	if (1 == $config_vars{'link_dest'}) {
-		
+
 		# sync_first is enabled
 		if ($config_vars{'sync_first'}) {
-			
+
 			# create the sync root if it doesn't exist (and we need it right now)
 			if ($cmd eq 'sync') {
 				# don't create the .sync directory, it gets created later on
 			}
-				
+
 		# sync_first is disabled
 		} else {
 			# if the sync directory is still here after sync_first is disabled, delete it
 			if ( -d "$config_vars{'snapshot_root'}/.sync" ) {
-				
+
 				display_rm_rf("$config_vars{'snapshot_root'}/.sync/");
 				if (0 == $test) {
 					$result = rm_rf( "$config_vars{'snapshot_root'}/.sync/" );
@@ -2668,21 +2668,21 @@ sub handle_backup_level {
 				}
 			}
 		}
-		
+
 	# link_dest is disabled
 	} else {
-		
+
 		# sync_first is enabled
 		if ($config_vars{'sync_first'}) {
 			# create the sync root if it doesn't exist
 			if ( ! -d "$config_vars{'snapshot_root'}/.sync" ) {
-				
+
 				# If .sync does not exist but lowest.0 does, then copy that.
-				
+
 				# call generic cp_al() subroutine
 				my $backup_level_0	= "$config_vars{'snapshot_root'}/" . $backup_levels[0]->{'backup_level'} . ".0";
 				my $sync_dir	= "$config_vars{'snapshot_root'}/.sync";
-				
+
 				if ( -d $backup_level_0 ) {
 					display_cp_al( "$backup_level_0", "$sync_dir" );
 					if (0 == $test) {
@@ -2693,7 +2693,7 @@ sub handle_backup_level {
 					}
 				}
 			}
-			
+
 		# sync_first is disabled
 		} else {
 			# if the sync directory still exists, delete it
@@ -2708,11 +2708,11 @@ sub handle_backup_level {
 			}
 		}
 	}
-	
+
 	#
 	# now that the preliminaries are out of the way, the main backups happen here
 	#
-	
+
 	# backup the lowest backup level (or sync content to staging area)
 	# we're not sure yet going in whether we'll be doing an actual backup, or just rotating snapshots for the lowest backup level
 	if ((defined($$id_ref{'backup_level_num'}) && (0 == $$id_ref{'backup_level_num'})) or ($cmd eq 'sync')) {
@@ -2721,7 +2721,7 @@ sub handle_backup_level {
 			exec_cmd_preexec();
 			backup_lowest_backup_level( $id_ref );
 			exec_cmd_postexec();
-			
+
 		# if we're working on the lowest backup level, either run the backup and rotate the snapshots, or just rotate them
 		# (depending on whether sync_first is enabled
 		} else {
@@ -2734,20 +2734,20 @@ sub handle_backup_level {
 				exec_cmd_postexec();
 			}
 		}
-		
+
 	# just rotate the higher backup levels
 	} else {
 		# this is not the most frequent unit, just rotate
 		rotate_higher_backup_level( $id_ref );
 	}
-	
+
 	# if use_lazy_delete is on, delete the _delete.$$ directory
 	# we just check for the directory, it will have been created or not depending on the value of use_lazy_delete
 	if ( -d "$config_vars{'snapshot_root'}/_delete.$$" ) {
 		# this is the last thing to do here, and it can take quite a while.
 		# we remove the lockfile here since this delete shouldn't block other rsnapshot jobs from running
 		remove_lockfile();
-		
+
 		# start the delete
 		display_rm_rf("$config_vars{'snapshot_root'}/_delete.$$");
 		if (0 == $test) {
@@ -2774,81 +2774,81 @@ sub handle_backup_level {
 # does not return a value, it bails instantly if there's a problem
 sub backup_lowest_backup_level {
 	my $id_ref = shift(@_);
-	
+
 	# this should never happen
 	if (!defined($id_ref))                  { bail('backup_lowest_backup_level() expects an argument'); }
 	if (!defined($$id_ref{'backup_level'})) { bail('backup_lowest_backup_level() expects a backup level'); }
-	
+
 	# this also should never happen
 	if ($$id_ref{'backup_level'} ne 'sync') {
 		if (!defined($$id_ref{'backup_level_num'}) or (0 != $$id_ref{'backup_level_num'})) {
 			bail('backup_lowest_backup_level() can only operate on the lowest backup level');
 		}
 	}
-	
+
 	my $sync_dest_matches	= 0;
 	my $sync_dest_dir		= undef;
-	
+
 	# if we're trying to sync only certain directories, remember the path to match
 	if ($ARGV[1]) {
 		$sync_dest_dir = $ARGV[1];
 	}
-	
+
 	# sync live filesystem data and backup script output to $level.0
 	# loop through each backup point and backup script
 	foreach my $bp_ref (@backup_points) {
-		
+
 		# rsync the given backup point into the snapshot root
 		if ( defined($$bp_ref{'dest'}) && (defined($$bp_ref{'src'}) or defined($$bp_ref{'script'})) ) {
-			
+
 			# if we're doing a sync and we specified an parameter on the command line (for the destination path),
 			# only sync directories matching the destination path
 			if (($$id_ref{'backup_level'} eq 'sync') && (defined($sync_dest_dir))) {
 				my $avail_path	= remove_trailing_slash( $$bp_ref{'dest'} );
 				my $req_path	= remove_trailing_slash( $sync_dest_dir );
-				
+
 				# if we have a match, sync this entry
 				if ($avail_path eq $req_path) {
 					# rsync
 					if ($$bp_ref{'src'}) {
 						rsync_backup_point( $$id_ref{'backup_level'}, $bp_ref );
-						
+
 					# backup_script
 					} elsif ($$bp_ref{'script'}) {
 						exec_backup_script( $$id_ref{'backup_level'}, $bp_ref );
 					}
-					
+
 					# ok, we got at least one dest match
 					$sync_dest_matches++;
 				}
-				
+
 			# this is a normal operation, either a sync or a lowest backup level sync/rotate
 			} else {
 				# rsync
 				if ($$bp_ref{'src'}) {
 					rsync_backup_point( $$id_ref{'backup_level'}, $bp_ref );
-					
+
 				# backup_script
 				} elsif ($$bp_ref{'script'}) {
 					exec_backup_script( $$id_ref{'backup_level'}, $bp_ref );
 				}
 			}
-			
+
 		# this should never happen
 		} else {
 			bail('invalid backup point data in backup_lowest_backup_level()');
 		}
 	}
-	
+
 	if ($$id_ref{'backup_level'} eq 'sync') {
 		if (defined($sync_dest_dir) && (0 == $sync_dest_matches)) {
 			bail ("No matches found for \"$sync_dest_dir\"");
 		}
 	}
-	
+
 	# rollback failed backups
 	rollback_failed_backups( $$id_ref{'backup_level'} );
-	
+
 	# update mtime on $level.0/ to show when the snapshot completed
 	touch_backup_level_dir( $$id_ref{'backup_level'} );
 }
@@ -2865,17 +2865,17 @@ sub backup_lowest_backup_level {
 #
 sub rotate_lowest_snapshots {
 	my $backup_level = shift(@_);
-	
+
 	if (!defined($backup_level)) { bail('backup_level not defined in rotate_lowest_snapshots()'); }
-	
+
 	my $id_ref = get_backup_level_data($backup_level);
 	my $backup_level_num = $$id_ref{'backup_level_num'};
 	my $backup_level_max = $$id_ref{'backup_level_max'};
 	my $prev_backup_level = $$id_ref{'prev_backup_level'};
 	my $prev_backup_level_max = $$id_ref{'prev_backup_level_max'};
-	
+
 	my $result;
-	
+
 	# remove oldest directory
 	if ( (-d "$config_vars{'snapshot_root'}/$backup_level.$backup_level_max") && ($backup_level_max > 0) ) {
 		# if use_lazy_deletes is set move the oldest directory to _delete.$$
@@ -2884,7 +2884,7 @@ sub rotate_lowest_snapshots {
 				"$config_vars{'snapshot_root'}/$backup_level.$backup_level_max/",
 				"$config_vars{'snapshot_root'}/_delete.$$/"
 			);
-			
+
 			if (0 == $test) {
 				my $result = safe_rename(
 					"$config_vars{'snapshot_root'}/$backup_level.$backup_level_max",
@@ -2897,11 +2897,11 @@ sub rotate_lowest_snapshots {
 					bail($errstr);
 				}
 			}
-			
+
 		# otherwise the default is to delete the oldest directory for this backup_level
 		} else {
 			display_rm_rf("$config_vars{'snapshot_root'}/$backup_level.$backup_level_max/");
-			
+
 			if (0 == $test) {
 				my $result = rm_rf( "$config_vars{'snapshot_root'}/$backup_level.$backup_level_max/" );
 				if (0 == $result) {
@@ -2910,7 +2910,7 @@ sub rotate_lowest_snapshots {
 			}
 		}
 	}
-	
+
 	# rotate the middle ones
 	if ($backup_level_max > 0) {
 		# Have we rotated a directory for this backup level?
@@ -2921,7 +2921,7 @@ sub rotate_lowest_snapshots {
 					"$config_vars{'snapshot_root'}/$backup_level.$i/ ",
 					"$config_vars{'snapshot_root'}/$backup_level." . ($i+1) . "/"
 				);
-				
+
 				if (0 == $test) {
 					my $result = safe_rename(
 						"$config_vars{'snapshot_root'}/$backup_level.$i",
@@ -2942,19 +2942,19 @@ sub rotate_lowest_snapshots {
 			}
 		}
 	}
-	
+
 	# .0 and .1 require more attention, especially now with link_dest and sync_first
-	
+
 	# sync_first enabled
 	if ($config_vars{'sync_first'}) {
 		# we move .0 to .1 no matter what (assuming it exists)
-		
+
 		if ( -d "$config_vars{'snapshot_root'}/$backup_level.0/" ) {
 			print_cmd("mv",
 				"$config_vars{'snapshot_root'}/$backup_level.0/",
 				"$config_vars{'snapshot_root'}/$backup_level.1/"
 			);
-			
+
 			if (0 == $test) {
 				my $result = safe_rename(
 					"$config_vars{'snapshot_root'}/$backup_level.0",
@@ -2968,17 +2968,17 @@ sub rotate_lowest_snapshots {
 				}
 			}
 		}
-			
+
 		# if we're using rsync --link-dest, we need to mv sync to .0 now
 		if (1 == $config_vars{'link_dest'}) {
 			# mv sync .0
-			
+
 			if ( -d "$config_vars{'snapshot_root'}/.sync" ) {
 				print_cmd("mv",
 					"$config_vars{'snapshot_root'}/.sync/",
 					"$config_vars{'snapshot_root'}/$backup_level.0/"
 				);
-				
+
 				if (0 == $test) {
 					my $result = safe_rename(
 						"$config_vars{'snapshot_root'}/.sync",
@@ -2992,11 +2992,11 @@ sub rotate_lowest_snapshots {
 					}
 				}
 			}
-			
+
 		# otherwise, we hard link (except for directories, symlinks, and special files) sync to .0
 		} else {
 			# cp -al .sync .0
-			
+
 			if ( -d "$config_vars{'snapshot_root'}/.sync/" ) {
 				display_cp_al( "$config_vars{'snapshot_root'}/.sync/", "$config_vars{'snapshot_root'}/$backup_level.0/" );
 				if (0 == $test) {
@@ -3007,17 +3007,17 @@ sub rotate_lowest_snapshots {
 				}
 			}
 		}
-		
+
 	# sync_first disabled (make sure we have a .0 directory and someplace to put it)
 	} elsif ( (-d "$config_vars{'snapshot_root'}/$backup_level.0") && ($backup_level_max > 0) ) {
-		
+
 		# if we're using rsync --link-dest, we need to mv .0 to .1 now
 		if (1 == $config_vars{'link_dest'}) {
 			# move .0 to .1
-			
+
 			if ( -d "$config_vars{'snapshot_root'}/$backup_level.0/" ) {
 				print_cmd("mv $config_vars{'snapshot_root'}/$backup_level.0/ $config_vars{'snapshot_root'}/$backup_level.1/");
-				
+
 				if (0 == $test) {
 					my $result = safe_rename(
 						"$config_vars{'snapshot_root'}/$backup_level.0",
@@ -3060,23 +3060,23 @@ sub rotate_lowest_snapshots {
 sub rsync_backup_point {
 	my $backup_level	= shift(@_);
 	my $bp_ref			= shift(@_);
-	
+
 	# validate subroutine args
 	if (!defined($backup_level))    { bail('backup_level not defined in rsync_backup_point()'); }
 	if (!defined($bp_ref))          { bail('bp_ref not defined in rsync_backup_point()'); }
 	if (!defined($$bp_ref{'src'}))  { bail('src not defined in rsync_backup_point()'); }
 	if (!defined($$bp_ref{'dest'})) { bail('dest not defined in rsync_backup_point()'); }
-	
+
 	# set up default args for rsync and ssh
 	my $ssh_args			= $default_ssh_args;
 	my $rsync_short_args	= $default_rsync_short_args;
 	my $rsync_long_args		= $default_rsync_long_args;
-	
+
 	# other misc variables
 	my @cmd_stack				= undef;
 	my $src						= $$bp_ref{'src'};
 	my $result					= undef;
-	
+
 	my $linux_lvm                     = 0;
 	my $linux_lvm_oldpwd              = undef;
 	my $linux_lvm_snapshotname        = undef;
@@ -3085,15 +3085,15 @@ sub rsync_backup_point {
 	# if we're doing a "sync", then look at [lowest-backup-level].0 instead of [cur-backup-level].1
 	my $backup_level_link_dest;
 	my $backup_level_num_link_dest;
-	
+
 	# start looking for link_dest targets at backup_level.$start_num
 	my $start_num = 1;
-	
+
 	# if we're doing a sync, we'll start looking at [lowest-backup_level].0 for a link_dest target
 	if ($backup_level eq 'sync') {
 		$start_num = 0;
 	}
-	
+
 	# look for the most recent link_dest target directory
 	# loop through all snapshots until we find the first match
 	foreach my $i_ref (@backup_levels) {
@@ -3107,14 +3107,14 @@ sub rsync_backup_point {
 				} else {
 					$i_check = $i;
 				}
-				
+
 				# once we find a valid link_dest target, the search is over
 				if ( -e "$config_vars{'snapshot_root'}/$$i_ref{'backup_level'}.$i_check/$$bp_ref{'dest'}" ) {
 					if (!defined($backup_level_link_dest) && !defined($backup_level_num_link_dest)) {
 						$backup_level_link_dest     = $$i_ref{'backup_level'};
 						$backup_level_num_link_dest = $i;
 					}
-					
+
 					# we'll still loop through the outer loop a few more times, but the defined() check above
 					# will make sure the first match wins
 					last;
@@ -3122,18 +3122,18 @@ sub rsync_backup_point {
 			}
 		}
 	}
-	
+
 	# check to see if this destination path has already failed
 	# if it's set to be rolled back, skip out now
 	foreach my $rollback_point (@rollback_points) {
 		if (defined($rollback_point)) {
 			my $tmp_dest			= $$bp_ref{'dest'};
 			my $tmp_rollback_point	= $rollback_point;
-			
+
 			# don't compare the slashes at the end
 			$tmp_dest			= remove_trailing_slash($tmp_dest);
 			$tmp_rollback_point	= remove_trailing_slash($tmp_rollback_point);
-			
+
 			if ("$tmp_dest" eq "$tmp_rollback_point") {
 				print_warn ("$src skipped due to rollback plan", 2);
 				syslog_warn("$src skipped due to rollback plan");
@@ -3141,7 +3141,7 @@ sub rsync_backup_point {
 			}
 		}
 	}
-	
+
 	# if the config file specified rsync or ssh args, use those instead of the hard-coded defaults in the program
 	if (defined($config_vars{'rsync_short_args'})) {
 		$rsync_short_args = $config_vars{'rsync_short_args'};
@@ -3152,10 +3152,10 @@ sub rsync_backup_point {
 	if (defined($config_vars{'ssh_args'})) {
 		$ssh_args = $config_vars{'ssh_args'};
 	}
-	
+
 	# extra verbose?
 	if ($verbose > 3) { $rsync_short_args .= 'v'; }
-	
+
 	# split up rsync long args into an array, paying attention to
 	# quoting - ideally we'd use Text::Balanced or similar, but that's
 	# only relatively recently gone into core
@@ -3165,7 +3165,7 @@ sub rsync_backup_point {
 	# (this may create the .sync dir, which is why we had to check for it above)
 	#
 	create_backup_point_dir($backup_level, $bp_ref);
-	
+
 	# check opts, first unique to this backup point, and then global
 	#
 	# with all these checks, we try the local option first, and if
@@ -3205,35 +3205,35 @@ sub rsync_backup_point {
 	} elsif ($config_vars{'one_fs'}) {
 		$rsync_short_args .= 'x';
 	}
-	
+
 	# SEE WHAT KIND OF SOURCE WE'RE DEALING WITH
 	#
 	# local filesystem
 	if ( is_real_local_abs_path($src) ) {
 		# no change
-		
+
 	# if this is a user@host:/path (or ...:./path, or ...:~/...), use ssh
 	} elsif ( is_ssh_path($src) ) {
-		
+
 		# if we have any args for SSH, add them
 		if ( defined($ssh_args) ) {
 			push( @rsync_long_args_stack, "--rsh=\"$config_vars{'cmd_ssh'} $ssh_args\"" );
-			
+
 		# no arguments is the default
 		} else {
 			push( @rsync_long_args_stack, "--rsh=$config_vars{'cmd_ssh'}" );
 		}
-		
+
 	# anonymous rsync
 	} elsif ( is_anon_rsync_path($src) ) {
 		# make rsync quiet if we're running in quiet mode
 		if ($verbose < 2) { $rsync_short_args .= 'q'; }
-		
+
 	# cwrsync path
 	} elsif ( is_cwrsync_path($src) ) {
 		# make rsync quiet if we're running in quiet mode
 		if ($verbose < 2) { $rsync_short_args .= 'q'; }
-		
+
 	# LVM path
 	} elsif ( is_linux_lvm_path($src) ) {
 		# take LVM snapshot and mount, reformat src into local path
@@ -3257,7 +3257,7 @@ sub rsync_backup_point {
         unless (defined($linux_lvmvgname) and defined($linux_lvmvolname) and defined($linux_lvmpath)) {
             bail("Could not understand LVM source \"$src\" in backup_lowest_backup_level()");
         }
-        
+
         # assemble and execute LVM snapshot command
         @cmd_stack = ();
         push(@cmd_stack, split(' ',$config_vars{'linux_lvm_cmd_lvcreate'}));
@@ -3269,18 +3269,18 @@ sub rsync_backup_point {
         push(@cmd_stack, $config_vars{'linux_lvm_snapshotname'});
 
         push(@cmd_stack, join('/', $config_vars{'linux_lvm_vgpath'}, $linux_lvmvgname, $linux_lvmvolname));
-        
+
         print_cmd(@cmd_stack);
         if (0 == $test) {
             # silence gratuitous lvcreate output
             #$result = system(@cmd_stack);
             $result = system(join " ", @cmd_stack, ">/dev/null");
-            
+
             if ($result != 0) {
                 bail("Create LVM snapshot failed: $result");
             }
         }
-        
+
         # mount the snapshot
         @cmd_stack = ();
         push(@cmd_stack, split(' ', $config_vars{'linux_lvm_cmd_mount'}));
@@ -3288,17 +3288,17 @@ sub rsync_backup_point {
         $linux_lvm_snapshotname = join('/', $config_vars{'linux_lvm_vgpath'}, $linux_lvmvgname, $config_vars{'linux_lvm_snapshotname'});
         push(@cmd_stack, $linux_lvm_snapshotname);
         push(@cmd_stack, $config_vars{'linux_lvm_mountpath'});
-        
+
         print_cmd(@cmd_stack);
         if (0 == $test) {
             $result = system(@cmd_stack);
-            
+
             if ($result != 0) {
                 bail("Mount LVM snapshot failed: $result");
             }
         }
-        
-        
+
+
         # rewrite src to point to mount path
         # - to avoid including the mountpath in the snapshot, change the working directory and use a relative source
         $linux_lvm_oldpwd = $ENV{PWD};
@@ -3312,12 +3312,12 @@ sub rsync_backup_point {
 
         $src = './' .  $linux_lvmpath;
         $linux_lvm = 1;
-		
+
 	# this should have already been validated once, but better safe than sorry
 	} else {
 		bail("Could not understand source \"$src\" in backup_lowest_backup_level()");
 	}
-	
+
 	# if we're using --link-dest, we'll need to specify the link-dest directory target
 	# this varies depending on whether we're operating on the lowest backup level or doing a 'sync'
 	if (1 == $config_vars{'link_dest'}) {
@@ -3330,7 +3330,7 @@ sub rsync_backup_point {
 			);
 		}
 	}
-	
+
 	# SPECIAL EXCEPTION:
 	#   If we're using --link-dest AND the source is a file AND we have a copy from the last time,
 	#   manually link level.1/foo to level.0/foo
@@ -3344,36 +3344,36 @@ sub rsync_backup_point {
 		defined($backup_level_num_link_dest) &&
 		(-f "$config_vars{'snapshot_root'}/$backup_level_link_dest.$backup_level_num_link_dest/$$bp_ref{'dest'}")
 	) {
-		
+
 		# these are both "destination" paths, but we're moving from .1 to .0
 		my $srcpath;
 		my $destpath;
-		
+
 		$srcpath = "$config_vars{'snapshot_root'}/$backup_level_link_dest.$backup_level_num_link_dest/$$bp_ref{'dest'}";
-		
+
 		if ($backup_level eq 'sync') {
 			$destpath = "$config_vars{'snapshot_root'}/.sync/$$bp_ref{'dest'}";
 		} else {
 			$destpath = "$config_vars{'snapshot_root'}/$backup_level.0/$$bp_ref{'dest'}";
 		}
-		
+
 		print_cmd("ln $srcpath $destpath");
-		
+
 		if (0 == $test) {
 			$result = link( "$srcpath", "$destpath" );
-			
+
 			if (!defined($result) or (0 == $result)) {
 				print_err ("link(\"$srcpath\", \"$destpath\") failed", 2);
 				syslog_err("link(\"$srcpath\", \"$destpath\") failed");
 			}
 		}
 	}
-	
+
 	# put a trailing slash on the source if we know it's a directory and it doesn't have one
 	if ((-d "$src") && ($$bp_ref{'src'} !~ /\/$/)) {
 		$src .= '/';
 	}
-	
+
 	# BEGIN RSYNC COMMAND ASSEMBLY
 	#   take care not to introduce blank elements into the array,
 	#   since it can confuse rsync, which in turn causes strange errors
@@ -3408,11 +3408,11 @@ sub rsync_backup_point {
 	}
 	#
 	# END RSYNC COMMAND ASSEMBLY
-	
-	
+
+
 	# RUN THE RSYNC COMMAND FOR THIS BACKUP POINT BASED ON THE @cmd_stack VARS
 	print_cmd(@cmd_stack);
-	
+
 
 	my $tryCount = 0;
 	$result = 1;
@@ -3426,7 +3426,7 @@ sub rsync_backup_point {
 		if ($result != 0) {
 			# bitmask return value
 			my $retval = get_retval($result);
-			
+
 			# print warnings, and set this backup point to rollback if we're using --link-dest
 			#
 			handle_rsync_error($retval, $bp_ref);
@@ -3434,10 +3434,10 @@ sub rsync_backup_point {
 			print_msg("rsync succeeded", 5);
 		}
 	}
-	
+
 	# unmount and drop snapshot if required
 	if ($linux_lvm) {
-	
+
         print_cmd("chdir($linux_lvm_oldpwd)");
         if (0 == $test) {
             $result = chdir($linux_lvm_oldpwd);
@@ -3450,11 +3450,11 @@ sub rsync_backup_point {
         push(@cmd_stack, split(' ', $config_vars{'linux_lvm_cmd_umount'}));
 
         push(@cmd_stack, $config_vars{'linux_lvm_mountpath'});
-        
+
         print_cmd(@cmd_stack);
         if (0 == $test) {
             $result = system(@cmd_stack);
-            
+
             if ($result != 0) {
                 bail("Unmount LVM snapshot failed: $result");
             }
@@ -3465,13 +3465,13 @@ sub rsync_backup_point {
 
         push(@cmd_stack, '--force');
         push(@cmd_stack, $linux_lvm_snapshotname);
-        
+
         print_cmd(@cmd_stack);
         if (0 == $test) {
             # silence gratuitous lvremove output
             #$result = system(@cmd_stack);
             $result = system(join " ", @cmd_stack, ">/dev/null");
-            
+
             if ($result != 0) {
                 bail("Removal of LVM snapshot failed: $result");
             }
@@ -3524,12 +3524,12 @@ sub split_long_args_with_quotes {
 sub handle_rsync_error {
 	my $retval	= shift(@_);
 	my $bp_ref	= shift(@_);
-	
+
 	# shouldn't ever happen
 	if (!defined($retval)) { bail('retval undefined in handle_rsync_error()'); }
 	if (0 == $retval) { bail('retval == 0 in handle_rsync_error()'); }
 	if (!defined($bp_ref)) { bail('bp_ref undefined in handle_rsync_error()'); }
-	
+
 	# a partial list of rsync exit values (from the rsync 2.6.0 man page)
 	#
 	# 0		Success
@@ -3543,22 +3543,22 @@ sub handle_rsync_error {
 	if ((1 == $config_vars{'link_dest'}) && (1 == $retval)) {
 		print_err ("$config_vars{'cmd_rsync'} syntax or usage error. Does this version of rsync support --link-dest?", 2);
 		syslog_err("$config_vars{'cmd_rsync'} syntax or usage error. Does this version of rsync support --link-dest?");
-		
+
 	# 23 and 24 are treated as warnings because users might be using the filesystem during the backup
 	# if you want perfect backups, don't allow the source to be modified while the backups are running :)
 	} elsif (23 == $retval) {
 		print_warn ("Some files and/or directories in $$bp_ref{'src'} only transferred partially during rsync operation", 4);
 		syslog_warn("Some files and/or directories in $$bp_ref{'src'} only transferred partially during rsync operation");
-		
+
 	} elsif (24 == $retval) {
 		print_warn ("Some files and/or directories in $$bp_ref{'src'} vanished during rsync operation", 4);
 		syslog_warn("Some files and/or directories in $$bp_ref{'src'} vanished during rsync operation");
-		
+
 	# other error
 	} else {
 		print_err ("$config_vars{'cmd_rsync'} returned $retval while processing $$bp_ref{'src'}", 2);
 		syslog_err("$config_vars{'cmd_rsync'} returned $retval while processing $$bp_ref{'src'}");
-		
+
 		# set this directory to rollback if we're using link_dest
 		# (since $level.0/ will have been moved to $level.1/ by now)
 		if (1 == $config_vars{'link_dest'}) {
@@ -3573,33 +3573,33 @@ sub handle_rsync_error {
 sub exec_backup_script {
 	my $backup_level = shift(@_);
 	my $bp_ref       = shift(@_);
-	
+
 	# validate subroutine args
 	if (!defined($backup_level)) { bail('backup_level not defined in exec_backup_script()'); }
 	if (!defined($bp_ref))       { bail('bp_ref not defined in exec_backup_script()'); }
-	
+
 	# other misc variables
 	my $script	= undef;
 	my $tmpdir	= undef;
 	my $result	= undef;
-	
+
 	# remember what directory we started in
 	my $cwd = cwd();
-	
+
 	# create $level.0/$$bp_ref{'dest'} directory if it doesn't exist
 	#
 	create_backup_point_dir($backup_level, $bp_ref);
-	
+
 	# work in a temp dir, and make this the source for the rsync operation later
 	# not having a trailing slash is a subtle distinction. it allows us to use
 	# the same path if it's NOT a directory when we try to delete it.
 	$tmpdir = "$config_vars{'snapshot_root'}/tmp";
-	
+
 	# remove the tmp directory if it's still there for some reason
 	# (this shouldn't happen unless the program was killed prematurely, etc)
 	if ( -e "$tmpdir" ) {
 		display_rm_rf("$tmpdir/");
-		
+
 		if (0 == $test) {
 			$result = rm_rf("$tmpdir/");
 			if (0 == $result) {
@@ -3607,10 +3607,10 @@ sub exec_backup_script {
 			}
 		}
 	}
-	
+
 	# create the tmp directory
 	print_cmd("mkdir -m 0755 -p $tmpdir/");
-	
+
 	if (0 == $test) {
 		eval {
 			# don't ever pass a trailing slash to mkpath
@@ -3620,20 +3620,20 @@ sub exec_backup_script {
 			bail("Unable to create \"$tmpdir/\",\nPlease make sure you have the right permissions.");
 		}
 	}
-	
+
 	# no more calls to mkpath here. the tmp dir needs a trailing slash
 	$tmpdir .= '/';
-	
+
 	# change to the tmp directory
 	print_cmd("cd $tmpdir");
-	
+
 	if (0 == $test) {
 		$result = chdir("$tmpdir");
 		if (0 == $result) {
 			bail("Could not change directory to \"$tmpdir\"");
 		}
 	}
-	
+
 	# run the backup script
 	#
 	# the assumption here is that the backup script is written in such a way
@@ -3643,21 +3643,21 @@ sub exec_backup_script {
 	# considered a failure.
 	#
 	print_cmd($$bp_ref{'script'});
-	
+
 	if (0 == $test) {
 		$result = system( $$bp_ref{'script'} );
 		if ($result != 0) {
 			# bitmask return value
 			my $retval = get_retval($result);
-			
+
 			print_err ("backup_script $$bp_ref{'script'} returned $retval", 2);
 			syslog_err("backup_script $$bp_ref{'script'} returned $retval");
-			
+
 			# if the backup script failed, roll back to the last good data
 			push(@rollback_points, $$bp_ref{'dest'} );
 		}
 	}
-	
+
 	# change back to the previous directory
 	# (/ is a special case)
 	if ('/' eq $cwd) {
@@ -3665,11 +3665,11 @@ sub exec_backup_script {
 	} else {
 		print_cmd("cd $cwd/");
 	}
-	
+
 	if (0 == $test) {
 		chdir($cwd);
 	}
-	
+
 	# if we're using link_dest, pull back the previous files (as links) that were moved up if any.
 	# this is because in this situation, .0 will always be empty, so we'll pull select things
 	# from .1 back to .0 if possible. these will be used as a baseline for diff comparisons by
@@ -3677,7 +3677,7 @@ sub exec_backup_script {
 	if (1 == $config_vars{'link_dest'}) {
 		my $lastdir;
 		my $curdir;
-		
+
 		if ($backup_level eq 'sync') {
 			$lastdir = "$config_vars{'snapshot_root'}/" . $backup_levels[0]->{'backup_level'} . ".0/$$bp_ref{'dest'}";
 			$curdir  = "$config_vars{'snapshot_root'}/.sync/$$bp_ref{'dest'}";
@@ -3685,7 +3685,7 @@ sub exec_backup_script {
 			$lastdir = "$config_vars{'snapshot_root'}/$backup_level.1/$$bp_ref{'dest'}";
 			$curdir  = "$config_vars{'snapshot_root'}/$backup_level.0/$$bp_ref{'dest'}";
 		}
-		
+
 		# make sure we have a slash at the end
 		if ($lastdir !~ m/\/$/) {
 			$lastdir .= '/';
@@ -3693,13 +3693,13 @@ sub exec_backup_script {
 		if ($curdir !~ m/\/$/) {
 			$curdir .= '/';
 		}
-		
+
 		# if we even have files from last time
 		if ( -e "$lastdir" ) {
-			
+
 			# and we're not somehow clobbering an existing directory (shouldn't happen)
 			if ( ! -e "$curdir" ) {
-				
+
 				# call generic cp_al() subroutine
 				display_cp_al( "$lastdir", "$curdir" );
 				if (0 == $test) {
@@ -3711,7 +3711,7 @@ sub exec_backup_script {
 			}
 		}
 	}
-	
+
 	# sync the output of the backup script into this backup level
 	# this is using a native function since rsync doesn't quite do what we want
 	#
@@ -3725,20 +3725,20 @@ sub exec_backup_script {
 	} else {
 		$target_dir = "$config_vars{'snapshot_root'}/$backup_level.0/$$bp_ref{'dest'}";
 	}
-	
+
 	print_cmd("sync_if_different(\"$tmpdir\", \"$target_dir\")");
-	
+
 	if (0 == $test) {
 		$result = sync_if_different("$tmpdir", "$target_dir");
 		if (!defined($result)) {
 			print_err("Warning! sync_if_different(\"$tmpdir\", \"$$bp_ref{'dest'}\") returned undef", 2);
 		}
 	}
-	
+
 	# remove the tmp directory
 	if ( -e "$tmpdir" ) {
 		display_rm_rf("$tmpdir");
-		
+
 		if (0 == $test) {
 			$result = rm_rf("$tmpdir");
 			if (0 == $result) {
@@ -3752,26 +3752,26 @@ sub exec_backup_script {
 # returns the exit value of the command
 sub exec_cmd {
 	my $cmd = shift(@_);
-	
+
 	my $return = 0;
 	my $retval = 0;
-	
+
 	if (!defined($cmd) or ('' eq $cmd)) {
 		print_err("Warning! Command \"$cmd\" not found", 2);
 		return (undef);
 	}
-	
+
 	print_cmd($cmd);
 	if (0 == $test) {
 		$return = system($cmd);
 		if (!defined($return)) {
 			print_err("Warning! exec_cmd(\"$cmd\") returned undef", 2);
 		}
-		
+
 		# bitmask to get the real return value
 		$retval = get_retval($return);
 	}
-	
+
 	return ($retval);
 }
 
@@ -3779,20 +3779,20 @@ sub exec_cmd {
 # returns the exit code of the defined preexec script, or undef if the command is not found
 sub exec_cmd_preexec {
 	my $retval = 0;
-	
+
 	# exec_cmd will only run if we're not in test mode
 	if (defined($config_vars{'cmd_preexec'})) {
 		$retval = exec_cmd( "$config_vars{'cmd_preexec'}" );
 	}
-	
+
 	if (!defined($retval)) {
 		print_err("$config_vars{'cmd_preexec'} not found", 2);
 	}
-	
+
 	if (0 != $retval) {
 		print_warn("cmd_preexec \"$config_vars{'cmd_preexec'}\" returned $retval", 2);
 	}
-	
+
 	return ($retval);
 }
 
@@ -3800,20 +3800,20 @@ sub exec_cmd_preexec {
 # returns the exit code of the defined preexec script, or undef if the command is not found
 sub exec_cmd_postexec {
 	my $retval = 0;
-	
+
 	# exec_cmd will only run if we're not in test mode
 	if (defined($config_vars{'cmd_postexec'})) {
 		$retval = exec_cmd( "$config_vars{'cmd_postexec'}" );
 	}
-	
+
 	if (!defined($retval)) {
 		print_err("$config_vars{'cmd_postexec'} not found", 2);
 	}
-	
+
 	if (0 != $retval) {
 		print_warn("cmd_postexec \"$config_vars{'cmd_postexec'}\" returned $retval", 2);
 	}
-	
+
 	return ($retval);
 }
 
@@ -3823,15 +3823,15 @@ sub exec_cmd_postexec {
 sub create_backup_point_dir {
 	my $backup_level = shift(@_);
 	my $bp_ref       = shift(@_);
-	
+
 	# validate subroutine args
 	if (!defined($backup_level)) { bail('backup_level not defined in create_backup_level_0()'); }
 	if (!defined($bp_ref))       { bail('bp_ref not defined in create_backup_level_0()'); }
-	
+
 	# create missing parent directories inside the $level.x directory
 	my @dirs = split(/\//, $$bp_ref{'dest'});
 	pop(@dirs);
-	
+
 	# don't mkdir for dest unless we have to
 	my $destpath;
 	if ($backup_level eq 'sync') {
@@ -3839,16 +3839,16 @@ sub create_backup_point_dir {
 	} else {
 		$destpath = "$config_vars{'snapshot_root'}/$backup_level.0/" . join('/', @dirs);
 	}
-	
+
 	# make sure we DON'T have a trailing slash (for mkpath)
 	if ($destpath =~ m/\/$/) {
 		$destpath = remove_trailing_slash($destpath);
 	}
-	
+
 	# create the directory if it doesn't exist
 	if ( ! -e "$destpath" ) {
 		print_cmd("mkdir -m 0755 -p $destpath/");
-		
+
 		if (0 == $test) {
 			eval {
 				mkpath( "$destpath", 0, 0755 );
@@ -3869,16 +3869,16 @@ sub create_backup_point_dir {
 #
 sub rollback_failed_backups {
 	my $backup_level = shift(@_);
-	
+
 	if (!defined($backup_level)) { bail('backup_level not defined in rollback_failed_backups()'); }
-	
+
 	my $result;
 	my $rsync_short_args	= $default_rsync_short_args;
-	
+
 	# handle 'sync' case
 	my $backup_level_src;
 	my $backup_level_dest;
-	
+
 	if ($backup_level eq 'sync') {
 		$backup_level_src  = $backup_levels[0]->{'backup_level'} . '.0';
 		$backup_level_dest = '.sync';
@@ -3886,20 +3886,20 @@ sub rollback_failed_backups {
 		$backup_level_src  = "$backup_level.1";
 		$backup_level_dest = "$backup_level.0";
 	}
-	
+
 	# extra verbose?
 	if ($verbose > 3) { $rsync_short_args .= 'v'; }
-	
+
 	# rollback failed backups (if we're using link_dest)
 	foreach my $rollback_point (@rollback_points) {
 		# make sure there's something to rollback from
 		if ( ! -e "$config_vars{'snapshot_root'}/$backup_level_src/$rollback_point" ) {
 			next;
 		}
-	
+
 		print_warn ("Rolling back \"$rollback_point\"", 2);
 		syslog_warn("Rolling back \"$rollback_point\"");
-		
+
 		# using link_dest, this probably won't happen
 		# just in case, we may have to delete the old backup point from level.0 / .sync
 		if ( -e "$config_vars{'snapshot_root'}/$backup_level_dest/$rollback_point" ) {
@@ -3911,7 +3911,7 @@ sub rollback_failed_backups {
 				}
 			}
 		}
-		
+
 		# copy hard links back from .1 to .0
 		# this will re-populate the .0 directory without taking up (much) additional space
 		#
@@ -3940,20 +3940,20 @@ sub rollback_failed_backups {
 # updates mtime on $level.0
 sub touch_backup_level_dir {
 	my $backup_level = shift(@_);
-	
+
 	if (!defined($backup_level)) { bail('backup_level not defined in touch_backup_level()'); }
-	
+
 	my $backup_level_dir;
-	
+
 	if ($backup_level eq 'sync') {
 		$backup_level_dir = '.sync';
 	} else {
 		$backup_level_dir = $backup_level . '.0';
 	}
-	
+
 	# update mtime of $level.0 to reflect the time this snapshot was taken
 	print_cmd("touch $config_vars{'snapshot_root'}/$backup_level_dir/");
-	
+
 	if (0 == $test) {
 		my $result = utime(time(), time(), "$config_vars{'snapshot_root'}/$backup_level_dir/");
 		if (0 == $result) {
@@ -3973,22 +3973,22 @@ sub touch_backup_level_dir {
 # does not return a value, it bails instantly if there's a problem
 sub rotate_higher_backup_level {
 	my $id_ref = shift(@_);
-	
+
 	# this should never happen
 	if (!defined($id_ref)) { bail('rotate_higher_backup_level() expects a backup_level_data_ref'); }
-	
+
 	# this also should never happen
 	if (!defined($$id_ref{'backup_level_num'}) or (0 == $$id_ref{'backup_level_num'})) {
 		bail('rotate_higher_backup_level() can only operate on the higher backup levels');
 	}
-	
+
 	# set up variables for convenience since we refer to them extensively
 	my $backup_level          = $$id_ref{'backup_level'};
 	my $backup_level_num      = $$id_ref{'backup_level_num'};
 	my $backup_level_max      = $$id_ref{'backup_level_max'};
 	my $prev_backup_level     = $$id_ref{'prev_backup_level'};
 	my $prev_backup_level_max = $$id_ref{'prev_backup_level_max'};
-	
+
 	# ROTATE DIRECTORIES
 	#
 	# delete the oldest one (if we're keeping more than one)
@@ -4000,7 +4000,7 @@ sub rotate_higher_backup_level {
 				"$config_vars{'snapshot_root'}/$backup_level.$backup_level_max/ ",
 				"$config_vars{'snapshot_root'}/_delete.$$/"
 			);
-			
+
 			if (0 == $test) {
 				my $result = safe_rename(
 					"$config_vars{'snapshot_root'}/$backup_level.$backup_level_max",
@@ -4015,7 +4015,7 @@ sub rotate_higher_backup_level {
 			}
 		} else {
 			display_rm_rf("$config_vars{'snapshot_root'}/$backup_level.$backup_level_max/");
-			
+
 			if (0 == $test) {
 				my $result = rm_rf( "$config_vars{'snapshot_root'}/$backup_level.$backup_level_max/" );
 				if (0 == $result) {
@@ -4027,7 +4027,7 @@ sub rotate_higher_backup_level {
 	} else {
 		print_msg("$config_vars{'snapshot_root'}/$backup_level.$backup_level_max not present (yet), nothing to delete", 4);
 	}
-	
+
 	# rotate the middle ones
 	for (my $i=($backup_level_max-1); $i>=0; $i--) {
 		if ( -d "$config_vars{'snapshot_root'}/$backup_level.$i" ) {
@@ -4035,7 +4035,7 @@ sub rotate_higher_backup_level {
 				"mv $config_vars{'snapshot_root'}/$backup_level.$i/ ",
 				"$config_vars{'snapshot_root'}/$backup_level." . ($i+1) . "/"
 			);
-			
+
 			if (0 == $test) {
 				my $result = safe_rename(
 					"$config_vars{'snapshot_root'}/$backup_level.$i",
@@ -4052,11 +4052,11 @@ sub rotate_higher_backup_level {
 			print_msg("$config_vars{'snapshot_root'}/$backup_level.$i not present (yet), nothing to rotate", 4);
 		}
 	}
-	
+
 	# prev.max and level.0 require more attention
 	if ( -d "$config_vars{'snapshot_root'}/$prev_backup_level.$prev_backup_level_max" ) {
 		my $result;
-		
+
 		# if the previous backup level has at least 2 snapshots,
 		# or if the previous backup level isn't the smallest one,
 		# move the last one up a level
@@ -4066,7 +4066,7 @@ sub rotate_higher_backup_level {
 				"mv $config_vars{'snapshot_root'}/$prev_backup_level.$prev_backup_level_max/ ",
 				"$config_vars{'snapshot_root'}/$backup_level.0/"
 			);
-			
+
 			if (0 == $test) {
 				$result = safe_rename(
 					"$config_vars{'snapshot_root'}/$prev_backup_level.$prev_backup_level_max",
@@ -4093,14 +4093,14 @@ sub rotate_higher_backup_level {
 sub display_cp_al {
 	my $src		= shift(@_);
 	my $dest	= shift(@_);
-	
+
 	# remove trailing slashes (for newer versions of GNU cp)
 	$src  = remove_trailing_slash($src);
 	$dest = remove_trailing_slash($dest);
-	
+
 	if (!defined($src))		{ bail('src not defined in display_cp_al()'); }
 	if (!defined($dest))	{ bail('dest not defined in display_cp_al()'); }
-	
+
 	if (defined($config_vars{'cmd_cp'})) {
 		print_cmd("$config_vars{'cmd_cp'} -al $src $dest");
 	} else {
@@ -4116,11 +4116,11 @@ sub cp_al {
 	my $src  = shift(@_);
 	my $dest = shift(@_);
 	my $result = 0;
-	
+
 	# use gnu cp if we have it
 	if (defined($config_vars{'cmd_cp'})) {
 		$result = gnu_cp_al("$src", "$dest");
-		
+
 	# fall back to the built-in native perl replacement, followed by an rsync clean-up step
 	} else {
 		# native cp -al
@@ -4128,11 +4128,11 @@ sub cp_al {
 		if (1 != $result) {
 			return ($result);
 		}
-		
+
 		# rsync clean-up
 		$result = rsync_cleanup_after_native_cp_al("$src", "$dest");
 	}
-	
+
 	return ($result);
 }
 
@@ -4167,20 +4167,20 @@ sub gnu_cp_al {
 	my $dest   = shift(@_);
 	my $result = 0;
 	my $status;
-	
+
 	# make sure we were passed two arguments
 	if (!defined($src))  { return(0); }
 	if (!defined($dest)) { return(0); }
-	
+
 	# remove trailing slashes (for newer versions of GNU cp)
 	$src  = remove_trailing_slash($src);
 	$dest = remove_trailing_slash($dest);
-	
+
 	if ( ! -d "$src" ) {
 		print_err("gnu_cp_al() needs a valid directory as an argument", 2);
 		return (0);
 	}
-	
+
 	# make the system call to GNU cp
 	$result = system( $config_vars{'cmd_cp'}, '-al', "$src", "$dest" );
 	if ($result != 0) {
@@ -4191,7 +4191,7 @@ sub gnu_cp_al {
 		}
 		return (0);
 	}
-	
+
 	return (1);
 }
 
@@ -4214,49 +4214,49 @@ sub native_cp_al {
 	my $dest   = shift(@_);
 	my $dh     = undef;
 	my $result = 0;
-	
+
 	# make sure we were passed two arguments
 	if (!defined($src))  { return(0); }
 	if (!defined($dest)) { return(0); }
-	
+
 	# make sure we have a source directory
 	if ( ! -d "$src" ) {
 		print_err("native_cp_al() needs a valid source directory as an argument", 2);
 		return (0);
 	}
-	
+
 	# strip trailing slashes off the directories,
 	# since we'll add them back on later
 	$src  = remove_trailing_slash($src);
 	$dest = remove_trailing_slash($dest);
-	
+
 	# LSTAT SRC
 	my $st = lstat("$src");
 	if (!defined($st)) {
 		print_err("Warning! Could not lstat source dir (\"$src\") : $!", 2);
 		return(0);
 	}
-	
+
 	# MKDIR DEST (AND SET MODE)
 	if ( ! -d "$dest" ) {
 		# print and/or log this if necessary
 		if (($verbose > 4) or ($loglevel > 4)) {
 			my $cmd_string = "mkdir(\"$dest\", " . get_perms($st->mode) . ")";
-		
+
 			if ($verbose > 4) {
 				print_cmd($cmd_string);
 			} elsif ($loglevel > 4) {
 				log_msg($cmd_string, 4);
 			}
 		}
-		
+
 		$result = mkdir("$dest", $st->mode);
 		if ( ! $result ) {
 			print_err("Warning! Could not mkdir(\"$dest\", $st->mode) : $!", 2);
 			return(0);
 		}
 	}
-	
+
 	# CHOWN DEST (if root)
 	if (0 == $<) {
 		# make sure destination is not a symlink
@@ -4264,14 +4264,14 @@ sub native_cp_al {
 			# print and/or log this if necessary
 			if (($verbose > 4) or ($loglevel > 4)) {
 				my $cmd_string = "safe_chown(" . $st->uid . ", " . $st->gid . ", \"$dest\")";
-			
+
 				if ($verbose > 4) {
 					print_cmd($cmd_string);
 				} elsif ($loglevel > 4) {
 					log_msg($cmd_string, 4);
 				}
 			}
-			
+
 			$result = safe_chown($st->uid, $st->gid, "$dest");
 			if (! $result) {
 				print_err("Warning! Could not safe_chown(" . $st->uid . ", " . $st->gid . ", \"$dest\");", 2);
@@ -4279,77 +4279,77 @@ sub native_cp_al {
 			}
 		}
 	}
-	
+
 	# READ DIR CONTENTS
 	$dh = new DirHandle( "$src" );
 	if (defined($dh)) {
 		my @nodes = $dh->read();
-		
+
 		# loop through all nodes in this dir
 		foreach my $node (@nodes) {
-			
+
 			# skip '.' and '..'
 			next if ($node =~ m/^\.\.?$/o);
-			
+
 			# make sure the node we just got is valid (this is highly unlikely to fail)
 			my $st = lstat("$src/$node");
 			if (!defined($st)) {
 				print_err("Warning! Could not lstat source node (\"$src/$node\") : $!", 2);
 				next;
 			}
-			
+
 			# SYMLINK (must be tested for first, because it will also pass the file and dir tests)
 			if ( -l "$src/$node" ) {
 				# print and/or log this if necessary
 				if (($verbose > 4) or ($loglevel > 4)) {
 					my $cmd_string = "copy_symlink(\"$src/$node\", \"$dest/$node\")";
-				
+
 					if ($verbose > 4) {
 						print_cmd($cmd_string);
 					} elsif ($loglevel > 4) {
 						log_msg($cmd_string, 4);
 					}
 				}
-				
+
 				$result = copy_symlink("$src/$node", "$dest/$node");
 				if (0 == $result) {
 					print_err("Warning! copy_symlink(\"$src/$node\", \"$dest/$node\")", 2);
 					next;
 				}
-				
+
 			# FILE
 			} elsif ( -f "$src/$node" ) {
 				# print and/or log this if necessary
 				if (($verbose > 4) or ($loglevel > 4)) {
 					my $cmd_string = "link(\"$src/$node\", \"$dest/$node\");";
-				
+
 					if ($verbose > 4) {
 						print_cmd($cmd_string);
 					} elsif ($loglevel > 4) {
 						log_msg($cmd_string, 4);
 					}
 				}
-				
+
 				# make a hard link
 				$result = link("$src/$node", "$dest/$node");
 				if (! $result) {
 					print_err("Warning! Could not link(\"$src/$node\", \"$dest/$node\") : $!", 2);
 					next;
 				}
-				
+
 			# DIRECTORY
 			} elsif ( -d "$src/$node" ) {
 				# print and/or log this if necessary
 				if (($verbose > 4) or ($loglevel > 4)) {
 					my $cmd_string = "native_cp_al(\"$src/$node\", \"$dest/$node\")";
-				
+
 					if ($verbose > 4) {
 						print_cmd($cmd_string);
 					} elsif ($loglevel > 4) {
 						log_msg($cmd_string, 4);
 					}
 				}
-				
+
 				# call this subroutine recursively, to create the directory
 				$result = native_cp_al("$src/$node", "$dest/$node");
 				if (! $result) {
@@ -4357,41 +4357,41 @@ sub native_cp_al {
 					next;
 				}
 			}
-			
+
 			## rsync_cleanup_after_native_cp_al() will take care of the files we can't handle here
 			#
 			## FIFO
 			#} elsif ( -p "$src/$node" ) {
 			#	# print_err("Warning! Ignoring FIFO $src/$node", 2);
-			#	
+			#
 			## SOCKET
 			#} elsif ( -S "$src/$node" ) {
 			#	# print_err("Warning! Ignoring socket: $src/$node", 2);
-			#	
+			#
 			## BLOCK DEVICE
 			#} elsif ( -b "$src/$node" ) {
 			#	# print_err("Warning! Ignoring special block file: $src/$node", 2);
-			#	
+			#
 			## CHAR DEVICE
 			#} elsif ( -c "$src/$node" ) {
 			#	# print_err("Warning! Ignoring special character file: $src/$node", 2);
 			#}
 		}
-		
+
 	} else {
 		print_err("Could not open \"$src\". Do you have adequate permissions?", 2);
 		return(0);
 	}
-	
+
 	# close open dir handle
 	if (defined($dh)) { $dh->close(); }
 	undef( $dh );
-	
+
 	# UTIME DEST
 	# print and/or log this if necessary
 	if (($verbose > 4) or ($loglevel > 4)) {
 		my $cmd_string = "utime(" . $st->atime . ", " . $st->mtime . ", \"$dest\");";
-	
+
 		if ($verbose > 4) {
 			print_cmd($cmd_string);
 		} elsif ($loglevel > 4) {
@@ -4403,7 +4403,7 @@ sub native_cp_al {
 		print_err("Warning! Could not set utime(" . $st->atime . ", " . $st->mtime . ", \"$dest\") : $!", 2);
 		return(0);
 	}
-	
+
 	return (1);
 }
 
@@ -4422,7 +4422,7 @@ sub native_cp_al {
 sub rsync_cleanup_after_native_cp_al {
 	my $src		= shift(@_);
 	my $dest	= shift(@_);
-	
+
 	my $local_rsync_short_args = '-a';
         # if the user asked for -E, we should use it here too.
         # should we check for OS X?  Dunno, but for now that extra
@@ -4436,17 +4436,17 @@ sub rsync_cleanup_after_native_cp_al {
         );
 
 	my @cmd_stack = ();
-	
+
 	# make sure we were passed two arguments
 	if (!defined($src))  { return(0); }
 	if (!defined($dest)) { return(0); }
-	
+
 	# make sure this is directory to directory
 	if (($src !~ m/\/$/o) or ($dest !~ m/\/$/o)) {
 		print_err("rsync_cleanup_after_native_cp_al() only works on directories", 2);
 		return (0);
 	}
-	
+
 	# make sure we have a source directory
 	if ( ! -d "$src" ) {
 		print_err("rsync_cleanup_after_native_cp_al() needs a valid source directory as an argument", 2);
@@ -4457,10 +4457,10 @@ sub rsync_cleanup_after_native_cp_al {
 		print_err("rsync_cleanup_after_native_cp_al() needs a valid destination directory as an argument", 2);
 		return (0);
 	}
-	
+
 	# check verbose settings and modify rsync's short args accordingly
 	if ($verbose > 3) { $local_rsync_short_args .= 'v'; }
-	
+
 	# setup rsync command
 	#
 	# rsync
@@ -4478,21 +4478,21 @@ sub rsync_cleanup_after_native_cp_al {
 	#
 	# dest
 	push(@cmd_stack, "$dest");
-	
+
 	print_cmd(@cmd_stack);
-	
+
 	if (0 == $test) {
 		my $result = system(@cmd_stack);
-		
+
 		if ($result != 0) {
 			# bitmask return value
 			my $retval = get_retval($result);
-			
+
 			# a partial list of rsync exit values
 			# 0		Success
 			# 23	Partial transfer due to error
 			# 24	Partial transfer due to vanished source files
-	
+
 			if (23 == $retval) {
 				print_warn ("Some files and/or directories in $src only transferred partially during rsync_cleanup_after_native_cp_al operation", 2);
 				syslog_warn("Some files and/or directories in $src only transferred partially during rsync_cleanup_after_native_cp_al operation");
@@ -4506,7 +4506,7 @@ sub rsync_cleanup_after_native_cp_al {
 			}
 		}
 	}
-	
+
 	return (1);
 }
 
@@ -4514,9 +4514,9 @@ sub rsync_cleanup_after_native_cp_al {
 # displays the rm command according to the config file
 sub display_rm_rf {
 	my $path = shift(@_);
-	
+
 	if (!defined($path)) { bail('display_rm_rf() requires an argument'); }
-	
+
 	if (defined($config_vars{'cmd_rm'})) {
 		print_cmd("$config_vars{'cmd_rm'} -rf $path");
 	} else {
@@ -4530,27 +4530,27 @@ sub display_rm_rf {
 sub rm_rf {
 	my $path = shift(@_);
 	my $result = 0;
-	
+
 	# make sure we were passed an argument
 	if (!defined($path)) { return(0); }
-	
+
 	# extra bonus safety feature!
 	# confirm that whatever we're deleting must be inside the snapshot_root
 	if (index($path, $config_vars{'snapshot_root'}) != 0) {
 		bail("rm_rf() tried to delete something outside of $config_vars{'snapshot_root'}! Quitting now!");
 	}
-	
+
 	# use the rm command if we have it
 	if (defined($config_vars{'cmd_rm'})) {
 		$result = cmd_rm_rf("$path");
-		
+
 	# fall back on rmtree()
 	} else {
 		# remove trailing slash just in case
 		$path =~ s/\/$//;
 		$result = rmtree("$path", 0, 0);
 	}
-	
+
 	return ($result);
 }
 
@@ -4558,22 +4558,22 @@ sub rm_rf {
 sub cmd_rm_rf {
 	my $path = shift(@_);
 	my $result = 0;
-	
+
 	# make sure we were passed an argument
 	if (!defined($path)) { return(0); }
-	
+
 	if ( ! -e "$path" ) {
 		print_err("cmd_rm_rf() needs a valid file path as an argument", 2);
 		return (0);
 	}
-	
+
 	# make the system call to /bin/rm
 	$result = system( $config_vars{'cmd_rm'}, '-rf', "$path" );
 	if ($result != 0) {
 		print_err("Warning! $config_vars{'cmd_rm'} failed.", 2);
 		return (0);
 	}
-	
+
 	return (1);
 }
 
@@ -4590,32 +4590,32 @@ sub show_disk_usage {
 	my $du_args	= $default_du_args;
 	my $dest_path = '';
 	my $retval;
-	
+
 	# first, make sure we have permission to see the snapshot root
 	if ( ! -r "$config_vars{'snapshot_root'}" ) {
 		print STDERR ("ERROR: Permission denied\n");
 		exit(1);
 	}
-	
+
 	# check for 'du' program
 	if ( defined($config_vars{'cmd_du'}) ) {
 		# it was specified in the config file, use that version
 		$cmd_du = $config_vars{'cmd_du'};
 	}
-	
+
 	# check for du args
 	if ( defined($config_vars{'du_args'}) ) {
 		# it this was specified in the config file, use that version
 		$du_args = $config_vars{'du_args'};
 	}
-	
+
 	# are we looking in subdirectories or at files?
 	if (defined($ARGV[1])) {
 		$dest_path = $ARGV[1];
-		
+
 		# consolidate multiple slashes
 		$dest_path =~ s/\/+/\//o;
-		
+
 		if (is_directory_traversal($dest_path)) {
 			print STDERR "ERROR: Directory traversal is not allowed\n";
 			exit(1);
@@ -4625,7 +4625,7 @@ sub show_disk_usage {
 			exit(1);
 		}
 	}
-	
+
 	# find the directories to look through, in order
 	# only add them to the list if we have read permissions
 	if (-r "$config_vars{'snapshot_root'}/") {
@@ -4635,12 +4635,12 @@ sub show_disk_usage {
 				push(@du_dirs, "$config_vars{'snapshot_root'}/.sync");
 			}
 		}
-		
+
 		# loop through the backup levels, most recent to oldest
 		foreach my $backup_level_ref (@backup_levels) {
 			my $backup_level         = $$backup_level_ref{'backup_level'};
 			my $max_backup_level_num = $$backup_level_ref{'number'};
-			
+
 			for (my $i=0; $i < $max_backup_level_num; $i++) {
 				if (-r "$config_vars{'snapshot_root'}/$backup_level.$i/$dest_path") {
 					push(@du_dirs, "$config_vars{'snapshot_root'}/$backup_level.$i/$dest_path");
@@ -4648,7 +4648,7 @@ sub show_disk_usage {
 			}
 		}
 	}
-	
+
 	# if we can see any of the backup levels, find out how much space they're taking up
 	# most likely we can either see all of them or none at all
 	if (scalar(@du_dirs) > 0) {
@@ -4658,7 +4658,7 @@ sub show_disk_usage {
 		if (defined($verbose) && ($verbose >= 3)) {
 			print wrap_cmd(join(' ', @cmd_stack)), "\n\n";
 		}
-		
+
 		if (0 == $test) {
 			$retval = system(@cmd_stack);
 			if (0 == $retval) {
@@ -4679,7 +4679,7 @@ sub show_disk_usage {
 		print STDERR ("No files or directories found\n");
 		exit(1);
 	}
-	
+
 	# shouldn't happen
 	exit(1);
 }
@@ -4689,33 +4689,33 @@ sub show_disk_usage {
 # NOTE: since this is a read-only operation, we're not concerned with directory traversals and relative paths
 sub show_rsnapshot_diff {
 	my $cmd_rsnapshot_diff = 'rsnapshot-diff';
-	
+
 	my $retval;
-	
+
 	# this will only hold two entries, no more no less
 	# paths_in holds the incoming arguments
 	# args will be assigned the arguments that rsnapshot-diff will use
 	#
 	my @paths_in	= ();
 	my @cmd_args	= ();
-	
+
 	# first, make sure we have permission to see the snapshot root
 	if ( ! -r "$config_vars{'snapshot_root'}" ) {
 		print STDERR ("ERROR: Permission denied\n");
 		exit(1);
 	}
-	
+
 	# check for rsnapshot-diff program (falling back on $PATH)
 	if (defined($config_vars{'cmd_rsnapshot_diff'})) {
 		$cmd_rsnapshot_diff = $config_vars{'cmd_rsnapshot_diff'};
 	}
-	
+
 	# see if we even got the right number of arguments (none is OK, but 1 isn't. 2 is also OK)
 	if (defined($ARGV[1]) && !defined($ARGV[2])) {
 		print STDERR "Usage: rsnapshot diff [backup level|dir] [backup level|dir]\n";
 		exit(1);
 	}
-	
+
 	# make this automatically pick the two lowest backup levels (or .sync dir) for comparison, as the default
 	# we actually want to specify the older directory first, since rsnapshot-diff will flip them around
 	# anyway based on mod times. doing it this way should make both programs consistent, and cause less
@@ -4727,10 +4727,10 @@ sub show_rsnapshot_diff {
 			if ( -d ("$config_vars{'snapshot_root'}/" . $backup_levels[0]->{'backup_level'} . ".0" ) ) {
 				$cmd_args[0] = "$config_vars{'snapshot_root'}/" . $backup_levels[0]->{'backup_level'} . ".0";
 			}
-			
+
 			# .sync
 			$cmd_args[1] = "$config_vars{'snapshot_root'}/.sync";
-			
+
 		# sync_first is not enabled, or .sync doesn't exist
 		} else {
 			# level.1
@@ -4742,56 +4742,56 @@ sub show_rsnapshot_diff {
 				$cmd_args[1] = "$config_vars{'snapshot_root'}/" . $backup_levels[0]->{'backup_level'} . ".0";
 			}
 		}
-			
+
 	# if we got some command line arguments, loop through twice and figure out what they mean
 	} else {
 		$paths_in[0] = $ARGV[1];	# the 1st path is the 2nd cmd line argument
 		$paths_in[1] = $ARGV[2];	# the 2nd path is the 3rd cmd line argument
-	
+
 		for (my $i=0; $i<2; $i++) {
 			# no backup level would start with ../
 			if (is_directory_traversal( "$paths_in[$i]" )) {
 				$cmd_args[$i] = $paths_in[$i];
-				
+
 			# if this directory exists locally, it must be local
 			} elsif ( -e "$paths_in[$i]" ) {
 				$cmd_args[$i] = $paths_in[$i];
-				
+
 			# absolute path
 			} elsif (is_valid_local_abs_path( "$paths_in[$i]" )) {
 				$cmd_args[$i] = $paths_in[$i];
-				
+
 			# we didn't find it locally, but it's in the snapshot root
 			} elsif ( -e "$config_vars{'snapshot_root'}/$paths_in[$i]" ) {
 				$cmd_args[$i] = "$config_vars{'snapshot_root'}/$paths_in[$i]";
 			}
 		}
 	}
-	
+
 	# double check to make sure the directories exists (and are directories)
 	if ( (!defined($cmd_args[0]) or (!defined($cmd_args[1]))) or ((! -d "$cmd_args[0]") or (! -d "$cmd_args[1]")) ) {
 		print STDERR "ERROR: Arguments must be valid backup levels or directories\n";
 		exit(1);
 	}
-	
+
 	# remove trailing slashes from directories
 	$cmd_args[0] = remove_trailing_slash($cmd_args[0]);
 	$cmd_args[1] = remove_trailing_slash($cmd_args[1]);
-	
+
 	# increase verbosity (by possibly sticking a verbose flag in as the first argument)
 	#
 	# debug
 	if ($verbose >= 5) {
 		unshift(@cmd_args, '-V');
-		
+
 	} elsif ($verbose >= 4) {
 		unshift(@cmd_args, '-v');
-		
+
 	# verbose
 	} elsif ($verbose >= 3) {
 		unshift(@cmd_args, '-vi');
 	}
-	
+
 	# run rsnapshot-diff
 	if (defined($verbose) && ($verbose >= 3)) {
 		print wrap_cmd(("$cmd_rsnapshot_diff " . join(' ', @cmd_args))), "\n\n";
@@ -4809,7 +4809,7 @@ sub show_rsnapshot_diff {
 		# test was successful
 		exit(0);
 	}
-	
+
 	# shouldn't happen
 	exit(1);
 }
@@ -4835,27 +4835,27 @@ sub sync_if_different {
 	my $src		= shift(@_);
 	my $dest	= shift(@_);
 	my $result	= 0;
-	
+
 	# make sure we were passed two arguments
 	if (!defined($src))  { return(0); }
 	if (!defined($dest)) { return(0); }
-	
+
 	# make sure we have a source directory
 	if ( ! -d "$src" ) {
 		print_err("sync_if_different() needs a valid source directory as its first argument", 2);
 		return (0);
 	}
-	
+
 	# strip trailing slashes off the directories,
 	# since we'll add them back on later
 	$src  = remove_trailing_slash($src);
 	$dest = remove_trailing_slash($dest);
-	
+
 	# copy everything from src to dest
 	# print and/or log this if necessary
 	if (($verbose > 4) or ($loglevel > 4)) {
 		my $cmd_string = "sync_cp_src_dest(\"$src\", \"$dest\")";
-	
+
 		if ($verbose > 4) {
 			print_cmd($cmd_string);
 		} elsif ($loglevel > 4) {
@@ -4867,12 +4867,12 @@ sub sync_if_different {
 		print_err("Warning! sync_cp_src_dest(\"$src\", \"$dest\")", 2);
 		return (0);
 	}
-	
+
 	# delete everything from dest that isn't in src
 	# print and/or log this if necessary
 	if (($verbose > 4) or ($loglevel > 4)) {
 		my $cmd_string = "sync_rm_dest(\"$src\", \"$dest\")";
-	
+
 		if ($verbose > 4) {
 			print_cmd($cmd_string);
 		} elsif ($loglevel > 4) {
@@ -4884,7 +4884,7 @@ sub sync_if_different {
 		print_err("Warning! sync_rm_dest(\"$src\", \"$dest\")", 2);
 		return (0);
 	}
-	
+
 	return (1);
 }
 
@@ -4898,29 +4898,29 @@ sub sync_cp_src_dest {
 	my $dh		= undef;
 	my $result	= 0;
 	my $retval	= 1;	# return code for this subroutine
-	
+
 	# make sure we were passed two arguments
 	if (!defined($src))  { return(0); }
 	if (!defined($dest)) { return(0); }
-	
+
 	# make sure we have a source directory
 	if ( ! -d "$src" ) {
 		print_err("sync_if_different() needs a valid source directory as its first argument", 2);
 		return (0);
 	}
-	
+
 	# strip trailing slashes off the directories,
 	# since we'll add them back on later
 	$src  = remove_trailing_slash($src);
 	$dest = remove_trailing_slash($dest);
-	
+
 	# LSTAT SRC
 	my $st = lstat("$src");
 	if (!defined($st)) {
 		print_err("Could not lstat(\"$src\")", 2);
 		return(0);
 	}
-	
+
 	# MKDIR DEST (AND SET MODE)
 	if ( ! -d "$dest" ) {
 		# check to make sure we don't have something here that's not a directory
@@ -4931,7 +4931,7 @@ sub sync_cp_src_dest {
 				return(0);
 			}
 		}
-		
+
 		# create the directory
 		$result = mkdir("$dest", $st->mode);
 		if ( ! $result ) {
@@ -4939,7 +4939,7 @@ sub sync_cp_src_dest {
 			return(0);
 		}
 	}
-	
+
 	# CHOWN DEST (if root)
 	if (0 == $<) {
 		# make sure destination is not a symlink (should never happen because of unlink() above)
@@ -4951,18 +4951,18 @@ sub sync_cp_src_dest {
 			}
 		}
 	}
-	
+
 	# copy anything different from src into dest
 	$dh = new DirHandle( "$src" );
 	if (defined($dh)) {
 		my @nodes = $dh->read();
-		
+
 		# loop through all nodes in this dir
 		foreach my $node (@nodes) {
-			
+
 			# skip '.' and '..'
 			next if ($node =~ m/^\.\.?$/o);
-			
+
 			# if it's a symlink, create the link
 			# this check must be done before dir and file because it will
 			# pretend to be a file or a directory as well as a symlink
@@ -4977,7 +4977,7 @@ sub sync_cp_src_dest {
 							print_err("Warning! Could not unlink(\"$dest/$node\")", 2);
 							next;
 						}
-						
+
 					# nuke the destination directory
 					} else {
 						$result = rm_rf("$dest/$node");
@@ -4987,13 +4987,13 @@ sub sync_cp_src_dest {
 						}
 					}
 				}
-				
+
 				$result = copy_symlink("$src/$node", "$dest/$node");
 				if (0 == $result) {
 					print_err("Warning! copy_symlink(\"$src/$node\", \"$dest/$node\") failed", 2);
 					return(0);
 				}
-				
+
 			# if it's a directory, recurse!
 			} elsif ( -d "$src/$node" ) {
 				# if the destination exists but isn't a directory, delete it
@@ -5007,13 +5007,13 @@ sub sync_cp_src_dest {
 						}
 					}
 				}
-				
+
 				# ok, dest is a real directory or it isn't there yet, go recurse
 				$result = sync_cp_src_dest("$src/$node", "$dest/$node");
 				if (! $result) {
 					print_err("Warning! Recursion error in sync_cp_src_dest(\"$src/$node\", \"$dest/$node\")", 2);
 				}
-				
+
 			# if it's a file...
 			} elsif ( -f "$src/$node" ) {
 				# if dest is a symlink, we need to remove it first
@@ -5024,7 +5024,7 @@ sub sync_cp_src_dest {
 						next;
 					}
 				}
-				
+
 				# if dest is a directory, we need to wipe it out first
 				if ( -d "$dest/$node" ) {
 					$result = rm_rf("$dest/$node");
@@ -5033,10 +5033,10 @@ sub sync_cp_src_dest {
 						return(0);
 					}
 				}
-				
+
 				# if dest (still) exists, check for differences
 				if ( -e "$dest/$node" ) {
-					
+
 					# if they are different, unlink dest and link src to dest
 					if (1 == file_diff("$src/$node", "$dest/$node")) {
 						$result = unlink("$dest/$node");
@@ -5049,12 +5049,12 @@ sub sync_cp_src_dest {
 							print_err("Warning! link(\"$src/$node\", \"$dest/$node\") failed", 2);
 							next;
 						}
-						
+
 					# if they are the same, just leave dest alone
 					} else {
 						next;
 					}
-					
+
 				# ok, dest doesn't exist. just link src to dest
 				} else {
 					$result = link("$src/$node", "$dest/$node");
@@ -5062,19 +5062,19 @@ sub sync_cp_src_dest {
 						print_err("Warning! link(\"$src/$node\", \"$dest/$node\") failed", 2);
 					}
 				}
-				
+
 			# FIFO
 			} elsif ( -p "$src/$node" ) {
 				print_err("Warning! Ignoring FIFO $src/$node", 2);
-				
+
 			# SOCKET
 			} elsif ( -S "$src/$node" ) {
 				print_err("Warning! Ignoring socket: $src/$node", 2);
-				
+
 			# BLOCK DEVICE
 			} elsif ( -b "$src/$node" ) {
 				print_err("Warning! Ignoring special block file: $src/$node", 2);
-				
+
 			# CHAR DEVICE
 			} elsif ( -c "$src/$node" ) {
 				print_err("Warning! Ignoring special character file: $src/$node", 2);
@@ -5084,7 +5084,7 @@ sub sync_cp_src_dest {
 	# close open dir handle
 	if (defined($dh)) { $dh->close(); }
 	undef( $dh );
-	
+
 	return (1);
 }
 
@@ -5096,39 +5096,39 @@ sub sync_rm_dest {
 	my $dest	= shift(@_);
 	my $dh		= undef;
 	my $result	= 0;
-	
+
 	# make sure we were passed two arguments
 	if (!defined($src))  { return(0); }
 	if (!defined($dest)) { return(0); }
-	
+
 	# make sure we have a source directory
 	if ( ! -d "$src" ) {
 		print_err("sync_rm_dest() needs a valid source directory as its first argument", 2);
 		return (0);
 	}
-	
+
 	# make sure we have a destination directory
 	if ( ! -d "$dest" ) {
 		print_err("sync_rm_dest() needs a valid destination directory as its second argument", 2);
 		return (0);
 	}
-	
+
 	# strip trailing slashes off the directories,
 	# since we'll add them back on later
 	$src  = remove_trailing_slash($src);
 	$dest = remove_trailing_slash($dest);
-	
+
 	# delete anything from dest that isn't found in src
 	$dh = new DirHandle( "$dest" );
 	if (defined($dh)) {
 		my @nodes = $dh->read();
-		
+
 		# loop through all nodes in this dir
 		foreach my $node (@nodes) {
-			
+
 			# skip '.' and '..'
 			next if ($node =~ m/^\.\.?$/o);
-			
+
 			# if this node isn't present in src, delete it
 			if ( ! -e "$src/$node" ) {
 				# file or symlink
@@ -5138,7 +5138,7 @@ sub sync_rm_dest {
 						print_err("Warning! Could not delete \"$dest/$node\"", 2);
 						next;
 					}
-					
+
 				# directory
 				} else {
 					$result = rm_rf("$dest/$node");
@@ -5148,11 +5148,11 @@ sub sync_rm_dest {
 				}
 				next;
 			}
-			
+
 			# ok, this also exists in src...
 			# theoretically, sync_cp_src_dest() should have caught this already, but better safe than sorry
 			# also, symlinks can pretend to be directories, so we have to check for those too
-			
+
 			# if src is a file but dest is a directory, we need to recursively remove the dest dir
 			if ((-l "$src/$node") or (! -d "$src/$node")) {
 				if (-d "$dest/$node") {
@@ -5161,7 +5161,7 @@ sub sync_rm_dest {
 						print_err("Warning! Could not delete \"$dest/$node\"", 2);
 					}
 				}
-				
+
 			# otherwise, if src is a directory, but dest is a file, remove the file in dest
 			} elsif (-d "$src/$node") {
 				if ((-l "$dest/$node") or (! -d "$dest/$node")) {
@@ -5172,7 +5172,7 @@ sub sync_rm_dest {
 					}
 				}
 			}
-			
+
 			# if it's a directory in src, let's recurse into it and compare files there
 			if ( -d "$src/$node" ) {
 				$result = sync_rm_dest("$src/$node", "$dest/$node");
@@ -5185,9 +5185,9 @@ sub sync_rm_dest {
 	# close open dir handle
 	if (defined($dh)) { $dh->close(); }
 	undef( $dh );
-	
+
 	return (1);
-	
+
 }
 
 # accepts src, dest
@@ -5198,28 +5198,28 @@ sub copy_symlink {
 	my $dest	= shift(@_);
 	my $st		= undef;
 	my $result	= undef;
-	
+
 	my $link_deref_path	= undef;
-	
+
 	# make sure it's actually a symlink
 	if ( ! -l "$src" ) {
 		print_err("Warning! \"$src\" not a symlink in copy_symlink()", 2);
 		return (0);
 	}
-	
+
 	# make sure we aren't clobbering the destination
 	if ( -e "$dest" ) {
 		print_err("Warning! \"$dest\" exists!", 2);
 		return (0);
 	}
-	
+
 	# LSTAT
 	$st = lstat("$src");
 	if (!defined($st)) {
 		print_err("Warning! lstat(\"$src\") failed", 2);
 		return (0);
 	}
-	
+
 	# CREATE THE SYMLINK
 	# This is done in two steps:
 	# Reading/dereferencing the link, and creating a new one
@@ -5232,7 +5232,7 @@ sub copy_symlink {
 	# Step 1: READ THE LINK
 	if (($verbose > 4) or ($loglevel > 4)) {
 		my $cmd_string = "readlink(\"$src\")\n";
-		
+
 		if ($verbose > 4) {
 			print_cmd($cmd_string);
 		} elsif ($loglevel > 4) {
@@ -5248,7 +5248,7 @@ sub copy_symlink {
 	# Step 2: RECREATE THE LINK
 	if (($verbose > 4) or ($loglevel > 4)) {
 		my $cmd_string = "symlink(\"$link_deref_path\", \"$dest\")\n";
-		
+
 		if ($verbose > 4) {
 			print_cmd($cmd_string);
 		} elsif ($loglevel > 4) {
@@ -5260,32 +5260,32 @@ sub copy_symlink {
 		print_err("Warning! Could not symlink(\"$link_deref_path\"), \"$dest\")", 2);
 		return (0);
 	}
-	
+
 	# CHOWN DEST (if root)
 	if (0 == $<) {
 		# make sure the symlink even exists
 		if ( -e "$dest" ) {
-			
+
 			# print and/or log this if necessary
 			if (($verbose > 4) or ($loglevel > 4)) {
 				my $cmd_string = "safe_chown(" . $st->uid . ", " . $st->gid . ", \"$dest\");";
-			
+
 				if ($verbose > 4) {
 					print_cmd($cmd_string);
 				} elsif ($loglevel > 4) {
 					log_msg($cmd_string, 4);
 				}
 			}
-			
+
 			$result = safe_chown($st->uid, $st->gid, "$dest");
-			
+
 			if (0 == $result) {
 				print_err("Warning! Could not safe_chown(" . $st->uid . ", " . $st->gid . ", \"$dest\")", 2);
 				return (0);
 			}
 		}
 	}
-	
+
 	return (1);
 }
 
@@ -5294,13 +5294,13 @@ sub copy_symlink {
 # do the appropriate bit shifting to get a "normal" UNIX file permission mode
 sub get_perms {
 	my $raw_mode = shift(@_);
-	
+
 	if (!defined($raw_mode)) { return (undef); }
-	
+
 	# a lot of voodoo for just one line
 	# http://www.perlmonks.org/index.pl?node_id=159906
 	my $mode = sprintf("%04o", ($raw_mode & 07777));
-	
+
 	return ($mode);
 }
 
@@ -5308,14 +5308,14 @@ sub get_perms {
 # bitmasks it, and returns the same thing "echo $?" would from the shell
 sub get_retval {
 	my $retval = shift(@_);
-	
+
 	if (!defined($retval)) {
 		bail('get_retval() was not passed a value');
 	}
 	if ($retval !~ m/^\d+$/) {
 		bail("get_retval() was passed $retval, a number is required");
 	}
-	
+
 	return ($retval / 256);
 }
 
@@ -5330,32 +5330,32 @@ sub file_diff   {
 	my $buf1	= undef;
 	my $buf2	= undef;
 	my $result	= undef;
-	
+
 	# number of bytes to read at once
 	my $BUFSIZE = 16384;
-	
+
 	# boolean file comparison flag. assume they're the same.
 	my $is_different = 0;
-	
+
 	if (! -r "$file1")	{ return (undef); }
 	if (! -r "$file2")	{ return (undef); }
-	
+
 	# CHECK FILE SIZES FIRST
 	$st1 = lstat("$file1");
 	$st2 = lstat("$file2");
-	
+
 	if (!defined($st1))	{ return (undef); }
 	if (!defined($st2))	{ return (undef); }
-	
+
 	# if the files aren't even the same size, they can't possibly be the same.
 	# don't waste time comparing them more intensively
 	if ($st1->size != $st2->size) {
 		return (1);
 	}
-	
+
 	# ok, we're still here.
 	# that means we have to compare files one chunk at a time
-	
+
 	# open both files
 	$result = open(FILE1, "$file1");
 	if (!defined($result)) {
@@ -5366,7 +5366,7 @@ sub file_diff   {
 		close(FILE1);
 		return (undef);
 	}
-	
+
 	# compare files
 	while (read(FILE1, $buf1, $BUFSIZE) && read(FILE2, $buf2, $BUFSIZE)) {
 		# exit this loop as soon as possible
@@ -5375,7 +5375,7 @@ sub file_diff   {
 			last;
 		}
 	}
-	
+
 	# close both files
 	$result = close(FILE2);
 	if (!defined($result)) {
@@ -5386,7 +5386,7 @@ sub file_diff   {
 	if (!defined($result)) {
 		return (undef);
 	}
-	
+
 	# return our findings
 	return ($is_different);
 }
@@ -5397,11 +5397,11 @@ sub file_diff   {
 sub safe_rename {
 	my $src		= shift(@_);
 	my $dest	= shift(@_);
-	
+
 	my $st;
 	my $retval;
 	my $result;
-	
+
 	# validate src and dest paths
 	if (!defined($src)) {
 		print_err("safe_rename() needs a valid source file path as an argument", 2);
@@ -5411,28 +5411,28 @@ sub safe_rename {
 		print_err("safe_rename() needs a valid destination file path as an argument", 2);
 		return (0);
 	}
-	
+
 	# stat file before rename
 	$st = stat($src);
 	if (!defined($st)) {
 		print_err("Could not stat() \"$src\"", 2);
 		return (0);
 	}
-	
+
 	# rename the file
 	$retval = rename( "$src", "$dest" );
 	if (1 != $retval) {
 		print_err("Could not rename(\"$src\", \"$dest\")", 2);
 		return (0);
 	}
-	
+
 	# give it back the old mtime and atime values
 	$result = utime( $st->atime, $st->mtime, "$dest" );
 	if (!defined($result)) {
 		print_err("Could not utime( $st->atime, $st->mtime, \"$dest\")", 2);
 		return (0);
 	}
-	
+
 	# if we made it this far, it must have worked
 	return (1);
 }
@@ -5444,12 +5444,12 @@ sub safe_rename {
 # this feature is "undocumented", for use with scripts, etc
 sub check_config_version {
 	my $version = get_config_version();
-	
+
 	if (!defined($version)) {
 		print "error\n";
 		exit(1);
 	}
-	
+
 	print $version, "\n";
 	exit(0);
 }
@@ -5460,7 +5460,7 @@ sub check_config_version {
 sub get_config_version {
 	my $result;
 	my $version;
-	
+
 	# make sure the config file exists and we can read it
 	if (!defined($config_file)) {
 		return (undef);
@@ -5468,18 +5468,18 @@ sub get_config_version {
 	if (! -r "$config_file") {
 		return (undef);
 	}
-	
+
 	# open the config file
 	$result = open(CONFIG, "$config_file");
 	if (!defined($result)) {
 		return (undef);
 	}
-	
+
 	# scan the config file looking for the config_version parameter
 	# if we find it, exit the loop
 	while (my $line = <CONFIG>) {
 		chomp($line);
-		
+
 		if ($line =~ m/^config_version/o) {
 			if ($line =~ m/^config_version\t+([\d\.\-\w]+)$/o) {
 				$version = $1;
@@ -5489,16 +5489,16 @@ sub get_config_version {
 			}
 		}
 	}
-	
+
 	$result = close(CONFIG);
 	if (!defined($result)) {
 		return (undef);
 	}
-	
+
 	if (!defined($version)) {
 		$version = 'unknown';
 	}
-	
+
 	return ($version);
 }
 
@@ -5509,10 +5509,10 @@ sub upgrade_config_file {
 	my $result;
 	my @lines;
 	my $config_version;
-	
+
 	# check if rsync_long_args is already enabled
 	my $rsync_long_args_enabled	= 0;
-	
+
 	# first, see if the file isn't already up to date
 	$config_version = get_config_version();
 	if (!defined($config_version)) {
@@ -5523,17 +5523,17 @@ sub upgrade_config_file {
 	if ('1.2' eq $config_version) {
 		print "$config_file file is already up to date.\n";
 		exit(0);
-		
+
 	# config_version is set, but not to anything we know about
 	} elsif ('unknown' eq $config_version) {
 		# this is good, it means the config_version was not already set to anything
 		# and is a good candidate for the upgrade
-		
+
 	} else {
 		print STDERR "ERROR: config_version is set to unknown version: $config_version.\n";
 		exit(1);
 	}
-	
+
 	# make sure config file is present and readable
 	if (!defined($config_file)) {
 		print STDERR "ERROR: Config file not defined.\n";
@@ -5543,7 +5543,7 @@ sub upgrade_config_file {
 		print STDERR "ERROR: $config_file not readable.\n";
 		exit(1);
 	}
-	
+
 	# read in original config file
 	$result = open(CONFIG, "$config_file");
 	if (!defined($result)) {
@@ -5556,30 +5556,30 @@ sub upgrade_config_file {
 		print STDERR "ERROR: Could not close $config_file after reading.\n";
 		exit(1);
 	}
-	
+
 	# see if we can find rsync_long_args, either commented out or uncommented
 	foreach my $line (@lines) {
 		if ($line =~ m/^rsync_long_args/o) {
 			$rsync_long_args_enabled = 1;
 		}
 	}
-	
+
 	# back up old config file
 	backup_config_file(\@lines);
-	
+
 	# found rsync_long_args enabled
 	if ($rsync_long_args_enabled) {
 		print "Found \"rsync_long_args\" uncommented. Attempting upgrade...\n";
 		write_upgraded_config_file(\@lines, 0);
-		
+
 	# did not find rsync_long_args enabled
 	} else {
 		print "Could not find old \"rsync_long_args\" parameter. Attempting upgrade...\n";
 		write_upgraded_config_file(\@lines, 1);
 	}
-	
+
 	print "\"$config_file\" was successfully upgraded.\n";
-	
+
 	exit(0);
 }
 
@@ -5588,25 +5588,25 @@ sub upgrade_config_file {
 # attempts to backup rsnapshot.conf to rsnapshot.conf.backup.(#)
 sub backup_config_file {
 	my $lines_ref = shift(@_);
-	
+
 	my $result;
 	my $backup_config_file;
 	my $backup_exists = 0;
-	
+
 	if (!defined($lines_ref)) {
 		print STDERR "ERROR: backup_config_file() was not passed an argument.\n";
 		exit(1);
 	}
-	
+
 	if (!defined($config_file)) {
 		print STDERR "ERROR: Could not find config file.\n";
 		exit(1);
 	}
-	
+
 	$backup_config_file = "$config_file.backup";
-	
+
 	print "Backing up \"$config_file\".\n";
-	
+
 	# pick a unique name for the backup file
 	if ( -e "$backup_config_file" ) {
 		$backup_exists = 1;
@@ -5617,7 +5617,7 @@ sub backup_config_file {
 				last;
 			}
 		}
-		
+
 		# if we couldn't write a backup file, exit with an error
 		if (1 == $backup_exists) {
 			print STDERR "ERROR: Refusing to overwrite $backup_config_file.\n";
@@ -5626,7 +5626,7 @@ sub backup_config_file {
 			exit(1);
 		}
 	}
-	
+
 	$result = open(OUTFILE, "> $backup_config_file");
 	if (!defined($result) or ($result != 1)) {
 	    print STDERR "Error opening $backup_config_file for writing.\n";
@@ -5642,7 +5642,7 @@ sub backup_config_file {
 	    print STDERR "$config_file has NOT been upgraded!\n";
 	    exit(1);
 	}
-	
+
 	print "Config file was backed up to \"$backup_config_file\".\n";
 }
 
@@ -5652,11 +5652,11 @@ sub backup_config_file {
 sub write_upgraded_config_file {
 	my $lines_ref			= shift(@_);
 	my $add_rsync_long_args	= shift(@_);
-	
+
 	my $result;
-	
+
 	my $upgrade_notice = '';
-	
+
 	$upgrade_notice .= "#-----------------------------------------------------------------------------\n";
 	$upgrade_notice .= "# UPGRADE NOTICE:\n";
 	$upgrade_notice .= "#\n";
@@ -5668,7 +5668,7 @@ sub write_upgraded_config_file {
 	$upgrade_notice .= "# By explicitly setting it to the old default values, rsnapshot will still\n";
 	$upgrade_notice .= "# behave like it did in previous versions.\n";
 	$upgrade_notice .= "#\n";
-	
+
 	if (defined($add_rsync_long_args) && (1 == $add_rsync_long_args)) {
 		$upgrade_notice .= "# In this file, \"rsync_long_args\" was not enabled before the upgrade,\n";
 		$upgrade_notice .= "# so it has been set to the old default value.\n";
@@ -5676,7 +5676,7 @@ sub write_upgraded_config_file {
 		$upgrade_notice .= "# In this file, \"rsync_long_args\" was already enabled before the upgrade,\n";
 		$upgrade_notice .= "# so it was not changed.\n";
 	}
-	
+
 	$upgrade_notice .= "#\n";
 	$upgrade_notice .= "# New features and improvements have been added to rsnapshot that can\n";
 	$upgrade_notice .= "# only be fully utilized by making some additional changes to\n";
@@ -5684,7 +5684,7 @@ sub write_upgraded_config_file {
 	$upgrade_notice .= "# most out of rsnapshot, please read the INSTALL file that came with this\n";
 	$upgrade_notice .= "# program for more information.\n";
 	$upgrade_notice .= "#-----------------------------------------------------------------------------\n";
-	
+
 	if (!defined($config_file)) {
 		print STDERR "ERROR: Config file not found.\n";
 		exit(1);
@@ -5693,27 +5693,27 @@ sub write_upgraded_config_file {
 		print STDERR "ERROR: \"$config_file\" is not writable.\n";
 		exit(1);
 	}
-	
+
 	$result = open(CONFIG, "> $config_file");
 	if (!defined($result)) {
 		print "ERROR: Could not open \"$config_file\" for writing.\n";
 		exit(1);
 	}
-	
+
 	print CONFIG $upgrade_notice;
 	print CONFIG "\n";
 	print CONFIG "config_version\t1.2\n";
 	print CONFIG "\n";
-	
+
 	if (defined($add_rsync_long_args) && (1 == $add_rsync_long_args)) {
 		print CONFIG "rsync_long_args\t--delete --numeric-ids\n";
 		print CONFIG "\n";
 	}
-	
+
 	foreach my $line (@$lines_ref) {
 		print CONFIG "$line";
 	}
-	
+
 	$result = close(CONFIG);
 	if (!defined($result)) {
 		print STDERR "ERROR: Could not close \"$config_file\" after writing\n.";
@@ -5733,34 +5733,34 @@ sub use_lchown {
 	};
 	if ($@) {
 		$have_lchown = 0;
-		
+
 		if ($verbose >= 5) {
 			print_msg('Lchown module not found', 5);
 		}
-		
+
 		return(0);
 	}
-	
+
 	# if it loaded, see if this OS supports the lchown() system call
 	{
 		no strict 'subs';
 		if (defined(Lchown) && defined(Lchown::LCHOWN_AVAILABLE)) {
 			if (1 == Lchown::LCHOWN_AVAILABLE()) {
 				$have_lchown = 1;
-				
+
 				if ($verbose >= 5) {
 					print_msg('Lchown module loaded successfully', 5);
 				}
-				
+
 				return(1);
 			}
 		}
 	}
-	
+
 	if ($verbose >= 5) {
 		print_msg("Lchown module loaded, but operating system doesn't support lchown()", 5);
 	}
-	
+
 	return(0);
 }
 
@@ -5772,9 +5772,9 @@ sub safe_chown {
 	my $uid			= shift(@_);
 	my $gid			= shift(@_);
 	my $filepath	= shift(@_);
-	
+
 	my $result = undef;
-	
+
 	if (!defined($uid) or !defined($gid) or !defined($filepath)) {
 		print_err("safe_chown() needs uid, gid, and filepath", 2);
 		return(0);
@@ -5783,7 +5783,7 @@ sub safe_chown {
 		print_err("safe_chown() needs a valid filepath (not \"$filepath\")", 2);
 		return(0);
 	}
-	
+
 	# if it's a symlink, use lchown() or skip it
 	if (-l "$filepath") {
 		# use Lchown
@@ -5792,21 +5792,21 @@ sub safe_chown {
 			if (!defined($result)) {
 				return (0);
 			}
-			
+
 		# we can't safely do anything here, skip it
 		} else {
 			raise_warning();
-			
+
 			if ($verbose > 2) {
 				print_warn("Could not lchown() symlink \"$filepath\"", 2);
 			} elsif ($loglevel > 2) {
 				log_warn("Could not lchown() symlink \"$filepath\"", 2);
 			}
-			
+
 			# we'll still return 1 at the bottom, because we did as well as we could
 			# the warning raised will tell the user what happened
 		}
-		
+
 	# if it's not a symlink, use chown()
 	} else {
 		$result = chown($uid, $gid, "$filepath");
@@ -5814,7 +5814,7 @@ sub safe_chown {
 			return (0);
 		}
 	}
-	
+
 	return (1);
 }
 

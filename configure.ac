@@ -279,7 +279,7 @@ RSNAPSHOT_SYSCONFDIR=`eval echo ${sysconfdir}`
 
 if test -e "$RSNAPSHOT_SYSCONFDIR/rsnapshot.conf"; then
 	RSNAPSHOT_OLD_VERSION=`$PERL rsnapshot-program.pl -c $RSNAPSHOT_SYSCONFDIR/rsnapshot.conf check-config-version`
-	
+
 	# figure out if this is a fresh install or an upgrade
 	# advise the user accordingly
 	if test "$RSNAPSHOT_OLD_VERSION" = "unknown"; then
@@ -305,7 +305,7 @@ if test -e "$RSNAPSHOT_SYSCONFDIR/rsnapshot.conf"; then
 		echo "+----------------------------------------------------------------------------+"
 		exit 0
 	fi
-	
+
 	# this is already the latest version.
 	if test "$RSNAPSHOT_OLD_VERSION" = "1.2"; then
 		echo "$RSNAPSHOT_SYSCONFDIR/rsnapshot.conf found, and is up to date."

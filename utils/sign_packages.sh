@@ -17,13 +17,13 @@ for file in `/bin/ls *.tar.gz *.deb *.rpm | grep -v latest`; do
 		md5sum $file > $file.md5;
 		echo "Created MD5 Hash for $file";
 	fi
-	
+
 	# SHA1
 	if [ ! -e "$file.sha1" ]; then
 		sha1sum $file > $file.sha1;
 		echo "Created SHA1 hash for $file";
 	fi
-	
+
 	# PGP
 	if [ ! -e "$file.asc" ]; then
 		gpg --armor --detach-sign $file;

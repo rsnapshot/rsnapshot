@@ -115,7 +115,7 @@ fi
 if [ x"$dir_arg" != x ]; then
 	dst=$src
 	src=""
-	
+
 	if [ -d $dst ]; then
 		instcmd=:
 		chmodcmd=""
@@ -135,7 +135,7 @@ else
 		echo "install:  $src does not exist"
 		exit 1
 	fi
-	
+
 	if [ x"$dst" = x ]
 	then
 		echo "install:	no destination specified"

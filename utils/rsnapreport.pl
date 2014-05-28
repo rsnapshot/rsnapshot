@@ -62,7 +62,7 @@ sub nextLine($){
 	push(@$lines,$line);
 	return shift @$lines;
 }
-	
+
 
 my @rsnapout = ();
 

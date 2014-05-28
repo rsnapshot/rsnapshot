@@ -45,22 +45,22 @@ A- What to use:
      +++++
      Alternatives:
      Use VPN between source and destination.
-     
+
      Use SSH tunnel(s) to the internal source(s).
        Incorporate into each backup entry.
        Open and close tunnels with preexec and postexec.
-     
+
      Use firewall port forward rule(s) to the internal source(s).
-     
+
 
    - cwRsync Server:
      Under Method #2 the cwRsync server is not used.
-     
+
 
    - Windows file permissions:
      Rsync (Rsnapshot) does not preserve Windows files permissions.
      So use an appropriate method to restore files - see last section.
-   
+
      Rsync runs on the WinXP box as SvcwRsync 1007:513.
      When files are copied from an Rsync module the files at the destination
      are owned by 1007:513 with mode of 755 for directories and 644 for files.
@@ -68,7 +68,7 @@ A- What to use:
      The files on the WinXP box are seen by SSH as: rwx------+ ???????? ????????
      When files are copied via Rsync over SSH the files at the destination
      are owned by root:root with mode of 700 for directories and 700 for files.
-       
+
 
    - Rsnapshot relative parameter:
      backup  administrator@apost1.mycompany.com:/cygdrive/c/\
@@ -253,7 +253,7 @@ E- Restoring Files:
 1- Method #1 - From the backup server by the administrator:
     Mount the client WinXP box:
     # smbmunt //apost1/C$ /mnt -o username=administrator/MYCOMPANY
-   
+
     Copy needed files from the backup server to the mounted computer:
     # cp "/home/workstations/daily.1/apost1/My Documents/Some File" \
          "/mnt/C/Documents and Settings/apost/My Documents/
@@ -274,7 +274,7 @@ E- Restoring Files:
     Here is one possible approach under which the user would have
     read only access to the workstation backup intervals via a
     Samba file share at //backup1/user.
-        
+
     a- Install Samba.
        Join backup1 to the domain for centralized user accounts management.
        Or create a local unix and samba accounts for each user.
@@ -284,11 +284,11 @@ E- Restoring Files:
        comment = Home Directories
        browseable = no
        writable = no
-   
+
     c- Create home directories as needed:
        Example:
        # mkdir /home/apost
-    
+
     d- Create symbolic links to the appropriate backup interval directories:
        Example:
        # ln -s /home/workstations/daily.0/apost /home/apost/daily.O
@@ -306,7 +306,7 @@ E- Restoring Files:
     e- If rsync via ssh is used add a cmd_postexec script to the /etc/rsnapshot
        config to set file modes so that file acls do not block the user from
        reading the needed files.
-       
+
        script:
        find /home/workstations/daily.0 -type d -exec chmod 777 {} \;
        find /home/workstations/daily.0 -type f -exec chmod 666 {} \;
