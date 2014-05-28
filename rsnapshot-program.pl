@@ -37,14 +37,14 @@
 
 require 5.004;
 use strict;
-use DirHandle;			# DirHandle()
-use Cwd;				# cwd()
-use Getopt::Std;		# getopts()
-use File::Path;			# mkpath(), rmtree()
-use File::stat;			# stat(), lstat()
-use POSIX qw(locale_h);	# setlocale()
-use Fcntl;				# sysopen()
-use IO::File;			# recursive open in parse_config_file
+use DirHandle;          # DirHandle()
+use Cwd;                # cwd()
+use Getopt::Std;        # getopts()
+use File::Path;         # mkpath(), rmtree()
+use File::stat;         # stat(), lstat()
+use POSIX qw(locale_h); # setlocale()
+use Fcntl;              # sysopen()
+use IO::File;           # recursive open in parse_config_file
 
 ########################################
 ###           CPAN MODULES           ###
@@ -160,20 +160,20 @@ $config_vars{'stop_on_stale_lockfile'} = 0; # stop if there is a stale lockfile
 # please note that direct rsync output does not get written to the log file, only to STDOUT
 # this is because we're not intercepting STDOUT while rsync runs
 #
-#	0	Absolutely quiet (reserved, but not implemented)
-#	1	Don't display warnings about FIFOs and special files
-#	2	Default (errors only)
-#	3	Verbose (show shell commands and equivalents)
-#	4	Extra verbose messages (individual actions inside some subroutines, output from rsync)
-#	5	Debug
+#  0   Absolutely quiet (reserved, but not implemented)
+#  1   Don't display warnings about FIFOs and special files
+#  2   Default (errors only)
+#  3   Verbose (show shell commands and equivalents)
+#  4   Extra verbose messages (individual actions inside some subroutines, output from rsync)
+#  5   Debug
 #
 # define verbose and loglevel
-my $verbose		= undef;
-my $loglevel	= undef;
+my $verbose  = undef;
+my $loglevel = undef;
 
 # set defaults for verbose and loglevel
-my $default_verbose		= 2;
-my $default_loglevel	= 3;
+my $default_verbose  = 2;
+my $default_loglevel = 3;
 
 # assume the config file is valid until we find an error
 my $config_perfect = 1;
@@ -182,13 +182,13 @@ my $config_perfect = 1;
 my $exit_code = 0;
 
 # global defaults for external programs
-my $default_rsync_short_args	= '-a';
-my $default_rsync_long_args		= '--delete --numeric-ids --relative --delete-excluded';
-my $default_ssh_args			= undef;
-my $default_du_args				= '-csh';
+my $default_rsync_short_args = '-a';
+my $default_rsync_long_args  = '--delete --numeric-ids --relative --delete-excluded';
+my $default_ssh_args         = undef;
+my $default_du_args          = '-csh';
 
 # set default for use_lazy_deletes
-$config_vars{'use_lazy_deletes'} = 0;	# do not delete the oldest archive until after backup
+$config_vars{'use_lazy_deletes'} = 0; # do not delete the oldest archive until after backup
 
 # set default for number of tries
 my $rsync_numtries = 1; # by default, try once
@@ -202,21 +202,21 @@ my $have_printed_run_string = 0;
 	
 # pre-buffer the include/exclude parameter flags
 # local to parse_config_file and validate_config_file
-my $rsync_include_args		= undef;
-my $rsync_include_file_args	= undef;
+my $rsync_include_args      = undef;
+my $rsync_include_file_args = undef;
 
 ########################################
 ###         SIGNAL HANDLERS          ###
 ########################################
 
 # shut down gracefully if necessary
-$SIG{'HUP'}		= 'IGNORE';
-$SIG{'INT'}		= sub { bail('rsnapshot was sent INT signal... cleaning up');  };
-$SIG{'QUIT'}	= sub { bail('rsnapshot was sent QUIT signal... cleaning up'); };
-$SIG{'ABRT'}	= sub { bail('rsnapshot was sent ABRT signal... cleaning up'); };
-$SIG{'TERM'}	= sub { bail('rsnapshot was sent TERM signal... cleaning up'); };
+$SIG{'HUP'}  = 'IGNORE';
+$SIG{'INT'}  = sub { bail('rsnapshot was sent INT signal... cleaning up');  };
+$SIG{'QUIT'} = sub { bail('rsnapshot was sent QUIT signal... cleaning up'); };
+$SIG{'ABRT'} = sub { bail('rsnapshot was sent ABRT signal... cleaning up'); };
+$SIG{'TERM'} = sub { bail('rsnapshot was sent TERM signal... cleaning up'); };
 # For a PIPE error, we dont want any more output so set $verbose less than 1.
-$SIG{'PIPE'}	= sub { $verbose = 0; bail('rsnapshot was sent PIPE signal... Hint: if rsnapshot is running from cron, check that mail is installed on this system, or redirect stdout and stderr in cron job'); };
+$SIG{'PIPE'} = sub { $verbose = 0; bail('rsnapshot was sent PIPE signal... Hint: if rsnapshot is running from cron, check that mail is installed on this system, or redirect stdout and stderr in cron job'); };
 
 ########################################
 ###      CORE PROGRAM STRUCTURE      ###
@@ -6192,7 +6192,7 @@ features.
 
 B<lockfile    /var/run/rsnapshot.pid>
 
-B<stop_on_stale_lockfile	0>
+B<stop_on_stale_lockfile    0>
 
 =over 4
 
@@ -6260,7 +6260,7 @@ Name to be used when creating the LVM logical volume snapshot(s) (lvcreate --nam
 
 =back
 
-B<linux_lvm_vgpath		/dev>
+B<linux_lvm_vgpath        /dev>
 
 =over 4
 
@@ -6268,7 +6268,7 @@ Path to the LVM Volume Groups.
 
 =back
 
-B<linux_lvm_mountpath		/mnt/lvm-snapshot>
+B<linux_lvm_mountpath     /mnt/lvm-snapshot>
 
 =over 4
 
@@ -6399,7 +6399,7 @@ So in this example, say the backup_database.sh script simply runs a command like
 
 mysqldump -uusername mydatabase > mydatabase.sql
 
-chmod u=r,go= mydatabase.sql	# r-------- (0400)
+chmod u=r,go= mydatabase.sql    # r-------- (0400)
 
 =back
 
@@ -6450,7 +6450,7 @@ Putting it all together (an example file):
     retain              alpha  6
     retain              beta   7
     retain              gamma  7
-    retain              delta 3
+    retain              delta  3
 
     backup              /etc/                     localhost/
     backup              /home/                    localhost/

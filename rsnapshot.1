@@ -492,7 +492,7 @@ features.
 .Sp
 \&\fBlockfile    /var/run/rsnapshot.pid\fR
 .Sp
-\&\fBstop_on_stale_lockfile	0\fR
+\&\fBstop_on_stale_lockfile    0\fR
 .Sp
 .RS 4
 Lockfile to use when rsnapshot is run. This prevents a second invocation
@@ -560,7 +560,7 @@ Name to be used when creating the \s-1LVM\s0 logical volume snapshot(s) (lvcreat
 .RE
 .RS 4
 .Sp
-\&\fBlinux_lvm_vgpath		/dev\fR
+\&\fBlinux_lvm_vgpath        /dev\fR
 .Sp
 .RS 4
 Path to the \s-1LVM\s0 Volume Groups.
@@ -568,7 +568,7 @@ Path to the \s-1LVM\s0 Volume Groups.
 .RE
 .RS 4
 .Sp
-\&\fBlinux_lvm_mountpath		/mnt/lvm\-snapshot\fR
+\&\fBlinux_lvm_mountpath     /mnt/lvm\-snapshot\fR
 .Sp
 .RS 4
 Mount point to use to temporarily mount the snapshot(s).
@@ -695,7 +695,7 @@ So in this example, say the backup_database.sh script simply runs a command like
 .Sp
 mysqldump \-uusername mydatabase > mydatabase.sql
 .Sp
-chmod u=r,go= mydatabase.sql	# r\-\-\-\-\-\-\-\- (0400)
+chmod u=r,go= mydatabase.sql    # r\-\-\-\-\-\-\-\- (0400)
 .RE
 .RE
 .RS 4
@@ -748,7 +748,7 @@ Putting it all together (an example file):
 \&    retain              alpha  6
 \&    retain              beta   7
 \&    retain              gamma  7
-\&    retain              delta 3
+\&    retain              delta  3
 \&
 \&    backup              /etc/                     localhost/
 \&    backup              /home/                    localhost/
