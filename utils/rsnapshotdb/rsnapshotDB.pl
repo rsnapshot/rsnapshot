@@ -148,11 +148,11 @@ sub read_dbpasswd
 	if ($xmlUsage)
 	{
 		my $xobj = rsnapshotDB->new( {
-				'dbpasswd' 	=> $dbpasswd,
-				'xsd'		=> $xsd,
-				'dbApp' 	=> $dbApp,
-				'tmpDir'	=> $tmpDir,
-				'verbose'	=> $verbose,
+				'dbpasswd' => $dbpasswd,
+				'xsd'      => $xsd,
+				'dbApp'    => $dbApp,
+				'tmpDir'   => $tmpDir,
+				'verbose'  => $verbose,
 			} );
 
 		my $validity = $xobj->validateXML; #boolean test
