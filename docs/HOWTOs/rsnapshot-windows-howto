@@ -39,36 +39,36 @@ A- What to use:
    Notes:
 
    - Routing:
-     Routing over a WAN (internet) will work only if only if DNS and routers 
-     (firewalls) are configured such that the destination (pc1.mycompany.com) 
+     Routing over a WAN (internet) will work only if only if DNS and routers
+     (firewalls) are configured such that the destination (pc1.mycompany.com)
      can be reached reachable.
      +++++
      Alternatives:
-     Use VPN between source and destination.          
-     
+     Use VPN between source and destination.
+
      Use SSH tunnel(s) to the internal source(s).
        Incorporate into each backup entry.
-       Open and close tunnels with preexec and postexec.       
-     
+       Open and close tunnels with preexec and postexec.
+
      Use firewall port forward rule(s) to the internal source(s).
-     
+
 
    - cwRsync Server:
      Under Method #2 the cwRsync server is not used.
-     
+
 
    - Windows file permissions:
      Rsync (Rsnapshot) does not preserve Windows files permissions.
      So use an appropriate method to restore files - see last section.
-   
+
      Rsync runs on the WinXP box as SvcwRsync 1007:513.
-     When files are copied from an Rsync module the files at the destination 
+     When files are copied from an Rsync module the files at the destination
      are owned by 1007:513 with mode of 755 for directories and 644 for files.
 
      The files on the WinXP box are seen by SSH as: rwx------+ ???????? ????????
-     When files are copied via Rsync over SSH the files at the destination 
-     are owned by root:root with mode of 700 for directories and 700 for files.   
-       
+     When files are copied via Rsync over SSH the files at the destination
+     are owned by root:root with mode of 700 for directories and 700 for files.
+
 
    - Rsnapshot relative parameter:
      backup  administrator@apost1.mycompany.com:/cygdrive/c/\
@@ -253,7 +253,7 @@ E- Restoring Files:
 1- Method #1 - From the backup server by the administrator:
     Mount the client WinXP box:
     # smbmunt //apost1/C$ /mnt -o username=administrator/MYCOMPANY
-   
+
     Copy needed files from the backup server to the mounted computer:
     # cp "/home/workstations/daily.1/apost1/My Documents/Some File" \
          "/mnt/C/Documents and Settings/apost/My Documents/
@@ -272,9 +272,9 @@ E- Restoring Files:
 
 4- Method #4 - From source computer via Samba by the user:
     Here is one possible approach under which the user would have
-    read only access to the workstation backup intervals via a 
+    read only access to the workstation backup intervals via a
     Samba file share at //backup1/user.
-        
+
     a- Install Samba.
        Join backup1 to the domain for centralized user accounts management.
        Or create a local unix and samba accounts for each user.
@@ -284,12 +284,12 @@ E- Restoring Files:
        comment = Home Directories
        browseable = no
        writable = no
-   
+
     c- Create home directories as needed:
        Example:
        # mkdir /home/apost
-    
-    d- Create symbolic links to the appropriate backup interval directories:    
+
+    d- Create symbolic links to the appropriate backup interval directories:
        Example:
        # ln -s /home/workstations/daily.0/apost /home/apost/daily.O
        # ln -s /home/workstations/daily.1/apost /home/apost/daily.1
@@ -300,13 +300,13 @@ E- Restoring Files:
        # ln -s /home/workstations/daily.6/apost /home/apost/daily.6
        # ln -s /home/workstations/weekly.0/apost /home/apost/weekly.O
        # ln -s /home/workstations/weekly.1/apost /home/apost/weekly.1
-       # ln -s /home/workstations/weekly.2/apost /home/apost/weekly.2    
+       # ln -s /home/workstations/weekly.2/apost /home/apost/weekly.2
        # ln -s /home/workstations/weekly.3/apost /home/apost/weekly.3
 
-    e- If rsync via ssh is used add a cmd_postexec script to the /etc/rsnapshot 
+    e- If rsync via ssh is used add a cmd_postexec script to the /etc/rsnapshot
        config to set file modes so that file acls do not block the user from
        reading the needed files.
-       
-       script:    
+
+       script:
        find /home/workstations/daily.0 -type d -exec chmod 777 {} \;
        find /home/workstations/daily.0 -type f -exec chmod 666 {} \;

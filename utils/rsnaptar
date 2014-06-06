@@ -51,17 +51,17 @@ fi
 ${MKDIR} -p ${TAR_DIR}/${DATE}/
 cd ${SNAPSHOT_DIR}
 for BACKUP_POINT in `${LS} ${SNAPSHOT_DIR}`; do
-	
+
 	# GPG encrypt backups if $GPG is defined
 	if test ${GPG}; then
 		${TAR} --numeric-owner -cf - ${BACKUP_POINT}/ | \
 			$GPG --encrypt -r $TO_EMAIL > ${TAR_DIR}/${DATE}/${BACKUP_POINT}.tar.gpg
-		
+
 	# just create regular tar files
 	else
 		${TAR} -czf ${TAR_DIR}/${DATE}/${BACKUP_POINT}.tar.gz ${BACKUP_POINT}/
 	fi
-	
+
 done
 cd -
 

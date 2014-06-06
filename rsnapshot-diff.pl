@@ -189,7 +189,7 @@ sub compare_dirs {
         my %changed = map { ($_, 1) } @changed, @added, @deleted;
         print "0 $new/$_\n" foreach(grep { !-d "$new/$_" && !exists($changed{$_}) } keys %new);
     }
-    
+
     foreach (grep { !-l $new.'/'.$_ && !-l $old.'/'.$_ && -d $new.'/'.$_ && -d $old.'/'.$_ } keys %new) {
         print "Comparing subdirs $new/$_ and $old/$_ ...\n" if(DEBUG);
         compare_dirs($old.'/'.$_, $new.'/'.$_);

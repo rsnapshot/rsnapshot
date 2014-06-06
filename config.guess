@@ -210,7 +210,7 @@ case "${UNAME_MACHINE}:${UNAME_SYSTEM}:${UNAME_RELEASE}:${UNAME_VERSION}" in
 	echo m68k-unknown-openbsd${UNAME_RELEASE}
 	exit 0 ;;
     luna88k:OpenBSD:*:*)
-    	echo m88k-unknown-openbsd${UNAME_RELEASE}
+	echo m88k-unknown-openbsd${UNAME_RELEASE}
 	exit 0 ;;
     mac68k:OpenBSD:*:*)
 	echo m68k-unknown-openbsd${UNAME_RELEASE}
@@ -499,7 +499,7 @@ EOF
 	else
 	    echo i586-dg-dgux${UNAME_RELEASE}
 	fi
- 	exit 0 ;;
+	exit 0 ;;
     M88*:DolphinOS:*:*)	# DolphinOS (SVR3)
 	echo m88k-dolphin-sysv3
 	exit 0 ;;
@@ -623,22 +623,22 @@ EOF
                   long cpu  = sysconf (_SC_CPU_VERSION);
 
                   switch (cpu)
-              	{
-              	case CPU_PA_RISC1_0: puts ("hppa1.0"); break;
-              	case CPU_PA_RISC1_1: puts ("hppa1.1"); break;
-              	case CPU_PA_RISC2_0:
+                      {
+                      case CPU_PA_RISC1_0: puts ("hppa1.0"); break;
+                      case CPU_PA_RISC1_1: puts ("hppa1.1"); break;
+                      case CPU_PA_RISC2_0:
               #if defined(_SC_KERNEL_BITS)
-              	    switch (bits)
-              		{
-              		case 64: puts ("hppa2.0w"); break;
-              		case 32: puts ("hppa2.0n"); break;
-              		default: puts ("hppa2.0"); break;
-              		} break;
+                          switch (bits)
+                              {
+                              case 64: puts ("hppa2.0w"); break;
+                              case 32: puts ("hppa2.0n"); break;
+                              default: puts ("hppa2.0"); break;
+                              } break;
               #else  /* !defined(_SC_KERNEL_BITS) */
-              	    puts ("hppa2.0"); break;
+                          puts ("hppa2.0"); break;
               #endif
-              	default: puts ("hppa1.0"); break;
-              	}
+                      default: puts ("hppa1.0"); break;
+                      }
                   exit (0);
               }
 EOF
@@ -831,7 +831,7 @@ EOF
 	echo crisv32-axis-linux-gnu
 	exit 0 ;;
     frv:Linux:*:*)
-    	echo frv-unknown-linux-gnu
+	echo frv-unknown-linux-gnu
 	exit 0 ;;
     ia64:Linux:*:*)
 	echo ${UNAME_MACHINE}-unknown-linux-gnu
@@ -915,7 +915,7 @@ EOF
 	echo ${UNAME_MACHINE}-ibm-linux
 	exit 0 ;;
     sh64*:Linux:*:*)
-    	echo ${UNAME_MACHINE}-unknown-linux-gnu
+	echo ${UNAME_MACHINE}-unknown-linux-gnu
 	exit 0 ;;
     sh*:Linux:*:*)
 	echo ${UNAME_MACHINE}-unknown-linux-gnu
@@ -1245,7 +1245,7 @@ EOF
 	echo ${UNAME_MACHINE}-unknown-dragonfly`echo ${UNAME_RELEASE}|sed -e 's/[-(].*//'`
 	exit 0 ;;
     *:*VMS:*:*)
-    	UNAME_MACHINE=`(uname -p) 2>/dev/null`
+	UNAME_MACHINE=`(uname -p) 2>/dev/null`
 	case "${UNAME_MACHINE}" in
 	    A*) echo alpha-dec-vms && exit 0 ;;
 	    I*) echo ia64-dec-vms && exit 0 ;;

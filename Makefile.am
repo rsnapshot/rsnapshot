@@ -17,11 +17,11 @@ man: $(man_MANS)
 rsnapshot.1 : rsnapshot
 	@# perl 5.8 for this
 	pod2man -c '' -n 'rsnapshot' -r '' rsnapshot > rsnapshot.1
-	
+
 rsnapshot-diff.1 : rsnapshot-diff
 	@# perl 5.8 for this
 	pod2man -c '' -n 'rsnapshot-diff' -r '' rsnapshot-diff > rsnapshot-diff.1
-	
+
 html: rsnapshot.html
 rsnapshot.html: rsnapshot
 	pod2html rsnapshot | grep -v 'link rev' > rsnapshot.html
@@ -49,7 +49,7 @@ clean:
 	rm -f t/support/etc/*.conf
 	rm -f t/support/files/a/{1,2}
 	rm -rf t/support/snapshots/*.*
-	
+
 rpm-patch: redhat/SOURCES/rsnapshot.patch
 	@echo
 	@touch rpm-patch
@@ -64,7 +64,7 @@ redhat/SOURCES/rsnapshot.patch: rsnapshot.conf.default.in Makefile
 	@# diff doesn't return 0
 	diff -u rsnapshot.conf.default.in rsnapshot.conf.default.in.redhat > redhat/SOURCES/rsnapshot.patch || /bin/true
 	rm -f rsnapshot.conf.default.in.redhat
-	
+
 rpm: rsnapshot-$(VERSION)-$(RPM_RELEASE).noarch.rpm
 	@touch rpm
 rsnapshot-$(VERSION)-$(RPM_RELEASE).noarch.rpm: tar redhat/SOURCES/rsnapshot.patch redhat/SPECS/rsnapshot.spec
@@ -81,10 +81,10 @@ rsnapshot-$(VERSION)-$(RPM_RELEASE).noarch.rpm: tar redhat/SOURCES/rsnapshot.pat
 tar: rsnapshot-$(VERSION).tar.gz
 	@touch tar
 rsnapshot-$(VERSION).tar.gz: $(man_MANS) rpm-patch Makefile $(bin_SCRIPTS) $(sysconf_DATA)
-	@echo building tar file 
+	@echo building tar file
 	@# recommended to run make tar as root for the chown
 	rm -f rsnapshot-$(VERSION).tar.gz
-	
+
 	@# core files
 	mkdir rsnapshot-$(VERSION)
 	cp -p rsnapshot-preamble.pl rsnapshot-program.pl rsnapshot-diff.pl rsnapshot.conf.default.in \
@@ -93,11 +93,11 @@ rsnapshot-$(VERSION).tar.gz: $(man_MANS) rpm-patch Makefile $(bin_SCRIPTS) $(sys
 
 	@# documentation files
 	cp -a docs rsnapshot-$(VERSION)/
-	
+
 	@# autoconf files
 	cp -p Makefile.am Makefile.in aclocal.m4 configure configure.ac config.guess config.sub \
 		install-sh missing mkinstalldirs rsnapshot-$(VERSION)/
-	
+
 	@# redhat
 	mkdir rsnapshot-$(VERSION)/redhat/
 	mkdir rsnapshot-$(VERSION)/redhat/SOURCES/
@@ -105,14 +105,14 @@ rsnapshot-$(VERSION).tar.gz: $(man_MANS) rpm-patch Makefile $(bin_SCRIPTS) $(sys
 	cp -p redhat/README rsnapshot-$(VERSION)/redhat/
 	cp -p redhat/SOURCES/rsnapshot.patch rsnapshot-$(VERSION)/redhat/SOURCES/
 	cp -p redhat/SPECS/rsnapshot.spec rsnapshot-$(VERSION)/redhat/SPECS/
-	
+
 	@# utils
 	mkdir rsnapshot-$(VERSION)/utils/
 	cp -p utils/{*.sh,*.pl,README} rsnapshot-$(VERSION)/utils/
 	cp -p utils/{rsnaptar,rsnapshot-copy} rsnapshot-$(VERSION)/utils/
 	mkdir rsnapshot-$(VERSION)/utils/rsnapshotdb
 	cp -p --parents utils/rsnapshotdb/*.* rsnapshot-$(VERSION)/
-	
+
 	@# t - testing
 	mkdir -p rsnapshot-$(VERSION)/t/support/etc
 	mkdir rsnapshot-$(VERSION)/t/support/files
@@ -120,7 +120,7 @@ rsnapshot-$(VERSION).tar.gz: $(man_MANS) rpm-patch Makefile $(bin_SCRIPTS) $(sys
 	cp -a --parents t/*.t.in t/support/etc/*.in t/support/files rsnapshot-$(VERSION)/
 	@# remove CVS directories from t/support/files and docs.
 	-find rsnapshot-$(VERSION)/ -depth -name CVS -exec rm -rf {} \;
-	
+
 	@# change ownership to root, and delete build dir
 	-chown -R root:root rsnapshot-$(VERSION)/
 	tar czf rsnapshot-$(VERSION).tar.gz rsnapshot-$(VERSION)/

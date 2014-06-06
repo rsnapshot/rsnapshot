@@ -5,7 +5,7 @@ use Test::More tests => 5;
 
 my $snap_root="t/support/snapshots/link-dest_t";
 
-# Make sure snap_root directory does not exist before we start 
+# Make sure snap_root directory does not exist before we start
 ok(! -d "$snap_root" || ! `rm -rf "$snap_root"`,
 	" snapshot root does not exist before testing starts");
 

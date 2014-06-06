@@ -60,11 +60,11 @@ COMPATIBILITY NOTICES (Please read)
 (2)
   If you have rsync version 2.5.7 or later, you may want to enable the
   link_dest parameter in the rsnapshot.conf file.
-  
+
   If you are running Linux but do not have the problem above, you should
   enable the cmd_cp parameter in rsnapshot.conf (especially if you do not
   have link_dest enabled).
-  
+
   Be advised that currently link_dest doesn't do well with unavailable hosts.
   Specifically, if a remote host is unavailable using link_dest, there will
   be no latest backup of that machine, and a full re-sync will be required
@@ -93,10 +93,10 @@ real by executing the following command (where interval is alpha, beta, etc):
 Once you are happy with everything, the final step is to setup a cron job to
 automate your backups. Here is a quick example which makes backups every four
 hours, and beta backups for a week:
-    
+
     0 */4 * * *     /usr/local/bin/rsnapshot alpha
     50 23 * * *     /usr/local/bin/rsnapshot beta
-    
+
 In the previous example, there will be six "alpha" snapshots
 taken each day (at 0,4,8,12,16, and 20 hours). There will also
 be beta snapshots taken every night at 11:50PM. The number of
@@ -104,9 +104,9 @@ snapshots that are saved depends on the "interval" settings in
 /etc/rsnapshot.conf.
 
 For example:
-    
+
     interval    alpha    6
-    
+
 This means that every time "rsnapshot alpha" is run, it will make a
 new snapshot, rotate the old ones, and retain the most recent six
 (alpha.0 - alpha.5).
@@ -124,7 +124,7 @@ first day of each month.
 Note that the backups are done from the highest interval first
 (in this case delta) and go down to the lowest interval.  If
 you are not having cron invoke the "alpha" snapshot interval,
-then you must also ensure that alpha is not listed as one of 
+then you must also ensure that alpha is not listed as one of
 your intervals in rsnapshot.conf (for example, comment out alpha,
 so that "beta" becomes the lowest interval).
 
@@ -132,8 +132,8 @@ Remember that it is only the lowest interval which actually does
 the rsync to back up the relevant source directories, the higher
 intervals just rotate snapshots around.  Unless you have enabled
 sync_first in your rsnapshot.conf, in which case only the "sync"
-pseudo-interval does the actual rsync, and all real intervals 
-just rotate snapshots.  
+pseudo-interval does the actual rsync, and all real intervals
+just rotate snapshots.
 
 For the full documentation, type "man rsnapshot" once it is installed,
 or visit http://www.rsnapshot.org/.  The HowTo on the web site has a

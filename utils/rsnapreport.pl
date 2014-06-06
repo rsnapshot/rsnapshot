@@ -62,7 +62,7 @@ sub nextLine($){
 	push(@$lines,$line);
 	return shift @$lines;
 }
-	
+
 
 my @rsnapout = ();
 
@@ -82,11 +82,11 @@ while (my $line = nextLine(\@rsnapout)){
 		my $source = $rsynccmd[-2]; # count backwards: source always second to last
 		#print $source;
 		while($line = nextLine(\@rsnapout)){
-  			# this means we are missing stats info
-			if($line =~ /^[\/\w]+\/rsync/){ 
+			# this means we are missing stats info
+			if($line =~ /^[\/\w]+\/rsync/){
 				unshift(@rsnapout,$line);
 				push(@errors,"$source NO STATS DATA");
-				last;  
+				last;
 			}
 			# stat record
 			if($line =~ /^total size is\s+\d+/){ last; } # this ends the rsync stats record

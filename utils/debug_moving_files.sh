@@ -39,7 +39,7 @@ while true; do
 		echo mv $i $i.tmp
 		mv $i $i.tmp
 	done
-	
+
 	# move them back
 	for i in `echo 0 1 2 3 4 5 6 7 8 9`; do
 		echo mv $i.tmp $i

@@ -135,7 +135,7 @@ sub init
 
 	unless ($xmlUsage && -f $xsd)
 	{
-	
+
 		warn "You are not validating '$dbpasswd' against an XMLSchema file: '$xsd'. Defaulting to flat file format for '$dbpasswd'.\n";
 	}
 
@@ -148,12 +148,12 @@ sub read_dbpasswd
 	if ($xmlUsage)
 	{
 		my $xobj = rsnapshotDB->new( {
-				'dbpasswd' 	=> $dbpasswd,
-				'xsd'		=> $xsd,
-				'dbApp' 	=> $dbApp,
-				'tmpDir'	=> $tmpDir,
-				'verbose'	=> $verbose,
-			} );	
+				'dbpasswd' => $dbpasswd,
+				'xsd'      => $xsd,
+				'dbApp'    => $dbApp,
+				'tmpDir'   => $tmpDir,
+				'verbose'  => $verbose,
+			} );
 
 		my $validity = $xobj->validateXML; #boolean test
 
@@ -248,7 +248,7 @@ sub parseXML
 	my $parser = XML::Simple->new();
 
 	#hardcoded xml tag names
-	my $xmlRef = $parser->XMLin($xml, ForceArray => ['hostGroup', 'hostPair', 'databaseHost', 'defaultSSHHost'] ); 
+	my $xmlRef = $parser->XMLin($xml, ForceArray => ['hostGroup', 'hostPair', 'databaseHost', 'defaultSSHHost'] );
 
 	#count hostGroup tags
 	my $hostGroups = scalar(@{$xmlRef->{'hostGroup'}});
@@ -331,10 +331,10 @@ sub showDB
 	my $prompt = $dbApp->{$dbType}->{'prompt'}->{'bin'};
 	my $dbNames = []; #results from SHOW DATABASES;
 	my $dbpass_arg = defined($dbpass) ? "$dbApp->{$dbType}->{'prompt'}->{'pass'}$dbpass" : ''; #dbpass not required
-	
+
 
 	$self->v("START: showDB command...", 1);
-	my $cmdShowDB = "ssh $sshOption $user\@$host \"echo -n 'SHOW DATABASES;' | \ $dbApp->{$dbType}->{'prompt'}->{'bin'} \ $dbApp->{$dbType}->{'prompt'}->{'opts'} \ $dbApp->{$dbType}->{'prompt'}->{'user'} $dbuser \ $dbpass_arg \ $dbApp->{$dbType}->{'prompt'}->{'host'} $dbhost\""; 
+	my $cmdShowDB = "ssh $sshOption $user\@$host \"echo -n 'SHOW DATABASES;' | \ $dbApp->{$dbType}->{'prompt'}->{'bin'} \ $dbApp->{$dbType}->{'prompt'}->{'opts'} \ $dbApp->{$dbType}->{'prompt'}->{'user'} $dbuser \ $dbpass_arg \ $dbApp->{$dbType}->{'prompt'}->{'host'} $dbhost\"";
 
 	my $out = qx/$cmdShowDB/ or warn 'SHOW DATABASES failed...';
 	$self->v("CMD: $cmdShowDB -> $out.", 2);
@@ -416,7 +416,7 @@ sub dumbDB
 
 			$self->v("FAIL: $cmdChmodRTD, $out.", 2) if $?;
 		}
-	
+
 		#the actual .sql.gz remote file creation!
 		my $cmdRemoteDump = "ssh $sshOption $user\@$host 'umask 0077;nice --adjustment=$niceness $dumper \ $dumpOptsArg $dumpUserArg $dbuser $dumpPassArg" . "$dbpass $dumpHostArg $dbhost \ $dbName > $remoteTmpDir/$file.sql'";
 
@@ -427,7 +427,7 @@ sub dumbDB
 		$self->v("FINISH: remote dump.", 1);
 
 		my $cmdRemoteGZip = "ssh $sshOption $user\@$host 'nice --adjustment=$niceness gzip --fast $remoteTmpDir/$file.sql'";
-	
+
 		$self->v("WAITING: remote gzip...", 1);
 		$self->v("CMD: $cmdRemoteGZip", 2);
 		$out = qx/$cmdRemoteGZip/;
