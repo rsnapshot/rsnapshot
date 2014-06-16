@@ -865,7 +865,7 @@ rsnapshot-$(VERSION).tar.gz: $(man_MANS) rpm-patch Makefile $(bin_SCRIPTS) $(sys
 	rm -rf rsnapshot-$(VERSION)/
 	@echo
 test: rsnapshot $(test_cases) $(test_configs)
-	@PERL@ -MTest::Harness -e 'runtests(glob "t/*.t")';
+	@PERL@ -MTest::Harness -e 'runtests($(test_cases:%="%",))'
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
