@@ -31,6 +31,4 @@ check command line options:
 	-v, -q, -V, -D: unsure
 	check multiple commands?
 
-check required options
-
 Test lockfiles hanging around (on every test set?)

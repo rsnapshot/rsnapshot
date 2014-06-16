@@ -87,12 +87,19 @@ DIST_COMMON = INSTALL NEWS README AUTHORS ChangeLog \
 	$(srcdir)/rsnapshot-diff.pl \
 	$(srcdir)/rsnapshot.conf.default.in \
 	$(top_srcdir)/t/support/etc/configtest.conf.in \
+	$(top_srcdir)/t/support/etc/configtest-required1.conf.in \
+	$(top_srcdir)/t/support/etc/configtest-required2.conf.in \
+	$(top_srcdir)/t/support/etc/configtest-required3.conf.in \
+	$(top_srcdir)/t/support/etc/configtest-required4.conf.in \
+	$(top_srcdir)/t/support/etc/configtest-required5.conf.in \
+	$(top_srcdir)/t/support/etc/configtest-required6.conf.in \
 	$(top_srcdir)/t/support/etc/rsync.conf.in \
 	$(top_srcdir)/t/support/etc/gnu_cp.conf.in \
 	$(top_srcdir)/t/support/etc/relative_delete_bugfix.conf.in \
 	$(top_srcdir)/t/support/etc/snapshot_root_with_space.conf.in \
 	$(top_srcdir)/t/support/etc/link-dest_-t_when_only_one_snapshot.conf.in \
 	$(top_srcdir)/t/SysWrap.pm.in $(top_srcdir)/t/configtest.t.in \
+	$(top_srcdir)/t/configtest-required-options.t.in \
 	$(top_srcdir)/t/rsync.t.in $(top_srcdir)/t/gnu_cp.t.in \
 	$(top_srcdir)/t/relative_delete_bugfix.t.in \
 	$(top_srcdir)/t/snapshot_root_with_space.t.in \
@@ -106,13 +113,20 @@ am__CONFIG_DISTCLEAN_FILES = config.status config.cache config.log \
  configure.lineno config.status.lineno
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_CLEAN_FILES = rsnapshot rsnapshot-diff rsnapshot.conf.default \
-	t/support/etc/configtest.conf t/support/etc/rsync.conf \
-	t/support/etc/gnu_cp.conf \
+	t/support/etc/configtest.conf \
+	t/support/etc/configtest-required1.conf \
+	t/support/etc/configtest-required2.conf \
+	t/support/etc/configtest-required3.conf \
+	t/support/etc/configtest-required4.conf \
+	t/support/etc/configtest-required5.conf \
+	t/support/etc/configtest-required6.conf \
+	t/support/etc/rsync.conf t/support/etc/gnu_cp.conf \
 	t/support/etc/relative_delete_bugfix.conf \
 	t/support/etc/snapshot_root_with_space.conf \
 	t/support/etc/link-dest_-t_when_only_one_snapshot.conf \
-	t/SysWrap.pm t/configtest.t t/rsync.t t/gnu_cp.t \
-	t/relative_delete_bugfix.t t/snapshot_root_with_space.t \
+	t/SysWrap.pm t/configtest.t t/configtest-required-options.t \
+	t/rsync.t t/gnu_cp.t t/relative_delete_bugfix.t \
+	t/snapshot_root_with_space.t \
 	t/link-dest_-t_when_only_one_snapshot.t
 CONFIG_CLEAN_VPATH_FILES =
 am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
@@ -342,6 +356,18 @@ rsnapshot.conf.default: $(top_builddir)/config.status $(srcdir)/rsnapshot.conf.d
 	cd $(top_builddir) && $(SHELL) ./config.status $@
 t/support/etc/configtest.conf: $(top_builddir)/config.status $(top_srcdir)/t/support/etc/configtest.conf.in
 	cd $(top_builddir) && $(SHELL) ./config.status $@
+t/support/etc/configtest-required1.conf: $(top_builddir)/config.status $(top_srcdir)/t/support/etc/configtest-required1.conf.in
+	cd $(top_builddir) && $(SHELL) ./config.status $@
+t/support/etc/configtest-required2.conf: $(top_builddir)/config.status $(top_srcdir)/t/support/etc/configtest-required2.conf.in
+	cd $(top_builddir) && $(SHELL) ./config.status $@
+t/support/etc/configtest-required3.conf: $(top_builddir)/config.status $(top_srcdir)/t/support/etc/configtest-required3.conf.in
+	cd $(top_builddir) && $(SHELL) ./config.status $@
+t/support/etc/configtest-required4.conf: $(top_builddir)/config.status $(top_srcdir)/t/support/etc/configtest-required4.conf.in
+	cd $(top_builddir) && $(SHELL) ./config.status $@
+t/support/etc/configtest-required5.conf: $(top_builddir)/config.status $(top_srcdir)/t/support/etc/configtest-required5.conf.in
+	cd $(top_builddir) && $(SHELL) ./config.status $@
+t/support/etc/configtest-required6.conf: $(top_builddir)/config.status $(top_srcdir)/t/support/etc/configtest-required6.conf.in
+	cd $(top_builddir) && $(SHELL) ./config.status $@
 t/support/etc/rsync.conf: $(top_builddir)/config.status $(top_srcdir)/t/support/etc/rsync.conf.in
 	cd $(top_builddir) && $(SHELL) ./config.status $@
 t/support/etc/gnu_cp.conf: $(top_builddir)/config.status $(top_srcdir)/t/support/etc/gnu_cp.conf.in
@@ -355,6 +381,8 @@ t/support/etc/link-dest_-t_when_only_one_snapshot.conf: $(top_builddir)/config.s
 t/SysWrap.pm: $(top_builddir)/config.status $(top_srcdir)/t/SysWrap.pm.in
 	cd $(top_builddir) && $(SHELL) ./config.status $@
 t/configtest.t: $(top_builddir)/config.status $(top_srcdir)/t/configtest.t.in
+	cd $(top_builddir) && $(SHELL) ./config.status $@
+t/configtest-required-options.t: $(top_builddir)/config.status $(top_srcdir)/t/configtest-required-options.t.in
 	cd $(top_builddir) && $(SHELL) ./config.status $@
 t/rsync.t: $(top_builddir)/config.status $(top_srcdir)/t/rsync.t.in
 	cd $(top_builddir) && $(SHELL) ./config.status $@

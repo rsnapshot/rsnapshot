@@ -2854,6 +2854,18 @@ ac_config_files="$ac_config_files rsnapshot.conf.default:rsnapshot.conf.default.
 
 ac_config_files="$ac_config_files t/support/etc/configtest.conf:t/support/etc/configtest.conf.in"
 
+ac_config_files="$ac_config_files t/support/etc/configtest-required1.conf"
+
+ac_config_files="$ac_config_files t/support/etc/configtest-required2.conf"
+
+ac_config_files="$ac_config_files t/support/etc/configtest-required3.conf"
+
+ac_config_files="$ac_config_files t/support/etc/configtest-required4.conf"
+
+ac_config_files="$ac_config_files t/support/etc/configtest-required5.conf"
+
+ac_config_files="$ac_config_files t/support/etc/configtest-required6.conf"
+
 ac_config_files="$ac_config_files t/support/etc/rsync.conf:t/support/etc/rsync.conf.in"
 
 ac_config_files="$ac_config_files t/support/etc/gnu_cp.conf:t/support/etc/gnu_cp.conf.in"
@@ -2869,6 +2881,8 @@ ac_config_files="$ac_config_files t/SysWrap.pm"
 
 
 ac_config_files="$ac_config_files t/configtest.t:t/configtest.t.in"
+
+ac_config_files="$ac_config_files t/configtest-required-options.t"
 
 ac_config_files="$ac_config_files t/rsync.t:t/rsync.t.in"
 
@@ -3603,6 +3617,12 @@ do
     "rsnapshot-diff") CONFIG_FILES="$CONFIG_FILES rsnapshot-diff:rsnapshot-preamble.pl:rsnapshot-diff.pl" ;;
     "rsnapshot.conf.default") CONFIG_FILES="$CONFIG_FILES rsnapshot.conf.default:rsnapshot.conf.default.in" ;;
     "t/support/etc/configtest.conf") CONFIG_FILES="$CONFIG_FILES t/support/etc/configtest.conf:t/support/etc/configtest.conf.in" ;;
+    "t/support/etc/configtest-required1.conf") CONFIG_FILES="$CONFIG_FILES t/support/etc/configtest-required1.conf" ;;
+    "t/support/etc/configtest-required2.conf") CONFIG_FILES="$CONFIG_FILES t/support/etc/configtest-required2.conf" ;;
+    "t/support/etc/configtest-required3.conf") CONFIG_FILES="$CONFIG_FILES t/support/etc/configtest-required3.conf" ;;
+    "t/support/etc/configtest-required4.conf") CONFIG_FILES="$CONFIG_FILES t/support/etc/configtest-required4.conf" ;;
+    "t/support/etc/configtest-required5.conf") CONFIG_FILES="$CONFIG_FILES t/support/etc/configtest-required5.conf" ;;
+    "t/support/etc/configtest-required6.conf") CONFIG_FILES="$CONFIG_FILES t/support/etc/configtest-required6.conf" ;;
     "t/support/etc/rsync.conf") CONFIG_FILES="$CONFIG_FILES t/support/etc/rsync.conf:t/support/etc/rsync.conf.in" ;;
     "t/support/etc/gnu_cp.conf") CONFIG_FILES="$CONFIG_FILES t/support/etc/gnu_cp.conf:t/support/etc/gnu_cp.conf.in" ;;
     "t/support/etc/relative_delete_bugfix.conf") CONFIG_FILES="$CONFIG_FILES t/support/etc/relative_delete_bugfix.conf:t/support/etc/relative_delete_bugfix.conf.in" ;;
@@ -3610,6 +3630,7 @@ do
     "t/support/etc/link-dest_-t_when_only_one_snapshot.conf") CONFIG_FILES="$CONFIG_FILES t/support/etc/link-dest_-t_when_only_one_snapshot.conf:t/support/etc/link-dest_-t_when_only_one_snapshot.conf.in" ;;
     "t/SysWrap.pm") CONFIG_FILES="$CONFIG_FILES t/SysWrap.pm" ;;
     "t/configtest.t") CONFIG_FILES="$CONFIG_FILES t/configtest.t:t/configtest.t.in" ;;
+    "t/configtest-required-options.t") CONFIG_FILES="$CONFIG_FILES t/configtest-required-options.t" ;;
     "t/rsync.t") CONFIG_FILES="$CONFIG_FILES t/rsync.t:t/rsync.t.in" ;;
     "t/gnu_cp.t") CONFIG_FILES="$CONFIG_FILES t/gnu_cp.t:t/gnu_cp.t.in" ;;
     "t/relative_delete_bugfix.t") CONFIG_FILES="$CONFIG_FILES t/relative_delete_bugfix.t:t/relative_delete_bugfix.t.in" ;;
