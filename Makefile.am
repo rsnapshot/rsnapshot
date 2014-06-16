@@ -46,6 +46,7 @@ clean:
 	rm -f Makefile config.log config.status configure.lineno rsnapshot rsnapshot-diff
 	-rm -f doc rpm-patch rpm tar
 	rm -f t/*.t
+	rm -f t/*.pm
 	rm -f t/support/etc/*.conf
 	rm -f t/support/files/a/{1,2}
 	rm -rf t/support/snapshots/*.*
