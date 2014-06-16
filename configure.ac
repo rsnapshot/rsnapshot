@@ -240,7 +240,7 @@ dnl if we couldn't find it, provide an example
 if test "$DU" = "no"; then
 	DU=/path/to/du
 fi
-dnl either way, set the cmd_ssh var
+dnl either way, set the cmd_du var
 AC_SUBST(CMD_DU, "cmd_du		$DU")
 
 
