@@ -1287,14 +1287,18 @@ sub parse_config_file {
 			} elsif (1 == is_directory_traversal($value)) {
 				config_err($file_line_num, "$line - Directory traversal attempted in $value");
 				next;
-			} elsif (( -e "$value" ) && ( ! -f "$value" ) && ( ! -p "$value" ) ) {
-				config_err($file_line_num, "$line - logfile $value exists, but is not a file");
-				next;
-			} else {
-				$config_vars{'logfile'} = $value;
-				$line_syntax_ok = 1;
-				next;
+			} elsif ( -e "$value" ) {
+				if ( ( ! -f "$value" ) && ( ! -p "$value" ) ) {
+					config_err($file_line_num, "$line - logfile $value exists, but is not a file");
+					next;
+				} elsif ( ! -w "$value" ) {
+					config_err($file_line_num, "$line - logfile $value exists, but is not writable");
+					next;
+				}
 			}
+			$config_vars{'logfile'} = $value;
+			$line_syntax_ok = 1;
+			next;
 		}
 		# VERBOSE
 		if ($var eq 'verbose') {
