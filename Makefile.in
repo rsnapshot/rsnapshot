@@ -100,6 +100,7 @@ DIST_COMMON = INSTALL NEWS README AUTHORS ChangeLog \
 	$(top_srcdir)/t/support/etc/link-dest_-t_when_only_one_snapshot.conf.in \
 	$(top_srcdir)/t/SysWrap.pm.in $(top_srcdir)/t/configtest.t.in \
 	$(top_srcdir)/t/configtest-required-options.t.in \
+	$(top_srcdir)/t/file-permissions-tests.t.in \
 	$(top_srcdir)/t/rsync.t.in $(top_srcdir)/t/gnu_cp.t.in \
 	$(top_srcdir)/t/relative_delete_bugfix.t.in \
 	$(top_srcdir)/t/snapshot_root_with_space.t.in \
@@ -125,8 +126,8 @@ CONFIG_CLEAN_FILES = rsnapshot rsnapshot-diff rsnapshot.conf.default \
 	t/support/etc/snapshot_root_with_space.conf \
 	t/support/etc/link-dest_-t_when_only_one_snapshot.conf \
 	t/SysWrap.pm t/configtest.t t/configtest-required-options.t \
-	t/rsync.t t/gnu_cp.t t/relative_delete_bugfix.t \
-	t/snapshot_root_with_space.t \
+	t/file-permissions-tests.t t/rsync.t t/gnu_cp.t \
+	t/relative_delete_bugfix.t t/snapshot_root_with_space.t \
 	t/link-dest_-t_when_only_one_snapshot.t
 CONFIG_CLEAN_VPATH_FILES =
 am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
@@ -383,6 +384,8 @@ t/SysWrap.pm: $(top_builddir)/config.status $(top_srcdir)/t/SysWrap.pm.in
 t/configtest.t: $(top_builddir)/config.status $(top_srcdir)/t/configtest.t.in
 	cd $(top_builddir) && $(SHELL) ./config.status $@
 t/configtest-required-options.t: $(top_builddir)/config.status $(top_srcdir)/t/configtest-required-options.t.in
+	cd $(top_builddir) && $(SHELL) ./config.status $@
+t/file-permissions-tests.t: $(top_builddir)/config.status $(top_srcdir)/t/file-permissions-tests.t.in
 	cd $(top_builddir) && $(SHELL) ./config.status $@
 t/rsync.t: $(top_builddir)/config.status $(top_srcdir)/t/rsync.t.in
 	cd $(top_builddir) && $(SHELL) ./config.status $@

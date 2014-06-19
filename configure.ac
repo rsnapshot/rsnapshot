@@ -276,6 +276,7 @@ AC_CONFIG_FILES(t/SysWrap.pm)
 dnl regression test scripts
 AC_CONFIG_FILES(t/configtest.t:t/configtest.t.in)
 AC_CONFIG_FILES(t/configtest-required-options.t)
+AC_CONFIG_FILES(t/file-permissions-tests.t)
 AC_CONFIG_FILES(t/rsync.t:t/rsync.t.in)
 AC_CONFIG_FILES(t/gnu_cp.t:t/gnu_cp.t.in)
 AC_CONFIG_FILES(t/relative_delete_bugfix.t:t/relative_delete_bugfix.t.in)

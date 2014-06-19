@@ -2884,6 +2884,8 @@ ac_config_files="$ac_config_files t/configtest.t:t/configtest.t.in"
 
 ac_config_files="$ac_config_files t/configtest-required-options.t"
 
+ac_config_files="$ac_config_files t/file-permissions-tests.t"
+
 ac_config_files="$ac_config_files t/rsync.t:t/rsync.t.in"
 
 ac_config_files="$ac_config_files t/gnu_cp.t:t/gnu_cp.t.in"
@@ -3631,6 +3633,7 @@ do
     "t/SysWrap.pm") CONFIG_FILES="$CONFIG_FILES t/SysWrap.pm" ;;
     "t/configtest.t") CONFIG_FILES="$CONFIG_FILES t/configtest.t:t/configtest.t.in" ;;
     "t/configtest-required-options.t") CONFIG_FILES="$CONFIG_FILES t/configtest-required-options.t" ;;
+    "t/file-permissions-tests.t") CONFIG_FILES="$CONFIG_FILES t/file-permissions-tests.t" ;;
     "t/rsync.t") CONFIG_FILES="$CONFIG_FILES t/rsync.t:t/rsync.t.in" ;;
     "t/gnu_cp.t") CONFIG_FILES="$CONFIG_FILES t/gnu_cp.t:t/gnu_cp.t.in" ;;
     "t/relative_delete_bugfix.t") CONFIG_FILES="$CONFIG_FILES t/relative_delete_bugfix.t:t/relative_delete_bugfix.t.in" ;;

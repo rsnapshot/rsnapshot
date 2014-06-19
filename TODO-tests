@@ -1,4 +1,4 @@
-file readable/exectuable/local vs absolute/link/directory traversal checks for:
+file local vs absolute/link/directory traversal checks for:
 	-c?
 	include_conf (with args?)
 	cmd_rsync (no args)

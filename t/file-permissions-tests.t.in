@@ -1,0 +1,96 @@
+#!/usr/bin/perl
+
+use strict;
+use Test::More;
+use SysWrap;
+
+my %files = (
+	"rwx"    => 0700,
+	"rwnx"   => 0600,
+	"rnwx"   => 0500,
+	"rnwnx"  => 0400,
+	"nrwx"   => 0300,
+	"nrwnx"  => 0200,
+	"nrnwx"  => 0100,
+	"nrnwnx" => 0002, # using mode 0000 doesn't seem to actually change
+	                  # anything, so use writable only by someone else instead
+);
+
+sub create {
+	my $path = shift(@_);
+	my $mode = shift(@_);
+	my @contents = @_;
+
+	unlink("$path");
+	open(my $fh, ">", "$path") or die;
+	print $fh join("\n", @contents) or die;
+	close($fh) or die;
+
+	if ($mode) {
+		chmod($mode, "$path") or die;
+	}
+}
+
+my $config_no_rsync = 'config_version	1.2
+snapshot_root	@CWD@/t/support/snapshots/
+retain	hourly	6
+backup	@CWD@/t/support/files/a/	localhost/
+';
+
+my $minimal_config = "$config_no_rsync" . "cmd_rsync	@RSYNC@\n";
+
+my $extra_backup = "backup	@CWD@/t/support/files/template/	localhost/\n";
+
+# -c, cmd_rsync, and backup_script have to be handled separately
+my %options = (
+	include_conf           => 0400,
+	include_file           => 0400,
+	exclude_file           => 0400,
+	logfile                => 0200,
+	cmd_ssh                => 0100,
+	cmd_cp                 => 0100,
+	cmd_rm                 => 0100,
+	cmd_logger             => 0100,
+	cmd_du                 => 0100,
+	cmd_rsnapshot_diff     => 0100,
+	cmd_preexec            => 0100,
+	cmd_postexec           => 0100,
+	linux_lvm_cmd_lvcreate => 0100,
+	linux_lvm_cmd_lvremove => 0100,
+	linux_lvm_cmd_mount    => 0100,
+	linux_lvm_cmd_umount   => 0100,
+);
+
+# Test -c
+for my $config (keys %files) {
+	create("@CWD@/t/support/etc/$config.conf", $files{$config}, $minimal_config);
+	# If the config file is readable, configtest should pass
+	my $expected = (0400 & $files{$config}) == 0400 ? 0 : 1;
+	my $actual = rsnapshot("-c @CWD@/t/support/etc/$config.conf configtest");
+	is($actual, $expected, "Testing mode " . sprintf("%o", $files{$config}));
+	unlink("@CWD@/t/support/etc/$config.conf") or die;
+}
+
+#set up scripts
+for my $file (keys %files) {
+	create("@CWD@/t/support/etc/$file", $files{$file}, $extra_backup);
+}
+
+# Test the rest
+for my $option (keys %options) {
+	for my $file (keys %files) {
+		my $expected = ($options{$option} & $files{$file}) == $options{$option} ? 0 : 1;
+		my $contents = $minimal_config . "$option	@CWD@/t/support/etc/$file\n";
+		create("@CWD@/t/support/etc/temp.conf", 0400, $contents);
+		my $actual = rsnapshot("-c @CWD@/t/support/etc/temp.conf configtest");
+		is($actual, $expected, "Testing $option with mode " . sprintf("%o", $files{$file}));
+		unlink("@CWD@/t/support/etc/temp.conf") or die;
+	}
+}
+
+#delete scripts
+for my $file (keys %files) {
+	unlink("@CWD@/t/support/etc/$file") or die;
+}
+
+done_testing();
