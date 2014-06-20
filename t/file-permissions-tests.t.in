@@ -76,6 +76,26 @@ for my $file (keys %files) {
 	create("@CWD@/t/support/etc/$file", $files{$file}, $extra_backup);
 }
 
+# Test cmd_rsync
+for my $file (keys %files) {
+	my $expected = (0100 & $files{$file}) == 0100 ? 0 : 1;
+	my $contents = $config_no_rsync . "cmd_rsync	@CWD@/t/support/etc/$file\n";
+	create("@CWD@/t/support/etc/temp.conf", 0400, $contents);
+	my $actual = rsnapshot("-c @CWD@/t/support/etc/temp.conf configtest");
+	is($actual, $expected, "Testing cmd_rsync with mode " . sprintf("%o", $files{$file}));
+	unlink("@CWD@/t/support/etc/temp.conf") or die;
+}
+
+# Test backup_script
+for my $file (keys %files) {
+	my $expected = (0100 & $files{$file}) == 0100 ? 0 : 1;
+	my $contents = $minimal_config . "backup_script	@CWD@/t/support/etc/$file	backup_script/\n";
+	create("@CWD@/t/support/etc/temp.conf", 0400, $contents);
+	my $actual = rsnapshot("-c @CWD@/t/support/etc/temp.conf configtest");
+	is($actual, $expected, "Testing backup_script with mode " . sprintf("%o", $files{$file}));
+	unlink("@CWD@/t/support/etc/temp.conf") or die;
+}
+
 # Test the rest
 for my $option (keys %options) {
 	for my $file (keys %files) {
