@@ -18,10 +18,6 @@ ok(-d "$snap_root/daily.0" && ! -d "$snap_root/daily.1",
 
 my $output=`@PERL@ ./rsnapshot -c t/support/etc/link-dest_-t_when_only_one_snapshot.conf -t daily`;
 
-open(TMP,">>/tmp/test_output");
-print TMP "output=$output\n";
-close(TMP);
-
 ok($output =~ / --link-dest=/,
 	" link-dest is used");
 
