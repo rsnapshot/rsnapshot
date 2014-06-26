@@ -261,6 +261,9 @@ AC_CONFIG_FILES(t/support/etc/snapshot_root_with_space.conf:t/support/etc/snapsh
 AC_CONFIG_FILES(t/support/etc/backup_exec.conf:t/support/etc/backup_exec.conf.in)
 AC_CONFIG_FILES(t/support/etc/link-dest_-t_when_only_one_snapshot.conf:t/support/etc/link-dest_-t_when_only_one_snapshot.conf.in)
 
+dnl Perl modules for regression test scripts
+AC_CONFIG_FILES(t/SysWrap.pm)
+
 dnl regression test scripts
 AC_CONFIG_FILES(t/configtest.t:t/configtest.t.in)
 AC_CONFIG_FILES(t/rsync.t:t/rsync.t.in)

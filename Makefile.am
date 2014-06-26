@@ -132,8 +132,10 @@ test_cases_in := $(wildcard t/*.t.in)
 test_cases := $(test_cases_in:%.in=%)
 test_configs_in := $(wildcard t/support/etc/*.conf.in)
 test_configs := $(test_configs_in:%.in=%)
-test: rsnapshot $(test_cases) $(test_configs)
-	@PERL@ -MTest::Harness -e 'runtests($(test_cases:%="%",))'
+test_modules_in = $(wildcard t/*.pm.in)
+test_modules = $(test_modules_in:%.in=%)
+test: rsnapshot $(test_cases) $(test_configs) $(test_modules)
+	@PERL@ -MTest::Harness -It -e 'runtests($(test_cases:%="%",))'
 
 bin_SCRIPTS = rsnapshot rsnapshot-diff
 man_MANS = rsnapshot.1 rsnapshot-diff.1
