@@ -2,6 +2,7 @@
 
 use strict;
 use Test::More tests => 1;
+use SysWrap;
 
 # check for basic configtest
-ok(! `@PERL@ ./rsnapshot -c t/support/etc/configtest.conf configtest > /dev/null`);
+ok(0 == rsnapshot("-c t/support/etc/configtest.conf configtest > /dev/null"));

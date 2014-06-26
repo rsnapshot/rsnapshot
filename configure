@@ -2865,6 +2865,9 @@ ac_config_files="$ac_config_files t/support/etc/snapshot_root_with_space.conf:t/
 ac_config_files="$ac_config_files t/support/etc/link-dest_-t_when_only_one_snapshot.conf:t/support/etc/link-dest_-t_when_only_one_snapshot.conf.in"
 
 
+ac_config_files="$ac_config_files t/SysWrap.pm"
+
+
 ac_config_files="$ac_config_files t/configtest.t:t/configtest.t.in"
 
 ac_config_files="$ac_config_files t/rsync.t:t/rsync.t.in"
@@ -3605,6 +3608,7 @@ do
     "t/support/etc/relative_delete_bugfix.conf") CONFIG_FILES="$CONFIG_FILES t/support/etc/relative_delete_bugfix.conf:t/support/etc/relative_delete_bugfix.conf.in" ;;
     "t/support/etc/snapshot_root_with_space.conf") CONFIG_FILES="$CONFIG_FILES t/support/etc/snapshot_root_with_space.conf:t/support/etc/snapshot_root_with_space.conf.in" ;;
     "t/support/etc/link-dest_-t_when_only_one_snapshot.conf") CONFIG_FILES="$CONFIG_FILES t/support/etc/link-dest_-t_when_only_one_snapshot.conf:t/support/etc/link-dest_-t_when_only_one_snapshot.conf.in" ;;
+    "t/SysWrap.pm") CONFIG_FILES="$CONFIG_FILES t/SysWrap.pm" ;;
     "t/configtest.t") CONFIG_FILES="$CONFIG_FILES t/configtest.t:t/configtest.t.in" ;;
     "t/rsync.t") CONFIG_FILES="$CONFIG_FILES t/rsync.t:t/rsync.t.in" ;;
     "t/gnu_cp.t") CONFIG_FILES="$CONFIG_FILES t/gnu_cp.t:t/gnu_cp.t.in" ;;

@@ -92,8 +92,8 @@ DIST_COMMON = INSTALL NEWS README AUTHORS ChangeLog \
 	$(top_srcdir)/t/support/etc/relative_delete_bugfix.conf.in \
 	$(top_srcdir)/t/support/etc/snapshot_root_with_space.conf.in \
 	$(top_srcdir)/t/support/etc/link-dest_-t_when_only_one_snapshot.conf.in \
-	$(top_srcdir)/t/configtest.t.in $(top_srcdir)/t/rsync.t.in \
-	$(top_srcdir)/t/gnu_cp.t.in \
+	$(top_srcdir)/t/SysWrap.pm.in $(top_srcdir)/t/configtest.t.in \
+	$(top_srcdir)/t/rsync.t.in $(top_srcdir)/t/gnu_cp.t.in \
 	$(top_srcdir)/t/relative_delete_bugfix.t.in \
 	$(top_srcdir)/t/snapshot_root_with_space.t.in \
 	$(top_srcdir)/t/link-dest_-t_when_only_one_snapshot.t.in \
@@ -111,8 +111,8 @@ CONFIG_CLEAN_FILES = rsnapshot rsnapshot-diff rsnapshot.conf.default \
 	t/support/etc/relative_delete_bugfix.conf \
 	t/support/etc/snapshot_root_with_space.conf \
 	t/support/etc/link-dest_-t_when_only_one_snapshot.conf \
-	t/configtest.t t/rsync.t t/gnu_cp.t t/relative_delete_bugfix.t \
-	t/snapshot_root_with_space.t \
+	t/SysWrap.pm t/configtest.t t/rsync.t t/gnu_cp.t \
+	t/relative_delete_bugfix.t t/snapshot_root_with_space.t \
 	t/link-dest_-t_when_only_one_snapshot.t
 CONFIG_CLEAN_VPATH_FILES =
 am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
@@ -292,6 +292,8 @@ test_cases_in := $(wildcard t/*.t.in)
 test_cases := $(test_cases_in:%.in=%)
 test_configs_in := t/support/etc/*.conf.in
 test_configs := $(test_configs_in:%.in=%)
+test_modules_in = $(wildcard t/*.pm.in)
+test_modules = $(test_modules_in:%.in=%)
 bin_SCRIPTS = rsnapshot rsnapshot-diff
 man_MANS = rsnapshot.1 rsnapshot-diff.1
 sysconf_DATA = rsnapshot.conf.default
@@ -349,6 +351,8 @@ t/support/etc/relative_delete_bugfix.conf: $(top_builddir)/config.status $(top_s
 t/support/etc/snapshot_root_with_space.conf: $(top_builddir)/config.status $(top_srcdir)/t/support/etc/snapshot_root_with_space.conf.in
 	cd $(top_builddir) && $(SHELL) ./config.status $@
 t/support/etc/link-dest_-t_when_only_one_snapshot.conf: $(top_builddir)/config.status $(top_srcdir)/t/support/etc/link-dest_-t_when_only_one_snapshot.conf.in
+	cd $(top_builddir) && $(SHELL) ./config.status $@
+t/SysWrap.pm: $(top_builddir)/config.status $(top_srcdir)/t/SysWrap.pm.in
 	cd $(top_builddir) && $(SHELL) ./config.status $@
 t/configtest.t: $(top_builddir)/config.status $(top_srcdir)/t/configtest.t.in
 	cd $(top_builddir) && $(SHELL) ./config.status $@
@@ -865,8 +869,8 @@ rsnapshot-$(VERSION).tar.gz: $(man_MANS) rpm-patch Makefile $(bin_SCRIPTS) $(sys
 	tar czf rsnapshot-$(VERSION).tar.gz rsnapshot-$(VERSION)/
 	rm -rf rsnapshot-$(VERSION)/
 	@echo
-test: rsnapshot $(test_cases) $(test_configs)
-	@PERL@ -MTest::Harness -e 'runtests($(test_cases:%="%",))'
+test: rsnapshot $(test_cases) $(test_configs) $(test_modules)
+	@PERL@ -MTest::Harness -It -e 'runtests($(test_cases:%="%",))'
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
