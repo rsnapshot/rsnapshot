@@ -1,0 +1,13 @@
+#!/usr/bin/perl
+
+use strict;
+use Test::More tests => 6;
+use SysWrap;
+
+# each required option commented
+for my $i (1..5) {
+	ok(1 == rsnapshot("-c t/support/etc/configtest-required$i.conf configtest"));
+}
+
+# all required options present
+ok(0 == rsnapshot("-c t/support/etc/configtest-required6.conf configtest"));

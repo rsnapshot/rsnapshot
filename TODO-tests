@@ -1,0 +1,34 @@
+file local vs absolute/link/directory traversal checks for:
+	-c?
+	include_conf (with args?)
+	cmd_rsync (no args)
+	cmd_ssh (no args)
+	cmd_cp (no args)
+	cmd_rm (no args)
+	cmd_logger (with args?)
+	cmd_du (no args)
+	cmd_rsnapshot_diff (no args)
+	cmd_preexec (with args?)
+	cmd_postexec (with args?)
+	linux_lvm_cmd_lvcreate (no args, backup level too)
+	linux_lvm_cmd_lvremove (no args, backup level too)
+	linux_lvm_cmd_mount (no args, backup level too)
+	linux_lvm_cmd_umount (no args, backup level too)
+	logfile
+	include_file (backup level too?)
+	exclude_file (backup level too?)
+	backup
+	backup_script
+
+test mixing retain and interval?
+
+check mixing log methods?
+
+check command line options:
+	-t: verify that no changes are made for a series of commands
+	-c: probably covered by all of the other tests
+	-x: specify a custom "rsync" and check for -x with it
+	-v, -q, -V, -D: unsure
+	check multiple commands?
+
+Test lockfiles hanging around (on every test set?)

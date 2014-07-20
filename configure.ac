@@ -242,7 +242,7 @@ dnl if we couldn't find it, provide an example
 if test "$DU" = "no"; then
 	DU=/path/to/du
 fi
-dnl either way, set the cmd_ssh var
+dnl either way, set the cmd_du var
 AC_SUBST(CMD_DU, "cmd_du		$DU")
 
 
@@ -258,14 +258,25 @@ AC_CONFIG_FILES(rsnapshot.conf.default:rsnapshot.conf.default.in)
 
 dnl config files for regression test scripts
 AC_CONFIG_FILES(t/support/etc/configtest.conf:t/support/etc/configtest.conf.in)
+AC_CONFIG_FILES(t/support/etc/configtest-required1.conf)
+AC_CONFIG_FILES(t/support/etc/configtest-required2.conf)
+AC_CONFIG_FILES(t/support/etc/configtest-required3.conf)
+AC_CONFIG_FILES(t/support/etc/configtest-required4.conf)
+AC_CONFIG_FILES(t/support/etc/configtest-required5.conf)
+AC_CONFIG_FILES(t/support/etc/configtest-required6.conf)
 AC_CONFIG_FILES(t/support/etc/rsync.conf:t/support/etc/rsync.conf.in)
 AC_CONFIG_FILES(t/support/etc/gnu_cp.conf:t/support/etc/gnu_cp.conf.in)
 AC_CONFIG_FILES(t/support/etc/relative_delete_bugfix.conf:t/support/etc/relative_delete_bugfix.conf.in)
 AC_CONFIG_FILES(t/support/etc/snapshot_root_with_space.conf:t/support/etc/snapshot_root_with_space.conf.in)
 AC_CONFIG_FILES(t/support/etc/link-dest_-t_when_only_one_snapshot.conf:t/support/etc/link-dest_-t_when_only_one_snapshot.conf.in)
 
+dnl Perl modules for regression test scripts
+AC_CONFIG_FILES(t/SysWrap.pm)
+
 dnl regression test scripts
 AC_CONFIG_FILES(t/configtest.t:t/configtest.t.in)
+AC_CONFIG_FILES(t/configtest-required-options.t)
+AC_CONFIG_FILES(t/file-permissions-tests.t)
 AC_CONFIG_FILES(t/rsync.t:t/rsync.t.in)
 AC_CONFIG_FILES(t/gnu_cp.t:t/gnu_cp.t.in)
 AC_CONFIG_FILES(t/relative_delete_bugfix.t:t/relative_delete_bugfix.t.in)
@@ -279,7 +290,7 @@ RSNAPSHOT_SYSCONFDIR=`eval echo ${sysconfdir}`
 
 if test -e "$RSNAPSHOT_SYSCONFDIR/rsnapshot.conf"; then
 	RSNAPSHOT_OLD_VERSION=`$PERL rsnapshot-program.pl -c $RSNAPSHOT_SYSCONFDIR/rsnapshot.conf check-config-version`
-	
+
 	# figure out if this is a fresh install or an upgrade
 	# advise the user accordingly
 	if test "$RSNAPSHOT_OLD_VERSION" = "unknown"; then
@@ -305,7 +316,7 @@ if test -e "$RSNAPSHOT_SYSCONFDIR/rsnapshot.conf"; then
 		echo "+----------------------------------------------------------------------------+"
 		exit 0
 	fi
-	
+
 	# this is already the latest version.
 	if test "$RSNAPSHOT_OLD_VERSION" = "1.2"; then
 		echo "$RSNAPSHOT_SYSCONFDIR/rsnapshot.conf found, and is up to date."

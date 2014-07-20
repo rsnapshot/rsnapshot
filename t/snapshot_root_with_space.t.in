@@ -2,19 +2,20 @@
 
 use strict;
 use Test::More tests => 5;
+use SysWrap;
 
 my $snap_root="t/support/snapshot root";
 
-# Make sure snap_root directory does not exist before we start 
-ok(! -d "$snap_root" || ! `rm -rf "$snap_root"`,
+# Make sure snap_root directory does not exist before we start
+ok(! -d "$snap_root" || 0 == execute("rm -rf \"$snap_root\""),
 	" snapshot root does not exist before testing starts");
 
-ok(! `@PERL@ ./rsnapshot -c t/support/etc/snapshot_root_with_space.conf hourly`,
+ok(0 == rsnapshot("-c t/support/etc/snapshot_root_with_space.conf hourly"),
 	" first rsnapshot ran");
-ok(! `@PERL@ ./rsnapshot -c t/support/etc/snapshot_root_with_space.conf hourly`,
+ok(0 == rsnapshot("-c t/support/etc/snapshot_root_with_space.conf hourly"),
 	" second rsnapshot ran");
 ok(-d "$snap_root/hourly.0" && -d "$snap_root/hourly.1",
 	" hourly.0 and hourly.1 directories exist afterward");
 
-ok(! `rm -rf "$snap_root"`,
+ok(0 == execute("rm -rf \"$snap_root\""),
 	" Removed snapshot root to clean up");
