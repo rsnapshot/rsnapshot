@@ -290,6 +290,8 @@ RPM_RELEASE = 1
 # If you lack GNU make, you could use "test_cases = t/*.t" as an approximation.
 test_cases_in := $(wildcard t/*.t.in)
 test_cases := $(test_cases_in:%.in=%)
+test_configs_in := t/support/etc/*.conf.in
+test_configs := $(test_configs_in:%.in=%)
 bin_SCRIPTS = rsnapshot rsnapshot-diff
 man_MANS = rsnapshot.1 rsnapshot-diff.1
 sysconf_DATA = rsnapshot.conf.default
@@ -862,7 +864,7 @@ rsnapshot-$(VERSION).tar.gz: $(man_MANS) rpm-patch Makefile $(bin_SCRIPTS) $(sys
 	tar czf rsnapshot-$(VERSION).tar.gz rsnapshot-$(VERSION)/
 	rm -rf rsnapshot-$(VERSION)/
 	@echo
-test: rsnapshot $(test_cases)
+test: rsnapshot $(test_cases) $(test_configs)
 	@PERL@ -MTest::Harness -e 'runtests(glob "t/*.t")';
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
