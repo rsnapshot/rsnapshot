@@ -507,14 +507,14 @@ sub parse_config_file {
 	my @configs = ();
 	
 	# open the config file
-	my $config_file = shift() || $config_file;
+	my $current_config_file = shift() || $config_file;
 	my $CONFIG;
-	if($config_file =~ /^`(.*)`$/) {
+	if($current_config_file =~ /^`(.*)`$/) {
 	    open($CONFIG, "$1 |") 
 	        or bail("Couldn't execute \"$1\" to get config information\n");
 	} else {
-	    $CONFIG = IO::File->new($config_file)
-		or bail("Could not open config file \"$config_file\"\nAre you sure you have permission?");
+	    $CONFIG = IO::File->new($current_config_file)
+		or bail("Could not open config file \"$current_config_file\"\nAre you sure you have permission?");
         }
 	
 	# read it line by line
@@ -524,6 +524,11 @@ sub parse_config_file {
 		
 		# count line numbers
 		$file_line_num++;
+		
+		# Ensure the correct filename is reported in error messages.  Setting it on
+		# every iteration ensures it will be reset after recursive calls to this
+		# function.
+		$config_file = $current_config_file;
 		
 		# assume the line is formatted incorrectly
 		my $line_syntax_ok = 0;
@@ -1989,7 +1994,7 @@ sub print_warn {
 	}
 	
 	# write to log
-	log_msg($str, $level);
+	log_warn($str, $level);
 }
 
 # accepts string, and level
@@ -2125,15 +2130,15 @@ sub syslog_msg {
 	if (defined($config_vars{'cmd_logger'})) {
 		# print out our call to syslog
 		if (defined($verbose) && ($verbose >= 4)) {
-			print_cmd("$config_vars{'cmd_logger'} -i -p $facility.$level -t rsnapshot $msg");
+			print_cmd("$config_vars{'cmd_logger'} -p $facility.$level -t rsnapshot[$$] $msg");
 		}
 		
 		# log to syslog
 		if (0 == $test) {
-			$result = system($config_vars{'cmd_logger'}, '-i', '-p', "$facility.$level", '-t', 'rsnapshot', $msg);
+			$result = system($config_vars{'cmd_logger'}, '-p', "$facility.$level", '-t', "rsnapshot[$$]", $msg);
 			if (0 != $result) {
 				print_warn("Could not log to syslog:", 2);
-				print_warn("$config_vars{'cmd_logger'} -i -p $facility.$level -t rsnapshot $msg", 2);
+				print_warn("$config_vars{'cmd_logger'} -p $facility.$level -t rsnapshot[$$] $msg", 2);
 			}
 		}
 	}
