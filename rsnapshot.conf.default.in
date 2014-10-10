@@ -156,6 +156,12 @@ lockfile	/var/run/rsnapshot.pid
 #include_file	/path/to/include/file
 #exclude_file	/path/to/exclude/file
 
+# The filter_file parameter, if enabled, is passed to rsync using the
+# option --filter='merge /path/to/filter/file'. Please look up the --filter
+# option in the rsync man page for more details.
+#
+#filter_file	/path/to/filter/file
+
 # If your version of rsync supports --link-dest, consider enabling this.
 # This is the best way to support special files (FIFOs, etc) cross-platform.
 # The default is 0 (off).
