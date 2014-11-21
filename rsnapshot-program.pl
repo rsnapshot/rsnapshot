@@ -3450,7 +3450,7 @@ sub rsync_backup_point {
 		
 		# if we have any args for SSH, add them
 		if ( defined($ssh_args) ) {
-			push( @rsync_long_args_stack, "--rsh=\"$config_vars{'cmd_ssh'} $ssh_args\"" );
+			push( @rsync_long_args_stack, "--rsh=$config_vars{'cmd_ssh'} $ssh_args" );
 			
 		# no arguments is the default
 		} else {
