@@ -45,6 +45,8 @@ use File::stat;			# stat(), lstat()
 use POSIX qw(locale_h);	# setlocale()
 use Fcntl;				# sysopen()
 use IO::File;			# recursive open in parse_config_file
+use IPC::Open2;			# open2() for "cmd_snapshot"
+use POSIX ":sys_wait_h";# waitpid() for "cmd_snapshot"
 
 ########################################
 ###           CPAN MODULES           ###
@@ -77,6 +79,9 @@ my %config_vars;
 # array of hash_refs containing the destination backup point
 # and either a source dir or a script to run
 my @backup_points;
+
+# hash containing file descriptors for the external "snapshot" command
+my %backup_snapshots;
 
 # array of backup points to rollback, in the event of failure
 my @rollback_points;
@@ -280,9 +285,15 @@ create_snapshot_root();
 # we ever mention are absolute.
 chdir($config_vars{'snapshot_root'});
 
+# create a snapshot for each backup source
+create_source_snapshots();
+
 # actually run the backup job
 # $cmd should store the name of the interval we'll run against
 handle_interval( $cmd );
+
+# release the snapshots for each backup source
+release_source_snapshots();
 
 # if we have a lockfile, remove it
 # however, this will have already been done if use_lazy_deletes is turned
@@ -763,6 +774,18 @@ sub parse_config_file {
 			}
 		}
 		
+		# CHECK FOR snapshot (optional)
+		if ($var eq 'cmd_snapshot') {
+			if (is_valid_script($value)) {
+				$config_vars{'cmd_snapshot'} = $value;
+				$line_syntax_ok = 1;
+				next;
+			} else {
+				config_err($file_line_num, "$line - $value is not a valid executable");
+				next;
+			}
+		}
+
 		# CHECK FOR lvcreate (optional)
 		if ($var eq 'linux_lvm_cmd_lvcreate') {
 			if (is_valid_script($value)) {
@@ -1042,7 +1065,9 @@ sub parse_config_file {
 			# This should work in any version of rsync since 2.6.4 except for 2.6.7, due to a bug:
 			# http://lists.samba.org/archive/rsync/2006-March/014953.html
 			if ((is_real_local_abs_path("$src")) && ($config_vars{'snapshot_root'} =~ m/^$src/)) {
-				$hash{'opts'}{'extra_rsync_long_args'} .= sprintf(' --filter=-/_%s', $config_vars{'snapshot_root'});
+				my $altroot = "";
+				$altroot = $config_vars{'snapshot_mountpath'} if defined ($config_vars{'snapshot_mountpath'});
+				$hash{'opts'}{'extra_rsync_long_args'} .= sprintf(' --filter=-/_%s%s', $altroot, $config_vars{'snapshot_root'});
 			}
 			
 			push(@backup_points, \%hash);
@@ -1288,6 +1313,18 @@ sub parse_config_file {
 		# DU ARGS
 		if ($var eq 'du_args') {
 			$config_vars{'du_args'} = $value;
+			$line_syntax_ok = 1;
+			next;
+		}
+		# Snapshot CMDS
+		if ($var =~ m/^cmd_snapshot$/) {
+			$config_vars{$var} = $value;
+			$line_syntax_ok = 1;
+			next;
+		}
+		# Snapshot ARGS
+		if ($var =~ m/^snapshot_mountpath$/) {
+			$config_vars{$var} = $value;
 			$line_syntax_ok = 1;
 			next;
 		}
@@ -1691,6 +1728,10 @@ sub parse_backup_opts {
 		} elsif ( $name eq 'ssh_args' ) {
 			# pass unchecked
 			
+		# snapshot args
+		} elsif ( $name =~ m/^snapshot_mountpath$/ ) {
+			# pass unchecked
+
 		# lvm args
 		} elsif ( $name =~ m/^linux_lvm_(vgpath|snapshotname|snapshotsize|mountpath)$/ ) {
 			# pass unchecked
@@ -1860,6 +1901,9 @@ sub bail {
 	if(0 == $stop_on_stale_lockfile) {
 	        remove_lockfile();
 	}
+	
+	# release any source snapshots that have been created
+	release_source_snapshots();
 	
 	# exit showing an error
 	exit(1);
@@ -2841,6 +2885,103 @@ sub add_slashdot_if_root {
 	return ($str);
 }
 
+# accepts nothing
+# returns nothing
+# calls external "snapshot" script if defined, which creates snapshots
+# of each backup source and mounts the snapshots.  saves file descriptor
+# from "snapshot" command in %backup_snapshots
+sub create_source_snapshots {
+	my %hosts;
+	my $ssh_args = $default_ssh_args;
+
+	if (not defined($config_vars{'cmd_snapshot'})) {
+		return;
+	}
+
+	unless (defined($config_vars{'snapshot_mountpath'})) {
+		bail("Missing required argument for cmd_snapshot: snapshot_mountpath");
+	}
+
+	if (defined($config_vars{'ssh_args'})) {
+		$ssh_args = $config_vars{'ssh_args'};
+	}
+
+	# Create a hash of hosts where snapshots are needed, and a list
+	# of directories on each host to snapshot.
+	foreach my $bp_ref (@backup_points) {
+		if ( defined($$bp_ref{'dest'}) && defined($$bp_ref{'src'}) ) {
+			my $dest = $$bp_ref{'dest'};
+			my $src = $$bp_ref{'src'};
+			# SEE WHAT KIND OF SOURCE WE'RE DEALING WITH
+			#
+			# local filesystem
+			if ( is_real_local_abs_path($src) ) {
+				if ( defined($hosts{'localhost'}) ) {
+					push(@{$hosts{'localhost'}}, $src);
+				} else {
+					@{$hosts{'localhost'}} = ($src,);
+				}
+			# if this is a user@host:/path (or ...:./path, or ...:~/...), use ssh
+			} elsif ( is_ssh_path($src) ) {
+				$src =~ m/^(.*?\@)?(.*?):([~.]?\/.*)$/;
+				my $host = "$1$2";
+				if ( defined($hosts{$host}) ) {
+					push(@{$hosts{$host}}, $3);
+				} else {
+					@{$hosts{$host}} = ($3,);
+				}
+			}
+		}
+	}
+	
+	# Create snapshots on each host
+	foreach my $host (keys %hosts) {
+		my @cmd_stack = ();
+
+		push(@cmd_stack, split(' ',$config_vars{'cmd_snapshot'}));
+		push(@cmd_stack, '-t');
+		push(@cmd_stack, $config_vars{'snapshot_mountpath'});
+		foreach my $dir (@{$hosts{$host}}) {
+			push(@cmd_stack, $dir);
+		}
+
+		if ( 'localhost' ne $host ) {
+			my $sshcmd = join(' ', @cmd_stack);
+			@cmd_stack = ();
+			push(@cmd_stack, "$config_vars{'cmd_ssh'}" );
+			push(@cmd_stack, split(' ',$ssh_args) );
+			push(@cmd_stack, "$host" );
+			push(@cmd_stack, "$sshcmd");
+		}
+		
+		print_cmd(@cmd_stack);
+		if (0 == $test) {
+			my $pid = open2(\*CHLD_OUT, \*CHLD_IN, @cmd_stack);
+			# for a local snapshot, read until CHLD_OUT closes
+			# for a snapshot over ssh, read until the snapshot application prints "done"
+			while(<CHLD_OUT>) { last if($_ =~ /^done$/ && 'localhost' ne $host)};
+			# ensure "snapshot" didn't fail
+			if (waitpid($pid, WNOHANG) > 0) {
+				bail("Failed to create snapshot for host: $host");
+			}
+			# save a reference to CHLD_IN.  When this is closed, the snapshot
+			# will be released.
+			$hosts{$host} = *CHLD_IN;
+		}
+	}
+}
+
+# accepts nothing
+# returns nothing
+# closes the file descriptors in %backup_snapshots, which signals to
+# the external script that snapshots should be umounted and released.
+sub release_source_snapshots {
+	foreach my $fd (values %backup_snapshots) {
+		close $fd;
+	}
+}
+
+
 # accepts the interval (cmd) to run against
 # returns nothing
 # calls the appropriate subroutine, depending on whether this is the lowest interval or a higher one
@@ -3443,7 +3584,10 @@ sub rsync_backup_point {
 	#
 	# local filesystem
 	if ( is_real_local_abs_path($src) ) {
-		# no change
+		# if we're using the external "snapshot" application, rewrite src to point to mount path
+		if (defined($config_vars{'cmd_snapshot'})) {
+			$src = sprintf('%s/%s', $config_vars{'snapshot_mountpath'}, $src);
+		}
 		
 	# if this is a user@host:/path (or ...:./path, or ...:~/...), use ssh
 	} elsif ( is_ssh_path($src) ) {
@@ -3455,6 +3599,12 @@ sub rsync_backup_point {
 		# no arguments is the default
 		} else {
 			push( @rsync_long_args_stack, "--rsh=$config_vars{'cmd_ssh'}" );
+		}
+
+		# if we're using the external "snapshot" application, rewrite src to point to mount path
+		if (defined($config_vars{'cmd_snapshot'})) {
+			$src =~ m/^(.*?\@)?(.*?):([~.]?\/.*)$/;
+			$src = sprintf('%s%s:%s/%s', $1, $2, $config_vars{'snapshot_mountpath'}, $3);
 		}
 		
 	# anonymous rsync
@@ -6216,6 +6366,15 @@ managing snapshots of LVM volumes and are otherwise optional.
 
 =back
 
+B<cmd_snapshot>       Full path to snapshot (optional)
+
+=over 4
+
+Path to "snapshot" script.  Supported for both local and ssh backups, but
+must be installed locally for path validation.
+
+=back
+
 B<retain>             [name]   [number]
 
 =over 4
@@ -6506,6 +6665,15 @@ B<linux_lvm_mountpath		/mnt/lvm-snapshot>
 =over 4
 
 Mount point to use to temporarily mount the snapshot(s). 
+
+=back
+
+B<snapshot_mountpath>
+
+=over 4
+
+Mount point to use to temporarily mount the snapshot(s).  Required if
+cmd_snapshot is defined.
 
 =back
 
@@ -7236,6 +7404,14 @@ Ben Low (B<ben@bdlow.net>)
 =over 4
 
 Linux LVM snapshot support
+
+=back
+
+Gordon Messmer (B<gordon@dragonsdawn.net>)
+
+=over 4
+
+cmd_snapshot support
 
 =back
 
