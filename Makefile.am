@@ -1,5 +1,3 @@
-# $Id: Makefile.am,v 1.91 2009/11/21 06:57:00 djk20 Exp $ #
-
 # rsnapshot version
 VERSION = 1.3.1.1
 

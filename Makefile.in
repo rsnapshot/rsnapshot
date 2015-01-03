@@ -14,9 +14,6 @@
 
 @SET_MAKE@
 
-# $Id: Makefile.in,v 1.111 2009/03/27 21:36:34 djk20 Exp $ #
-
-
 srcdir = @srcdir@
 top_srcdir = @top_srcdir@
 VPATH = @srcdir@

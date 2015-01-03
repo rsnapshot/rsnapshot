@@ -1,5 +1,3 @@
-dnl $Id: configure.ac,v 1.52 2009/11/21 07:04:02 djk20 Exp $
-
 AC_INIT(rsnapshot, 1.3.1.1, rsnapshot-discuss@lists.sourceforge.net)
 AM_INIT_AUTOMAKE
 AC_PROG_MAKE_SET

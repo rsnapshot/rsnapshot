@@ -4,8 +4,6 @@
 # Created: 1993-05-16
 # Public domain
 
-# $Id: mkinstalldirs,v 1.2 2005/01/26 06:36:50 scubaninja Exp $
-
 errstatus=0
 
 for file
