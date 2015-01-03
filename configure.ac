@@ -245,11 +245,9 @@ AC_SUBST(CMD_DU, "cmd_du		$DU")
 
 
 
-dnl Combine the preamble with a normal, working script
-AC_CONFIG_FILES(rsnapshot:rsnapshot-preamble.pl:rsnapshot-program.pl)
-
-dnl Combine the preamble with the rsnapshot-diff script to determine path to perl
-AC_CONFIG_FILES(rsnapshot-diff:rsnapshot-preamble.pl:rsnapshot-diff.pl)
+# replace perl paths
+AC_CONFIG_FILES(rsnapshot:rsnapshot-program.pl)
+AC_CONFIG_FILES(rsnapshot-diff:rsnapshot-diff.pl)
 
 dnl try to find dependent programs for the config file
 AC_CONFIG_FILES(rsnapshot.conf.default:rsnapshot.conf.default.in)
