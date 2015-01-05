@@ -94,7 +94,7 @@ rsnapshot-$(VERSION).tar.gz: $(man_MANS) rpm-patch Makefile $(bin_SCRIPTS) $(sys
 	
 	@# autoconf files
 	cp -p Makefile.am Makefile.in aclocal.m4 configure configure.ac config.guess config.sub \
-		install-sh missing mkinstalldirs rsnapshot-$(VERSION)/
+		install-sh missing rsnapshot-$(VERSION)/
 	
 	@# redhat
 	mkdir rsnapshot-$(VERSION)/redhat/
