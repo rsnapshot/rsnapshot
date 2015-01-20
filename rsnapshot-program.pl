@@ -3648,7 +3648,7 @@ sub rsync_backup_point {
 	$result = 1;
 	if (0 == $test) {
 		while ($tryCount < $rsync_numtries && $result !=0) {
-			my $pid = open(RSYNC, "@cmd_stack 2>&1 |")
+			my $pid = open(RSYNC, "|-", (@cmd_stack, "2>&1 |"))
 				or die "Couldn't fork rsync: $!\n";
 			while(<RSYNC>){
 				print_msg($_, 4);
