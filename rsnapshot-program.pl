@@ -46,6 +46,7 @@ use POSIX qw(locale_h);	# setlocale()
 use Fcntl;				# sysopen()
 use IO::File;			# recursive open in parse_config_file
 use IPC::Open3 qw(open3); #open rsync with error output
+use IO::Handle; # handle autoflush for rsync-output
 
 ########################################
 ###           CPAN MODULES           ###
@@ -3649,17 +3650,21 @@ sub rsync_backup_point {
 	$result = 1;
 	if (0 == $test) {
 		while ($tryCount < $rsync_numtries && $result !=0) {
-			my ($rsync_in, $rsync_out, $rsync_err);
-			use Symbol 'gensym'; $rsync_err = gensym;
-			my $pid = open3($rsync_in, $rsync_out, $rsync_err, @cmd_stack)
-			#my $pid = open(RSYNC, "|-", (@cmd_stack, "2>&1 |"))
+
+			# open rsync and capture STDOUT and STDERR
+			# the 3rd argument is undefined, that STDERR gets mashed into STDOUT and we
+			# don't have to care about getting both STREAMS together without mixing up time
+			my ($rsync_in, $rsync_out);
+			my $pid = open3($rsync_in, $rsync_out, undef, @cmd_stack)
 				or die "Couldn't fork rsync: $!\n";
+
+			# add autoflush to get output by time and not at the end when rsync is finished
+			$rsync_out->autoflush();
+
 			while(<$rsync_out>){
 				print_msg($_, 4);
 			}
-			while(<$rsync_err>){
-				print_msg($_, 4);
-			}
+
 			$result = $?;
 			$tryCount += 1;
 		}
