@@ -45,6 +45,7 @@ use File::stat;			# stat(), lstat()
 use POSIX qw(locale_h);	# setlocale()
 use Fcntl;				# sysopen()
 use IO::File;			# recursive open in parse_config_file
+use IPC::Open3 qw(open3); #open rsync with error output
 
 ########################################
 ###           CPAN MODULES           ###
@@ -3648,9 +3649,15 @@ sub rsync_backup_point {
 	$result = 1;
 	if (0 == $test) {
 		while ($tryCount < $rsync_numtries && $result !=0) {
-			my $pid = open(RSYNC, "|-", (@cmd_stack, "2>&1 |"))
+			my ($rsync_in, $rsync_out, $rsync_err);
+			use Symbol 'gensym'; $rsync_err = gensym;
+			my $pid = open3($rsync_in, $rsync_out, $rsync_err, @cmd_stack)
+			#my $pid = open(RSYNC, "|-", (@cmd_stack, "2>&1 |"))
 				or die "Couldn't fork rsync: $!\n";
-			while(<RSYNC>){
+			while(<$rsync_out>){
+				print_msg($_, 4);
+			}
+			while(<$rsync_err>){
 				print_msg($_, 4);
 			}
 			$result = $?;
