@@ -3201,19 +3201,23 @@ sub handle_interval {
 	}
 
 	# if use_lazy_delete is on, delete the _delete.$$ directory
-	# we just check for the directory, it will have been created or not depending on the value of use_lazy_delete
-	if (-d "$config_vars{'snapshot_root'}/_delete.$$") {
+	if ($use_lazy_deletes) {
 
-		# this is the last thing to do here, and it can take quite a while.
+		# Besides the _delete.$$ directory, the lockfile has to be removed as well.
+		# The reason is that the last task to do in this subroutine is to delete the _delete.$$ directory, and it can take quite a while.
 		# we remove the lockfile here since this delete shouldn't block other rsnapshot jobs from running
 		remove_lockfile();
 
-		# start the delete
-		display_rm_rf("$config_vars{'snapshot_root'}/_delete.$$");
-		if (0 == $test) {
-			my $result = rm_rf("$config_vars{'snapshot_root'}/_delete.$$");
-			if (0 == $result) {
-				bail("Error! rm_rf(\"$config_vars{'snapshot_root'}/_delete.$$\")\n");
+		# Check for the directory. It might not exist, e.g. in case of the 'sync' command.
+		if (-d "$config_vars{'snapshot_root'}/_delete.$$") {
+
+			# start the delete
+			display_rm_rf("$config_vars{'snapshot_root'}/_delete.$$");
+			if (0 == $test) {
+				my $result = rm_rf("$config_vars{'snapshot_root'}/_delete.$$");
+				if (0 == $result) {
+					bail("Error! rm_rf(\"$config_vars{'snapshot_root'}/_delete.$$\")\n");
+				}
 			}
 		}
 		else {
