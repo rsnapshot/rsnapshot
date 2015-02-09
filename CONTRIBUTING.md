@@ -34,6 +34,8 @@ If you checked rsnapshot out of the git-repository, you have to generate the con
 ## Development
 The `master` branch should be complete, by which we mean that there should be no half-completed features in it. Any development should be done in a separate branch, each of them containing only a single feature or bugfix.
 
+![The branch-model in general](./contrib/branchtree.svg?raw=true)
+
 ### Coding standards
 Changes that do not conform to the coding standard will not be accepted. The current coding standard is primarily encapsulated in the code itself. However briefly:
 
