@@ -68,7 +68,7 @@ e.g. `release-1-4`. The first release of that version should be tagged `1.4.0`.
 Subsequent releases of that version, which should contain no changes other
 than bugfixes and security fixes, should also be tagged, e.g. `1.4.1`.
 
-In the end, there should be for every release a branch like `release-X-Y`. The sub-releases should only get tagged on their specific branches.
+In the end, there should be for every minor release a branch like `release-X-Y`. The sub-releases should only get tagged on their specific branches.
 
 ### release-model in practice
 Here is a model presented for release 1.4.0. Make sure, that you start
@@ -78,6 +78,8 @@ on the master-branch and have a clean working-directory!
     - `git checkout -b release-1-4`
 
 2.  If there are necessary changes to do before release, make them and commit them now.
+    Mind: Any auto-generated script should *not* get tracked. You should only merge the actual changes.
+    The configure-scripts are generated later for the release.
     - `git add -A`
     - `git commit -m "Finish Release v1.4.0"`
 
@@ -85,12 +87,13 @@ on the master-branch and have a clean working-directory!
     - `git tag 1.4.0`
     - `git push --tags`
 
-4.  Now generate the configure-file with autogen.sh and make the release-tarball
+4.  Wait for Travis-CI to finish, the fully-built release is then available on the Github-releases page.
+
+    Travis will execute these commands to make a release:
     - `./autogen.sh`
-    - `make dist`
-
-5.  Now upload the tarball to the github-page for the specific version.
-
+    - `make`
+    - `make tar`
+    - upload generated file by make tar to Github releases-page
 
 ### make targets
 
@@ -100,4 +103,3 @@ on the master-branch and have a clean working-directory!
 * *make test*: run the testsuite
 * *make clean*: clean up the mess from autoconf
 * *make dist*: make the release-tarball
-
