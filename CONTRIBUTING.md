@@ -7,11 +7,11 @@ describes the whole release and development process.
 
 ## Bug tracker
 
-The bug tracker is hosted on [Github](https://github.com/DrHyde/rsnapshot/issues). Please don't report any issues in the tracker on Sourceforge.
+The bug tracker is hosted on [Github](https://github.com/rsnapshot/rsnapshot/issues). Please don't report any issues in the tracker on Sourceforge.
 
 ## Source code control
 
-The rsnapshot source code is on [Github](https://github.com/DrHyde/rsnapshot).
+The rsnapshot source code is on [Github](https://github.com/rsnapshot/rsnapshot).
 
 Auto-generated files should not get tracked. If you need the configure-script, generate it with `./autogen.sh`. Keep in mind that you have to execute `./autoclean.sh` before you commit.
 
