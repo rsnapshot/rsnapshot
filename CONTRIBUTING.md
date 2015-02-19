@@ -20,16 +20,15 @@ Auto-generated files should not get tracked. If you need the configure-script, g
 If you have found a bug, open an issue-report on Github. Before you open a report, please search if there are corresponding issues already opened or whether the bug has already been fixed on the `master` branch. Please provide the rsnapshot-version, and describe how to reproduce the bug. It would be great if you could provide also a fix.
 
 ## Building rsnapshot
+If you checked rsnapshot out of the git-repository, you have to generate the configure-script with:
+
+    $ ./autogen.sh
 
 rsnapshot uses the common triple to build software:
 
     $ ./configure
     $ make
     $ make install
-
-If you checked rsnapshot out of the git-repository, you have to generate the configure-script with:
-
-    $ ./autogen.sh
 
 ## Development
 The `master` branch should be complete, by which we mean that there should be no half-completed features in it. Any development should be done in a separate branch, each of them containing only a single feature or bugfix.
