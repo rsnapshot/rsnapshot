@@ -1188,6 +1188,23 @@ sub parse_config_file {
 			$line_syntax_ok = 1;
 			next;
 		}
+		#WAIT_FOR_LOCK
+		if ($var eq 'wait_for_lock') {
+			if (!defined($value)) {
+				config_err($file_line_num, "$line - wait_for_lock can not be blank");
+				next;
+			}
+			if (!is_boolean($value)) {
+				config_err(
+					$file_line_num, "$line - \"$value\" is not a legal value for wait_for_lock, must be 0 or 1 only"
+				);
+				next;
+			}
+
+			$config_vars{'wait_for_lock'} = $value;
+			$line_syntax_ok = 1;
+			next;
+		}
 		# INCLUDE
 		if ($var eq 'include') {
 			if (!defined($rsync_include_args)) {
