@@ -6469,6 +6469,8 @@ B<lockfile    /var/run/rsnapshot.pid>
 
 B<stop_on_stale_lockfile	0>
 
+B<wait_for_lock	0>
+
 =over 4
 
 Lockfile to use when rsnapshot is run. This prevents a second invocation
@@ -6476,11 +6478,22 @@ from clobbering the first one. If not specified, no lock file is used.
 Make sure to use a directory that is not world writeable for security
 reasons.  Use of a lock file is strongly recommended.
 
-If a lockfile exists when rsnapshot starts, it will try to read the file
-and stop with an error if it can't.  If it *can* read the file, it sees if
-a process exists with the PID noted in the file.  If it does, rsnapshot
-stops with an error message.  If there is no process with that PID, then
-we assume that the lockfile is stale and ignore it *unless*
+If a lockfile exists when rsnapshot starts, it will try to read the
+file and stop with an error if it can't.  If it *can* read the file,
+it sees if a process exists with the PID noted in the file.  If it
+does, rsnapshot can either stop with an error message or continue
+trying to acquire the lock by checking back repeatedly whether the
+other process has exited. This is determined by the wait_for_lock flag
+-- if it is zero (the default), rsnapshot won't wait for the lock to
+become available, otherwise it will. This way you can easily start
+several rsnapshot instances simultaneously (e.g. from the same cron
+time slot) and make sure they don't clobber each other's files, while
+at the same time also ensuring that they will all run eventually. With
+wait_for_lock = 0, only one of them would get to run, while the others
+would all bail out without backing up anything.
+
+If there is no process with the PID noted in the lock file, then we
+assume that the lockfile is stale and ignore it *unless*
 stop_on_stale_lockfile is set to 1 in which case we stop.
 
 stop_on_stale_lockfile defaults to 0.

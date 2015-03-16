@@ -118,6 +118,11 @@ loglevel	3
 #
 lockfile	/var/run/rsnapshot.pid
 
+# If enabled, wait until the lockfile can be created (i.e. any other instance
+# has finished) and start the backup then, rather than exiting if the lockfile
+# can't be written immediately
+wait_for_lock	0
+
 # Default rsync args. All rsync commands have at least these options set.
 #
 #rsync_short_args	-a
