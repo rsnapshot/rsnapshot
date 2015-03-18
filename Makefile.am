@@ -1,5 +1,3 @@
-# $Id: Makefile.am,v 1.91 2009/11/21 06:57:00 djk20 Exp $ #
-
 # rsnapshot version
 VERSION = 1.3.1.1
 
@@ -35,6 +33,7 @@ upgrade:
 
 clean:
 	rm -rf rsnapshot-$(VERSION)/
+	rm -f  $(man_MANS)
 	rm -rf autom4te.cache
 	rm -f rsnapshot-$(VERSION).tar.gz
 	rm -f rsnapshot-$(VERSION)-$(RPM_RELEASE).noarch.rpm
@@ -96,7 +95,7 @@ rsnapshot-$(VERSION).tar.gz: $(man_MANS) rpm-patch Makefile $(bin_SCRIPTS) $(sys
 	
 	@# autoconf files
 	cp -p Makefile.am Makefile.in aclocal.m4 configure configure.ac config.guess config.sub \
-		install-sh missing mkinstalldirs rsnapshot-$(VERSION)/
+		install-sh missing rsnapshot-$(VERSION)/
 	
 	@# redhat
 	mkdir rsnapshot-$(VERSION)/redhat/
