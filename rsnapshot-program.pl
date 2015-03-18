@@ -2320,7 +2320,7 @@ sub remove_lockfile {
 		  chomp(my $locked_pid = <LOCKFILE>);
 		  close(LOCKFILE);
 		  if($locked_pid != $$) {
-		    print_warn("About to remove lockfile $lockfile which belongs to a different process (this is OK if it's a stale lock)");
+		    print_warn("About to remove lockfile $lockfile which belongs to a different process: $locked_pid (this is OK if it's a stale lock)");
 		  }
 		} else {
 		  print_err ("Could not read lockfile $lockfile: $!", 0);
