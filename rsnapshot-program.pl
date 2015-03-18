@@ -2120,23 +2120,49 @@ sub syslog_msg {
 	my $facility	= shift(@_);
 	my $level		= shift(@_);
 	my $result		= undef;
-	
+
 	if (!defined($msg))			{ return (undef); }
 	if (!defined($facility))	{ $facility	= 'user'; }
 	if (!defined($level))		{ $level	= 'info'; }
 	
 	if (defined($config_vars{'cmd_logger'})) {
+
+		# log_tool supports only 3 levels
+		if ($config_vars{'cmd_logger'} =~ /log_tool$/) {
+			if (($level eq 'err') || ($level eq 'crit') || ($level eq 'alert') || ($level eq 'emerg')) {
+				$level = 2;
+			} elsif ($level eq 'warning') {
+				$level = 1;
+			} elsif (($level eq 'debug') || ($level eq 'info') || ($level eq 'notice')) {
+				$level = 0;
+			} else {
+				print_warn("Unexpected level value: $level", 2);
+			}
+		}
+
 		# print out our call to syslog
 		if (defined($verbose) && ($verbose >= 4)) {
-			print_cmd("$config_vars{'cmd_logger'} -p $facility.$level -t rsnapshot[$$] $msg");
+			if ($config_vars{'cmd_logger'} =~ /log_tool$/) {
+				print_cmd("$config_vars{'cmd_logger'} -t $level -a $msg");
+			} else {
+				print_cmd("$config_vars{'cmd_logger'} -p $facility.$level -t rsnapshot $msg");
+			}
 		}
 		
 		# log to syslog
 		if (0 == $test) {
-			$result = system($config_vars{'cmd_logger'}, '-p', "$facility.$level", '-t', "rsnapshot[$$]", $msg);
-			if (0 != $result) {
-				print_warn("Could not log to syslog:", 2);
-				print_warn("$config_vars{'cmd_logger'} -p $facility.$level -t rsnapshot[$$] $msg", 2);
+			if ($config_vars{'cmd_logger'} =~ /log_tool$/) {
+				$result = system($config_vars{'cmd_logger'}, '-t', $level, '-a', $msg);
+				if (0 != $result) {
+					print_warn("Could not log to syslog:", 2);
+					print_warn("$config_vars{'cmd_logger'} -t $level -a [rsnapshot], $msg", 2);
+				}
+			} else {
+				$result = system($config_vars{'cmd_logger'}, '-p', "$facility.$level", '-t', 'rsnapshot', $msg);
+				if (0 != $result) {
+					print_warn("Could not log to syslog:", 2);
+					print_warn("$config_vars{'cmd_logger'} -p $facility.$level -t rsnapshot $msg", 2);
+				}
 			}
 		}
 	}
