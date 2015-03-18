@@ -1,5 +1,3 @@
-#!/bin/sh -x
+#!/bin/sh
 
-aclocal
-autoconf
-automake --add-missing --copy
+autoreconf -i

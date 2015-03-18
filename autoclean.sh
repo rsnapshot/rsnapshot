@@ -1,4 +1,4 @@
-#!/bin/sh -xu
+#!/bin/sh
 
 [ -f Makefile ] && make clean
 rm -rf autom4te.cache

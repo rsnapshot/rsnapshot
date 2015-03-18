@@ -1,7 +1,8 @@
-AC_INIT(rsnapshot, 1.3.1.1, rsnapshot-discuss@lists.sourceforge.net)
+AC_INIT(rsnapshot, [m4_esyscmd_s([git describe --tags --always])], rsnapshot-discuss@lists.sourceforge.net)
 AM_INIT_AUTOMAKE
 AC_PROG_MAKE_SET
 AC_PROG_INSTALL
+AC_PROG_LIBTOOL
 AC_CONFIG_FILES(Makefile)
 
 dnl

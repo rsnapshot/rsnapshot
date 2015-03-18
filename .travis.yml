@@ -1,0 +1,33 @@
+os:
+  - linux
+  - osx
+language: perl
+perl:
+  - "5.20"
+  - "5.18"
+  - "5.16"
+  - "5.14"
+install:
+  - "./autogen.sh"
+  - "./configure"
+script:
+  - make
+  - make test
+before_deploy:
+  - make tar
+deploy:
+  provider: releases
+  api_key:
+    secure: <need to generate and encrypt the key>
+  file: rsnapshot-${TRAVIS_TAG}.tar.gz
+  skip_cleanup: true
+  on:
+    tags: true
+notifications:
+  email:
+    # maybe we have to add rsnapshot-maintainers@lists.sourceforge.net
+    # this will depend on activity and notification-settings
+    recipients:
+      - benedikt@heine.rocks
+    on_success: change
+    on_failure: always
