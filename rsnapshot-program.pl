@@ -43,6 +43,7 @@ use File::stat;			# stat(), lstat()
 use POSIX qw(locale_h);	# setlocale()
 use Fcntl;				# sysopen()
 use IO::File;			# recursive open in parse_config_file
+use filetest 'access';	# use access() call instead of stat() for file tests
 
 ########################################
 ###           CPAN MODULES           ###
