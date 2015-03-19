@@ -1186,6 +1186,23 @@ sub parse_config_file {
 			$line_syntax_ok = 1;
 			next;
 		}
+		#WAIT_FOR_LOCK
+		if ($var eq 'wait_for_lock') {
+			if (!defined($value)) {
+				config_err($file_line_num, "$line - wait_for_lock can not be blank");
+				next;
+			}
+			if (!is_boolean($value)) {
+				config_err(
+					$file_line_num, "$line - \"$value\" is not a legal value for wait_for_lock, must be 0 or 1 only"
+				);
+				next;
+			}
+
+			$config_vars{'wait_for_lock'} = $value;
+			$line_syntax_ok = 1;
+			next;
+		}
 		# INCLUDE
 		if ($var eq 'include') {
 			if (!defined($rsync_include_args)) {
@@ -2219,6 +2236,7 @@ sub log_startup {
 	log_msg("$run_string: started", 2);
 }
 
+
 # accepts no arguments
 # returns undef if lockfile isn't defined in the config file, and 1 upon success
 # also, it can make the program exit with 1 as the return value if it can't create the lockfile
@@ -2230,6 +2248,33 @@ sub log_startup {
 # then see if that PID exists.  If it does, we stop, otherwise we assume it's
 # a stale lock and remove it first.
 sub add_lockfile {
+	my ($wait_time) = @_;
+	$wait_time = 60 unless defined($wait_time);
+	my $wait_for_lock = $config_vars{'wait_for_lock'};
+
+	while (1) {
+		my $ret = try_add_lockfile();
+		return $ret unless ($ret == 2 || $ret == 3);
+		if ($wait_for_lock) {
+			sleep $wait_time;
+		} else {
+			if (2 == $ret) {
+				print_err ("Lockfile $config_vars{'lockfile'} exists and so does its process, can not continue");
+				syslog_err("Lockfile $config_vars{'lockfile'} exists and so does its process, can not continue");
+			} else {
+				print_err ("Could not write lockfile $config_vars{'lockfile'}: $!", 1);
+				syslog_err("Could not write lockfile $config_vars{'lockfile'}");
+			}
+			exit(1);
+		}
+	}
+}
+
+
+# implements all of add_lockfile() except for the wait_for_lock flag. If the lockfile
+# is blocked, return 2 or 3 (depending on the specific condition) so the caller (add_lockfile())
+# can react according to the wait_for_lock setting.
+sub try_add_lockfile {
 	# if we don't have a lockfile defined, just return undef
 	if (!defined($config_vars{'lockfile'})) {
 		return (undef);
@@ -2255,9 +2300,7 @@ sub add_lockfile {
             chomp($pid);
             close(LOCKFILE);
             if(kill(0, $pid)) {
-                print_err ("Lockfile $lockfile exists and so does its process, can not continue");
-                syslog_err("Lockfile $lockfile exists and so does its process, can not continue");
-                exit(1);
+                return 2;
             } else {
 		if(1 == $stop_on_stale_lockfile) {
 		    print_err ("Stale lockfile $lockfile detected. You need to remove it manually to continue", 1);
@@ -2279,9 +2322,7 @@ sub add_lockfile {
 		# sysopen() can do exclusive opens, whereas perl open() can not
 		my $result = sysopen(LOCKFILE, $lockfile, O_WRONLY | O_EXCL | O_CREAT, 0644);
 		if (!defined($result) || 0 == $result) {
-			print_err ("Could not write lockfile $lockfile: $!", 1);
-			syslog_err("Could not write lockfile $lockfile");
-			exit(1);
+			return 3;
 		}
 		
 		# print PID to lockfile
@@ -2295,6 +2336,7 @@ sub add_lockfile {
 	
 	return (1);
 }
+
 
 # accepts no arguments
 #
@@ -6425,6 +6467,8 @@ B<lockfile    /var/run/rsnapshot.pid>
 
 B<stop_on_stale_lockfile	0>
 
+B<wait_for_lock	0>
+
 =over 4
 
 Lockfile to use when rsnapshot is run. This prevents a second invocation
@@ -6432,11 +6476,22 @@ from clobbering the first one. If not specified, no lock file is used.
 Make sure to use a directory that is not world writeable for security
 reasons.  Use of a lock file is strongly recommended.
 
-If a lockfile exists when rsnapshot starts, it will try to read the file
-and stop with an error if it can't.  If it *can* read the file, it sees if
-a process exists with the PID noted in the file.  If it does, rsnapshot
-stops with an error message.  If there is no process with that PID, then
-we assume that the lockfile is stale and ignore it *unless*
+If a lockfile exists when rsnapshot starts, it will try to read the
+file and stop with an error if it can't.  If it *can* read the file,
+it sees if a process exists with the PID noted in the file.  If it
+does, rsnapshot can either stop with an error message or continue
+trying to acquire the lock by checking back repeatedly whether the
+other process has exited. This is determined by the wait_for_lock flag
+-- if it is zero (the default), rsnapshot won't wait for the lock to
+become available, otherwise it will. This way you can easily start
+several rsnapshot instances simultaneously (e.g. from the same cron
+time slot) and make sure they don't clobber each other's files, while
+at the same time also ensuring that they will all run eventually. With
+wait_for_lock = 0, only one of them would get to run, while the others
+would all bail out without backing up anything.
+
+If there is no process with the PID noted in the lock file, then we
+assume that the lockfile is stale and ignore it *unless*
 stop_on_stale_lockfile is set to 1 in which case we stop.
 
 stop_on_stale_lockfile defaults to 0.
