@@ -1,5 +1,3 @@
-dnl $Id: configure.ac,v 1.52 2009/11/21 07:04:02 djk20 Exp $
-
 AC_INIT(rsnapshot, 1.3.1.1, rsnapshot-discuss@lists.sourceforge.net)
 AM_INIT_AUTOMAKE
 AC_PROG_MAKE_SET
@@ -247,11 +245,9 @@ AC_SUBST(CMD_DU, "cmd_du		$DU")
 
 
 
-dnl Combine the preamble with a normal, working script
-AC_CONFIG_FILES(rsnapshot:rsnapshot-preamble.pl:rsnapshot-program.pl)
-
-dnl Combine the preamble with the rsnapshot-diff script to determine path to perl
-AC_CONFIG_FILES(rsnapshot-diff:rsnapshot-preamble.pl:rsnapshot-diff.pl)
+# replace perl paths
+AC_CONFIG_FILES(rsnapshot:rsnapshot-program.pl)
+AC_CONFIG_FILES(rsnapshot-diff:rsnapshot-diff.pl)
 
 dnl try to find dependent programs for the config file
 AC_CONFIG_FILES(rsnapshot.conf.default:rsnapshot.conf.default.in)
@@ -262,6 +258,7 @@ AC_CONFIG_FILES(t/support/etc/rsync.conf:t/support/etc/rsync.conf.in)
 AC_CONFIG_FILES(t/support/etc/gnu_cp.conf:t/support/etc/gnu_cp.conf.in)
 AC_CONFIG_FILES(t/support/etc/relative_delete_bugfix.conf:t/support/etc/relative_delete_bugfix.conf.in)
 AC_CONFIG_FILES(t/support/etc/snapshot_root_with_space.conf:t/support/etc/snapshot_root_with_space.conf.in)
+AC_CONFIG_FILES(t/support/etc/backup_exec.conf:t/support/etc/backup_exec.conf.in)
 AC_CONFIG_FILES(t/support/etc/link-dest_-t_when_only_one_snapshot.conf:t/support/etc/link-dest_-t_when_only_one_snapshot.conf.in)
 
 dnl regression test scripts
@@ -270,6 +267,7 @@ AC_CONFIG_FILES(t/rsync.t:t/rsync.t.in)
 AC_CONFIG_FILES(t/gnu_cp.t:t/gnu_cp.t.in)
 AC_CONFIG_FILES(t/relative_delete_bugfix.t:t/relative_delete_bugfix.t.in)
 AC_CONFIG_FILES(t/snapshot_root_with_space.t:t/snapshot_root_with_space.t.in)
+AC_CONFIG_FILES(t/backup_exec.t:t/backup_exec.t.in)
 AC_CONFIG_FILES(t/link-dest_-t_when_only_one_snapshot.t:t/link-dest_-t_when_only_one_snapshot.t.in)
 
 AC_OUTPUT

@@ -8,6 +8,8 @@ VERSION 1.3.x
 - Print rnspashot's PID when logging to syslog, instead of the logger's PID.
 - make script uses pod2man instead of /usr/bin/pod2man
 - rsnapshot-diff: Fixed removed files reported as addition (+ mark)
+- Introduction of backup_exec resource for running unix commands interspersed
+  with backup and backup_script jobs.
 - check for SIGPIPE, mainly in case cron fails when trying to mail
   (this is probably why rsnapshot dies mysteriously if it outputs when
   called by cron on a system which does not have mail working).
@@ -27,6 +29,7 @@ VERSION 1.3.x
   http://sourceforge.net/mailarchive/forum.php?thread_name=4986E5A4.3090002%40Media-Brokers.com&forum_name=rsnapshot-discuss
 - rsnapshot-diff: Add -s option to show size of each file.
   http://sourceforge.net/mailarchive/forum.php?thread_name=20080128082704.03568f0c%40szpak&forum_name=rsnapshot-discuss
+
 
 VERSION 1.3.1  (Aug 31 2008)
 ------------------------------------------------------------------------------

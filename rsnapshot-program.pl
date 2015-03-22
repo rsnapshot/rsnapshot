@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!@PERL@ -w
 
 ########################################################################
 #                                                                      #
@@ -25,8 +25,6 @@
 # http://www.mikerubel.org/computers/rsync_snapshots/                  #
 #                                                                      #
 ########################################################################
-
-# $Id: rsnapshot-program.pl,v 1.432 2012/04/24 21:37:11 drhyde Exp $
 
 # tabstops are set to 4 spaces
 # in vi, do: set ts=4 sw=4
@@ -1099,6 +1097,30 @@ sub parse_config_file {
 			next;
 		}
 		
+		# BACKUP EXEC - just run a unix command
+    if ($var eq 'backup_exec') {
+      my %hash;
+      my $cmd = $value;
+      my $importance = $value2;
+      if (!defined($cmd)) {
+        config_err($file_line_num, "$line - a command to be executed must be provided");
+        next;
+      }
+      # Valid importance level options: 'optional', 'required'.
+      # Default value if not specified: 'optional'
+      if (!defined($importance)) {
+        $importance = 'optional';
+      } elsif ($importance ne 'optional' && $importance ne 'required') {
+        config_err($file_line_num, "$line - requirement level \"$importance\" is invalid");
+        next;
+      }
+      $hash{'cmd'} = $cmd;
+      $hash{'importance'} = $importance;
+      $line_syntax_ok = 1;
+      push(@backup_points, \%hash);
+      next;
+    }
+
 		# GLOBAL OPTIONS from the config file
 		# ALL ARE OPTIONAL
 		#
@@ -1512,6 +1534,9 @@ sub validate_config_file {
 		
 		# remember where the destination paths are...
 		foreach my $bp_ref (@backup_points) {
+			# skip for backup_exec since it uses no destination
+			next if (defined($$bp_ref{'cmd'}));
+
 			my $tmp_dest_path = $$bp_ref{'dest'};
 			
 			# normalize multiple slashes, and strip trailing slash
@@ -2295,7 +2320,7 @@ sub remove_lockfile {
 		  chomp(my $locked_pid = <LOCKFILE>);
 		  close(LOCKFILE);
 		  if($locked_pid != $$) {
-		    print_warn("About to remove lockfile $lockfile which belongs to a different process (this is OK if it's a stale lock)");
+		    print_warn("About to remove lockfile $lockfile which belongs to a different process: $locked_pid (this is OK if it's a stale lock)");
 		  }
 		} else {
 		  print_err ("Could not read lockfile $lockfile: $!", 0);
@@ -2990,7 +3015,7 @@ sub backup_lowest_interval {
 	}
 	
 	# sync live filesystem data and backup script output to $interval.0
-	# loop through each backup point and backup script
+	# loop through each backup point, backup exec, and backup script
 	foreach my $bp_ref (@backup_points) {
 		
 		# rsync the given backup point into the snapshot root
@@ -3029,6 +3054,17 @@ sub backup_lowest_interval {
 				}
 			}
 			
+		# run a simple command
+    } elsif (defined($$bp_ref{'cmd'})) {
+      my $rc = exec_cmd($$bp_ref{'cmd'});
+      if ($rc != 0) {
+        if ($$bp_ref{'importance'} eq 'required') {
+          bail("\"$$bp_ref{'cmd'}\" returned \"$rc\". Exiting.");
+        } else {
+          print_warn("\"$$bp_ref{'cmd'}\" returned \"$rc\"", 2);
+        }
+      } 
+
 		# this should never happen
 		} else {
 			bail('invalid backup point data in backup_lowest_interval()');
@@ -3412,7 +3448,7 @@ sub rsync_backup_point {
 		
 		# if we have any args for SSH, add them
 		if ( defined($ssh_args) ) {
-			push( @rsync_long_args_stack, "--rsh=\"$config_vars{'cmd_ssh'} $ssh_args\"" );
+			push( @rsync_long_args_stack, "--rsh=$config_vars{'cmd_ssh'} $ssh_args" );
 			
 		# no arguments is the default
 		} else {
@@ -3496,7 +3532,7 @@ sub rsync_backup_point {
         
         # rewrite src to point to mount path
         # - to avoid including the mountpath in the snapshot, change the working directory and use a relative source
-        $linux_lvm_oldpwd = $ENV{PWD};
+        $linux_lvm_oldpwd = cwd();
         print_cmd("chdir($config_vars{'linux_lvm_mountpath'})");
         if (0 == $test) {
             $result = chdir($config_vars{'linux_lvm_mountpath'});
@@ -4149,7 +4185,7 @@ sub touch_interval_dir {
 	# update mtime of $interval.0 to reflect the time this snapshot was taken
 	print_cmd("touch $config_vars{'snapshot_root'}/$interval_dir/");
 	
-	if (0 == $test) {
+	if (0 == $test && -e "$config_vars{'snapshot_root'}/$interval_dir/") {
 		my $result = utime(time(), time(), "$config_vars{'snapshot_root'}/$interval_dir/");
 		if (0 == $result) {
 			bail("Could not utime(time(), time(), \"$config_vars{'snapshot_root'}/$interval_dir/\");");
@@ -6607,6 +6643,23 @@ additional disk space will be taken up.
 
 =back
 
+B<backup_exec      ssh root@1.2.3.4 "du -sh /.offsite_backup"                     optional/>
+B<backup_exec      rsync -az /.snapshots/daily.0 root@1.2.3.4:/.offsite_backup/   required/>
+B<backup_exec      /bin/true/>
+
+=over 4
+
+backup_exec simply runs the command listed. The second argument is not
+required and defaults to a value of 'optional'. It specifies the importance
+that the command return 0. Valid values are 'optional' and 'required'. If the
+command is specified as optional, a non-zero exit status from the command will
+result in a warning message being output. If the command is specified as
+'required', a non-zero exit status from the command will result in an error
+message being output and rsnapshot itself will exit with a non-zero exit
+status.
+
+=back
+
 =back
 
 Remember that tabs must separate all elements, and that
@@ -6656,6 +6709,7 @@ Putting it all together (an example file):
     backup              root@mail.foo.com:/home/  mail.foo.com/
     backup              rsync://example.com/pub/  example.com/pub/
     backup              lvm://vg0/xen-home/       lvm-vg0/xen-home/
+    backup_exec         echo "backup finished!"
 
 =back
 
