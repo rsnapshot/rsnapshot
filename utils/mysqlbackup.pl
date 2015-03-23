@@ -1,6 +1,5 @@
 #!/usr/bin/perl
 
-
 =head1
 
 Author: Anthony Ettinger
@@ -45,6 +44,7 @@ main();
 
 sub main
 {
+
 	#check mode of $mysqlbackup_passwd file
 	my ($mode) = (stat($mysqlbackup_passwd))[2];
 	$mode = sprintf "%04o", $mode & 07777;
@@ -111,6 +111,6 @@ sub dump_databases
 		system($tar_cmd) == 0 or die "$!";
 		system($rm_cmd) == 0 or die "$!";
 
-        #tar czf $db.$DATE.tar.gz $FILE
+		#tar czf $db.$DATE.tar.gz $FILE
 	}
 }

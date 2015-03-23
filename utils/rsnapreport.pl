@@ -44,11 +44,11 @@ sub pretty_print(){
 		my $bytes= $bkdata{$source}{'file_size'}/1000000; # convert to MB
 		my $bytest= $bkdata{$source}{'file_tran_size'}/1000000; # convert to MB
 		$source =~ s/^[^\@]+\@//; # remove username
-format BREPORTHEAD =
+		format BREPORTHEAD =
 SOURCE                          TOTAL FILES   FILES TRANS      TOTAL MB     MB TRANS   LIST GEN TIME  FILE XFER TIME
 --------------------------------------------------------------------------------------------------------------------
 .
-format BREPORTBODY =
+		format BREPORTBODY =
 @<<<<<<<<<<<<<<<<<<<<<<<<<<<<<	@>>>>>>>>>>   @>>>>>>>>>> @#########.## @########.##   @>>>>>>>>>>>>  @>>>>>>>>>>>>>
 $source,                        $files,       $filest,    $bytes,       $bytest,       $filelistgentime, $filelistxfertime
 .
@@ -62,7 +62,6 @@ sub nextLine($){
 	push(@$lines,$line);
 	return shift @$lines;
 }
-	
 
 my @rsnapout = ();
 
@@ -82,12 +81,14 @@ while (my $line = nextLine(\@rsnapout)){
 		my $source = $rsynccmd[-2]; # count backwards: source always second to last
 		#print $source;
 		while($line = nextLine(\@rsnapout)){
-  			# this means we are missing stats info
-			if($line =~ /^[\/\w]+\/rsync/){ 
+
+			# this means we are missing stats info
+			if($line =~ /^[\/\w]+\/rsync/){
 				unshift(@rsnapout,$line);
 				push(@errors,"$source NO STATS DATA");
-				last;  
+				last;
 			}
+
 			# stat record
 			if($line =~ /^total size is\s+\d+/){ last; } # this ends the rsync stats record
 			elsif($line =~ /Number of files:\s+(\d+)/){
