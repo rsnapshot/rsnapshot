@@ -21,6 +21,11 @@ See the GNU General Public Licence for details.
 ---------------
   QUICK START
 ---------------
+=======
+# INSTALLATION
+
+## QUICK START
+
 If you are installing for the first time (and just want the defaults):
 
     Run these commands for a quick installation from source code:
@@ -43,29 +48,30 @@ If you are installing for the first time (and just want the defaults):
 
     The rsnapshot HOWTO can be found online at http://www.rsnapshot.org/
 
--------------
-  UPGRADING
--------------
+## UPGRADING
+
 If you are upgrading from a previous installation of rsnapshot 1.1.x,
 please read the file:
-	docs/Upgrading_from_1.1
+
+    docs/Upgrading_from_1.1
 
 There are no special instructions for upgrading from rsnapshot 1.2.x to
-1.3.x, since both use config_version 1.2.  
+1.3.x, since both use config_version 1.2.
 
 If you are not sure whether you need to do anything to upgrade your
 old rsnapshot.conf, you can run
-	make upgrade
-or
-	rsnapshot upgrade-config-file
-or
-	rsnapshot -c /etc/rsnapshot.conf upgrade-config-file
 
+    make upgrade
+or
 
-    
-----------------------
-  ADDITIONAL OPTIONS
-----------------------
+    rsnapshot upgrade-config-file
+
+or
+
+    rsnapshot -c /etc/rsnapshot.conf upgrade-config-file
+
+## ADDITIONAL OPTIONS
+
 If you require more precise control over the locations of files:
 
     You can pass the following options to ./configure for more control
@@ -133,4 +139,3 @@ If you require more precise control over the locations of files:
             when rsnapshot is called with the "du" argument to calculate
             the amount of disk space used. This is optional, so if you
             don't have it or comment it out it's OK.
-
