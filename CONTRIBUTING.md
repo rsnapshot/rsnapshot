@@ -66,11 +66,11 @@ Add your commits to the branch. They should be logically ordered and clean. Reba
 ### release-branches
 
 Releases should be done from branches, named for the release version,
-e.g. `release-1.4`. The first release of that version should be tagged `1.4.0`.
+e.g. `release-1-4`. The first release of that version should be tagged `1.4.0`.
 Subsequent releases of that version, which should contain no changes other
 than bugfixes and security fixes, should also be tagged, e.g. `1.4.1`.
 
-In the end, there should be for every minor release a branch like `release-X.Y`. The sub-releases should only get tagged on their specific branches.
+In the end, there should be for every minor release a branch like `release-X-Y`. The sub-releases should only get tagged on their specific branches.
 
 ### release-model in practice
 
