@@ -1,5 +1,5 @@
 # rsnapshot version
-VERSION = 1.3.1.1
+VERSION = @VERSION@
 
 # Where RPM files are built on this system
 RPM_BASE_DIR = /usr/src/redhat
@@ -86,8 +86,8 @@ rsnapshot-$(VERSION).tar.gz: $(man_MANS) rpm-patch Makefile $(bin_SCRIPTS) $(sys
 	
 	@# core files
 	mkdir rsnapshot-$(VERSION)
-	cp -p rsnapshot-preamble.pl rsnapshot-program.pl rsnapshot-diff.pl rsnapshot.conf.default.in \
-		$(man_MANS) AUTHORS COPYING INSTALL README TODO NEWS ChangeLog \
+	cp -p rsnapshot-program.pl rsnapshot-diff.pl rsnapshot.conf.default.in \
+		$(man_MANS) AUTHORS COPYING INSTALL README NEWS ChangeLog \
 		rsnapshot-$(VERSION)/
 
 	@# documentation files
@@ -121,7 +121,7 @@ rsnapshot-$(VERSION).tar.gz: $(man_MANS) rpm-patch Makefile $(bin_SCRIPTS) $(sys
 	-find rsnapshot-$(VERSION)/ -depth -name CVS -exec rm -rf {} \;
 	
 	@# change ownership to root, and delete build dir
-	-chown -R root:root rsnapshot-$(VERSION)/
+	-fakeroot chown -R root:root rsnapshot-$(VERSION)/
 	tar czf rsnapshot-$(VERSION).tar.gz rsnapshot-$(VERSION)/
 	rm -rf rsnapshot-$(VERSION)/
 	@echo

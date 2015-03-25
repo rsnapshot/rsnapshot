@@ -61,7 +61,7 @@ my $have_lchown = 0;
 $| = 1;
 
 # version of rsnapshot
-my $VERSION = '1.3.1';
+my $VERSION = '@VERSION@';
 
 # command or interval to execute (first cmd line arg)
 my $cmd;
