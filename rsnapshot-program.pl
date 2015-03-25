@@ -43,6 +43,8 @@ use File::stat;			# stat(), lstat()
 use POSIX qw(locale_h);	# setlocale()
 use Fcntl;				# sysopen()
 use IO::File;			# recursive open in parse_config_file
+use IPC::Open3 qw(open3); #open rsync with error output
+use IO::Handle; # handle autoflush for rsync-output
 
 ########################################
 ###           CPAN MODULES           ###
@@ -126,9 +128,6 @@ my $link_dest			= 0; # use the --link-dest option to rsync
 my $stop_on_stale_lockfile	= 0; # stop if there is a stale lockfile
 
 # how much noise should we make? the default is 2
-#
-# please note that direct rsync output does not get written to the log file, only to STDOUT
-# this is because we're not intercepting STDOUT while rsync runs
 #
 #	0	Absolutely quiet (reserved, but not implemented)
 #	1	Don't display warnings about FIFOs and special files
@@ -3649,7 +3648,22 @@ sub rsync_backup_point {
 	$result = 1;
 	if (0 == $test) {
 		while ($tryCount < $rsync_numtries && $result !=0) {
-			$result = system(@cmd_stack);
+
+			# open rsync and capture STDOUT and STDERR
+			# the 3rd argument is undefined, that STDERR gets mashed into STDOUT and we
+			# don't have to care about getting both STREAMS together without mixing up time
+			my ($rsync_in, $rsync_out);
+			my $pid = open3($rsync_in, $rsync_out, undef, @cmd_stack)
+				or die "Couldn't fork rsync: $!\n";
+
+			# add autoflush to get output by time and not at the end when rsync is finished
+			$rsync_out->autoflush();
+
+			while(<$rsync_out>){
+				print_msg($_, 4);
+			}
+
+			$result = $?;
 			$tryCount += 1;
 		}
 
@@ -6316,9 +6330,6 @@ B<loglevel            3>
 
 This number means the same thing as B<verbose> above, but it determines how
 much data is written to the logfile, if one is being written.
-
-The only thing missing from this at the higher levels is the direct output
-from rsync. We hope to add support for this in a future release.
 
 =back
 
