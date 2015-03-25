@@ -18,7 +18,7 @@ before_deploy:
 deploy:
   provider: releases
   api_key:
-    secure: <need to generate and encrypt the key>
+    secure: vlYgJ2PWqfM1YA9Rw/qpJntaRl276uq8BcL7raDMNDySqO7QUg2TIilxWRxiiWLGjHUabAdsn8fsNEYmHfCLKywJdqzU90SS9KDWmSuVgzJfLBIPYlgfVMjEa0QQRZgJ7k1Oe2jsmH9lJuZw9jW/xG2C4eQRqAQ64m+UWwcDHqw=
   file: rsnapshot-${TRAVIS_TAG}.tar.gz
   skip_cleanup: true
   on:
