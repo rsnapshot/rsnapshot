@@ -9,5 +9,5 @@ my @lines = `@CP@ --help | grep -i 'gnu'`;
 SKIP: {
 	skip('GNU cp not found', 1) if (@lines == 0);
 	
-	ok(! `@PERL@ ./rsnapshot -c t/support/etc/gnu_cp.conf hourly`);
+	ok(! `@PERL@ ./rsnapshot -c t/support/etc/gnu_cp.conf hourly 2>&1`);
 }

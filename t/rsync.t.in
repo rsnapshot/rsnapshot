@@ -6,6 +6,6 @@ use Test::More tests => 1;
 mkdir("t/support/files/a")		unless -d "t/support/files/a";
 `cp t/support/files/template/a/1 t/support/files/template/a/2 t/support/files/a/`;
 
-ok(! `@PERL@ ./rsnapshot -c t/support/etc/rsync.conf hourly`);
+ok(! `@PERL@ ./rsnapshot -c t/support/etc/rsync.conf hourly 2>&1`);
 
 `rm -f t/support/files/a/1 t/support/files/a/2`;
