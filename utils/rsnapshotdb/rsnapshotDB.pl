@@ -91,32 +91,32 @@ my $dbApp = {
 			user	=> '-u',
 			pass	=> '-p',
 			host	=> '-h',
-		},
+		  },
 		'prompt'	=> {
 			bin	=> 'mysql',
 			opts	=> '-s',
 			user	=> '-u',
 			pass	=> '-p',
 			host	=> '-h',
-		},
-	},
+		  },
+	  },
 	'pgsql'	=> {
 		'dumper' => {
-			 bin => 'pg_dump',
+			bin => 'pg_dump',
 			opts	=> '',
 			user	=> '-U',
 			pass	=> '-p',
 			host	=> '-h',
-		},
+		  },
 		'prompt' => {
 			bin	=> 'pgsql',
 			opts	=> '',
 			user	=> '-U',
 			pass	=> '-p',
 			host	=> '-h',
-		},
-	},
-};
+		  },
+	  },
+  };
 
 init();
 
@@ -135,7 +135,7 @@ sub init
 
 	unless ($xmlUsage && -f $xsd)
 	{
-	
+
 		warn "You are not validating '$dbpasswd' against an XMLSchema file: '$xsd'. Defaulting to flat file format for '$dbpasswd'.\n";
 	}
 
@@ -153,12 +153,13 @@ sub read_dbpasswd
 				'dbApp' 	=> $dbApp,
 				'tmpDir'	=> $tmpDir,
 				'verbose'	=> $verbose,
-			} );	
+			} );
 
 		my $validity = $xobj->validateXML; #boolean test
 
 		if ($validity)
 		{
+
 			#main module dump routine called within
 			my $status = $xobj->parseXML();
 		}
@@ -248,7 +249,7 @@ sub parseXML
 	my $parser = XML::Simple->new();
 
 	#hardcoded xml tag names
-	my $xmlRef = $parser->XMLin($xml, ForceArray => ['hostGroup', 'hostPair', 'databaseHost', 'defaultSSHHost'] ); 
+	my $xmlRef = $parser->XMLin($xml, ForceArray => ['hostGroup', 'hostPair', 'databaseHost', 'defaultSSHHost'] );
 
 	#count hostGroup tags
 	my $hostGroups = scalar(@{$xmlRef->{'hostGroup'}});
@@ -267,11 +268,13 @@ sub parseXML
 		{
 
 			$self->v("START: hostPair...", 1);
+
 			#save databaseHost hashref
 			my $databaseHost = $hostPair->{'databaseHost'};
 
 			if ( exists($hostPair->{'defaultSSHHost'}[0]->{'hostType'}) )
 			{
+
 				#save default and continue to use it
 				$defaultSSHHost = $hostPair->{'defaultSSHHost'};
 
@@ -316,9 +319,11 @@ Make sure your prompt binary (ie - mysql) and dumper binary (ie - mysqldump) are
 sub showDB
 {
 	my ($self, $sshHost, $dbHost) = @_;
+
 	#ssh
 	my $user   = $sshHost->[0]->{'username'};
 	my $host   = $sshHost->[0]->{'hostname'};
+
 	#db
 	my $dbApp = $self->_dbApp();
 	my $dbType = $dbHost->[0]->{'dbType'};
@@ -331,10 +336,9 @@ sub showDB
 	my $prompt = $dbApp->{$dbType}->{'prompt'}->{'bin'};
 	my $dbNames = []; #results from SHOW DATABASES;
 	my $dbpass_arg = defined($dbpass) ? "$dbApp->{$dbType}->{'prompt'}->{'pass'}$dbpass" : ''; #dbpass not required
-	
 
 	$self->v("START: showDB command...", 1);
-	my $cmdShowDB = "ssh $sshOption $user\@$host \"echo -n 'SHOW DATABASES;' | \ $dbApp->{$dbType}->{'prompt'}->{'bin'} \ $dbApp->{$dbType}->{'prompt'}->{'opts'} \ $dbApp->{$dbType}->{'prompt'}->{'user'} $dbuser \ $dbpass_arg \ $dbApp->{$dbType}->{'prompt'}->{'host'} $dbhost\""; 
+	my $cmdShowDB = "ssh $sshOption $user\@$host \"echo -n 'SHOW DATABASES;' | \ $dbApp->{$dbType}->{'prompt'}->{'bin'} \ $dbApp->{$dbType}->{'prompt'}->{'opts'} \ $dbApp->{$dbType}->{'prompt'}->{'user'} $dbuser \ $dbpass_arg \ $dbApp->{$dbType}->{'prompt'}->{'host'} $dbhost\"";
 
 	my $out = qx/$cmdShowDB/ or warn 'SHOW DATABASES failed...';
 	$self->v("CMD: $cmdShowDB -> $out.", 2);
@@ -360,12 +364,12 @@ The gained result here should be seconds vs. minutes.
 
 =cut
 
-
 sub dumbDB
 {
 	my ($self, $sshHost, $dbHost, $dbNames) = @_;
 	my $user   = $sshHost->[0]->{'username'};
 	my $host   = $sshHost->[0]->{'hostname'};
+
 	#db
 	my $dbApp  = $self->_dbApp();
 	my $dbType = $dbHost->[0]->{'dbType'};
@@ -416,7 +420,7 @@ sub dumbDB
 
 			$self->v("FAIL: $cmdChmodRTD, $out.", 2) if $?;
 		}
-	
+
 		#the actual .sql.gz remote file creation!
 		my $cmdRemoteDump = "ssh $sshOption $user\@$host 'umask 0077;nice --adjustment=$niceness $dumper \ $dumpOptsArg $dumpUserArg $dbuser $dumpPassArg" . "$dbpass $dumpHostArg $dbhost \ $dbName > $remoteTmpDir/$file.sql'";
 
@@ -427,7 +431,7 @@ sub dumbDB
 		$self->v("FINISH: remote dump.", 1);
 
 		my $cmdRemoteGZip = "ssh $sshOption $user\@$host 'nice --adjustment=$niceness gzip --fast $remoteTmpDir/$file.sql'";
-	
+
 		$self->v("WAITING: remote gzip...", 1);
 		$self->v("CMD: $cmdRemoteGZip", 2);
 		$out = qx/$cmdRemoteGZip/;
@@ -576,7 +580,6 @@ sub _verbose
 
 	return $self->{'verbose'};
 }
-
 
 1;
 
