@@ -1,4 +1,4 @@
-# RSNAPSHOT
+# RSNAPSHOT [![Build Status](https://api.travis-ci.org/rsnapshot/rsnapshot.png)](https://travis-ci.org/rsnapshot/rsnapshot)
 
 rsnapshot comes with ABSOLUTELY NO WARRANTY.  This is free software,
 and you are welcome to redistribute it under certain conditions.
@@ -139,4 +139,4 @@ example scripts.  The `utils/rsnapreport.pl` script is well worth a look.
 
 ## AUTHORS
 
-Please see the [AUTHORS]/(/AUTHORS) file for the complete list of contributors.
+Please see the [AUTHORS](/AUTHORS) file for the complete list of contributors.
