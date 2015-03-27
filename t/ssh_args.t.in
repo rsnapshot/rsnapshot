@@ -1,0 +1,15 @@
+#!/usr/bin/perl
+
+use strict;
+use Test::More tests => 1;
+
+mkdir("t/support/files/a")		unless -d "t/support/files/a";
+`cp t/support/files/template/a/1 t/support/files/template/a/2 t/support/files/a/`;
+
+SKIP: {
+	my $cant_ssh = system("@SSH@ -p 22 @TEST_SSH_USER@\@localhost true");
+	skip("Cant SSH with \"@SSH@ -p 22 @TEST_SSH_USER@\@localhost\"", 1) if ($cant_ssh);
+	ok(! `@PERL@ ./rsnapshot -c t/support/etc/ssh_args.conf hourly 2>&1`, "ssh_args parsed");
+}
+
+`rm -f t/support/files/a/1 t/support/files/a/2`;

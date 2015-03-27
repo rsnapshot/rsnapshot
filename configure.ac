@@ -245,6 +245,24 @@ dnl either way, set the cmd_ssh var
 AC_SUBST(CMD_DU, "cmd_du		$DU")
 
 
+dnl
+dnl TEST_SSH_USER CHECK (optional param)
+dnl
+dnl if the user specified a path, try that first
+AC_ARG_WITH(test-ssh-user,
+	[  --with-test-ssh-user=USER       Specify the path to rsync ],
+	[
+		if test "x$withval" != "xno"; then
+			TEST_SSH_USER="$withval"
+			AC_SUBST(TEST_SSH_USER, "$TEST_SSH_USER")
+		fi
+	]
+)
+dnl if the user didn't specify a test ssh user use current user
+if test "$TEST_SSH_USER" = ""; then
+	AC_SUBST(TEST_SSH_USER, "$USER")
+fi
+
 
 # replace perl paths
 AC_CONFIG_FILES(rsnapshot:rsnapshot-program.pl)
@@ -262,6 +280,7 @@ AC_CONFIG_FILES(t/support/etc/snapshot_root_with_space.conf:t/support/etc/snapsh
 AC_CONFIG_FILES(t/support/etc/backup_exec.conf:t/support/etc/backup_exec.conf.in)
 AC_CONFIG_FILES(t/support/etc/backup_exec_fail.conf:t/support/etc/backup_exec_fail.conf.in)
 AC_CONFIG_FILES(t/support/etc/link-dest_-t_when_only_one_snapshot.conf:t/support/etc/link-dest_-t_when_only_one_snapshot.conf.in)
+AC_CONFIG_FILES(t/support/etc/ssh_args.conf:t/support/etc/ssh_args.conf.in)
 
 dnl regression test scripts
 AC_CONFIG_FILES(t/configtest.t:t/configtest.t.in)
@@ -272,6 +291,7 @@ AC_CONFIG_FILES(t/snapshot_root_with_space.t:t/snapshot_root_with_space.t.in)
 AC_CONFIG_FILES(t/backup_exec.t:t/backup_exec.t.in)
 AC_CONFIG_FILES(t/backup_exec_fail.t:t/backup_exec_fail.t.in)
 AC_CONFIG_FILES(t/link-dest_-t_when_only_one_snapshot.t:t/link-dest_-t_when_only_one_snapshot.t.in)
+AC_CONFIG_FILES(t/ssh_args.t:t/ssh_args.t.in)
 
 AC_OUTPUT
 
