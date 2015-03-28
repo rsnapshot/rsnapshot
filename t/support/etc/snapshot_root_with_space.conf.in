@@ -1,5 +1,5 @@
 config_version	1.2
-snapshot_root	@CWD@/t/support/snapshot root/
+snapshot_root	@CWD@/t/support/snapshots space root/
 cmd_rsync		@RSYNC@
 interval		hourly	6
 backup			@CWD@/t/support/etc/snapshot_root_with_space.conf	localhost/

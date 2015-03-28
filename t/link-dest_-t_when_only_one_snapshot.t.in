@@ -1,15 +1,13 @@
 #!/usr/bin/perl -w
 
 use strict;
-use Test::More tests => 5;
+use Test::More tests => 3;
 
-my $snap_root="t/support/snapshots/link-dest_t";
+my $snap_root="t/support/snapshots/";
+# make sure snap_root directory does not exist before we start
+-d "$snap_root" && (system("rm -rf \"$snap_root\"")==0 || BAIL_OUT("Failed to rm snapshot root."));
 
-# Make sure snap_root directory does not exist before we start 
-ok(! -d "$snap_root" || ! `rm -rf "$snap_root"`,
-	" snapshot root does not exist before testing starts");
-
-ok(! `@PERL@ ./rsnapshot -c t/support/etc/link-dest_-t_when_only_one_snapshot.conf daily`,
+ok(! `@PERL@ ./rsnapshot -c t/support/etc/link-dest_-t_when_only_one_snapshot.conf daily 2>&1`,
 	" first rsnapshot ran");
 
 ok(-d "$snap_root/daily.0" && ! -d "$snap_root/daily.1",
@@ -23,6 +21,3 @@ close(TMP);
 
 ok($output =~ / --link-dest=/,
 	" link-dest is used");
-
-ok(! `rm -rf "$snap_root"`,
-	" Removed snapshot root to clean up");

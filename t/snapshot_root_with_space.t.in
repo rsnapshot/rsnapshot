@@ -1,20 +1,14 @@
 #!/usr/bin/perl -w
 
 use strict;
-use Test::More tests => 5;
+use Test::More tests => 3;
 
-my $snap_root="t/support/snapshot root";
+my $snap_root="t/support/snapshots space root";
+-d "$snap_root" && (system("rm -rf \"$snap_root\"")==0 || BAIL_OUT("Failed to rm snapshot root."));
 
-# Make sure snap_root directory does not exist before we start 
-ok(! -d "$snap_root" || ! `rm -rf "$snap_root"`,
-	" snapshot root does not exist before testing starts");
-
-ok(! `@PERL@ ./rsnapshot -c t/support/etc/snapshot_root_with_space.conf hourly`,
+ok(! `@PERL@ ./rsnapshot -c t/support/etc/snapshot_root_with_space.conf hourly 2>&1`,
 	" first rsnapshot ran");
-ok(! `@PERL@ ./rsnapshot -c t/support/etc/snapshot_root_with_space.conf hourly`,
+ok(! `@PERL@ ./rsnapshot -c t/support/etc/snapshot_root_with_space.conf hourly 2>&1`,
 	" second rsnapshot ran");
 ok(-d "$snap_root/hourly.0" && -d "$snap_root/hourly.1",
 	" hourly.0 and hourly.1 directories exist afterward");
-
-ok(! `rm -rf "$snap_root"`,
-	" Removed snapshot root to clean up");

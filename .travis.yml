@@ -10,6 +10,10 @@ perl:
 install:
   - "./autogen.sh"
   - "./configure"
+before_script:
+  # Allow us to SSH passwordless to localhost
+  - ssh-keygen -t "rsa" -f ~/.ssh/id_rsa -N ""
+  - cp ~/.ssh/{id_rsa.pub,authorized_keys}
 script:
   - make
   - make test

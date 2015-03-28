@@ -93,9 +93,7 @@ dnl save the program for testing
 AC_SUBST(TEST_CP, "$CP")
 dnl if the user didn't specify a path, hunt for it
 if test "$CP" != "no"; then
-	if test "$CP" = ""; then
-		AC_PATH_PROG(CP, cp, no)
-	fi
+	AC_PATH_PROG(CP, cp, no)
 fi
 dnl if we couldn't find it, provide an example
 if test "$CP" = "no"; then
@@ -126,9 +124,7 @@ AC_ARG_WITH(rm,
 )
 dnl if the user didn't specify a path, hunt for it
 if test "$RM" != "no"; then
-	if test "$RM" = ""; then
-		AC_PATH_PROG(RM, rm, no)
-	fi
+	AC_PATH_PROG(RM, rm, no)
 fi
 dnl save the program for testing
 AC_SUBST(TEST_RM, "$RM")
@@ -161,9 +157,7 @@ AC_ARG_WITH(ssh,
 )
 dnl if the user didn't specify a path, hunt for it
 if test "$SSH" != "no"; then
-	if test "$SSH" = ""; then
-		AC_PATH_PROG(SSH, ssh, no)
-	fi
+	AC_PATH_PROG(SSH, ssh, no)
 fi
 dnl save the program for testing
 AC_SUBST(TEST_SSH, "$SSH")
@@ -196,9 +190,7 @@ AC_ARG_WITH(logger,
 )
 dnl if the user didn't specify a path, hunt for it
 if test "$LOGGER" != "no"; then
-	if test "$LOGGER" = ""; then
-		AC_PATH_PROG(LOGGER, logger, no)
-	fi
+	AC_PATH_PROG(LOGGER, logger, no)
 fi
 dnl save the program for testing
 AC_SUBST(TEST_LOGGER, "$LOGGER")
@@ -231,9 +223,7 @@ AC_ARG_WITH(du,
 )
 dnl if the user didn't specify a path, hunt for it
 if test "$DU" != "no"; then
-	if test "$DU" = ""; then
-		AC_PATH_PROG(DU, du, no)
-	fi
+	AC_PATH_PROG(DU, du, no)
 fi
 dnl save the program for testing
 AC_SUBST(TEST_DU, "$DU")
@@ -244,6 +234,24 @@ fi
 dnl either way, set the cmd_ssh var
 AC_SUBST(CMD_DU, "cmd_du		$DU")
 
+
+dnl
+dnl TEST_SSH_USER CHECK (optional param)
+dnl
+dnl if the user specified a path, try that first
+AC_ARG_WITH(test-ssh-user,
+	[  --with-test-ssh-user=USER       Specify the path to rsync ],
+	[
+		if test "x$withval" != "xno"; then
+			TEST_SSH_USER="$withval"
+			AC_SUBST(TEST_SSH_USER, "$TEST_SSH_USER")
+		fi
+	]
+)
+dnl if the user didn't specify a test ssh user use current user
+if test "$TEST_SSH_USER" = ""; then
+	AC_SUBST(TEST_SSH_USER, "$USER")
+fi
 
 
 # replace perl paths
@@ -260,7 +268,9 @@ AC_CONFIG_FILES(t/support/etc/gnu_cp.conf:t/support/etc/gnu_cp.conf.in)
 AC_CONFIG_FILES(t/support/etc/relative_delete_bugfix.conf:t/support/etc/relative_delete_bugfix.conf.in)
 AC_CONFIG_FILES(t/support/etc/snapshot_root_with_space.conf:t/support/etc/snapshot_root_with_space.conf.in)
 AC_CONFIG_FILES(t/support/etc/backup_exec.conf:t/support/etc/backup_exec.conf.in)
+AC_CONFIG_FILES(t/support/etc/backup_exec_fail.conf:t/support/etc/backup_exec_fail.conf.in)
 AC_CONFIG_FILES(t/support/etc/link-dest_-t_when_only_one_snapshot.conf:t/support/etc/link-dest_-t_when_only_one_snapshot.conf.in)
+AC_CONFIG_FILES(t/support/etc/ssh_args.conf:t/support/etc/ssh_args.conf.in)
 
 dnl regression test scripts
 AC_CONFIG_FILES(t/configtest.t:t/configtest.t.in)
@@ -269,7 +279,9 @@ AC_CONFIG_FILES(t/gnu_cp.t:t/gnu_cp.t.in)
 AC_CONFIG_FILES(t/relative_delete_bugfix.t:t/relative_delete_bugfix.t.in)
 AC_CONFIG_FILES(t/snapshot_root_with_space.t:t/snapshot_root_with_space.t.in)
 AC_CONFIG_FILES(t/backup_exec.t:t/backup_exec.t.in)
+AC_CONFIG_FILES(t/backup_exec_fail.t:t/backup_exec_fail.t.in)
 AC_CONFIG_FILES(t/link-dest_-t_when_only_one_snapshot.t:t/link-dest_-t_when_only_one_snapshot.t.in)
+AC_CONFIG_FILES(t/ssh_args.t:t/ssh_args.t.in)
 
 AC_OUTPUT
 
@@ -278,7 +290,7 @@ RSNAPSHOT_SYSCONFDIR=`eval echo ${sysconfdir}`
 
 if test -e "$RSNAPSHOT_SYSCONFDIR/rsnapshot.conf"; then
 	RSNAPSHOT_OLD_VERSION=`$PERL rsnapshot-program.pl -c $RSNAPSHOT_SYSCONFDIR/rsnapshot.conf check-config-version`
-	
+
 	# figure out if this is a fresh install or an upgrade
 	# advise the user accordingly
 	if test "$RSNAPSHOT_OLD_VERSION" = "unknown"; then
@@ -304,7 +316,7 @@ if test -e "$RSNAPSHOT_SYSCONFDIR/rsnapshot.conf"; then
 		echo "+----------------------------------------------------------------------------+"
 		exit 0
 	fi
-	
+
 	# this is already the latest version.
 	if test "$RSNAPSHOT_OLD_VERSION" = "1.2"; then
 		echo "$RSNAPSHOT_SYSCONFDIR/rsnapshot.conf found, and is up to date."
@@ -327,4 +339,3 @@ if test ! -e "$RSNAPSHOT_SYSCONFDIR/rsnapshot.conf"; then
 	echo "$RSNAPSHOT_SYSCONFDIR/rsnapshot.conf.default to $RSNAPSHOT_SYSCONFDIR/rsnapshot.conf"
 	echo ""
 fi
-
