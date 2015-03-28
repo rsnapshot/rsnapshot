@@ -2250,10 +2250,10 @@ sub add_lockfile {
                 syslog_err("Lockfile $lockfile exists and can't be read, can not continue");
                 exit(1);
             }
-            my $pid = <LOCKFILE>;
+            my $pid = <LOCKFILE> || "";
             chomp($pid);
             close(LOCKFILE);
-            if(kill(0, $pid)) {
+            if( $pid =~ m/^[0-9]+$/ && kill(0, $pid)) {
                 print_err ("Lockfile $lockfile exists and so does its process, can not continue");
                 syslog_err("Lockfile $lockfile exists and so does its process, can not continue");
                 exit(1);
@@ -2316,9 +2316,10 @@ sub remove_lockfile {
 	
 	if ( -e "$lockfile" ) {
 	        if(open(LOCKFILE, $lockfile)) {
-		  chomp(my $locked_pid = <LOCKFILE>);
+		  my $locked_pid = <LOCKFILE> || "";
+		  chomp($locked_pid);
 		  close(LOCKFILE);
-		  if($locked_pid != $$) {
+		  if($locked_pid && $locked_pid != $$) {
 		    print_warn("About to remove lockfile $lockfile which belongs to a different process: $locked_pid (this is OK if it's a stale lock)");
 		  }
 		} else {
