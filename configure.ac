@@ -93,9 +93,7 @@ dnl save the program for testing
 AC_SUBST(TEST_CP, "$CP")
 dnl if the user didn't specify a path, hunt for it
 if test "$CP" != "no"; then
-	if test "$CP" = ""; then
-		AC_PATH_PROG(CP, cp, no)
-	fi
+	AC_PATH_PROG(CP, cp, no)
 fi
 dnl if we couldn't find it, provide an example
 if test "$CP" = "no"; then
@@ -126,9 +124,7 @@ AC_ARG_WITH(rm,
 )
 dnl if the user didn't specify a path, hunt for it
 if test "$RM" != "no"; then
-	if test "$RM" = ""; then
-		AC_PATH_PROG(RM, rm, no)
-	fi
+	AC_PATH_PROG(RM, rm, no)
 fi
 dnl save the program for testing
 AC_SUBST(TEST_RM, "$RM")
@@ -161,9 +157,7 @@ AC_ARG_WITH(ssh,
 )
 dnl if the user didn't specify a path, hunt for it
 if test "$SSH" != "no"; then
-	if test "$SSH" = ""; then
-		AC_PATH_PROG(SSH, ssh, no)
-	fi
+	AC_PATH_PROG(SSH, ssh, no)
 fi
 dnl save the program for testing
 AC_SUBST(TEST_SSH, "$SSH")
@@ -196,9 +190,7 @@ AC_ARG_WITH(logger,
 )
 dnl if the user didn't specify a path, hunt for it
 if test "$LOGGER" != "no"; then
-	if test "$LOGGER" = ""; then
-		AC_PATH_PROG(LOGGER, logger, no)
-	fi
+	AC_PATH_PROG(LOGGER, logger, no)
 fi
 dnl save the program for testing
 AC_SUBST(TEST_LOGGER, "$LOGGER")
@@ -231,9 +223,7 @@ AC_ARG_WITH(du,
 )
 dnl if the user didn't specify a path, hunt for it
 if test "$DU" != "no"; then
-	if test "$DU" = ""; then
-		AC_PATH_PROG(DU, du, no)
-	fi
+	AC_PATH_PROG(DU, du, no)
 fi
 dnl save the program for testing
 AC_SUBST(TEST_DU, "$DU")
