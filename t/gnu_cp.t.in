@@ -3,11 +3,15 @@
 use strict;
 use Test::More tests => 1;
 
+my $snap_root="t/support/snapshots/";
+# make sure snap_root directory does not exist before we start
+-d "$snap_root" && (system("rm -rf \"$snap_root\"")==0 || BAIL_OUT("Failed to rm snapshot root."));
+
 # check for GNU cp
 my @lines = `@CP@ --help | grep -i 'gnu'`;
 
 SKIP: {
 	skip('GNU cp not found', 1) if (@lines == 0);
-	
+
 	ok(! `@PERL@ ./rsnapshot -c t/support/etc/gnu_cp.conf hourly 2>&1`);
 }

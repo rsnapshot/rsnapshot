@@ -4,4 +4,4 @@ cmd_rsync		@RSYNC@
 cmd_ssh			@SSH@
 interval		hourly	6
 ssh_args		-p 22
-backup			@TEST_SSH_USER@@localhost:@CWD@/t/support/files/a/	localhost/
+backup			@TEST_SSH_USER@@localhost:@CWD@/t/support/etc/ssh_args.conf	localhost/

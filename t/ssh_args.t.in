@@ -3,8 +3,9 @@
 use strict;
 use Test::More tests => 1;
 
-mkdir("t/support/files/a")		unless -d "t/support/files/a";
-`cp t/support/files/template/a/1 t/support/files/template/a/2 t/support/files/a/`;
+my $snap_root="t/support/snapshots/";
+# make sure snap_root directory does not exist before we start
+-d "$snap_root" && (system("rm -rf \"$snap_root\"")==0 || BAIL_OUT("Failed to rm snapshot root."));
 
 SKIP: {
 	my $ssh_test = "@SSH@ -p 22 -o StrictHostKeyChecking=no @TEST_SSH_USER@\@localhost true";
@@ -12,5 +13,3 @@ SKIP: {
 	skip("Cant SSH with \"$ssh_test\"", 1) if ($cant_ssh);
 	ok(! `@PERL@ ./rsnapshot -c t/support/etc/ssh_args.conf hourly 2>&1`, "ssh_args parsed");
 }
-
-`rm -f t/support/files/a/1 t/support/files/a/2`;
