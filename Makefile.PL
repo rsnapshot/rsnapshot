@@ -3,7 +3,7 @@
 use ExtUtils::MakeMaker;
 
 WriteMakefile(
-	NAME => "rsnapshot",
+	NAME => 'rsnapshot',
 	# disable till we know, where the mistake is
 	#VERSION => `git describe --tags --always`,
 	MAN1PODS => {
@@ -23,9 +23,10 @@ WriteMakefile(
 	},
 	#PM_FILTER => 'sed "s%@PERL@%/usr/bin/perl%g"', # this is the old filter
 	# does not work:
-	PM_FILTER => qq{ /usr/bin/sed -e "s,rsnapshot,/usr/bin/perl,g" },
+	#PM_FILTER => qq{ /usr/bin/sed -e s,rsnapshot,/usr/bin/perl,g },
+	PM_FILTER => "/home/bebe/code/rsnapshot/test.sh",
 	PM => {
-		'src/rsnapshot.pl' => '$(INST_BIN)/rsnapshot',
-		'src/rsnapshot-diff.pl' => '$(INST_BIN)/rsnapshot-diff',
+		'src/rsnapshot.pl' => '$(INST_LIB)/rsnapshot',
+		'src/rsnapshot-diff.pl' => '$(INST_LIB)/rsnapshot-diff',
 	},
 );
