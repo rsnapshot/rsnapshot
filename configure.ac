@@ -272,6 +272,12 @@ AC_CONFIG_FILES(t/support/etc/backup_exec_fail.conf:t/support/etc/backup_exec_fa
 AC_CONFIG_FILES(t/support/etc/link-dest_-t_when_only_one_snapshot.conf:t/support/etc/link-dest_-t_when_only_one_snapshot.conf.in)
 AC_CONFIG_FILES(t/support/etc/ssh_args.conf:t/support/etc/ssh_args.conf.in)
 
+AC_CONFIG_FILES(t/cmd-post_pre-exec/pre-false-post-false.conf:t/cmd-post_pre-exec/pre-false-post-false.conf.in)
+AC_CONFIG_FILES(t/cmd-post_pre-exec/pre-false-post-true.conf:t/cmd-post_pre-exec/pre-false-post-true.conf.in)
+AC_CONFIG_FILES(t/cmd-post_pre-exec/pre-true-post-false.conf:t/cmd-post_pre-exec/pre-true-post-false.conf.in)
+AC_CONFIG_FILES(t/cmd-post_pre-exec/pre-true-post-true.conf:t/cmd-post_pre-exec/pre-true-post-true.conf.in)
+
+
 dnl regression test scripts
 AC_CONFIG_FILES(t/configtest.t:t/configtest.t.in)
 AC_CONFIG_FILES(t/rsync.t:t/rsync.t.in)
@@ -282,6 +288,7 @@ AC_CONFIG_FILES(t/backup_exec.t:t/backup_exec.t.in)
 AC_CONFIG_FILES(t/backup_exec_fail.t:t/backup_exec_fail.t.in)
 AC_CONFIG_FILES(t/link-dest_-t_when_only_one_snapshot.t:t/link-dest_-t_when_only_one_snapshot.t.in)
 AC_CONFIG_FILES(t/ssh_args.t:t/ssh_args.t.in)
+AC_CONFIG_FILES(t/cmd-post_pre-exec.t:t/cmd-post_pre-exec.t.in)
 
 AC_OUTPUT
 
