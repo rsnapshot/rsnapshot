@@ -6198,7 +6198,7 @@ B<cmd_preexec>
 
 Full path (plus any arguments) to preexec script (optional).
 This script will run immediately before each backup operation (but not any
-rotations).
+rotations). If the execution fails, rsnapshot will stop immediately.
 
 =back
 
@@ -6208,7 +6208,7 @@ B<cmd_postexec>
 
 Full path (plus any arguments) to postexec script (optional).
 This script will run immediately after each backup operation (but not any
-rotations).
+rotations). If the execution fails, rsnapshot will stop immediately.
 
 =back
 
