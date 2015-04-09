@@ -580,7 +580,11 @@ sub parse_config_file {
 				$line_syntax_ok = 1;
 				parse_config_file($value);
 			} else {
-				config_err($file_line_num, "$line - can't find or read file '$value'");
+				if(defined($1)){
+					config_err($file_line_num, "$line - not a valid script: '$1'");
+				} else {
+					config_err($file_line_num, "$line - can't find or read file '$value'");
+				}
 				next;
 			}
 		}
