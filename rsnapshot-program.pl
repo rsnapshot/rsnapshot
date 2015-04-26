@@ -4148,7 +4148,7 @@ sub exec_cmd_preexec {
 	}
 	
 	if (0 != $retval) {
-		print_warn("cmd_preexec \"$config_vars{'cmd_preexec'}\" returned $retval", 2);
+		bail("cmd_preexec \"$config_vars{'cmd_preexec'}\" returned $retval");
 	}
 	
 	return ($retval);
@@ -4169,7 +4169,7 @@ sub exec_cmd_postexec {
 	}
 	
 	if (0 != $retval) {
-		print_warn("cmd_postexec \"$config_vars{'cmd_postexec'}\" returned $retval", 2);
+		bail("cmd_postexec \"$config_vars{'cmd_postexec'}\" returned $retval");
 	}
 	
 	return ($retval);
@@ -6310,7 +6310,7 @@ B<cmd_preexec>
 
 Full path (plus any arguments) to preexec script (optional).
 This script will run immediately before each backup operation (but not any
-rotations).
+rotations). If the execution fails, rsnapshot will stop immediately.
 
 =back
 
@@ -6320,7 +6320,7 @@ B<cmd_postexec>
 
 Full path (plus any arguments) to postexec script (optional).
 This script will run immediately after each backup operation (but not any
-rotations).
+rotations). If the execution fails, rsnapshot will stop immediately.
 
 =back
 
