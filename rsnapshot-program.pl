@@ -174,6 +174,11 @@ my $have_printed_run_string = 0;
 my $rsync_include_args		= undef;
 my $rsync_include_file_args	= undef;
 
+# hash used to register traps and execute in bail
+my %traps;
+$traps{"linux_lvm_snapshot"} = 0;
+$traps{"linux_lvm_mountpoint"} = 0;
+
 ########################################
 ###         SIGNAL HANDLERS          ###
 ########################################
@@ -1856,6 +1861,19 @@ sub bail {
 	if ((0 == $do_configtest) && (0 == $test) && defined($str) && ('' ne $str)) {
 		syslog_err($str);
 	}
+
+	# umount LVM Snapshot if it is mounted
+	if(1 == $traps{"linux_lvm_mountpoint"}){
+		$traps{"linux_lvm_mountpoint"} = 0;
+		linux_lvm_unmount();
+	}
+
+	# destroy snapshot created by rsnapshot
+	if(0 ne $traps{"linux_lvm_snapshot"}){
+		my $tmp = $traps{"linux_lvm_snapshot"};
+		$traps{"linux_lvm_snapshot"} = 0;
+		linux_lvm_snapshot_del(linux_lvm_parseurl($tmp));
+	}
 	
 	# get rid of the lockfile, if it exists
 	if(0 == $stop_on_stale_lockfile) {
@@ -3312,9 +3330,8 @@ sub rsync_backup_point {
 	my $src						= $$bp_ref{'src'};
 	my $result					= undef;
 	
-	my $linux_lvm                     = 0;
 	my $linux_lvm_oldpwd              = undef;
-	my $linux_lvm_snapshotname        = undef;
+	my $lvm_src              = undef;
 
 	# if we're using link-dest later, that target depends on whether we're doing a 'sync' or a regular interval
 	# if we're doing a "sync", then look at [lowest-interval].0 instead of [cur-interval].1
@@ -3486,53 +3503,12 @@ sub rsync_backup_point {
             bail("Missing required argument for LVM source: linux_lvm_mountpath");
         }
 
-        # parse LVM src ('lvm://vgname/volname/path')
-        my ($linux_lvmvgname,$linux_lvmvolname, $linux_lvmpath) = ($src =~ m|^lvm://([^/]+)/([^/]+)/(.*)$|);
-        # lvmvolname and/or path could be the string "0", so test for 'defined':
-        unless (defined($linux_lvmvgname) and defined($linux_lvmvolname) and defined($linux_lvmpath)) {
-            bail("Could not understand LVM source \"$src\" in backup_lowest_interval()");
-        }
+				$lvm_src = $src;
         
-        # assemble and execute LVM snapshot command
-        @cmd_stack = ();
-        push(@cmd_stack, split(' ',$config_vars{'linux_lvm_cmd_lvcreate'}));
-        push(@cmd_stack, '--snapshot');
-
-        push(@cmd_stack, '--size');
-        push(@cmd_stack, $config_vars{'linux_lvm_snapshotsize'});
-        push(@cmd_stack, '--name');
-        push(@cmd_stack, $config_vars{'linux_lvm_snapshotname'});
-
-        push(@cmd_stack, join('/', $config_vars{'linux_lvm_vgpath'}, $linux_lvmvgname, $linux_lvmvolname));
-        
-        print_cmd(@cmd_stack);
-        if (0 == $test) {
-            # silence gratuitous lvcreate output
-            #$result = system(@cmd_stack);
-            $result = system(join " ", @cmd_stack, ">/dev/null");
-            
-            if ($result != 0) {
-                bail("Create LVM snapshot failed: $result");
-            }
-        }
-        
-        # mount the snapshot
-        @cmd_stack = ();
-        push(@cmd_stack, split(' ', $config_vars{'linux_lvm_cmd_mount'}));
-
-        $linux_lvm_snapshotname = join('/', $config_vars{'linux_lvm_vgpath'}, $linux_lvmvgname, $config_vars{'linux_lvm_snapshotname'});
-        push(@cmd_stack, $linux_lvm_snapshotname);
-        push(@cmd_stack, $config_vars{'linux_lvm_mountpath'});
-        
-        print_cmd(@cmd_stack);
-        if (0 == $test) {
-            $result = system(@cmd_stack);
-            
-            if ($result != 0) {
-                bail("Mount LVM snapshot failed: $result");
-            }
-        }
-        
+        linux_lvm_snapshot_create(linux_lvm_parseurl($lvm_src));
+        $traps{"linux_lvm_snapshot"} = $lvm_src;
+        linux_lvm_mount(linux_lvm_parseurl($lvm_src));
+        $traps{"linux_lvm_mountpoint"} = 1;
         
         # rewrite src to point to mount path
         # - to avoid including the mountpath in the snapshot, change the working directory and use a relative source
@@ -3545,8 +3521,7 @@ sub rsync_backup_point {
             }
         }
 
-        $src = './' .  $linux_lvmpath;
-        $linux_lvm = 1;
+        $src = './' . (linux_lvm_parseurl($lvm_src))[2];
 		
 	# this should have already been validated once, but better safe than sorry
 	} else {
@@ -3684,49 +3659,173 @@ sub rsync_backup_point {
 			print_msg("rsync succeeded", 5);
 		}
 	}
+
+	if(1 == $traps{"linux_lvm_mountpoint"} || 0 ne $traps{"linux_lvm_snapshot"}){
+		print_cmd("chdir($linux_lvm_oldpwd)");
+		if (0 == $test) {
+			$result = chdir($linux_lvm_oldpwd);
+			if (0 == $result) {
+				bail("Could not change directory to \"$linux_lvm_oldpwd\"");
+			}
+		}
+	}
 	
-	# unmount and drop snapshot if required
-	if ($linux_lvm) {
-	
-        print_cmd("chdir($linux_lvm_oldpwd)");
-        if (0 == $test) {
-            $result = chdir($linux_lvm_oldpwd);
-            if (0 == $result) {
-            bail("Could not change directory to \"$linux_lvm_oldpwd\"");
-            }
-        }
+	# delte the traps manually
+	# umount LVM Snapshot if it is mounted
+	if(1 == $traps{"linux_lvm_mountpoint"}){
+		undef $traps{"linux_lvm_mountpoint"};
+		linux_lvm_unmount();
+	}
+	# destroy snapshot created by rsnapshot
+	if(0 ne $traps{"linux_lvm_snapshot"}){
+		undef $traps{"linux_lvm_snapshot"};
+		linux_lvm_snapshot_del(linux_lvm_parseurl($lvm_src));
+	}
+}
 
-        @cmd_stack = ();
-        push(@cmd_stack, split(' ', $config_vars{'linux_lvm_cmd_umount'}));
+#
+# split a LVM backup source into vgname volname and path
+#
+# 1. parameter: full LVM source
+#
+# returns: vgname, volname, path as array
+sub linux_lvm_parseurl(){
+	my $src = shift @_;
+	# parse LVM src ('lvm://vgname/volname/path')
+	my ($linux_lvmvgname,$linux_lvmvolname, $linux_lvmpath) = ($src =~ m|^lvm://([^/]+)/([^/]+)/(.*)$|);
+	# lvmvolname and/or path could be the string "0", so test for 'defined':
+	unless (defined($linux_lvmvgname) and defined($linux_lvmvolname) and defined($linux_lvmpath)) {
+		bail("Could not understand LVM source \"$src\" in linux_lvm_parseurl()");
+	}
+	return ($linux_lvmvgname,$linux_lvmvolname, $linux_lvmpath);
+}
 
-        push(@cmd_stack, $config_vars{'linux_lvm_mountpath'});
-        
-        print_cmd(@cmd_stack);
-        if (0 == $test) {
-            $result = system(@cmd_stack);
-            
-            if ($result != 0) {
-                bail("Unmount LVM snapshot failed: $result");
-            }
-        }
+#
+# assemble and execute LVM snapshot command
+#
+# parameters: the return of linux_lvm_parseurl()
+#
+# returns: -
+sub linux_lvm_snapshot_create {
 
-        @cmd_stack = ();
-        push(@cmd_stack, $config_vars{'linux_lvm_cmd_lvremove'});
+	my $result = undef;
 
-        push(@cmd_stack, '--force');
-        push(@cmd_stack, $linux_lvm_snapshotname);
-        
-        print_cmd(@cmd_stack);
-        if (0 == $test) {
-            # silence gratuitous lvremove output
-            #$result = system(@cmd_stack);
-            $result = system(join " ", @cmd_stack, ">/dev/null");
-            
-            if ($result != 0) {
-                bail("Removal of LVM snapshot failed: $result");
-            }
-        }
-    }
+	my ($linux_lvmvgname,$linux_lvmvolname, $linux_lvmpath) = @_;
+	unless (defined($linux_lvmvgname) and defined($linux_lvmvolname) and defined($linux_lvmpath)) {
+		bail("linux_lvm_snapshot_create needs 3 parameters!");
+	}
+
+	my @cmd_stack = ();
+	push(@cmd_stack, split(' ',$config_vars{'linux_lvm_cmd_lvcreate'}));
+	push(@cmd_stack, '--snapshot');
+
+	push(@cmd_stack, '--size');
+	push(@cmd_stack, $config_vars{'linux_lvm_snapshotsize'});
+	push(@cmd_stack, '--name');
+	push(@cmd_stack, $config_vars{'linux_lvm_snapshotname'});
+
+	push(@cmd_stack, join('/', $config_vars{'linux_lvm_vgpath'}, $linux_lvmvgname, $linux_lvmvolname));
+
+	print_cmd(@cmd_stack);
+	if (0 == $test) {
+		# silence gratuitous lvcreate output
+		#$result = system(@cmd_stack);
+		$result = system(join " ", @cmd_stack, ">/dev/null");
+
+		if ($result != 0) {
+			bail("Create LVM snapshot failed: $result");
+		}
+	}
+}
+
+#
+# delete LVM-snapshot
+#
+# parameters: the return of linux_lvm_parseurl()
+#
+# returns: -
+sub linux_lvm_snapshot_del {
+
+	my $result = undef;
+
+	my ($linux_lvmvgname,$linux_lvmvolname, $linux_lvmpath) = @_;
+	unless (defined($linux_lvmvgname) and defined($linux_lvmvolname) and defined($linux_lvmpath)) {
+		bail("linux_lvm_snapshot_del needs 3 parameters!");
+	}
+
+	my @cmd_stack = ();
+	push(@cmd_stack, $config_vars{'linux_lvm_cmd_lvremove'});
+
+	push(@cmd_stack, '--force');
+	push(@cmd_stack, join('/', $config_vars{'linux_lvm_vgpath'}, $linux_lvmvgname, $config_vars{'linux_lvm_snapshotname'}));
+
+	print_cmd(@cmd_stack);
+	if (0 == $test) {
+		# silence gratuitous lvremove output
+		#$result = system(@cmd_stack);
+		$result = system(join " ", @cmd_stack, ">/dev/null");
+
+		if ($result != 0) {
+			bail("Removal of LVM snapshot failed: $result");
+		}
+	}
+}
+
+#
+# mount a LVM-snapshot
+#
+# parameters: the return of linux_lvm_parseurl()
+#
+# returns: -
+sub linux_lvm_mount {
+
+	my $result = undef;
+
+	my ($linux_lvmvgname,$linux_lvmvolname, $linux_lvmpath) = @_;
+	unless (defined($linux_lvmvgname) and defined($linux_lvmvolname) and defined($linux_lvmpath)) {
+		bail("linux_lvm_mount needs 3 parameters!");
+	}
+
+	# mount the snapshot
+	my @cmd_stack = ();
+	push(@cmd_stack, split(' ', $config_vars{'linux_lvm_cmd_mount'}));
+
+	push(@cmd_stack, join('/', $config_vars{'linux_lvm_vgpath'}, $linux_lvmvgname, $config_vars{'linux_lvm_snapshotname'}));
+	push(@cmd_stack, $config_vars{'linux_lvm_mountpath'});
+
+	print_cmd(@cmd_stack);
+	if (0 == $test) {
+		$result = system(@cmd_stack);
+
+		if ($result != 0) {
+			bail("Mount LVM snapshot failed: $result");
+		}
+	}
+}
+
+#
+# unmount a LVM-snapshot
+#
+# parameters: -
+#
+# returns: -
+sub linux_lvm_unmount {
+
+	my $result = undef;
+
+	my @cmd_stack = ();
+	push(@cmd_stack, split(' ', $config_vars{'linux_lvm_cmd_umount'}));
+
+	push(@cmd_stack, $config_vars{'linux_lvm_mountpath'});
+
+	print_cmd(@cmd_stack);
+	if (0 == $test) {
+		$result = system(@cmd_stack);
+
+		if ($result != 0) {
+			bail("Unmount LVM snapshot failed: $result");
+		}
+	}
 }
 
 # accepts the name of the argument to split, and its value
