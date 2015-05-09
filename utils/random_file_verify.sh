@@ -32,10 +32,10 @@ bs=1 count=100
 
 if [ $? -eq 0 ]
 then
-  echo "SUCCESS:  Randomly generated test file created." >>
+  echo "SUCCESS:  Randomly generated test file created." >>\
 /var/log/localbackup.log
 else
-  echo "FAILED:  Randomly generated test file not created." >>
+  echo "FAILED:  Randomly generated test file not created." >>\
 /var/log/localbackup.log
   msubject="Local Backup has ERRORS!"
 fi
@@ -60,10 +60,10 @@ diff /path/to/files/you/are/backing/up/randomtestfile
 
 if [ $? -eq 0 ]
 then
-  echo "PASSED:  Randomly generated test file is the same." >>
+  echo "PASSED:  Randomly generated test file is the same." >>\
 /var/log/localbackup.log
 else
-  echo "FAILED:  Randomly generated test file differs." >>
+  echo "FAILED:  Randomly generated test file differs." >>\
 /var/log/localbackup.log
   msubject="Local Backup has ERRORS!"
 fi
