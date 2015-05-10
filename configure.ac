@@ -169,6 +169,37 @@ dnl either way, set the cmd_ssh var
 AC_SUBST(CMD_SSH, "cmd_ssh	$SSH")
 
 
+dnl
+dnl LVM COMMANDS CHECK (optional programs)
+dnl
+dnl lvcreate
+AC_PATH_PROG(LVCREATE, lvcreate, no)
+if test "$LVCREATE" = "no"; then
+	LVCREATE=/path/to/lvcreate
+fi
+AC_SUBST(CMD_LVCREATE, "$LVCREATE")
+
+dnl lvremove
+AC_PATH_PROG(LVREMOVE, lvremove, no)
+if test "$LVREMOVE" = "no"; then
+	LVREMOVE=/path/to/lvremove
+fi
+AC_SUBST(CMD_LVREMOVE, "$LVREMOVE")
+
+dnl mount
+AC_PATH_PROG(MOUNT, mount, no)
+if test "$MOUNT" = "no"; then
+	MOUNT=/path/to/mount
+fi
+AC_SUBST(CMD_MOUNT, "$MOUNT")
+
+dnl umount
+AC_PATH_PROG(UMOUNT, umount, no)
+if test "$UMOUNT" = "no"; then
+	UMOUNT=/path/to/umount
+fi
+AC_SUBST(CMD_UMOUNT, "$UMOUNT")
+
 
 dnl
 dnl LOGGER CHECK (optional program)
