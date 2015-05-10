@@ -6996,6 +6996,14 @@ run rsnapshot again, using example.com/etc as the optional parameter.
 
 =back
 
+B<rsnapshot configtest>
+
+=over 4
+
+Do a quick sanity check to make sure everything is ready to go.
+
+=back
+
 =head1 EXIT VALUES
 
 =over 4
