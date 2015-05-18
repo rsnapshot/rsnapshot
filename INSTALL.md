@@ -15,6 +15,7 @@ If you are installing for the first time (and just want the defaults):
 *   Run these commands for a quick installation from source code:
     (skip these commands if you have installed rpm or debian package)
 
+        $ ./autogen.sh # Generates the configure script.
         $ ./configure --sysconfdir=/etc
         $ sudo make install
         $ sudo cp /etc/rsnapshot.conf.default /etc/rsnapshot.conf
