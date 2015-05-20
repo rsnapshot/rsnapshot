@@ -227,8 +227,8 @@ if ($cmd eq 'configtest') {
 	$do_configtest = 1;
 }
 
-# parse config file (if it exists)
-if (defined($config_file) && -r $config_file) {
+# parse config file (if it exists), note: we can't parse a directory
+if (defined($config_file) && (-r $config_file) && (! -d $config_file)) {
 	# if there is a problem, this subroutine will exit the program and notify the user of the error
 	parse_config_file();
 	validate_config_file();
@@ -2558,12 +2558,20 @@ sub exit_configtest {
 # prints out error messages since we can't find the config file
 # exits with a return code of 1
 sub exit_no_config_file {
-	# warn that the config file could not be found
-	print STDERR "Config file \"$config_file\" does not exist or is not readable.\n";
-	if (0 == $do_configtest) {
-		syslog_err("Config file \"$config_file\" does not exist or is not readable.");
+
+	if( -d $config_file ){
+		print STDERR "Can't read the config file: \"$config_file\" is a directory.\n";
+		if (0 == $do_configtest) {
+			syslog_err("Can't read the config file: \"$config_file\" is a directory.\n");
+		}
+	} else {
+		# warn that the config file could not be found
+		print STDERR "Config file \"$config_file\" does not exist or is not readable.\n";
+		if (0 == $do_configtest) {
+			syslog_err("Config file \"$config_file\" does not exist or is not readable.");
+		}
 	}
-	
+
 	# if we have the default config from the install, remind the user to create the real config
 	if ((-e "$config_file.default") && (! -e "$config_file")) {
 		print STDERR "Did you copy $config_file.default to $config_file yet?\n";
