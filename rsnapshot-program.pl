@@ -3140,6 +3140,14 @@ sub rotate_lowest_snapshots {
 	
 	my $result;
 	
+	# cancel if sync_first is enabled but .sync directory not existent
+	
+	if (($config_vars{'sync_first'}) && ( ! -d "$config_vars{'snapshot_root'}/.sync/" )) {
+		print_err ("sync_first is enabled, but there is no .sync directory! Run rsnapshot with the ´sync´ command first. Refusing to rotate this level ($interval)", 1);
+		syslog_err("sync_first is enabled, but there is no .sync directory! Run rsnapshot with the ´sync´ command first. Refusing to rotate this level ($interval)");
+		bail();
+	}
+	
 	# remove oldest directory
 	if ( (-d "$config_vars{'snapshot_root'}/$interval.$interval_max") && ($interval_max > 0) ) {
 		# if use_lazy_deletes is set move the oldest directory to _delete.$$
@@ -4357,6 +4365,16 @@ sub rotate_higher_interval {
 	my $interval_max		= $$id_ref{'interval_max'};
 	my $prev_interval		= $$id_ref{'prev_interval'};
 	my $prev_interval_max	= $$id_ref{'prev_interval_max'};
+	
+	# here we check, if $prev_interval.$prev_interval_max exists and only do the rotation, if from that level can be pulled...
+	# otherwise bail. Maybe there should be an option for such new behaviour, too?
+	if (! -d "$config_vars{'snapshot_root'}/$prev_interval.$prev_interval_max" ) {
+		print_err ("Did not find previous interval max ($config_vars{'snapshot_root'}/$prev_interval.$prev_interval_max), refusing to rotate this level ($interval)", 1);
+		syslog_err("Did not find previous interval max ($config_vars{'snapshot_root'}/$prev_interval.$prev_interval_max), refusing to rotate this level ($interval)");
+		bail();
+	}
+
+
 	
 	# ROTATE DIRECTORIES
 	#
