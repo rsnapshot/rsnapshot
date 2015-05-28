@@ -6398,7 +6398,7 @@ B<retain  gamma 4>
 
 =back
 
-beta.0/ will be copied from alpha.5/, and gamma.0/ will be copied from beta.6/
+beta.0/ will be moved from alpha.5/, and gamma.0/ will be moved from beta.6/
 
 alpha.0/ will be rsynced directly from the filesystem.
 
