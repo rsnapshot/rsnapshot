@@ -21,7 +21,7 @@
 
 # newline-control
 -bbb
--ce
+-nce
 -bar
 
 # whitespace-control
