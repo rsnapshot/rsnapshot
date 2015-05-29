@@ -245,8 +245,9 @@ if (defined($config_file) && -r $config_file) {
 	parse_config_file();
 	validate_config_file();
 
-	# no config file found
 }
+
+# no config file found
 else {
 
 	# warn user and exit the program
@@ -954,8 +955,9 @@ sub parse_config_file {
 				config_err($file_line_num, "$line - \"$value2\" is not a legal value for a retention count");
 				next;
 
-				# ok, it's a number. is it positive?
 			}
+
+			# ok, it's a number. is it positive?
 			else {
 
 				# make sure number is positive
@@ -1079,8 +1081,9 @@ sub parse_config_file {
 				}
 				$line_syntax_ok = 1;
 
-				# fear the unknown
 			}
+
+			# fear the unknown
 			else {
 				config_err($file_line_num, "$line - Source directory \"$src\" doesn't exist");
 				next;
@@ -1688,8 +1691,9 @@ sub validate_config_file {
 			elsif (defined($$bp_ref{'script'})) {
 				push(@backup_script_dest, $tmp_dest_path);
 
-				# something else is wrong
 			}
+
+			# something else is wrong
 			else {
 				print_err("logic error in parse_config_file(): a backup point has no src and no script", 1);
 				syslog_err("logic error in parse_config_file(): a backup point has no src and no script");
@@ -1948,8 +1952,9 @@ sub parse_backup_opts {
 			print_err("$name is not implemented as a per-backup-point option in this version of rsnapshot", 2);
 			return (undef);
 
-			# if we don't know about it, it doesn't exist
 		}
+
+		# if we don't know about it, it doesn't exist
 		else {
 			return (undef);
 		}
@@ -2704,8 +2709,9 @@ sub exit_with_status {
 		log_warn("$run_string: completed, but with some warnings", 2);
 		exit($exit_code);
 
-		# this should never happen
 	}
+
+	# this should never happen
 	else {
 		syslog_err("$run_string: completed, but with no definite status");
 		log_err("$run_string: completed, but with no definite status", 2);
@@ -2726,8 +2732,9 @@ sub exit_configtest {
 			print "Syntax OK\n";
 			exit(0);
 
-			# this should never happen, because any errors should have killed the program before now
 		}
+
+		# this should never happen, because any errors should have killed the program before now
 		else {
 			print "Syntax Error\n";
 			exit(1);
@@ -3082,8 +3089,9 @@ sub handle_interval {
 				# don't create the .sync directory, it gets created later on
 			}
 
-			# sync_first is disabled
 		}
+
+		# sync_first is disabled
 		else {
 
 			# if the sync directory is still here after sync_first is disabled, delete it
@@ -3099,8 +3107,9 @@ sub handle_interval {
 			}
 		}
 
-		# link_dest is disabled
 	}
+
+	# link_dest is disabled
 	else {
 
 		# sync_first is enabled
@@ -3126,8 +3135,9 @@ sub handle_interval {
 				}
 			}
 
-			# sync_first is disabled
 		}
+
+		# sync_first is disabled
 		else {
 
 			# if the sync directory still exists, delete it
@@ -3157,9 +3167,10 @@ sub handle_interval {
 			backup_lowest_interval($id_ref);
 			exec_cmd_postexec();
 
-			# if we're working on the lowest interval, either run the backup and rotate the snapshots, or just rotate them
-			# (depending on whether sync_first is enabled
 		}
+
+		# if we're working on the lowest interval, either run the backup and rotate the snapshots, or just rotate them
+		# (depending on whether sync_first is enabled
 		else {
 			if ($config_vars{'sync_first'}) {
 				rotate_lowest_snapshots($$id_ref{'interval'});
@@ -3172,8 +3183,9 @@ sub handle_interval {
 			}
 		}
 
-		# just rotate the higher intervals
 	}
+
+	# just rotate the higher intervals
 	else {
 
 		# this is not the most frequent unit, just rotate
@@ -3266,8 +3278,9 @@ sub backup_lowest_interval {
 					$sync_dest_matches++;
 				}
 
-				# this is a normal operation, either a sync or a lowest interval sync/rotate
 			}
+
+			# this is a normal operation, either a sync or a lowest interval sync/rotate
 			else {
 
 				# rsync
@@ -3294,8 +3307,9 @@ sub backup_lowest_interval {
 				}
 			}
 
-			# this should never happen
 		}
+
+		# this should never happen
 		else {
 			bail('invalid backup point data in backup_lowest_interval()');
 		}
@@ -3359,8 +3373,9 @@ sub rotate_lowest_snapshots {
 				}
 			}
 
-			# otherwise the default is to delete the oldest directory for this interval
 		}
+
+		# otherwise the default is to delete the oldest directory for this interval
 		else {
 			display_rm_rf("$config_vars{'snapshot_root'}/$interval.$interval_max/");
 
@@ -3459,8 +3474,9 @@ sub rotate_lowest_snapshots {
 				}
 			}
 
-			# otherwise, we hard link (except for directories, symlinks, and special files) sync to .0
 		}
+
+		# otherwise, we hard link (except for directories, symlinks, and special files) sync to .0
 		else {
 
 			# cp -al .sync .0
@@ -3503,8 +3519,9 @@ sub rotate_lowest_snapshots {
 				}
 			}
 
-			# otherwise, we hard link (except for directories, symlinks, and special files) .0 over to .1
 		}
+
+		# otherwise, we hard link (except for directories, symlinks, and special files) .0 over to .1
 		else {
 
 			# call generic cp_al() subroutine
@@ -3706,8 +3723,9 @@ sub rsync_backup_point {
 		if (defined($ssh_args)) {
 			push(@rsync_long_args_stack, "--rsh=$config_vars{'cmd_ssh'} $ssh_args");
 
-			# no arguments is the default
 		}
+
+		# no arguments is the default
 		else {
 			push(@rsync_long_args_stack, "--rsh=$config_vars{'cmd_ssh'}");
 		}
@@ -3765,8 +3783,9 @@ sub rsync_backup_point {
 
 		$src = './' . (linux_lvm_parseurl($lvm_src))[2];
 
-		# this should have already been validated once, but better safe than sorry
 	}
+
+	# this should have already been validated once, but better safe than sorry
 	else {
 		bail("Could not understand source \"$src\" in backup_lowest_interval()");
 	}
@@ -4184,8 +4203,9 @@ sub handle_rsync_error {
 		print_warn("Some files and/or directories in $$bp_ref{'src'} vanished during rsync operation", 4);
 		syslog_warn("Some files and/or directories in $$bp_ref{'src'} vanished during rsync operation");
 
-		# other error
 	}
+
+	# other error
 	else {
 		print_err("$config_vars{'cmd_rsync'} returned $retval while processing $$bp_ref{'src'}", 2);
 		syslog_err("$config_vars{'cmd_rsync'} returned $retval while processing $$bp_ref{'src'}");
@@ -4777,8 +4797,9 @@ sub cp_al {
 	if (defined($config_vars{'cmd_cp'})) {
 		$result = gnu_cp_al("$src", "$dest");
 
-		# fall back to the built-in native perl replacement, followed by an rsync clean-up step
 	}
+
+	# fall back to the built-in native perl replacement, followed by an rsync clean-up step
 	else {
 
 		# native cp -al
@@ -5234,8 +5255,9 @@ sub rm_rf {
 	if (defined($config_vars{'cmd_rm'})) {
 		$result = cmd_rm_rf("$path");
 
-		# fall back on rmtree()
 	}
+
+	# fall back on rmtree()
 	else {
 
 		# remove trailing slash just in case
@@ -5432,8 +5454,9 @@ sub show_rsnapshot_diff {
 			# .sync
 			$cmd_args[1] = "$config_vars{'snapshot_root'}/.sync";
 
-			# sync_first is not enabled, or .sync doesn't exist
 		}
+
+		# sync_first is not enabled, or .sync doesn't exist
 		else {
 
 			# interval.1
@@ -5447,8 +5470,9 @@ sub show_rsnapshot_diff {
 			}
 		}
 
-		# if we got some command line arguments, loop through twice and figure out what they mean
 	}
+
+	# if we got some command line arguments, loop through twice and figure out what they mean
 	else {
 		$paths_in[0] = $ARGV[1];    # the 1st path is the 2nd cmd line argument
 		$paths_in[1] = $ARGV[2];    # the 2nd path is the 3rd cmd line argument
@@ -5699,8 +5723,9 @@ sub sync_cp_src_dest {
 							next;
 						}
 
-						# nuke the destination directory
 					}
+
+					# nuke the destination directory
 					else {
 						$result = rm_rf("$dest/$node");
 						if (0 == $result) {
@@ -5716,8 +5741,9 @@ sub sync_cp_src_dest {
 					return (0);
 				}
 
-				# if it's a directory, recurse!
 			}
+
+			# if it's a directory, recurse!
 			elsif (-d "$src/$node") {
 
 				# if the destination exists but isn't a directory, delete it
@@ -5739,8 +5765,9 @@ sub sync_cp_src_dest {
 					print_err("Warning! Recursion error in sync_cp_src_dest(\"$src/$node\", \"$dest/$node\")", 2);
 				}
 
-				# if it's a file...
 			}
+
+			# if it's a file...
 			elsif (-f "$src/$node") {
 
 				# if dest is a symlink, we need to remove it first
@@ -5777,14 +5804,16 @@ sub sync_cp_src_dest {
 							next;
 						}
 
-						# if they are the same, just leave dest alone
 					}
+
+					# if they are the same, just leave dest alone
 					else {
 						next;
 					}
 
-					# ok, dest doesn't exist. just link src to dest
 				}
+
+				# ok, dest doesn't exist. just link src to dest
 				else {
 					$result = link("$src/$node", "$dest/$node");
 					if (0 == $result) {
@@ -5792,23 +5821,27 @@ sub sync_cp_src_dest {
 					}
 				}
 
-				# FIFO
 			}
+
+			# FIFO
 			elsif (-p "$src/$node") {
 				print_err("Warning! Ignoring FIFO $src/$node", 2);
 
-				# SOCKET
 			}
+
+			# SOCKET
 			elsif (-S "$src/$node") {
 				print_err("Warning! Ignoring socket: $src/$node", 2);
 
-				# BLOCK DEVICE
 			}
+
+			# BLOCK DEVICE
 			elsif (-b "$src/$node") {
 				print_err("Warning! Ignoring special block file: $src/$node", 2);
 
-				# CHAR DEVICE
 			}
+
+			# CHAR DEVICE
 			elsif (-c "$src/$node") {
 				print_err("Warning! Ignoring special character file: $src/$node", 2);
 			}
@@ -5874,8 +5907,9 @@ sub sync_rm_dest {
 						next;
 					}
 
-					# directory
 				}
+
+				# directory
 				else {
 					$result = rm_rf("$dest/$node");
 					if (0 == $result) {
@@ -6320,8 +6354,9 @@ sub upgrade_config_file {
 		print "Found \"rsync_long_args\" uncommented. Attempting upgrade...\n";
 		write_upgraded_config_file(\@lines, 0);
 
-		# did not find rsync_long_args enabled
 	}
+
+	# did not find rsync_long_args enabled
 	else {
 		print "Could not find old \"rsync_long_args\" parameter. Attempting upgrade...\n";
 		write_upgraded_config_file(\@lines, 1);
@@ -6545,8 +6580,9 @@ sub safe_chown {
 				return (0);
 			}
 
-			# we can't safely do anything here, skip it
 		}
+
+		# we can't safely do anything here, skip it
 		else {
 			raise_warning();
 
@@ -6561,8 +6597,9 @@ sub safe_chown {
 			# the warning raised will tell the user what happened
 		}
 
-		# if it's not a symlink, use chown()
 	}
+
+	# if it's not a symlink, use chown()
 	else {
 		$result = chown($uid, $gid, "$filepath");
 		if (!$result) {
