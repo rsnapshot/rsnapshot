@@ -1,0 +1,33 @@
+-b
+-bext=.messy
+-ole=unix
+-nsfs
+
+# line-length
+-vmll
+-l=100
+
+# use tabs for indentation
+-t
+
+# replace 4 spaces with tab and indent line-breaks with 2 spaces
+-et=4
+-ci=2
+
+# don't outdent anything
+-nola
+-noll
+-nolq
+
+# newline-control
+-bbb
+-nce
+-bar
+
+# whitespace-control
+-bt=2
+-bbt=0
+-bbvt=0
+-pt=2
+-pvt=2
+-sbt=2
