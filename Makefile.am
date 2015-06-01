@@ -26,11 +26,6 @@ rsnapshot.html: rsnapshot
 	rm -f pod2htmd.*
 	rm -f pod2htmi.*
 
-upgrade:
-	@echo ""
-	${PERL} rsnapshot-program.pl -c ${sysconfdir}/rsnapshot.conf upgrade-config-file
-	@echo ""
-
 clean:
 	rm -rf rsnapshot-$(VERSION)/
 	rm -f  $(man_MANS)
@@ -79,6 +74,7 @@ rsnapshot-$(VERSION)-$(RPM_RELEASE).noarch.rpm: tar redhat/SOURCES/rsnapshot.pat
 
 tar: rsnapshot-$(VERSION).tar.gz
 	@touch tar
+
 rsnapshot-$(VERSION).tar.gz: $(man_MANS) rpm-patch Makefile $(bin_SCRIPTS) $(sysconf_DATA)
 	@echo building tar file 
 	@# recommended to run make tar as root for the chown
