@@ -25,7 +25,7 @@ clean:
 	rm -f  $(man_MANS)
 	rm -rf autom4te.cache
 	rm -f rsnapshot-$(VERSION).tar.gz
-	rm -f rsnapshot.conf.default
+	rm -f $(sysconf_DATA)
 	rm -f rsnapshot.html
 	rm -f pod2htmd.*
 	rm -f pod2htmi.*
@@ -41,39 +41,36 @@ tar: rsnapshot-$(VERSION).tar.gz
 
 rsnapshot-$(VERSION).tar.gz: $(man_MANS) Makefile $(bin_SCRIPTS) $(sysconf_DATA)
 	@echo building tar file 
-	@# recommended to run make tar as root for the chown
-	rm -f rsnapshot-$(VERSION).tar.gz
+	mkdir rsnapshot-$(VERSION)/
 	
 	@# core files
-	mkdir rsnapshot-$(VERSION)
-	cp -p rsnapshot-program.pl rsnapshot-diff.pl rsnapshot.conf.default.in \
-		$(man_MANS) AUTHORS COPYING INSTALL README NEWS ChangeLog \
+	cp -apr AUTHORS ChangeLog COPYING INSTALL.md Makefile.am NOTES README.md \
+ 		rsnapshot.conf.default.in rsnapshot-diff.pl rsnapshot-program.pl \
+ 		rsnapshot-$(VERSION)
+
+	@# autoconf files
+	cp -apr aclocal.m4 autom4te.cache compile config.guess config.sub configure \
+		install-sh ltmain.sh Makefile.in missing \
 		rsnapshot-$(VERSION)/
 
 	@# documentation files
-	cp -a docs rsnapshot-$(VERSION)/
-	
-	@# autoconf files
-	cp -p Makefile.am Makefile.in aclocal.m4 configure configure.ac config.guess config.sub \
-		install-sh missing rsnapshot-$(VERSION)/
-	
+	cp -apr docs \
+		rsnapshot-$(VERSION)/
+
 	@# utils
-	mkdir rsnapshot-$(VERSION)/utils/
-	cp -p utils/{*.sh,*.pl,README} rsnapshot-$(VERSION)/utils/
-	cp -p utils/{rsnaptar,rsnapshot-copy} rsnapshot-$(VERSION)/utils/
-	mkdir rsnapshot-$(VERSION)/utils/rsnapshotdb
-	cp -p --parents utils/rsnapshotdb/*.* rsnapshot-$(VERSION)/
-	
-	@# t - testing
-	mkdir -p rsnapshot-$(VERSION)/t/support/etc
-	mkdir rsnapshot-$(VERSION)/t/support/files
-	mkdir rsnapshot-$(VERSION)/t/support/snapshots
-	cp -a --parents t/*.t.in t/support/etc/*.in t/support/files rsnapshot-$(VERSION)/
-	@# remove CVS directories from t/support/files and docs.
-	-find rsnapshot-$(VERSION)/ -depth -name CVS -exec rm -rf {} \;
+	cp -apr utils/ \
+		rsnapshot-$(VERSION)/
+
+	@# testsuite
+	cp -apr t/ \
+	rsnapshot-$(VERSION)/
+
+	@# remove git-files
+	find rsnapshot-$(VERSION)/ -depth -name .gitignore -exec rm -rf {} \;
 	
 	@# change ownership to root, and delete build dir
-	-fakeroot chown -R root:root rsnapshot-$(VERSION)/
+	fakeroot chown -R root:root rsnapshot-$(VERSION)/
+	rm -f rsnapshot-$(VERSION).tar.gz
 	tar czf rsnapshot-$(VERSION).tar.gz rsnapshot-$(VERSION)/
 	rm -rf rsnapshot-$(VERSION)/
 	@echo
