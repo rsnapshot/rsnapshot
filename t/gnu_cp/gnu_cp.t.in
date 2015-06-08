@@ -14,5 +14,5 @@ my @lines = `@CP@ --help | grep -i 'gnu'`;
 SKIP: {
 	skip('GNU cp not found', 1) if (@lines == 0);
 
-	ok(0 == rsnapshot("-c t/support/etc/gnu_cp.conf hourly 2>&1"));
+	ok(0 == rsnapshot("-c t/gnu_cp/conf/gnu_cp.conf hourly 2>&1"));
 }

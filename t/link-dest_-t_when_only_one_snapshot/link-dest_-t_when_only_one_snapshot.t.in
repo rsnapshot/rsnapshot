@@ -12,13 +12,13 @@ my $snap_root="t/support/snapshots/";
 ok(! -d "$snap_root" || 0 == execute("rm -rf \"$snap_root\""),
 	" snapshot root does not exist before testing starts");
 
-ok(0 == rsnapshot("-c t/support/etc/link-dest_-t_when_only_one_snapshot.conf daily 2>&1"),
+ok(0 == rsnapshot("-c t/link-dest_-t_when_only_one_snapshot/conf/link-dest_-t_when_only_one_snapshot.conf daily 2>&1"),
 	" first rsnapshot ran");
 
 ok(-d "$snap_root/daily.0" && ! -d "$snap_root/daily.1",
 	" daily.0 exists but daily.1 does not");
 
-my $output=`@PERL@ ./rsnapshot -c t/support/etc/link-dest_-t_when_only_one_snapshot.conf -t daily`;
+my $output=`@PERL@ ./rsnapshot -c t/link-dest_-t_when_only_one_snapshot/conf/link-dest_-t_when_only_one_snapshot.conf -t daily`;
 
 ok($output =~ / --link-dest=/,
 	" link-dest is used");

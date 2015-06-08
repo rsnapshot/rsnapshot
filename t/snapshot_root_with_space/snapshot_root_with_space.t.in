@@ -11,9 +11,9 @@ my $snap_root="t/support/snapshots space root";
 ok(! -d "$snap_root" || 0 == execute("rm -rf \"$snap_root\""),
 	" snapshot root does not exist before testing starts");
 
-ok(0 == rsnapshot("-c t/support/etc/snapshot_root_with_space.conf hourly 2>&1"),
+ok(0 == rsnapshot("-c t/snapshot_root_with_space/conf/snapshot_root_with_space.conf hourly 2>&1"),
 	" first rsnapshot ran");
-ok(0 == rsnapshot("-c t/support/etc/snapshot_root_with_space.conf hourly 2>&1"),
+ok(0 == rsnapshot("-c t/snapshot_root_with_space/conf/snapshot_root_with_space.conf hourly 2>&1"),
 	" second rsnapshot ran");
 ok(-d "$snap_root/hourly.0" && -d "$snap_root/hourly.1",
 	" hourly.0 and hourly.1 directories exist afterward");

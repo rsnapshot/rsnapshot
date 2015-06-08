@@ -1,9 +1,0 @@
-#!/usr/bin/perl
-
-use strict;
-use Test::More tests => 1;
-
-# Ensure failing behavior
-system("@PERL@ ./rsnapshot -c t/support/etc/backup_exec_fail.conf hourly");
-my $rc = $? >> 8;
-ok($rc == 1);

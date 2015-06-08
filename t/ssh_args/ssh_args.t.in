@@ -11,5 +11,5 @@ SKIP: {
 	my $ssh_test = "@SSH@ -p 22 -o StrictHostKeyChecking=no @TEST_SSH_USER@\@localhost true";
 	my $cant_ssh = system("$ssh_test");
 	skip("Cant SSH with \"$ssh_test\"", 1) if ($cant_ssh);
-	ok(! `@PERL@ ./rsnapshot -c t/support/etc/ssh_args.conf hourly 2>&1`, "ssh_args parsed");
+	ok(! `@PERL@ ./rsnapshot -c t/ssh_args/conf/ssh_args.conf hourly 2>&1`, "ssh_args parsed");
 }

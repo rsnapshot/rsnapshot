@@ -128,9 +128,9 @@ rsnapshot-$(VERSION).tar.gz: $(man_MANS) rpm-patch Makefile $(bin_SCRIPTS) $(sys
 	@echo
 
 # If you lack GNU make, you could use "test_cases = t/*.t" as an approximation.
-test_cases_in := $(wildcard t/*.t.in)
+test_cases_in := $(wildcard t/*/*.t.in)
 test_cases := $(test_cases_in:%.in=%)
-test_configs_in := $(wildcard t/support/etc/*.conf.in)
+test_configs_in := $(wildcard t/*/conf/*.conf.in)
 test_configs := $(test_configs_in:%.in=%)
 test_modules_in = $(wildcard t/*.pm.in)
 test_modules = $(test_modules_in:%.in=%)

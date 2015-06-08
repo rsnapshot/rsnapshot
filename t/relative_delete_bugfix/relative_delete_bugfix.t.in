@@ -9,13 +9,13 @@ mkdir("t/support/files/a") unless -d "t/support/files/a";
 ok(0 == execute("cp t/support/files/template/a/1 t/support/files/template/a/2 t/support/files/a/"));
 
 # run rsnapshot once to copy the files into the snapshot root
-ok(0 == rsnapshot("-c t/support/etc/rsync.conf hourly"));
+ok(0 == rsnapshot("-c t/rsync/conf/rsync.conf hourly"));
 
 # now remove a file from the source
 ok(0 == execute("rm -f t/support/files/a/1"));
 
 # run rsnapshot again, it _should_ delete the "1" file
-ok(0 == rsnapshot("-c t/support/etc/relative_delete_bugfix.conf hourly"));
+ok(0 == rsnapshot("-c t/relative_delete_bugfix/conf/relative_delete_bugfix.conf hourly"));
 
 my $pwd = `pwd`;
 chomp($pwd);
