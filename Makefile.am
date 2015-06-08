@@ -49,7 +49,8 @@ rsnapshot-$(VERSION).tar.gz: $(man_MANS) Makefile $(bin_SCRIPTS) $(sysconf_DATA)
  		rsnapshot-$(VERSION)
 
 	@# autoconf files
-	cp -apr aclocal.m4 autom4te.cache compile config.guess config.sub configure \
+	cp -apr configure.ac Makefile.am \
+		aclocal.m4 autom4te.cache config.guess config.sub configure \
 		install-sh ltmain.sh Makefile.in missing \
 		rsnapshot-$(VERSION)/
 
