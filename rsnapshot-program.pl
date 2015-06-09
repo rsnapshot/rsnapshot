@@ -239,7 +239,8 @@ if ($cmd eq 'configtest') {
 }
 
 # parse config file (if it exists), note: we can't parse a directory
-if (defined($config_file) && (-r $config_file) && (! -d $config_file)) {
+if (defined($config_file) && (-r $config_file) && (!-d $config_file)) {
+
 	# if there is a problem, this subroutine will exit the program and notify the user of the error
 	parse_config_file();
 	validate_config_file();
@@ -2746,12 +2747,13 @@ sub exit_configtest {
 # exits with a return code of 1
 sub exit_no_config_file {
 
-	if( -d $config_file ){
+	if (-d $config_file) {
 		print STDERR "Can't read the config file: \"$config_file\" is a directory.\n";
 		if (0 == $do_configtest) {
 			syslog_err("Can't read the config file: \"$config_file\" is a directory.\n");
 		}
-	} else {
+	}
+	else {
 		# warn that the config file could not be found
 		print STDERR "Config file \"$config_file\" does not exist or is not readable.\n";
 		if (0 == $do_configtest) {
@@ -3213,7 +3215,8 @@ sub handle_interval {
 			if (0 == $result) {
 				bail("Error! rm_rf(\"$config_vars{'snapshot_root'}/_delete.$$\")\n");
 			}
-		} else {
+		}
+		else {
 			# only spit this out if lazy deletes are turned on.
 			# Still need to suppress this if they're turned on but we've
 			# not done enough backups to yet need to delete anything
