@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!@PERL@
 
 use strict;
 use Test::More tests => 7;
