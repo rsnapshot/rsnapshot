@@ -44,7 +44,7 @@ rsnapshot-$(VERSION).tar.gz: $(man_MANS) Makefile $(bin_SCRIPTS) $(sysconf_DATA)
 	mkdir rsnapshot-$(VERSION)/
 	
 	@# core files
-	cp -apr AUTHORS ChangeLog COPYING INSTALL.md Makefile.am NOTES README.md \
+	cp -apr AUTHORS ChangeLog COPYING INSTALL.md Makefile.am README.md \
  		rsnapshot.conf.default.in rsnapshot-diff.pl rsnapshot-program.pl \
  		rsnapshot-$(VERSION)
 
