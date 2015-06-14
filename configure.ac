@@ -299,39 +299,8 @@ dnl try to find dependent programs for the config file
 AC_CONFIG_FILES(rsnapshot.conf.default:rsnapshot.conf.default.in)
 
 dnl testsuite-files are following
-AC_CONFIG_FILES(t/backup_exec/backup_exec.t:t/backup_exec/backup_exec.t.in)
-AC_CONFIG_FILES(t/backup_exec/conf/backup_exec.conf:t/backup_exec/conf/backup_exec.conf.in)
-AC_CONFIG_FILES(t/backup_exec/conf/backup_exec_fail.conf:t/backup_exec/conf/backup_exec_fail.conf.in)
+m4_include(t/include.ac)
 
-AC_CONFIG_FILES(t/cmd-post_pre-exec/cmd-post_pre-exec.t:t/cmd-post_pre-exec/cmd-post_pre-exec.t.in)
-AC_CONFIG_FILES(t/cmd-post_pre-exec/conf/pre-false-post-false.conf:t/cmd-post_pre-exec/conf/pre-false-post-false.conf.in)
-AC_CONFIG_FILES(t/cmd-post_pre-exec/conf/pre-false-post-true.conf:t/cmd-post_pre-exec/conf/pre-false-post-true.conf.in)
-AC_CONFIG_FILES(t/cmd-post_pre-exec/conf/pre-true-post-false.conf:t/cmd-post_pre-exec/conf/pre-true-post-false.conf.in)
-AC_CONFIG_FILES(t/cmd-post_pre-exec/conf/pre-true-post-true.conf:t/cmd-post_pre-exec/conf/pre-true-post-true.conf.in)
-
-AC_CONFIG_FILES(t/configtest/conf/configtest.conf:t/configtest/conf/configtest.conf.in)
-AC_CONFIG_FILES(t/configtest/configtest.t:t/configtest/configtest.t.in)
-
-AC_CONFIG_FILES(t/gnu_cp/conf/gnu_cp.conf:t/gnu_cp/conf/gnu_cp.conf.in)
-AC_CONFIG_FILES(t/gnu_cp/gnu_cp.t:t/gnu_cp/gnu_cp.t.in)
-
-AC_CONFIG_FILES(t/link-dest_-t_when_only_one_snapshot/conf/link-dest_-t_when_only_one_snapshot.conf:t/link-dest_-t_when_only_one_snapshot/conf/link-dest_-t_when_only_one_snapshot.conf.in)
-AC_CONFIG_FILES(t/link-dest_-t_when_only_one_snapshot/link-dest_-t_when_only_one_snapshot.t:t/link-dest_-t_when_only_one_snapshot/link-dest_-t_when_only_one_snapshot.t.in)
-
-AC_CONFIG_FILES(t/relative_delete_bugfix/conf/relative_delete_bugfix.conf:t/relative_delete_bugfix/conf/relative_delete_bugfix.conf.in)
-AC_CONFIG_FILES(t/relative_delete_bugfix/relative_delete_bugfix.t:t/relative_delete_bugfix/relative_delete_bugfix.t.in)
-
-AC_CONFIG_FILES(t/rsync/conf/rsync.conf:t/rsync/conf/rsync.conf.in)
-AC_CONFIG_FILES(t/rsync/rsync.t:t/rsync/rsync.t.in)
-
-AC_CONFIG_FILES(t/snapshot_root_with_space/conf/snapshot_root_with_space.conf:t/snapshot_root_with_space/conf/snapshot_root_with_space.conf.in)
-AC_CONFIG_FILES(t/snapshot_root_with_space/snapshot_root_with_space.t:t/snapshot_root_with_space/snapshot_root_with_space.t.in)
-
-AC_CONFIG_FILES(t/ssh_args/conf/ssh_args.conf:t/ssh_args/conf/ssh_args.conf.in)
-AC_CONFIG_FILES(t/ssh_args/ssh_args.t:t/ssh_args/ssh_args.t.in)
-
-dnl Perl modules for regression test scripts
-AC_CONFIG_FILES(t/SysWrap.pm)
 
 AC_OUTPUT
 

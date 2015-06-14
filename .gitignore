@@ -15,6 +15,7 @@ rsnapshot-diff
 rsnapshot-diff.1
 rsnapshot.1
 rsnapshot.conf.default
+t/include.ac
 t/*.pm
 t/*/*.t
 t/*/conf/*.conf
