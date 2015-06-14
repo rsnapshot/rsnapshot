@@ -9,7 +9,13 @@ dnl
 dnl get the current working directory for the regression test suite
 dnl
 CWD=`eval echo \`pwd\``
-AC_SUBST(CWD, "$CWD")
+dnl general test-directory
+AC_SUBST(TEST, "$CWD/t/")
+dnl snapshot_root in conf-files
+AC_SUBST(SNAP, "$CWD/t/support/snapshots")
+dnl template-source to backup
+AC_SUBST(TEMP, "$CWD/t/support/files/template")
+
 
 dnl
 dnl PERL CHECK (required program)

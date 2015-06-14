@@ -4,9 +4,9 @@ use strict;
 use Test::More tests => 1;
 use SysWrap;
 
-mkdir("t/support/files/a") unless -d "t/support/files/a";
-execute("cp t/support/files/template/a/1 t/support/files/template/a/2 t/support/files/a/");
+mkdir("@TEST@/support/files/a") unless -d "@TEST@/support/files/a";
+execute("cp @TEMP@/a/1 @TEMP@/a/2 @TEST@/support/files/a/");
 
-ok(0 == rsnapshot("-c t/rsync/conf/rsync.conf hourly"));
+ok(0 == rsnapshot("-c @TEST@/rsync/conf/rsync.conf hourly"));
 
-execute("rm -f t/support/files/a/1 t/support/files/a/2");
+execute("rm -f @TEST@/support/files/a/1 @TEST@support/files/a/2");

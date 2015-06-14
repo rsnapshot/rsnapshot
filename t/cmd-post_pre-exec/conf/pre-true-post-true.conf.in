@@ -1,6 +1,6 @@
 config_version	1.2
 
-snapshot_root	@CWD@/t/support/snapshots/
+snapshot_root	@SNAP@
 cmd_rsync		@RSYNC@
 
 interval		hourly	2
@@ -8,4 +8,4 @@ interval		hourly	2
 cmd_preexec	/bin/true
 cmd_postexec	/bin/true
 
-backup	@CWD@/t/support/files		cmd_pre_postexectest/
+backup	@TEMP@		cmd_pre_postexectest/

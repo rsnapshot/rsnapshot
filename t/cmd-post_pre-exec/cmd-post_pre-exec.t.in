@@ -7,18 +7,18 @@ use strict;
 use Test::More tests => 4;
 
 # Ensure passing behavior
-system("@PERL@ ./rsnapshot -c t/cmd-post_pre-exec/conf/pre-false-post-false.conf hourly");
+system("@PERL@ ./rsnapshot -c @TEST@/cmd-post_pre-exec/conf/pre-false-post-false.conf hourly");
 my $rc = $? >> 8;
 ok($rc != 0);
 
-system("@PERL@ ./rsnapshot -c t/cmd-post_pre-exec/conf/pre-false-post-true.conf hourly");
+system("@PERL@ ./rsnapshot -c @TEST@/cmd-post_pre-exec/conf/pre-false-post-true.conf hourly");
 $rc = $? >> 8;
 ok($rc != 0);
 
-system("@PERL@ ./rsnapshot -c t/cmd-post_pre-exec/conf/pre-true-post-false.conf hourly");
+system("@PERL@ ./rsnapshot -c @TEST@/cmd-post_pre-exec/conf/pre-true-post-false.conf hourly");
 $rc = $? >> 8;
 ok($rc != 0);
 
-system("@PERL@ ./rsnapshot -c t/cmd-post_pre-exec/conf/pre-true-post-true.conf hourly");
+system("@PERL@ ./rsnapshot -c @TEST@/cmd-post_pre-exec/conf/pre-true-post-true.conf hourly");
 $rc = $? >> 8;
 ok($rc == 0);

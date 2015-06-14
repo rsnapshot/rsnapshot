@@ -5,4 +5,4 @@ use Test::More tests => 1;
 use SysWrap;
 
 # check for basic configtest
-ok(0 == rsnapshot("-c t/configtest/conf/configtest.conf configtest > /dev/null 2>&1"));
+ok(0 == rsnapshot("-c @TEST@/configtest/conf/configtest.conf configtest"));
