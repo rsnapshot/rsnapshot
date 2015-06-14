@@ -1,0 +1,11 @@
+config_version	1.2
+
+snapshot_root	@SNAP@
+cmd_rsync		@RSYNC@
+
+interval		hourly	2
+
+cmd_preexec	/bin/true
+cmd_postexec	/bin/true
+
+backup	@TEMP@		cmd_pre_postexectest/
