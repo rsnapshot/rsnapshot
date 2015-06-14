@@ -2,6 +2,7 @@
 
 use strict;
 use Test::More tests => 1;
+use SysWrap;
 
 my $snap_root="t/support/snapshots/";
 # make sure snap_root directory does not exist before we start
@@ -13,5 +14,5 @@ my @lines = `@CP@ --help | grep -i 'gnu'`;
 SKIP: {
 	skip('GNU cp not found', 1) if (@lines == 0);
 
-	ok(! `@PERL@ ./rsnapshot -c t/support/etc/gnu_cp.conf hourly 2>&1`);
+	ok(0 == rsnapshot("-c t/support/etc/gnu_cp.conf hourly 2>&1"));
 }

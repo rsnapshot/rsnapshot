@@ -1,22 +1,21 @@
 #!/usr/bin/perl
 
 use strict;
-use Test::More tests => 2;
+use Test::More tests => 7;
+use SysWrap;
 
-my $snap_root="t/support/snapshots/";
-# make sure snap_root directory does not exist before we start
--d "$snap_root" && (system("rm -rf \"$snap_root\"")==0 || BAIL_OUT("Failed to rm snapshot root."));
-# copy test files into place
-system("cp -a t/support/files/template/a t/support/files/")==0 || BAIL_OUT("Failed to copy test files.");
+# copy files into place
+mkdir("t/support/files/a") unless -d "t/support/files/a";
+ok(0 == execute("cp t/support/files/template/a/1 t/support/files/template/a/2 t/support/files/a/"));
 
 # run rsnapshot once to copy the files into the snapshot root
-`@PERL@ ./rsnapshot -c t/support/etc/rsync.conf hourly`;
+ok(0 == rsnapshot("-c t/support/etc/rsync.conf hourly"));
 
 # now remove a file from the source
-`rm -f t/support/files/a/1`;
+ok(0 == execute("rm -f t/support/files/a/1"));
 
 # run rsnapshot again, it _should_ delete the "1" file
-`@PERL@ ./rsnapshot -c t/support/etc/relative_delete_bugfix.conf hourly`;
+ok(0 == rsnapshot("-c t/support/etc/relative_delete_bugfix.conf hourly"));
 
 my $pwd = `pwd`;
 chomp($pwd);
@@ -29,4 +28,4 @@ ok( ! -e "$path_to_check/1" );
 ok(   -e "$path_to_check/2" );
 
 # clean up
-system("rm -rf t/support/files/a")==0 || BAIL_OUT("Failed to clean up test files.");
+ok(0 == execute("rm -f t/support/files/a/1 t/support/files/a/2"));

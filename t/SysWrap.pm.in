@@ -1,0 +1,21 @@
+package SysWrap;
+
+use strict;
+use warnings FATAL => 'all';
+use Exporter 'import';
+
+our $VERSION = '1.0';
+
+our @EXPORT = qw(execute rsnapshot);
+
+sub execute {
+	return system(@_) >> 8;
+}
+
+sub rsnapshot {
+	my $args = shift(@_);
+
+	return execute("@PERL@ ./rsnapshot $args >/dev/null 2>&1");
+}
+
+1;

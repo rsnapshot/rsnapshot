@@ -1,13 +1,18 @@
 #!/usr/bin/perl -w
 
 use strict;
-use Test::More tests => 3;
+use Test::More tests => 5;
+use SysWrap;
 
 my $snap_root="t/support/snapshots/";
 # make sure snap_root directory does not exist before we start
 -d "$snap_root" && (system("rm -rf \"$snap_root\"")==0 || BAIL_OUT("Failed to rm snapshot root."));
 
-ok(! `@PERL@ ./rsnapshot -c t/support/etc/link-dest_-t_when_only_one_snapshot.conf daily 2>&1`,
+# Make sure snap_root directory does not exist before we start
+ok(! -d "$snap_root" || 0 == execute("rm -rf \"$snap_root\""),
+	" snapshot root does not exist before testing starts");
+
+ok(0 == rsnapshot("-c t/support/etc/link-dest_-t_when_only_one_snapshot.conf daily 2>&1"),
 	" first rsnapshot ran");
 
 ok(-d "$snap_root/daily.0" && ! -d "$snap_root/daily.1",
@@ -15,9 +20,8 @@ ok(-d "$snap_root/daily.0" && ! -d "$snap_root/daily.1",
 
 my $output=`@PERL@ ./rsnapshot -c t/support/etc/link-dest_-t_when_only_one_snapshot.conf -t daily`;
 
-open(TMP,">>/tmp/test_output");
-print TMP "output=$output\n";
-close(TMP);
-
 ok($output =~ / --link-dest=/,
 	" link-dest is used");
+
+ok(0 == execute("rm -rf \"$snap_root\""),
+	" Removed snapshot root to clean up");

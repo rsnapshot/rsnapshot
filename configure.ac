@@ -262,7 +262,7 @@ dnl if we couldn't find it, provide an example
 if test "$DU" = "no"; then
 	DU=/path/to/du
 fi
-dnl either way, set the cmd_ssh var
+dnl either way, set the cmd_du var
 AC_SUBST(CMD_DU, "cmd_du		$DU")
 
 
@@ -308,6 +308,9 @@ AC_CONFIG_FILES(t/cmd-post_pre-exec/pre-false-post-true.conf:t/cmd-post_pre-exec
 AC_CONFIG_FILES(t/cmd-post_pre-exec/pre-true-post-false.conf:t/cmd-post_pre-exec/pre-true-post-false.conf.in)
 AC_CONFIG_FILES(t/cmd-post_pre-exec/pre-true-post-true.conf:t/cmd-post_pre-exec/pre-true-post-true.conf.in)
 
+
+dnl Perl modules for regression test scripts
+AC_CONFIG_FILES(t/SysWrap.pm)
 
 dnl regression test scripts
 AC_CONFIG_FILES(t/configtest.t:t/configtest.t.in)
