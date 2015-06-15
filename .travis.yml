@@ -17,7 +17,6 @@ before_script:
 script:
   - make
   - make test
-before_deploy:
   - make tar
 deploy:
   provider: releases

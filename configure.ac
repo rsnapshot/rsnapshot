@@ -1,8 +1,8 @@
-AC_INIT(rsnapshot, [m4_esyscmd_s([git describe --tags --always])], rsnapshot-discuss@lists.sourceforge.net)
+AC_INIT([rsnapshot],[m4_esyscmd_s([git describe --tags --always])],[rsnapshot-discuss@lists.sourceforge.net])
 AM_INIT_AUTOMAKE([foreign])
 AC_PROG_MAKE_SET
 AC_PROG_INSTALL
-AC_PROG_LIBTOOL
+LT_INIT
 AC_CONFIG_FILES(Makefile)
 
 dnl
@@ -304,50 +304,6 @@ m4_include(t/include.ac)
 
 
 AC_OUTPUT
-
-# this is kludgy, but it works
-RSNAPSHOT_SYSCONFDIR=`eval echo ${sysconfdir}`
-
-if test -e "$RSNAPSHOT_SYSCONFDIR/rsnapshot.conf"; then
-	RSNAPSHOT_OLD_VERSION=`$PERL rsnapshot-program.pl -c $RSNAPSHOT_SYSCONFDIR/rsnapshot.conf check-config-version`
-
-	# figure out if this is a fresh install or an upgrade
-	# advise the user accordingly
-	if test "$RSNAPSHOT_OLD_VERSION" = "unknown"; then
-		echo ""
-		echo "+----------------------------------------------------------------------------+"
-		echo "| A previous version of rsnapshot was detected.                              |"
-		echo "|                                                                            |"
-		echo "| If you have not already done so, it is HIGHLY recommended that you upgrade |"
-		echo "| your config file for compatibility with this release.                      |"
-		echo "|                                                                            |"
-		echo "| If you don't upgrade your config file, rsnapshot will appear to work, but  |"
-		echo "| rearrange the relative paths to your backup files when you aren't looking. |"
-		echo "| It would be a nasty surprise, which is why we're telling you about it now. |"
-		echo "|                                                                            |"
-		echo "| If you would like to automatically upgrade your config file, just type:    |"
-		echo "|                                                                            |"
-		echo "|     \"make upgrade\"                                                         |"
-		echo "|                                                                            |"
-		echo "| After you have upgraded your config file, type \"make install\".             |"
-		echo "|                                                                            |"
-		echo "| For more information on the upgrade, read the INSTALL file that came with  |"
-		echo "| the program.                                                               |"
-		echo "+----------------------------------------------------------------------------+"
-		exit 0
-	fi
-
-	# this is already the latest version.
-	if test "$RSNAPSHOT_OLD_VERSION" = "1.2"; then
-		echo "$RSNAPSHOT_SYSCONFDIR/rsnapshot.conf found, and is up to date."
-	else
-		echo ""
-		echo "ERROR: $RSNAPSHOT_SYSCONFDIR/rsnapshot.conf is an unknown version."
-		echo "Upgrading is not recommended until you figure out what's wrong."
-		echo ""
-		exit 1
-	fi
-fi
 
 echo ""
 echo "Now type  \"make test\"    to run the regression test suite."

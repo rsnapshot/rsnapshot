@@ -1,15 +1,20 @@
 # perltidy
 *.messy
 
-Makefile
-Makefile.in
 aclocal.m4
 autom4te.cache/
+compile
 config.log
 config.status
 configure
+config.guess
+config.sub
 install-sh
+libtool
+ltmain.sh
 missing
+Makefile
+Makefile.in
 rsnapshot
 rsnapshot-diff
 rsnapshot-diff.1
