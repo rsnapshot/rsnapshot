@@ -1,0 +1,12 @@
+#!@PERL@
+
+# Testing: Only pass test, if both cmd_preexec and cmd_postexec succeeds and the exit-code matches
+
+use strict;
+use Test::More tests => 4;
+use SysWrap;
+
+ok(0 != rsnapshot("-c @TEST@/cmd-post_pre-exec/conf/pre-false-post-false.conf hourly"));
+ok(0 != rsnapshot("-c @TEST@/cmd-post_pre-exec/conf/pre-false-post-true.conf hourly"));
+ok(0 != rsnapshot("-c @TEST@/cmd-post_pre-exec/conf/pre-true-post-false.conf hourly"));
+ok(0 == rsnapshot("-c @TEST@/cmd-post_pre-exec/conf/pre-true-post-true.conf hourly"));

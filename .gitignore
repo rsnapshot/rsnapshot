@@ -15,6 +15,8 @@ rsnapshot-diff
 rsnapshot-diff.1
 rsnapshot.1
 rsnapshot.conf.default
-t/*.t
-t/support/etc/*.conf
+t/include.ac
+t/*.pm
+t/*/*.t
+t/*/conf/*.conf
 t/support/snapshots/

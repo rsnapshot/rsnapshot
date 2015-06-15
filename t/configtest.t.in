@@ -1,7 +1,0 @@
-#!/usr/bin/perl
-
-use strict;
-use Test::More tests => 1;
-
-# check for basic configtest
-ok(! `@PERL@ ./rsnapshot -c t/support/etc/configtest.conf configtest >/dev/null 2>&1`);

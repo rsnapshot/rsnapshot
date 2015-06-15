@@ -1,0 +1,37 @@
+#!@PERL@
+use strict;
+use Test::More tests => 4; # pack here your amount of subtests
+use SysWrap;
+
+#
+# Write here in brief, what you want to check!
+#
+
+# your code follows here
+ 
+# there are MACROS, which should aways be used:
+# @TEST@ you're always referencing your testsuite-directory
+#   in a test-file it could look like this:
+#   ok(0 == rsnapshot("-c @TEST@/cmd-post_pre-exec/conf/pre-false-post-false.conf hourly"));
+# @SNAP@ always references a possible snapshot-root
+#   in the configuration-file this could be one line:
+#   snapshot_root		@SNAP@
+# @TEMP@ the template directory. Use this as your backup-source
+#   in the configuration-file this could be one line:
+#   backup	@TEMP@		localhost
+#
+# there are of course other MACROS, too. check them out:
+#  $> grep AC_SUBST configure.ac
+# The first parameter is always the macro_name which gets replaced
+
+#here is some pseudo-code to give you a hint, how your tests could look like
+ok(0 == rsnapshot("-c @TEST@/cmd-post_pre-exec/conf/pre-false-post-false.conf hourly"));
+
+# you can even skip tests
+SKIP: {
+	if($condition){
+		skip("Cant SSH with \"$ssh_test\"", 1);
+	}
+		
+	ok(!rsnapshot("-c @TEST@/ssh_args/conf/ssh_args.conf hourly"), "ssh_args parsed");
+}

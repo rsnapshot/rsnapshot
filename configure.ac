@@ -9,7 +9,14 @@ dnl
 dnl get the current working directory for the regression test suite
 dnl
 CWD=`eval echo \`pwd\``
-AC_SUBST(CWD, "$CWD")
+AC_SUBST(CWD, "$CWD/")
+dnl general test-directory
+AC_SUBST(TEST, "$CWD/t/")
+dnl snapshot_root in conf-files
+AC_SUBST(SNAP, "$CWD/t/support/snapshots")
+dnl template-source to backup
+AC_SUBST(TEMP, "$CWD/t/support/files/template")
+
 
 dnl
 dnl PERL CHECK (required program)
@@ -262,7 +269,7 @@ dnl if we couldn't find it, provide an example
 if test "$DU" = "no"; then
 	DU=/path/to/du
 fi
-dnl either way, set the cmd_ssh var
+dnl either way, set the cmd_du var
 AC_SUBST(CMD_DU, "cmd_du		$DU")
 
 
@@ -292,34 +299,9 @@ AC_CONFIG_FILES(rsnapshot-diff:rsnapshot-diff.pl)
 dnl try to find dependent programs for the config file
 AC_CONFIG_FILES(rsnapshot.conf.default:rsnapshot.conf.default.in)
 
-dnl config files for regression test scripts
-AC_CONFIG_FILES(t/support/etc/configtest.conf:t/support/etc/configtest.conf.in)
-AC_CONFIG_FILES(t/support/etc/rsync.conf:t/support/etc/rsync.conf.in)
-AC_CONFIG_FILES(t/support/etc/gnu_cp.conf:t/support/etc/gnu_cp.conf.in)
-AC_CONFIG_FILES(t/support/etc/relative_delete_bugfix.conf:t/support/etc/relative_delete_bugfix.conf.in)
-AC_CONFIG_FILES(t/support/etc/snapshot_root_with_space.conf:t/support/etc/snapshot_root_with_space.conf.in)
-AC_CONFIG_FILES(t/support/etc/backup_exec.conf:t/support/etc/backup_exec.conf.in)
-AC_CONFIG_FILES(t/support/etc/backup_exec_fail.conf:t/support/etc/backup_exec_fail.conf.in)
-AC_CONFIG_FILES(t/support/etc/link-dest_-t_when_only_one_snapshot.conf:t/support/etc/link-dest_-t_when_only_one_snapshot.conf.in)
-AC_CONFIG_FILES(t/support/etc/ssh_args.conf:t/support/etc/ssh_args.conf.in)
+dnl testsuite-files are following
+m4_include(t/include.ac)
 
-AC_CONFIG_FILES(t/cmd-post_pre-exec/pre-false-post-false.conf:t/cmd-post_pre-exec/pre-false-post-false.conf.in)
-AC_CONFIG_FILES(t/cmd-post_pre-exec/pre-false-post-true.conf:t/cmd-post_pre-exec/pre-false-post-true.conf.in)
-AC_CONFIG_FILES(t/cmd-post_pre-exec/pre-true-post-false.conf:t/cmd-post_pre-exec/pre-true-post-false.conf.in)
-AC_CONFIG_FILES(t/cmd-post_pre-exec/pre-true-post-true.conf:t/cmd-post_pre-exec/pre-true-post-true.conf.in)
-
-
-dnl regression test scripts
-AC_CONFIG_FILES(t/configtest.t:t/configtest.t.in)
-AC_CONFIG_FILES(t/rsync.t:t/rsync.t.in)
-AC_CONFIG_FILES(t/gnu_cp.t:t/gnu_cp.t.in)
-AC_CONFIG_FILES(t/relative_delete_bugfix.t:t/relative_delete_bugfix.t.in)
-AC_CONFIG_FILES(t/snapshot_root_with_space.t:t/snapshot_root_with_space.t.in)
-AC_CONFIG_FILES(t/backup_exec.t:t/backup_exec.t.in)
-AC_CONFIG_FILES(t/backup_exec_fail.t:t/backup_exec_fail.t.in)
-AC_CONFIG_FILES(t/link-dest_-t_when_only_one_snapshot.t:t/link-dest_-t_when_only_one_snapshot.t.in)
-AC_CONFIG_FILES(t/ssh_args.t:t/ssh_args.t.in)
-AC_CONFIG_FILES(t/cmd-post_pre-exec.t:t/cmd-post_pre-exec.t.in)
 
 AC_OUTPUT
 

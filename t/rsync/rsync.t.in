@@ -1,0 +1,12 @@
+#!@PERL@
+
+use strict;
+use Test::More tests => 1;
+use SysWrap;
+
+mkdir("@TEST@/support/files/a") unless -d "@TEST@/support/files/a";
+execute("cp @TEMP@/a/1 @TEMP@/a/2 @TEST@/support/files/a/");
+
+ok(0 == rsnapshot("-c @TEST@/rsync/conf/rsync.conf hourly"));
+
+execute("rm -f @TEST@/support/files/a/1 @TEST@support/files/a/2");

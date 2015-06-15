@@ -1,0 +1,6 @@
+config_version	1.2
+snapshot_root	@SNAP@
+cmd_rsync	@RSYNC@
+link_dest	1
+interval	daily	7
+backup	@TEST@/link-dest_-t_when_only_one_snapshot/conf/link-dest_-t_when_only_one_snapshot.conf	link_dest

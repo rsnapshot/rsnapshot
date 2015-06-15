@@ -1,0 +1,18 @@
+#!@PERL@
+
+use strict;
+use Test::More tests => 2;
+use SysWrap;
+
+# make sure snapshot_root directory does not exist before we start
+ok(! remove_snapshot_root(),
+	" snapshot root does not exist before testing starts");
+
+# check for GNU cp
+my @lines = `@CP@ --help | grep -i 'gnu'`;
+
+SKIP: {
+	skip('GNU cp not found', 1) if (@lines == 0);
+
+	ok(0 == rsnapshot("-c @TEST@/gnu_cp/conf/gnu_cp.conf hourly 2>&1"));
+}

@@ -45,6 +45,7 @@ clean:
 	rm -f Makefile config.log config.status configure.lineno rsnapshot rsnapshot-diff
 	-rm -f doc rpm-patch rpm tar
 	rm -f t/*.t
+	rm -f t/*.pm
 	rm -f t/support/etc/*.conf
 	rm -f t/support/files/a/{1,2}
 	rm -rf t/support/snapshots/*.*
@@ -127,10 +128,14 @@ rsnapshot-$(VERSION).tar.gz: $(man_MANS) rpm-patch Makefile $(bin_SCRIPTS) $(sys
 	@echo
 
 # If you lack GNU make, you could use "test_cases = t/*.t" as an approximation.
-test_cases_in := $(wildcard t/*.t.in)
+test_cases_in := $(wildcard t/*/*.t.in)
 test_cases := $(test_cases_in:%.in=%)
-test: rsnapshot $(test_cases)
-	@PERL@ -MTest::Harness -e 'runtests(glob "t/*.t")';
+test_configs_in := $(wildcard t/*/conf/*.conf.in)
+test_configs := $(test_configs_in:%.in=%)
+test_modules_in = $(wildcard t/*.pm.in)
+test_modules = $(test_modules_in:%.in=%)
+test: rsnapshot $(test_cases) $(test_configs) $(test_modules)
+	@PERL@ -MTest::Harness -It -e 'runtests($(test_cases:%="%",))'
 
 bin_SCRIPTS = rsnapshot rsnapshot-diff
 man_MANS = rsnapshot.1 rsnapshot-diff.1

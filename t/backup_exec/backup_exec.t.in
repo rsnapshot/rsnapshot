@@ -1,0 +1,10 @@
+#!@PERL@
+
+use strict;
+use Test::More tests => 2;
+use SysWrap;
+
+# Ensure passing behavior
+ok(2 == rsnapshot("-c @TEST@/backup_exec/conf/backup_exec.conf hourly"));
+# Ensure failing behavior
+ok(1 == rsnapshot("-c @TEST@/backup_exec/conf/backup_exec_fail.conf hourly"));

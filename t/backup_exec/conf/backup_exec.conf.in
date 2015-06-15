@@ -1,0 +1,12 @@
+config_version	1.2
+snapshot_root	@SNAP@
+cmd_rsync		@RSYNC@
+interval		hourly	2
+backup_exec		ls -ld /* | grep "/u"
+backup_exec		echo "hello world!"
+backup_exec		echo 'hello world!'
+backup_exec		/bin/true
+backup_exec		/bin/true		optional
+backup_exec		/bin/true		required
+backup_exec		/bin/false
+backup_exec		/bin/false	optional

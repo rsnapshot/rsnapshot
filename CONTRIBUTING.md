@@ -62,6 +62,23 @@ Create a new branch, prefix it with `issue/` and, if available, the github issue
 
 Add your commits to the branch. They should be logically ordered and clean. Rebase them, if neccessary. Make sure that `make test` passes. Finished? Open a pull-request! The code will get reviewed. If the review passes, a project-member will merge it onto `master` and `release-*` (see below), and will release new bugfix-versions.
 
+### Test cases
+
+We encourage you to write a test case for your pull-request. rsnapshot lacks of a proper testsuite, so please write tests whenever you create a Pull-request touching code at the program. We can verify your changes and intentions easier.
+
+1. Create a directory in the testsuite-folder (`t/`) with the desired test-name. And create in this also a subfolder named `conf`.
+2. Copy the skelleton-file from `t/support/skel/testcase` into your testcase-folder and name it like your folder with the **ending `.t.in`**.
+3. Do the same with the conf-file `t/support/skel/testconf`, but copy it into your conf-folder. Give the file the same name and with the **ending `.conf.in`**.
+4. Write your tests and of course test them.
+
+A few notes on the testsuite:
+
+- Use the SysWrap-module actively.
+- Any file commited in the testsuite-folder ending with `.conf` or `.t` is commited or named wrong.
+- Let your files always end with `.in` and execute `autogen.sh` before you run your testsuite.
+- Always place your configuration-files into the `conf`-subfolder.
+- If you have got multiple tests to check, which are quite similar, use one test-file, and multiple configuration-files located in your test-folder. (Look at the cmd-post_pre-exec testcase).
+
 ## Releases and versions
 ### release-branches
 

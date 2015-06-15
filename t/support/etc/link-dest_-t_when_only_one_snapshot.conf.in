@@ -1,6 +1,0 @@
-config_version	1.2
-snapshot_root	@CWD@/t/support/snapshots/
-cmd_rsync	@RSYNC@
-link_dest	1
-interval	daily	7
-backup	@CWD@/t/support/etc/link-dest_-t_when_only_one_snapshot.conf	link_dest

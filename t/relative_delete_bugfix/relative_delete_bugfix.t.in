@@ -1,0 +1,29 @@
+#!@PERL@
+
+use strict;
+use Test::More tests => 7;
+use SysWrap;
+
+# copy files into place
+mkdir("@TEST@/support/files/a") unless -d "@TEST@/support/files/a";
+ok(0 == execute("cp @TEMP@/a/1 @TEMP@/a/2 @TEST@/support/files/a/"));
+
+# run rsnapshot once to copy the files into the snapshot root
+ok(0 == rsnapshot("-c @TEST@/rsync/conf/rsync.conf hourly"));
+
+# now remove a file from the source
+ok(0 == execute("rm -f @TEST@/support/files/a/1"));
+
+# run rsnapshot again, it _should_ delete the "1" file
+ok(0 == rsnapshot("-c @TEST@/relative_delete_bugfix/conf/relative_delete_bugfix.conf hourly"));
+
+my $path_to_check = '@TEST@/support/snapshots/hourly.0/localhost/@TEST@/support/files/a/';
+
+# make sure the file was --deleted
+ok( ! -e "$path_to_check/1" );
+
+# make sure the other one is still there
+ok(   -e "$path_to_check/2" );
+
+# clean up
+ok(0 == execute("rm -f @TEST@/support/files/a/1 @TEST@/support/files/a/2"));

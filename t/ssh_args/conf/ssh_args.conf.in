@@ -1,0 +1,7 @@
+config_version	1.2
+snapshot_root	@SNAP@
+cmd_rsync		@RSYNC@
+cmd_ssh			@SSH@
+interval		hourly	6
+ssh_args		-p 22
+backup			@TEST_SSH_USER@@localhost:@TEST@/ssh_args/conf/ssh_args.conf	localhost/

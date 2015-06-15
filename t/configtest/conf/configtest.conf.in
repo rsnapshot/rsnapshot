@@ -1,0 +1,8 @@
+config_version	1.2
+snapshot_root	@SNAP@
+cmd_rsync		@RSYNC@
+interval		hourly	6
+backup			@TEMP@/a/	localhost/
+backup_exec		/bin/true
+backup_exec		/bin/true		optional
+backup_exec		/bin/true		required

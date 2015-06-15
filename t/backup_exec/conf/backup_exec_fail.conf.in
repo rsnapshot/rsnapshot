@@ -1,0 +1,5 @@
+config_version	1.2
+snapshot_root	@SNAP@
+cmd_rsync		@RSYNC@
+interval		hourly	2
+backup_exec		/bin/false	required

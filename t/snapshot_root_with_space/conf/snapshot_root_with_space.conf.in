@@ -1,0 +1,5 @@
+config_version	1.2
+snapshot_root	@TEST@/support/snapshots space root/
+cmd_rsync		@RSYNC@
+interval		hourly	6
+backup			@TEST@/snapshot_root_with_space/conf/snapshot_root_with_space.conf	localhost/
