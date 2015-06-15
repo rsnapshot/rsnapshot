@@ -1,11 +1,12 @@
 #!@PERL@
 
 use strict;
-use Test::More tests => 1;
+use Test::More tests => 2;
 use SysWrap;
 
 # make sure snapshot_root directory does not exist before we start
--d "@SNAP@" && (system("rm -rf \"@SNAP@\"")==0 || BAIL_OUT("Failed to rm snapshot root."));
+ok(! remove_snapshot_root(),
+	" snapshot root does not exist before testing starts");
 
 # check for GNU cp
 my @lines = `@CP@ --help | grep -i 'gnu'`;

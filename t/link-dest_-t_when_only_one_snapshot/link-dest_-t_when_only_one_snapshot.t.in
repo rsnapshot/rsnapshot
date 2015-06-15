@@ -4,22 +4,18 @@ use strict;
 use Test::More tests => 5;
 use SysWrap;
 
-# make sure snapshot_root directory does not exist before we start
--d "@SNAP@" && (system("rm -rf \"@SNAP@\"")==0 || BAIL_OUT("Failed to rm snapshot root."));
-
 # Make sure snap_root directory does not exist before we start
-ok(! -d "@SNAP@" || 0 == execute("rm -rf \"@SNAP@\""), " snapshot root does not exist before testing starts");
+ok(! remove_snapshot_root(),
+	" snapshot root does not exist before testing starts");
 
-ok(0 == rsnapshot("-c @TEST@/link-dest_-t_when_only_one_snapshot/conf/link-dest_-t_when_only_one_snapshot.conf daily 2>&1"),
+ok(0 == rsnapshot("-c @TEST@/link-dest_-t_when_only_one_snapshot/conf/link-dest_-t_when_only_one_snapshot.conf daily"),
 	" first rsnapshot ran");
 
 ok(-d "@SNAP@/daily.0" && ! -d "@SNAP@/daily.1",
 	" daily.0 exists but daily.1 does not");
 
-my $output=`@PERL@ ./rsnapshot -c @TEST@/link-dest_-t_when_only_one_snapshot/conf/link-dest_-t_when_only_one_snapshot.conf -t daily`;
-
-ok($output =~ / --link-dest=/,
+ok(rsnapshot_output("-c @TEST@/link-dest_-t_when_only_one_snapshot/conf/link-dest_-t_when_only_one_snapshot.conf -t daily") =~ / --link-dest=/,
 	" link-dest is used");
 
-ok(0 == execute("rm -rf \"@SNAP@\""),
+ok(0 == remove_snapshot_root(),
 	" Removed snapshot root to clean up");

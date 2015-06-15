@@ -1,11 +1,12 @@
 #!@PERL@
 
 use strict;
-use Test::More tests => 1;
+use Test::More tests => 2;
 use SysWrap;
 
 # make sure snap_root directory does not exist before we start
--d "@SNAP@" && (system("rm -rf \"@SNAP@\"")==0 || BAIL_OUT("Failed to rm snapshot root."));
+ok(! remove_snapshot_root(),
+	" snapshot root does not exist before testing starts");
 
 SKIP: {
 	my $ssh_test = "@SSH@ -p 22 -o StrictHostKeyChecking=no @TEST_SSH_USER@\@localhost true";
