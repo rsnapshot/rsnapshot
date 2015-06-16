@@ -4,12 +4,15 @@ Mike Rubel - http://www.mikerubel.org/computers/rsync_snapshots/
 Nathan Rosenquist
     - Primary author and ex-maintainer of rsnapshot (until 2005).
 
+Benedikt Heine <bebe@bebehei.de>
+    - current maintainer of rsnapshot (2015-)
+
 David Cantrell <david@cantrell.org.uk>
     - ex-maintainer of rsnapshot (2005-2007)
     - Wrote the rsnapshot-diff utility
 
 David Keegel <djk@cybersource.com.au>
-    - Current maintainer of rsnapshot (2008-)
+    - ex-maintainer of rsnapshot (2008-2015)
     - Allowed remote ssh directory paths starting with "~/" as well as "/"
     - Fixed race condition in lock file creation, improved error reporting
     - Fixed a number of other bugs and buglets
