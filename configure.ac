@@ -1,8 +1,6 @@
 AC_INIT([rsnapshot],[m4_esyscmd_s([git describe --tags --always --dirty])],[rsnapshot-discuss@lists.sourceforge.net])
 AM_INIT_AUTOMAKE([foreign])
 AC_PROG_MAKE_SET
-AC_PROG_INSTALL
-LT_INIT
 AC_CONFIG_FILES(Makefile)
 
 dnl
