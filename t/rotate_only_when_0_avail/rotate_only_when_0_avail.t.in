@@ -1,7 +1,7 @@
 #!@PERL@
 
 use strict;
-use Test::More tests => 10;
+use Test::More tests => 11;
 use SysWrap;
 
 remove_snapshot_root();
@@ -21,3 +21,4 @@ ok(0 == rsnapshot("-c @TEST@/rotate_only_when_0_avail/conf/rotate_only_when_0_av
 ok(0 == rsnapshot("-c @TEST@/rotate_only_when_0_avail/conf/rotate_only_when_0_avail.conf hourly"));
 ok(0 == rsnapshot("-c @TEST@/rotate_only_when_0_avail/conf/rotate_only_when_0_avail.conf hourly"));
 ok(0 == rsnapshot("-c @TEST@/rotate_only_when_0_avail/conf/rotate_only_when_0_avail.conf weekly"));
+ok(0 != rsnapshot("-c @TEST@/rotate_only_when_0_avail/conf/rotate_only_when_0_avail.conf weekly")); 
