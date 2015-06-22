@@ -16,6 +16,7 @@ missing
 Makefile
 Makefile.in
 rsnapshot
+rsnapshot-*.tar.gz
 rsnapshot-diff
 rsnapshot-diff.1
 rsnapshot.1
