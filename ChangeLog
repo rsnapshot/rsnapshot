@@ -3,6 +3,11 @@ rsnapshot changelog
 http://www.rsnapshot.org/
 ------------------------------------------------------------------------------
 
+current master
+------------------------------------------------------------------------------
+- Display warning, when the verbosity is set multiple times (e.g. on
+  command-line and logfile at the same time)
+
 VERSION 1.4.0
 ------------------------------------------------------------------------------
 - Tidy the code with perltidy
