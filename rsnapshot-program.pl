@@ -1442,6 +1442,8 @@ sub parse_config_file {
 			if (1 == is_valid_loglevel($value)) {
 				if (!defined($verbose)) {
 					$verbose = $value;
+				} elsif($verbose < $value ) {
+					print_warn("The verbosity-level is \"$verbose\" despite subsequent declaration at line $file_line_num.");
 				}
 
 				$line_syntax_ok = 1;
