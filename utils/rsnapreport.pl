@@ -1,7 +1,7 @@
 #!/usr/bin/env perl
 # this script prints a pretty report from rsnapshot output
 # in the rsnapshot.conf you must set
-# verbose >= 3
+# verbose >= 4
 # and add --stats to rsync_long_args
 # then setup crontab 'rsnapshot daily 2>&1 | rsnapreport.pl | mail -s"SUBJECT" backupadm@adm.com
 # don't forget the 2>&1 or your errors will be lost to stderr
@@ -41,14 +41,14 @@ sub pretty_print(){
 		my $filest = $bkdata{$source}{'files_tran'};
 		my $filelistgentime = $bkdata{$source}{'file_list_gen_time'};
 		my $filelistxfertime = $bkdata{$source}{'file_list_trans_time'};
-		my $bytes= $bkdata{$source}{'file_size'}/1000000; # convert to MB
-		my $bytest= $bkdata{$source}{'file_tran_size'}/1000000; # convert to MB
+		my $bytes = $bkdata{$source}{'file_size'}/1000000; # convert to MB
+		my $bytest = $bkdata{$source}{'file_tran_size'}/1000000; # convert to MB
 		$source =~ s/^[^\@]+\@//; # remove username
-format BREPORTHEAD =
+		format BREPORTHEAD =
 SOURCE                          TOTAL FILES   FILES TRANS      TOTAL MB     MB TRANS   LIST GEN TIME  FILE XFER TIME
 --------------------------------------------------------------------------------------------------------------------
 .
-format BREPORTBODY =
+		format BREPORTBODY =
 @<<<<<<<<<<<<<<<<<<<<<<<<<<<<<	@>>>>>>>>>>   @>>>>>>>>>> @#########.## @########.##   @>>>>>>>>>>>>  @>>>>>>>>>>>>>
 $source,                        $files,       $filest,    $bytes,       $bytest,       $filelistgentime, $filelistxfertime
 .
@@ -62,7 +62,7 @@ sub nextLine($){
 	push(@$lines,$line);
 	return shift @$lines;
 }
-	
+
 
 my @rsnapout = ();
 
@@ -83,24 +83,30 @@ while (my $line = nextLine(\@rsnapout)){
 		#print $source;
 		while($line = nextLine(\@rsnapout)){
   			# this means we are missing stats info
-			if($line =~ /^[\/\w]+\/rsync/){ 
+			if($line =~ /^[\/\w]+\/rsync/){
 				unshift(@rsnapout,$line);
 				push(@errors,"$source NO STATS DATA");
-				last;  
+				last;
 			}
 			# stat record
 			if($line =~ /^total size is\s+\d+/){ last; } # this ends the rsync stats record
-			elsif($line =~ /Number of files:\s+(\d+)/){
+			# Number of files: 1,325 (reg: 387, dir: 139, link: 799)
+			elsif($line =~ /Number of files:\s+([\d,]+)/){
 				$bkdata{$source}{'files'}=$1;
+				$bkdata{$source}{'files'}=~ s/,//g;
 			}
-			elsif($line =~ /Number of files transferred:\s+(\d+)/){
-				$bkdata{$source}{'files_tran'}=$1;
+			# Number of regular files transferred: 1
+			elsif($line =~ /Number of (regular )?files transferred:\s+([\d,]+)/){
+				$bkdata{$source}{'files_tran'}=$2;
 			}
-			elsif($line =~ /Total file size:\s+(\d+)/){
+			# Total file size: 1,865,857 bytes
+			elsif($line =~ /Total file size:\s+([\d,]+)/){
 				$bkdata{$source}{'file_size'}=$1;
+				$bkdata{$source}{'file_size'}=~ s/,//g;
 			}
-			elsif($line =~ /Total transferred file size:\s+(\d+)/){
+			elsif($line =~ /Total transferred file size:\s+([\d,]+)/){
 				$bkdata{$source}{'file_tran_size'}=$1;
+				$bkdata{$source}{'file_tran_size'}=~ s/,//g;
 			}
 			elsif($line =~ /File list generation time:\s+(.+)/){
 				$bkdata{$source}{'file_list_gen_time'}=$1;
