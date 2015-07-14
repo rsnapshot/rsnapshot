@@ -126,6 +126,12 @@ loglevel	3
 #
 lockfile	/var/run/rsnapshot.pid
 
+# By default, rsnapshot check lockfile, check if PID is running
+# and if not, consider lockfile as stale, then start
+# Enabling this stop rsnapshot if PID in lockfile is not running
+#
+#stop_on_stale_lockfile		0
+
 # Default rsync args. All rsync commands have at least these options set.
 #
 #rsync_short_args	-a
