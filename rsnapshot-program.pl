@@ -4,7 +4,7 @@
 #                                                                      #
 # rsnapshot                                                            #
 # by Nathan Rosenquist                                                 #
-# now maintained by David Keegel                                       #
+# now maintained by Benedikt Heine                                     #
 #                                                                      #
 # The official rsnapshot website is located at                         #
 # http://www.rsnapshot.org/                                            #
@@ -7623,7 +7623,7 @@ David Keegel <djk@cybersource.com.au>
 =over 4
 
 =item -
-Current rsnapshot maintainer
+Previous rsnapshot maintainer
 
 =item -
 Fixed race condition in lock file creation, improved error reporting
@@ -7633,6 +7633,15 @@ Allowed remote ssh directory paths starting with "~/" as well as "/"
 
 =item -
 Fixed a number of other bugs and buglets
+
+=back
+
+Benedikt Heine <benedikt@heine.rocks>
+
+=over 4
+
+=item -
+Current rsnapshot maintainer
 
 =back
 
