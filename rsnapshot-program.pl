@@ -3919,6 +3919,7 @@ sub rsync_backup_point {
 				print_msg($_, 4);
 			}
 
+			waitpid($pid, 0);
 			$result = $?;
 			$tryCount += 1;
 		}
