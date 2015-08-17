@@ -8,6 +8,7 @@ current master
 - Display warning, when the verbosity is set multiple times (e.g. on
   command-line and logfile at the same time)
 - Changed maintainership in all files.
+- Capture rsync's output right (Github issue 102)
 
 VERSION 1.4.0
 ------------------------------------------------------------------------------
