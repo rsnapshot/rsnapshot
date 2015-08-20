@@ -12,6 +12,33 @@ rsnapshot is a filesystem backup utility based on rsync. Using rsnapshot, it is 
 
 * * *
 
+      **Table of Contents**
+        Introduction
+            1.1. What you willneed
+            1.2. Copyright and License
+            1.3. Disclaimer
+            1.4. Feedback
+        2. Motivation
+        3. Installation
+            3.1. 30 second version (for the impatient)
+            3.2. Untar the source code package
+            3.3. Change to the source directory
+            3.4. Decide where you want to install
+            3.5. Run the configure script
+            3.6. Install the program
+        Configuration
+            4.1. Create the config file
+            4.2. Where to go for more info
+            4.3. Modifying the config file
+            4.4. Testing your config file
+        Automation
+        6. How it works
+        7. Restoring backupsi
+            7.1. root only
+            7.2. All users
+        8. Conclusion</a></span></dt>
+        9. More resources
+
 **Introduction**
 
 rsnapshot is a filesystem backup utility based on rsync. Using rsnapshot, it is possible to take snapshots of your filesystems at different points in time. Using hard links, rsnapshot creates the illusion of multiple full backups, while only taking up the space of one full backup plus differences. When coupled with ssh, it is possible to take snapshots of remote filesystems as well.
