@@ -12,7 +12,8 @@ rsnapshot is a filesystem backup utility based on rsync. Using rsnapshot, it is 
 
 * * *
 
-      **Table of Contents**
+**Table of Contents**
+
         Introduction
             1.1. What you willneed
             1.2. Copyright and License
