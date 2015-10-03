@@ -3926,13 +3926,9 @@ sub rsync_backup_point {
 
 		# now we see if rsync ran successfully, and what to do about it
 		if ($result != 0) {
-
-			# bitmask return value
-			my $retval = get_retval($result);
-
 			# print warnings, and set this backup point to rollback if we're using --link-dest
 			#
-			handle_rsync_error($retval, $bp_ref);
+			handle_rsync_error($result, $bp_ref);
 		}
 		else {
 			print_msg("rsync succeeded", 5);
