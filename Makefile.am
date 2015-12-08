@@ -9,11 +9,11 @@ man: $(man_MANS)
 rsnapshot.1 : rsnapshot
 	@# perl 5.8 for this
 	pod2man -c 'rsnapshot-tools' -n 'rsnapshot' -r 'rsnapshot-tools' rsnapshot > rsnapshot.1
-	
+
 rsnapshot-diff.1 : rsnapshot-diff
 	@# perl 5.8 for this
 	pod2man -c 'rsnapshot-tools' -n 'rsnapshot-diff' -r 'rsnapshot-tools' rsnapshot-diff > rsnapshot-diff.1
-	
+
 html: rsnapshot.html
 rsnapshot.html: rsnapshot
 	pod2html rsnapshot | grep -v 'link rev' > rsnapshot.html
@@ -35,40 +35,40 @@ clean:
 	rm -f t/support/etc/*.conf
 	rm -f t/support/files/a/{1,2}
 	rm -rf t/support/snapshots/*.*
-	
-	
+
+
 tar: rsnapshot-$(VERSION).tar.gz
 	@touch tar
 
 rsnapshot-$(VERSION).tar.gz: $(man_MANS) Makefile $(bin_SCRIPTS) $(sysconf_DATA)
-	@echo building tar file 
+	@echo building tar file
 	mkdir rsnapshot-$(VERSION)/
-	
+
 	@# core files
-	cp -apr AUTHORS ChangeLog COPYING INSTALL.md Makefile.am README.md \
+	cp -a AUTHORS ChangeLog COPYING INSTALL.md Makefile.am README.md \
  		rsnapshot.conf.default.in rsnapshot-diff.pl rsnapshot-program.pl \
  		rsnapshot-$(VERSION)
 
 	@# autoconf files
-	cp -apr configure.ac Makefile.am \
+	cp -a configure.ac Makefile.am \
 		aclocal.m4 autom4te.cache configure install-sh Makefile.in missing \
 		rsnapshot-$(VERSION)/
 
 	@# documentation files
-	cp -apr docs \
+	cp -a docs \
 		rsnapshot-$(VERSION)/
 
 	@# utils
-	cp -apr utils/ \
+	cp -a utils/ \
 		rsnapshot-$(VERSION)/
 
 	@# testsuite
-	cp -apr t/ \
+	cp -a t/ \
 	rsnapshot-$(VERSION)/
 
 	@# remove git-files
 	find rsnapshot-$(VERSION)/ -depth -name .gitignore -exec rm -rf {} \;
-	
+
 	@# change ownership to root, and delete build dir
 	fakeroot chown -R root:root rsnapshot-$(VERSION)/
 	rm -f rsnapshot-$(VERSION).tar.gz
@@ -89,4 +89,3 @@ test: rsnapshot $(test_cases) $(test_configs) $(test_modules)
 bin_SCRIPTS = rsnapshot rsnapshot-diff
 man_MANS = rsnapshot.1 rsnapshot-diff.1
 sysconf_DATA = rsnapshot.conf.default
-

@@ -3920,19 +3920,14 @@ sub rsync_backup_point {
 			}
 
 			waitpid($pid, 0);
-			$result = $? >> 8;
+			$result = get_retval($?);
 			$tryCount += 1;
 		}
 
 		# now we see if rsync ran successfully, and what to do about it
 		if ($result != 0) {
-
-			# bitmask return value
-			my $retval = get_retval($result);
-
 			# print warnings, and set this backup point to rollback if we're using --link-dest
-			#
-			handle_rsync_error($retval, $bp_ref);
+			handle_rsync_error($result, $bp_ref);
 		}
 		else {
 			print_msg("rsync succeeded", 5);
@@ -6708,7 +6703,7 @@ B<config_version>     Config file version (required). Default is 1.2
 B<snapshot_root>      Local filesystem path to save all snapshots
 
 B<include_conf>       Include another file in the configuration at this point.
- 
+
 =over 4
 
 This is recursive, but you may need to be careful about paths when specifying
@@ -6783,7 +6778,7 @@ B<linux_lvm_cmd_umount>
 =over 4
 
 Paths to lvcreate, lvremove, mount and umount commands, for use with Linux
-LVMs.  You may include options to the commands also. 
+LVMs.  You may include options to the commands also.
 The lvcreate, lvremove, mount and umount commands are required for
 managing snapshots of LVM volumes and are otherwise optional.
 
@@ -6964,7 +6959,7 @@ B<rsync_long_args     --delete --numeric-ids --relative --delete-excluded>
 
 List of long arguments to pass to rsync.  The default values are
     --delete --numeric-ids --relative --delete-excluded
-This means that the directory structure in each backup point destination 
+This means that the directory structure in each backup point destination
 will match that in the backup point source.
 
 Quotes are permitted in rsync_long_args, eg --rsync-path="sudo /usr/bin/rsync".
@@ -7029,7 +7024,7 @@ B<use_lazy_deletes    1>
 
 =over 4
 
-Changes default behavior of rsnapshot and does not initially remove the 
+Changes default behavior of rsnapshot and does not initially remove the
 oldest snapshot. Instead it moves that directory to _delete.[processid] and
 continues as normal. Once the backup has been completed, the lockfile will
 be removed before rsnapshot starts deleting the directory.
@@ -7075,7 +7070,7 @@ B<linux_lvm_mountpath		/mnt/lvm-snapshot>
 
 =over 4
 
-Mount point to use to temporarily mount the snapshot(s). 
+Mount point to use to temporarily mount the snapshot(s).
 
 =back
 
@@ -7175,8 +7170,8 @@ B<backup  lvm://vg0/home/path2/       lvm-vg0/>
 
 =over 4
 
-Backs up the LVM logical volume called home, of volume group vg0, to 
-<snapshot_root>/<interval>.0/lvm-vg0/. Will create, mount, backup, unmount and remove an LVM 
+Backs up the LVM logical volume called home, of volume group vg0, to
+<snapshot_root>/<interval>.0/lvm-vg0/. Will create, mount, backup, unmount and remove an LVM
 snapshot for each lvm:// entry.
 
 =back
@@ -7341,7 +7336,7 @@ If rsnapshot takes longer than 10 minutes to do the "beta" rotate
 (which usually includes deleting the oldest beta snapshot), then you
 should increase the time between the backup levels.
 Otherwise (assuming you have set the B<lockfile> parameter, as is recommended)
-your alpha snapshot will fail sometimes because the beta still has the lock.  
+your alpha snapshot will fail sometimes because the beta still has the lock.
 
 Remember that these are just the times that the program runs.
 To set the number of backups stored, set the B<retain> numbers in
