@@ -1,7 +1,7 @@
 #!/usr/bin/env perl
 # this script prints a pretty report from rsnapshot output
 # in the rsnapshot.conf you must set
-# verbose >= 3
+# verbose >= 4
 # and add --stats to rsync_long_args
 # then setup crontab 'rsnapshot daily 2>&1 | rsnapreport.pl | mail -s"SUBJECT" backupadm@adm.com
 # don't forget the 2>&1 or your errors will be lost to stderr
@@ -37,12 +37,12 @@ sub pretty_print(){
 
 	foreach my $source (sort keys %bkdata){
 		if($bkdata{$source} =~ /error/i) { print "ERROR $source $bkdata{$source}"; next; }
-		my $files = $bkdata{$source}{'files'};
-		my $filest = $bkdata{$source}{'files_tran'};
-		my $filelistgentime = $bkdata{$source}{'file_list_gen_time'};
-		my $filelistxfertime = $bkdata{$source}{'file_list_trans_time'};
-		my $bytes= $bkdata{$source}{'file_size'}/1000000; # convert to MB
-		my $bytest= $bkdata{$source}{'file_tran_size'}/1000000; # convert to MB
+		my $files = $bkdata{$source}{'files'} || "N/A";
+		my $filest = $bkdata{$source}{'files_tran'} || "N/A";
+		my $filelistgentime = $bkdata{$source}{'file_list_gen_time'} || "N/A";
+		my $filelistxfertime = $bkdata{$source}{'file_list_trans_time'} || "N/A";
+		my $bytes= $bkdata{$source}{'file_size'}/1000000 || "0"; # convert to MB
+		my $bytest= $bkdata{$source}{'file_tran_size'}/1000000 || "0"; # convert to MB
 		$source =~ s/^[^\@]+\@//; # remove username
 format BREPORTHEAD =
 SOURCE                          TOTAL FILES   FILES TRANS      TOTAL MB     MB TRANS   LIST GEN TIME  FILE XFER TIME
@@ -59,6 +59,11 @@ $source,                        $files,       $filest,    $bytes,       $bytest,
 sub nextLine($){
 	my($lines) = @_;
 	my $line = <>;
+
+	if ($line) {
+		# remove comma (thousand separator)
+		$line =~ s/,//g;
+	}
 	push(@$lines,$line);
 	return shift @$lines;
 }
@@ -72,7 +77,8 @@ for(my $i=0; $i < $bufsz; $i++){
 }
 
 while (my $line = nextLine(\@rsnapout)){
-	if($line =~ /^[\/\w]+\/rsync/) { # find start rsync command line
+
+	if($line =~ /^[\/\w]+\/rsync\s/) { # find start rsync command line
 		my @rsynccmd=();
 		while($line =~ /\s+\\$/){ # combine wrapped lines
 			$line =~ s/\\$//g;
@@ -80,10 +86,9 @@ while (my $line = nextLine(\@rsnapout)){
 		}
 		push(@rsynccmd,split(/\s+/,$line)); # split into command components
 		my $source = $rsynccmd[-2]; # count backwards: source always second to last
-		#print $source;
 		while($line = nextLine(\@rsnapout)){
-  			# this means we are missing stats info
-			if($line =~ /^[\/\w]+\/rsync/){ 
+			# this means we are missing stats info
+			if($line =~ /^[\/\w]+\/rsync\s/){ 
 				unshift(@rsnapout,$line);
 				push(@errors,"$source NO STATS DATA");
 				last;  
@@ -93,8 +98,9 @@ while (my $line = nextLine(\@rsnapout)){
 			elsif($line =~ /Number of files:\s+(\d+)/){
 				$bkdata{$source}{'files'}=$1;
 			}
-			elsif($line =~ /Number of files transferred:\s+(\d+)/){
-				$bkdata{$source}{'files_tran'}=$1;
+			# fix by Dominik George
+			elsif($line =~ /Number of (regular )?files transferred:\s+(\d+)/){
+				$bkdata{$source}{'files_tran'}=$2;
 			}
 			elsif($line =~ /Total file size:\s+(\d+)/){
 				$bkdata{$source}{'file_size'}=$1;
