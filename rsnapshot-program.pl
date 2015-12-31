@@ -6768,6 +6768,8 @@ files over (assuming there are any).
 
 B<cmd_rm>             Full path to rm (optional)
 
+B<cmd_mkbackupdir>    Full path to mkdir or equivalent (optional)
+
 B<cmd_logger>         Full path to logger (optional, for syslog support)
 
 B<cmd_du>             Full path to du (optional, for disk usage reports)

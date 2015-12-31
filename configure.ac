@@ -143,6 +143,39 @@ AC_SUBST(CMD_RM, "cmd_rm		$RM")
 
 
 dnl
+dnl MKBACKUPDIR CHECK (optional program)
+dnl
+dnl if the user specified a path, try that first
+AC_ARG_WITH(mkbackupdir,
+	[  --with-mkbackupdir=PATH Specify the path to mkbackupdir ],
+	[
+		if test "x$withval" != "xno"; then
+			if test -x "$withval"; then
+				MKBACKUPDIR=$withval
+			else
+				AC_MSG_ERROR(mkbackupdir not found)
+			fi
+		else
+			RM=no
+		fi
+	]
+)
+dnl if the user didn't specify a path, hunt for it
+if test "$MKBACKUPDIR" != "no"; then
+	AC_PATH_PROG(MKBACKUPDIR, mkbackupdir, no)
+fi
+dnl save the program for testing
+AC_SUBST(TEST_RM, "$MKBACKUPDIR")
+dnl if we couldn't find it, provide an example
+if test "$MKBACKUPDIR" = "no"; then
+	MKBACKUPDIR=/bin/mkdir
+fi
+dnl either way, set the cmd_mkbackupdir var
+AC_SUBST(CMD_MKBACKUPDIR, "cmd_mkbackupdir	$MKBACKUPDIR")
+
+
+
+dnl
 dnl SSH CHECK (optional program)
 dnl
 dnl if the user specified a path, try that first

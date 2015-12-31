@@ -43,6 +43,10 @@ snapshot_root	/.snapshots/
 #
 @CMD_RM@
 
+# uncomment this to use a custom mkdir program to create a backup directory
+#
+#@CMD_MKBACKUPDIR@
+
 # rsync must be enabled for anything to work. This is the only command that
 # must be enabled.
 #
