@@ -6691,7 +6691,7 @@ your needs.
 Long lines may be split over several lines.  "Continuation" lines
 B<must> begin with a space or a tab character.  Continuation lines will
 have all leading and trailing whitespace stripped off, and then be appended
-with an intervening tab character to the previous line when the configuation
+with an intervening tab character to the previous line when the configuration
 file is parsed.
 
 Here is a list of allowed parameters:
