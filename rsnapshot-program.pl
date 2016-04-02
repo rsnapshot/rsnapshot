@@ -8012,7 +8012,7 @@ Portions Copyright (C) 2002-2007 Mike Rubel, Carl Wilhelm Soderstrom,
 Ted Zlatanov, Carl Boe, Shane Liebling, Bharat Mediratta, Peter Palfrader,
 Nicolas Kaiser, David Cantrell, Chris Petersen, Robert Jackson, Justin Grote,
 David Keegel, Alan Batie, Dieter Bloms, Henning Moll, Ben Low, Anthony
-Ettinger
+Ettinger, John Sullivan
 
 This man page is distributed under the same license as rsnapshot:
 the GPL (see below).
