@@ -7224,6 +7224,14 @@ Mount point to use to temporarily mount the snapshot(s).
 
 =back
 
+B<linux_btrfs_snapshotname  rsnapshot>
+
+=over 4
+
+Name to be used when creating the BTRFS subvolume snapshot(s) (btrfs subvolume create option).
+
+=back
+
 B<backup>  /etc/                       localhost/
 
 B<backup>  root@example.com:/etc/      example.com/
@@ -7233,6 +7241,8 @@ B<backup>  rsync://example.com/path2/  example.com/
 B<backup>  /var/                       localhost/      one_fs=1
 
 B<backup>  lvm://vg0/home/path2/       lvm-vg0/
+
+B<backup>  btrfs://mnt/btrfs/subvol1/  btrfs/subvol1/
 
 B<backup_script>   /usr/local/bin/backup_pgsql.sh    pgsql_backup/
 
@@ -7326,6 +7336,16 @@ snapshot for each lvm:// entry.
 
 =back
 
+B<backup  btrfs://mnt/btrfs/subvol1/  btrfs/subvol1/>
+
+=over 4
+
+Backs up the BTRFS subvolume called subvol1 to
+<snapshot_root>/<interval>.0/btrfs/subvol1/. Will create, backup, and
+remove a BTRFS snapshot for each btrfs:// entry.
+
+=back
+
 
 B<backup_script      /usr/local/bin/backup_database.sh   db_backup/>
 
@@ -7412,6 +7432,8 @@ Putting it all together (an example file):
     linux_lvm_vgpath          /dev
     linux_lvm_mountpath       /mnt/lvm-snapshot
 
+    linux_btrfs_snapshotname    rsnapshot
+
     retain              alpha  6
     retain              beta   7
     retain              gamma  7
@@ -7426,6 +7448,7 @@ Putting it all together (an example file):
     backup              root@mail.foo.com:/home/  mail.foo.com/
     backup              rsync://example.com/pub/  example.com/pub/
     backup              lvm://vg0/xen-home/       lvm-vg0/xen-home/
+    backup              btrfs:///mnt/btrfs/data/  btrfs/data/
     backup_exec         echo "backup finished!"
 
 =back
@@ -7968,6 +7991,14 @@ Ben Low (B<ben@bdlow.net>)
 =over 4
 
 Linux LVM snapshot support
+
+=back
+
+John Sullivan (B<jsullivan3@gmail.com>)
+
+=over 4
+
+Linux BTRFS snapshot support
 
 =back
 
