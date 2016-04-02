@@ -178,6 +178,7 @@ my $rsync_include_file_args = undef;
 my %traps;
 $traps{"linux_lvm_snapshot"}   = 0;
 $traps{"linux_lvm_mountpoint"} = 0;
+$traps{"linux_btrfs_snapshot"} = 0;
 
 ########################################
 ###         SIGNAL HANDLERS          ###
@@ -1082,7 +1083,14 @@ sub parse_config_file {
 				$line_syntax_ok = 1;
 
 			}
-
+			elsif (is_linux_btrfs_path($src)) {
+				if (!defined($config_vars{'linux_btrfs_snapshotname'})) {
+					config_err($file_line_num,
+						"$line - Cannot handle $src, linux_btrfs_snapshotname not defined in $config_file");
+					next;
+				}
+				$line_syntax_ok = 1;
+			}
 			# fear the unknown
 			else {
 				config_err($file_line_num, "$line - Source directory \"$src\" doesn't exist");
@@ -1411,6 +1419,13 @@ sub parse_config_file {
 
 		# LVM ARGS
 		if ($var =~ m/^linux_lvm_(vgpath|snapshotname|snapshotsize|mountpath)$/) {
+			$config_vars{$var} = $value;
+			$line_syntax_ok = 1;
+			next;
+		}
+
+		# BTRFS ARGS
+		if ($var =~ m/^linux_btrfs_(snapshotname)$/) {
 			$config_vars{$var} = $value;
 			$line_syntax_ok = 1;
 			next;
@@ -2894,6 +2909,18 @@ sub is_linux_lvm_path {
 	return (0);
 }
 
+# accepts path
+# returns 1 if it's a syntactically valid BTRFS path
+# returns 0 otherwise
+sub is_linux_btrfs_path {
+	my $path = shift(@_);
+
+	if (!defined($path))		{ return (undef); }
+	if ($path =~ m|^btrfs://.*$|) { return (1); }
+
+	return (0);
+}
+
 # accepts proposed list for rsync_short_args
 # makes sure that rsync_short_args is in the format '-abcde'
 # (not '-a -b' or '-ab c', etc)
@@ -3583,6 +3610,8 @@ sub rsync_backup_point {
 	my $linux_lvm_oldpwd = undef;
 	my $lvm_src          = undef;
 
+	my $linux_btrfs_oldpwd = undef;
+
 	# if we're using link-dest later, that target depends on whether we're doing a 'sync' or a regular interval
 	# if we're doing a "sync", then look at [lowest-interval].0 instead of [cur-interval].1
 	my $interval_link_dest;
@@ -3797,6 +3826,29 @@ sub rsync_backup_point {
 		$src = './' . (linux_lvm_parseurl($lvm_src))[2];
 
 	}
+	elsif (is_linux_btrfs_path($src)) {
+		unless (defined($config_vars{'linux_btrfs_snapshotname'})) {
+			bail("Missing required argument for BTRFS source: linux_btrfs_snapshotname");
+		}
+		# take BTRFS snapshot, reformat src into local path
+		my $btrfs_src = $src;
+		linux_btrfs_snapshot_create(linux_btrfs_parseurl($btrfs_src));
+		$traps{"linux_btrfs_snapshot"} = $btrfs_src;
+		# rewrite src to point to snapshot path
+		# - to avoid including the mountpath in the snapshot, change the working directory and use a relative source
+		$linux_btrfs_oldpwd = cwd();
+
+		my $linux_btrfs_newdir = join('/', (linux_btrfs_parseurl($btrfs_src))[0], $config_vars{'linux_btrfs_snapshotname'});
+		print_cmd("chdir($linux_btrfs_newdir)");
+		if (0 == $test) {
+			$result = chdir($linux_btrfs_newdir);
+			if (0 == $result) {
+				bail("Could not change directory to \"$linux_btrfs_newdir\"");
+			}
+		}
+
+		$src = './'
+	}
 
 	# this should have already been validated once, but better safe than sorry
 	else {
@@ -3955,6 +4007,21 @@ sub rsync_backup_point {
 	if (0 ne $traps{"linux_lvm_snapshot"}) {
 		undef $traps{"linux_lvm_snapshot"};
 		linux_lvm_snapshot_del(linux_lvm_parseurl($lvm_src));
+	}
+
+	# Check for BTRFS traps.
+	if (0 ne $traps{"linux_btrfs_snapshot"}) {
+		print_cmd("chdir($linux_btrfs_oldpwd)");
+		if (0 == $test) {
+			$result = chdir($linux_btrfs_oldpwd);
+			if (0 == $result) {
+				bail("Could not change directory to \"$linux_btrfs_oldpwd\"");
+			}
+		}
+		# destroy snapshot created by rsnapshot
+		my $btrfs_snap = $traps{"linux_btrfs_snapshot"};
+		undef $traps{"linux_btrfs_snapshot"};
+		linux_btrfs_snapshot_del(linux_btrfs_parseurl($btrfs_snap));
 	}
 }
 
@@ -4116,6 +4183,89 @@ sub linux_lvm_unmount {
 			bail("Unmount LVM snapshot failed: $result");
 		}
 	}
+}
+
+#
+# assemble and execute BTRFS snapshot command
+#
+# parameters: the return of linux_btrfs_parseurl()
+#
+# returns: -
+sub linux_btrfs_snapshot_create {
+
+	my $result = undef;
+
+	my ($linux_btrfspath) = @_;
+	unless (defined($linux_btrfspath)) {
+		bail("linux_btrfs_snapshot_create needs 1 parameter!");
+	}
+
+	my @cmd_stack = ();
+	push(@cmd_stack, split(' ', 'btrfs subvolume snapshot'));
+	push(@cmd_stack, $linux_btrfspath);
+	push(@cmd_stack, join('/', $linux_btrfspath, $config_vars{'linux_btrfs_snapshotname'}));
+
+	print_cmd(@cmd_stack);
+	if (0 == $test) {
+
+		$result = system(@cmd_stack);
+
+		if ($result != 0) {
+			bail("Create BTRFS snapshot failed: $result");
+		}
+	}
+}
+
+#
+# delete BTRFS-snapshot
+#
+# parameters: the return of linux_btrfs_parseurl()
+#
+# returns: -
+sub linux_btrfs_snapshot_del {
+
+	my $result = undef;
+
+	my ($linux_btrfspath) = @_;
+	unless (defined($linux_btrfspath)) {
+		bail("linux_btrfs_snapshot_create needs 1 parameter!");
+	}
+
+	my @cmd_stack = ();
+    # The '-C' parameter ensures that the deletion is committed before the
+    # command returns.
+	push(@cmd_stack, split(' ', 'btrfs subvolume delete -C'));
+	push(@cmd_stack, join('/', $linux_btrfspath, $config_vars{'linux_btrfs_snapshotname'}));
+
+	print_cmd(@cmd_stack);
+	if (0 == $test) {
+
+		$result = system(@cmd_stack);
+
+		if ($result != 0) {
+			bail("Removal of BTRFS snapshot failed: $result");
+		}
+	}
+}
+
+#
+# split a BTRFS backup source into fspath, subvolume, and path
+#
+# 1. parameter: full BTRFS source
+#
+# returns: fspath as array
+sub linux_btrfs_parseurl() {
+	my $src = shift @_;
+
+	# parse BTRFS src ('btrfs://fspath/subvolume/path')
+	my ($linux_btrfspath) =
+	  ($src =~ m|^btrfs://(.*)$|);
+
+	# btrfsvolname and/or path could be the string "0", so test for 'defined':
+	unless (defined($linux_btrfspath)) {
+		bail("Could not understand BTRFS source \"$src\" in linux_btrfs_parseurl()");
+	}
+	return ($linux_btrfspath);
 }
 
 # accepts the name of the argument to split, and its value
