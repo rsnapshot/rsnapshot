@@ -4195,15 +4195,15 @@ sub linux_btrfs_snapshot_create {
 
 	my $result = undef;
 
-	my ($linux_btrfspath) = @_;
-	unless (defined($linux_btrfspath)) {
-		bail("linux_btrfs_snapshot_create needs 1 parameter!");
+	my ($linux_btrfs_path, $linux_btrfs_subvol) = @_;
+	unless (defined($linux_btrfs_path) and defined($linux_btrfs_subvol)) {
+		bail("linux_btrfs_snapshot_create needs 2 parameters!");
 	}
 
 	my @cmd_stack = ();
 	push(@cmd_stack, split(' ', 'btrfs subvolume snapshot'));
-	push(@cmd_stack, $linux_btrfspath);
-	push(@cmd_stack, join('/', $linux_btrfspath, $config_vars{'linux_btrfs_snapshotname'}));
+	push(@cmd_stack, join('/', $linux_btrfs_path, $linux_btrfs_subvol));
+	push(@cmd_stack, join('/', $linux_btrfs_path, $config_vars{'linux_btrfs_snapshotname'}));
 
 	print_cmd(@cmd_stack);
 	if (0 == $test) {
@@ -4226,16 +4226,16 @@ sub linux_btrfs_snapshot_del {
 
 	my $result = undef;
 
-	my ($linux_btrfspath) = @_;
-	unless (defined($linux_btrfspath)) {
-		bail("linux_btrfs_snapshot_create needs 1 parameter!");
+	my ($linux_btrfs_path, $linux_btrfs_subvol) = @_;
+	unless (defined($linux_btrfs_path) and defined($linux_btrfs_subvol)) {
+		bail("linux_btrfs_snapshot_create needs 2 parameters!");
 	}
 
 	my @cmd_stack = ();
     # The '-C' parameter ensures that the deletion is committed before the
     # command returns.
 	push(@cmd_stack, split(' ', 'btrfs subvolume delete -C'));
-	push(@cmd_stack, join('/', $linux_btrfspath, $config_vars{'linux_btrfs_snapshotname'}));
+	push(@cmd_stack, join('/', $linux_btrfs_path, $config_vars{'linux_btrfs_snapshotname'}));
 
 	print_cmd(@cmd_stack);
 	if (0 == $test) {
@@ -4258,14 +4258,16 @@ sub linux_btrfs_parseurl() {
 	my $src = shift @_;
 
 	# parse BTRFS src ('btrfs://fspath/subvolume/path')
-	my ($linux_btrfspath) =
-	  ($src =~ m|^btrfs://(.*)$|);
+	my ($linux_btrfs_path) =
+		($src =~ m|^btrfs://(.*)/([^\/]*)$|);
+	my ($linux_btrfs_subvol) =
+		($src =~ m|^btrfs://.*/([^\/]*)$|);
 
 	# btrfsvolname and/or path could be the string "0", so test for 'defined':
-	unless (defined($linux_btrfspath)) {
+	unless (defined($linux_btrfs_path) and defined($linux_btrfs_subvol)) {
 		bail("Could not understand BTRFS source \"$src\" in linux_btrfs_parseurl()");
 	}
-	return ($linux_btrfspath);
+	return ($linux_btrfs_path, $linux_btrfs_subvol);
 }
 
 # accepts the name of the argument to split, and its value
