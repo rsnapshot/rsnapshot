@@ -4257,11 +4257,12 @@ sub linux_btrfs_snapshot_del {
 sub linux_btrfs_parseurl() {
 	my $src = shift @_;
 
-	# parse BTRFS src ('btrfs://fspath/subvolume/path')
+	# parse BTRFS src ('btrfs:///fspath/subvolume/path')
+	# or with trailing slash ('btrfs:///fspath/subvolume/path/')
 	my ($linux_btrfs_path) =
-		($src =~ m|^btrfs://(.*)/([^\/]*)$|);
+		($src =~ m|^btrfs://(.*)/[^\/]+/?$|);
 	my ($linux_btrfs_subvol) =
-		($src =~ m|^btrfs://.*/([^\/]*)$|);
+		($src =~ m|^btrfs://.*/([^\/]+)/?$|);
 
 	# btrfsvolname and/or path could be the string "0", so test for 'defined':
 	unless (defined($linux_btrfs_path) and defined($linux_btrfs_subvol)) {
