@@ -841,6 +841,19 @@ sub parse_config_file {
 			}
 		}
 
+		# CHECK FOR btrfs (optional)
+		if ($var eq 'linux_btrfs_cmd') {
+			if (is_valid_script($value)) {
+				$config_vars{'linux_btrfs_cmd'} = $value;
+				$line_syntax_ok = 1;
+				next;
+			}
+			else {
+				config_err($file_line_num, "$line - $value is not a valid executable");
+				next;
+			}
+		}
+
 		# CHECK FOR mount (optional)
 		if ($var eq 'linux_lvm_cmd_mount') {
 			if (is_valid_script($value)) {
@@ -1084,6 +1097,11 @@ sub parse_config_file {
 
 			}
 			elsif (is_linux_btrfs_path($src)) {
+				if (!defined($config_vars{'linux_btrfs_cmd'})) {
+					config_err($file_line_num,
+						"$line - Cannot handle $src, linux_btrfs_cmd not defined in $config_file");
+					next;
+				}
 				if (!defined($config_vars{'linux_btrfs_snapshotname'})) {
 					config_err($file_line_num,
 						"$line - Cannot handle $src, linux_btrfs_snapshotname not defined in $config_file");
@@ -1425,7 +1443,7 @@ sub parse_config_file {
 		}
 
 		# BTRFS ARGS
-		if ($var =~ m/^linux_btrfs_(snapshotname)$/) {
+		if ($var =~ m/^linux_btrfs_(cmd|snapshotname)$/) {
 			$config_vars{$var} = $value;
 			$line_syntax_ok = 1;
 			next;
@@ -4201,7 +4219,9 @@ sub linux_btrfs_snapshot_create {
 	}
 
 	my @cmd_stack = ();
-	push(@cmd_stack, split(' ', 'btrfs subvolume snapshot'));
+	push(@cmd_stack, split(' ', $config_vars{'linux_btrfs_cmd'}));
+	push(@cmd_stack, 'subvolume');
+	push(@cmd_stack, 'snapshot');
 	push(@cmd_stack, join('/', $linux_btrfs_path, $linux_btrfs_subvol));
 	push(@cmd_stack, join('/', $linux_btrfs_path, $config_vars{'linux_btrfs_snapshotname'}));
 
@@ -4234,7 +4254,10 @@ sub linux_btrfs_snapshot_del {
 	my @cmd_stack = ();
     # The '-C' parameter ensures that the deletion is committed before the
     # command returns.
-	push(@cmd_stack, split(' ', 'btrfs subvolume delete -C'));
+	push(@cmd_stack, split(' ', $config_vars{'linux_btrfs_cmd'}));
+	push(@cmd_stack, 'subvolume');
+	push(@cmd_stack, 'delete');
+	push(@cmd_stack, '-C');
 	push(@cmd_stack, join('/', $linux_btrfs_path, $config_vars{'linux_btrfs_snapshotname'}));
 
 	print_cmd(@cmd_stack);
@@ -7227,6 +7250,16 @@ Mount point to use to temporarily mount the snapshot(s).
 
 =back
 
+B<linux_btrfs_cmd>
+
+=over 4
+
+Path to btrfs commands, for use with Linux BTRFS operations.  You may
+include options to the command also.  The btrfs command is required
+for managing snapshots of BTRFS subvolumes and are otherwise optional.
+
+=back
+
 B<linux_btrfs_snapshotname  rsnapshot>
 
 =over 4
@@ -7435,6 +7468,7 @@ Putting it all together (an example file):
     linux_lvm_vgpath          /dev
     linux_lvm_mountpath       /mnt/lvm-snapshot
 
+    linux_btrfs_cmd             /usr/sbin/btrfs
     linux_btrfs_snapshotname    rsnapshot
 
     retain              alpha  6
