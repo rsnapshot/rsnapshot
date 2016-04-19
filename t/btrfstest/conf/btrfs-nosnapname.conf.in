@@ -1,0 +1,9 @@
+config_version	1.2
+snapshot_root	/home/flatline/Projects/rsnapshot//t/support/snapshots
+cmd_rsync		/usr/bin/rsync
+interval		hourly	6
+backup			/home/flatline/Projects/rsnapshot//t/support/files/template/a/	localhost/
+
+linux_btrfs_cmd		/usr/sbin/btrfs
+
+backup	btrfs:///mnt/btrfs/home/home/				rivendell/home

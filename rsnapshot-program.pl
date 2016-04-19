@@ -178,6 +178,7 @@ my $rsync_include_file_args = undef;
 my %traps;
 $traps{"linux_lvm_snapshot"}   = 0;
 $traps{"linux_lvm_mountpoint"} = 0;
+$traps{"linux_btrfs_snapshot"} = 0;
 
 ########################################
 ###         SIGNAL HANDLERS          ###
@@ -421,11 +422,11 @@ sub find_config_file {
 
 	# consolidate multiple slashes
 	$autoconf_sysconfdir =~ s/\/+/\//g;
-	$autoconf_prefix =~ s/\/+/\//g;
+	$autoconf_prefix     =~ s/\/+/\//g;
 
 	# remove trailing slashes
 	$autoconf_sysconfdir =~ s/\/$//g;
-	$autoconf_prefix =~ s/\/$//g;
+	$autoconf_prefix     =~ s/\/$//g;
 
 	# if --sysconfdir was not set explicitly during ./configure, but we did use autoconf
 	if ($autoconf_sysconfdir eq '${prefix}/etc') {
@@ -840,6 +841,19 @@ sub parse_config_file {
 			}
 		}
 
+		# CHECK FOR btrfs (optional)
+		if ($var eq 'linux_btrfs_cmd') {
+			if (is_valid_script($value)) {
+				$config_vars{'linux_btrfs_cmd'} = $value;
+				$line_syntax_ok = 1;
+				next;
+			}
+			else {
+				config_err($file_line_num, "$line - $value is not a valid executable");
+				next;
+			}
+		}
+
 		# CHECK FOR mount (optional)
 		if ($var eq 'linux_lvm_cmd_mount') {
 			if (is_valid_script($value)) {
@@ -926,7 +940,7 @@ sub parse_config_file {
 		# alias.
 		if ($var eq 'interval' || $var eq 'retain') {
 			my $retain = $var;    # either 'interval' or 'retain'
-			                      # check if interval is blank
+								  # check if interval is blank
 			if (!defined($value)) { config_err($file_line_num, "$line - $retain can not be blank"); }
 
 			foreach my $word (@reserved_words) {
@@ -1082,6 +1096,19 @@ sub parse_config_file {
 				$line_syntax_ok = 1;
 
 			}
+			elsif (is_linux_btrfs_path($src)) {
+				if (!defined($config_vars{'linux_btrfs_cmd'})) {
+					config_err($file_line_num,
+						"$line - Cannot handle $src, linux_btrfs_cmd not defined in $config_file");
+					next;
+				}
+				if (!defined($config_vars{'linux_btrfs_snapshotname'})) {
+					config_err($file_line_num,
+						"$line - Cannot handle $src, linux_btrfs_snapshotname not defined in $config_file");
+					next;
+				}
+				$line_syntax_ok = 1;
+			}
 
 			# fear the unknown
 			else {
@@ -1150,7 +1177,7 @@ sub parse_config_file {
 
 			# get the base name of the script, not counting any arguments to it
 			@script_argv = split(/\s+/, $full_script);
-			$script = $script_argv[0];
+			$script      = $script_argv[0];
 
 			# make sure the destination is a relative path
 			if (0 == is_valid_local_non_abs_path($dest)) {
@@ -1416,6 +1443,13 @@ sub parse_config_file {
 			next;
 		}
 
+		# BTRFS ARGS
+		if ($var =~ m/^linux_btrfs_(cmd|snapshotname)$/) {
+			$config_vars{$var} = $value;
+			$line_syntax_ok = 1;
+			next;
+		}
+
 		# LOGFILE
 		if ($var eq 'logfile') {
 			if (0 == is_valid_local_abs_path($value)) {
@@ -1442,8 +1476,10 @@ sub parse_config_file {
 			if (1 == is_valid_loglevel($value)) {
 				if (!defined($verbose)) {
 					$verbose = $value;
-				} elsif($verbose < $value ) {
-					print_warn("The verbosity-level is \"$verbose\" despite subsequent declaration at line $file_line_num.");
+				}
+				elsif ($verbose < $value) {
+					print_warn(
+						"The verbosity-level is \"$verbose\" despite subsequent declaration at line $file_line_num.");
 				}
 
 				$line_syntax_ok = 1;
@@ -2807,7 +2843,7 @@ sub is_valid_rsync_numtries {
 sub is_boolean {
 	my $var = shift(@_);
 
-	if (!defined($var))   { return (0); }
+	if (!defined($var)) { return (0); }
 	if ($var !~ m/^\d+$/) { return (0); }
 
 	if (1 == $var) { return (1); }
@@ -2834,7 +2870,7 @@ sub is_blank {
 	my $str = shift(@_);
 
 	if (!defined($str)) { return (undef); }
-	if ($str !~ m/\S/)  { return (1); }
+	if ($str !~ m/\S/) { return (1); }
 	return (0);
 }
 
@@ -2890,6 +2926,18 @@ sub is_linux_lvm_path {
 
 	if (!defined($path))        { return (undef); }
 	if ($path =~ m|^lvm://.*$|) { return (1); }
+
+	return (0);
+}
+
+# accepts path
+# returns 1 if it's a syntactically valid BTRFS path
+# returns 0 otherwise
+sub is_linux_btrfs_path {
+	my $path = shift(@_);
+
+	if (!defined($path))          { return (undef); }
+	if ($path =~ m|^btrfs://.*$|) { return (1); }
 
 	return (0);
 }
@@ -3583,6 +3631,8 @@ sub rsync_backup_point {
 	my $linux_lvm_oldpwd = undef;
 	my $lvm_src          = undef;
 
+	my $linux_btrfs_oldpwd = undef;
+
 	# if we're using link-dest later, that target depends on whether we're doing a 'sync' or a regular interval
 	# if we're doing a "sync", then look at [lowest-interval].0 instead of [cur-interval].1
 	my $interval_link_dest;
@@ -3797,6 +3847,32 @@ sub rsync_backup_point {
 		$src = './' . (linux_lvm_parseurl($lvm_src))[2];
 
 	}
+	elsif (is_linux_btrfs_path($src)) {
+		unless (defined($config_vars{'linux_btrfs_snapshotname'})) {
+			bail("Missing required argument for BTRFS source: linux_btrfs_snapshotname");
+		}
+
+		# take BTRFS snapshot, reformat src into local path
+		my $btrfs_src = $src;
+		linux_btrfs_snapshot_create(linux_btrfs_parseurl($btrfs_src));
+		$traps{"linux_btrfs_snapshot"} = $btrfs_src;
+
+		# rewrite src to point to snapshot path
+		# - to avoid including the mountpath in the snapshot, change the working directory and use a relative source
+		$linux_btrfs_oldpwd = cwd();
+
+		my $linux_btrfs_newdir =
+		  join('/', (linux_btrfs_parseurl($btrfs_src))[0], $config_vars{'linux_btrfs_snapshotname'});
+		print_cmd("chdir($linux_btrfs_newdir)");
+		if (0 == $test) {
+			$result = chdir($linux_btrfs_newdir);
+			if (0 == $result) {
+				bail("Could not change directory to \"$linux_btrfs_newdir\"");
+			}
+		}
+
+		$src = './';
+	}
 
 	# this should have already been validated once, but better safe than sorry
 	else {
@@ -3828,7 +3904,7 @@ sub rsync_backup_point {
 		&& defined($interval_link_dest)
 		&& defined($interval_num_link_dest)
 		&& (-f "$config_vars{'snapshot_root'}/$interval_link_dest.$interval_num_link_dest/$$bp_ref{'dest'}")
-	  ) {
+	) {
 
 		# these are both "destination" paths, but we're moving from .1 to .0
 		my $srcpath;
@@ -3926,6 +4002,7 @@ sub rsync_backup_point {
 
 		# now we see if rsync ran successfully, and what to do about it
 		if ($result != 0) {
+
 			# print warnings, and set this backup point to rollback if we're using --link-dest
 			handle_rsync_error($result, $bp_ref);
 		}
@@ -3955,6 +4032,22 @@ sub rsync_backup_point {
 	if (0 ne $traps{"linux_lvm_snapshot"}) {
 		$traps{"linux_lvm_snapshot"} = 0;
 		linux_lvm_snapshot_del(linux_lvm_parseurl($lvm_src));
+	}
+
+	# Check for BTRFS traps.
+	if (0 ne $traps{"linux_btrfs_snapshot"}) {
+		print_cmd("chdir($linux_btrfs_oldpwd)");
+		if (0 == $test) {
+			$result = chdir($linux_btrfs_oldpwd);
+			if (0 == $result) {
+				bail("Could not change directory to \"$linux_btrfs_oldpwd\"");
+			}
+		}
+
+		# destroy snapshot created by rsnapshot
+		my $btrfs_snap = $traps{"linux_btrfs_snapshot"};
+		$traps{"linux_btrfs_snapshot"} = 0;
+		linux_btrfs_snapshot_del(linux_btrfs_parseurl($btrfs_snap));
 	}
 }
 
@@ -4116,6 +4209,100 @@ sub linux_lvm_unmount {
 			bail("Unmount LVM snapshot failed: $result");
 		}
 	}
+}
+
+#
+# assemble and execute BTRFS snapshot command
+#
+# parameters: the return of linux_btrfs_parseurl()
+#
+# returns: -
+sub linux_btrfs_snapshot_create {
+
+	my $result = undef;
+
+	my ($linux_btrfs_path, $linux_btrfs_subvol) = @_;
+	unless (defined($linux_btrfs_path) and defined($linux_btrfs_subvol)) {
+		bail("linux_btrfs_snapshot_create needs 2 parameters!");
+	}
+
+	my @cmd_stack = ();
+	push(@cmd_stack, split(' ', $config_vars{'linux_btrfs_cmd'}));
+	push(@cmd_stack, 'subvolume');
+	push(@cmd_stack, 'snapshot');
+	push(@cmd_stack, join('/', $linux_btrfs_path, $linux_btrfs_subvol));
+	push(@cmd_stack, join('/', $linux_btrfs_path, $config_vars{'linux_btrfs_snapshotname'}));
+
+	print_cmd(@cmd_stack);
+	if (0 == $test) {
+
+		# silence gratuitous btrfs subvolume snapshot output
+		#$result = system(@cmd_stack);
+		$result = system(join " ", @cmd_stack, ">/dev/null");
+
+		if ($result != 0) {
+			bail("Create BTRFS snapshot failed: $result");
+		}
+	}
+}
+
+#
+# delete BTRFS-snapshot
+#
+# parameters: the return of linux_btrfs_parseurl()
+#
+# returns: -
+sub linux_btrfs_snapshot_del {
+
+	my $result = undef;
+
+	my ($linux_btrfs_path, $linux_btrfs_subvol) = @_;
+	unless (defined($linux_btrfs_path) and defined($linux_btrfs_subvol)) {
+		bail("linux_btrfs_snapshot_create needs 2 parameters!");
+	}
+
+	my @cmd_stack = ();
+
+	# The '-C' parameter ensures that the deletion is committed before the
+	# command returns.
+	push(@cmd_stack, split(' ', $config_vars{'linux_btrfs_cmd'}));
+	push(@cmd_stack, 'subvolume');
+	push(@cmd_stack, 'delete');
+	push(@cmd_stack, '-C');
+	push(@cmd_stack, join('/', $linux_btrfs_path, $config_vars{'linux_btrfs_snapshotname'}));
+
+	print_cmd(@cmd_stack);
+	if (0 == $test) {
+
+		# silence gratuitous btrfs subvolume delete output
+		#$result = system(@cmd_stack);
+		$result = system(join " ", @cmd_stack, ">/dev/null");
+
+		if ($result != 0) {
+			bail("Removal of BTRFS snapshot failed: $result");
+		}
+	}
+}
+
+#
+# split a BTRFS backup source into fspath, subvolume, and path
+#
+# 1. parameter: full BTRFS source
+#
+# returns: fspath as array
+sub linux_btrfs_parseurl() {
+	my $src = shift @_;
+
+	# parse BTRFS src ('btrfs:///fspath/subvolume/path')
+	# or with trailing slash ('btrfs:///fspath/subvolume/path/')
+	my ($linux_btrfs_path)   = ($src =~ m|^btrfs://(.*)/[^\/]+/?$|);
+	my ($linux_btrfs_subvol) = ($src =~ m|^btrfs://.*/([^\/]+)/?$|);
+
+	# btrfsvolname and/or path could be the string "0", so test for 'defined':
+	unless (defined($linux_btrfs_path) and defined($linux_btrfs_subvol)) {
+		bail("Could not understand BTRFS source \"$src\" in linux_btrfs_parseurl()");
+	}
+	return ($linux_btrfs_path, $linux_btrfs_subvol);
 }
 
 # accepts the name of the argument to split, and its value
@@ -7074,6 +7261,24 @@ Mount point to use to temporarily mount the snapshot(s).
 
 =back
 
+B<linux_btrfs_cmd>
+
+=over 4
+
+Path to btrfs commands, for use with Linux BTRFS operations.  You may
+include options to the command also.  The btrfs command is required
+for managing snapshots of BTRFS subvolumes and are otherwise optional.
+
+=back
+
+B<linux_btrfs_snapshotname  rsnapshot>
+
+=over 4
+
+Name to be used when creating the BTRFS subvolume snapshot(s) (btrfs subvolume create option).
+
+=back
+
 B<backup>  /etc/                       localhost/
 
 B<backup>  root@example.com:/etc/      example.com/
@@ -7083,6 +7288,8 @@ B<backup>  rsync://example.com/path2/  example.com/
 B<backup>  /var/                       localhost/      one_fs=1
 
 B<backup>  lvm://vg0/home/path2/       lvm-vg0/
+
+B<backup>  btrfs://mnt/btrfs/subvol1/  btrfs/subvol1/
 
 B<backup_script>   /usr/local/bin/backup_pgsql.sh    pgsql_backup/
 
@@ -7176,6 +7383,16 @@ snapshot for each lvm:// entry.
 
 =back
 
+B<backup  btrfs://mnt/btrfs/subvol1/  btrfs/subvol1/>
+
+=over 4
+
+Backs up the BTRFS subvolume called subvol1 to
+<snapshot_root>/<interval>.0/btrfs/subvol1/. Will create, backup, and
+remove a BTRFS snapshot for each btrfs:// entry.
+
+=back
+
 
 B<backup_script      /usr/local/bin/backup_database.sh   db_backup/>
 
@@ -7264,6 +7481,9 @@ Putting it all together (an example file):
     linux_lvm_vgpath          /dev
     linux_lvm_mountpath       /mnt/lvm-snapshot
 
+    linux_btrfs_cmd             /usr/sbin/btrfs
+    linux_btrfs_snapshotname    rsnapshot
+
     retain              alpha  6
     retain              beta   7
     retain              gamma  7
@@ -7278,6 +7498,7 @@ Putting it all together (an example file):
     backup              root@mail.foo.com:/home/  mail.foo.com/
     backup              rsync://example.com/pub/  example.com/pub/
     backup              lvm://vg0/xen-home/       lvm-vg0/xen-home/
+    backup              btrfs:///mnt/btrfs/data/  btrfs/data/
     backup_exec         echo "backup finished!"
 
 =back
@@ -7823,6 +8044,14 @@ Linux LVM snapshot support
 
 =back
 
+John Sullivan (B<jsullivan3@gmail.com>)
+
+=over 4
+
+Linux BTRFS snapshot support
+
+=back
+
 =head1 COPYRIGHT
 
 Copyright (C) 2003-2005 Nathan Rosenquist
@@ -7831,7 +8060,7 @@ Portions Copyright (C) 2002-2007 Mike Rubel, Carl Wilhelm Soderstrom,
 Ted Zlatanov, Carl Boe, Shane Liebling, Bharat Mediratta, Peter Palfrader,
 Nicolas Kaiser, David Cantrell, Chris Petersen, Robert Jackson, Justin Grote,
 David Keegel, Alan Batie, Dieter Bloms, Henning Moll, Ben Low, Anthony
-Ettinger
+Ettinger, John Sullivan
 
 This man page is distributed under the same license as rsnapshot:
 the GPL (see below).
