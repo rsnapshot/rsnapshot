@@ -1277,10 +1277,10 @@ sub parse_config_file {
 		# INCLUDE
 		if ($var eq 'include') {
 			if (!defined($rsync_include_args)) {
-				$rsync_include_args = "--include=$value";
+				$rsync_include_args = "--include=\"$value\"";
 			}
 			else {
-				$rsync_include_args .= " --include=$value";
+				$rsync_include_args .= " --include=\"$value\"";
 			}
 			$line_syntax_ok = 1;
 			next;
@@ -1289,10 +1289,10 @@ sub parse_config_file {
 		# EXCLUDE
 		if ($var eq 'exclude') {
 			if (!defined($rsync_include_args)) {
-				$rsync_include_args = "--exclude=$value";
+				$rsync_include_args = "--exclude=\"$value\"";
 			}
 			else {
-				$rsync_include_args .= " --exclude=$value";
+				$rsync_include_args .= " --exclude=\"$value\"";
 			}
 			$line_syntax_ok = 1;
 			next;
