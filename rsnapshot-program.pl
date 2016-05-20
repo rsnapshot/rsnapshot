@@ -126,6 +126,7 @@ my $one_fs                 = 0;    # one file system (don't cross
                                    # partitions within a backup point)
 my $link_dest              = 0;    # use the --link-dest option to rsync
 my $stop_on_stale_lockfile = 0;    # stop if there is a stale lockfile
+my $btrfs_mode             = 0;    # use BTRFS subvolumes
 
 # how much noise should we make? the default is 2
 #
@@ -1241,6 +1242,23 @@ sub parse_config_file {
 			}
 
 			$one_fs         = $value;
+			$line_syntax_ok = 1;
+			next;
+		}
+
+		# BTRFS_MODE
+		if ($var eq 'btrfs_mode') {
+			if (!defined($value)) {
+				config_err($file_line_num, "$line - btrfs_mode can not be blank");
+				next;
+			}
+			if (!is_boolean($value)) {
+				config_err($file_line_num,
+					"$line - \"$value\" is not a legal value for btrfs_mode, must be 0 or 1 only");
+				next;
+			}
+
+			$btrfs_mode     = $value;
 			$line_syntax_ok = 1;
 			next;
 		}
@@ -3390,14 +3408,25 @@ sub rotate_lowest_snapshots {
 
 		# otherwise the default is to delete the oldest directory for this interval
 		else {
-			display_rm_rf("$config_vars{'snapshot_root'}/$interval.$interval_max/");
+            if (0 == $btrfs_mode) {
+                display_rm_rf("$config_vars{'snapshot_root'}/$interval.$interval_max/");
 
-			if (0 == $test) {
-				my $result = rm_rf("$config_vars{'snapshot_root'}/$interval.$interval_max/");
-				if (0 == $result) {
-					bail("Error! rm_rf(\"$config_vars{'snapshot_root'}/$interval.$interval_max/\")\n");
-				}
-			}
+                if (0 == $test) {
+                    my $result = rm_rf("$config_vars{'snapshot_root'}/$interval.$interval_max/");
+                    if (0 == $result) {
+                        bail("Error! rm_rf(\"$config_vars{'snapshot_root'}/$interval.$interval_max/\")\n");
+                    }
+                }
+            }
+            else {
+                display_rm_subvolume("$config_vars{'snapshot_root'}/$interval.$interval_max/");
+                if (0 == $test) {
+                    my $result = rm_subvolume("$config_vars{'snapshot_root'}/$interval.$interval_max/");
+                    if (0 == $result) {
+                        bail("Error! rm_subvolume(\"$config_vars{'snapshot_root'}/$interval.$interval_max/\")\n");
+                    }
+                }
+            }
 		}
 	}
 
@@ -3539,18 +3568,35 @@ sub rotate_lowest_snapshots {
 
 			# call generic cp_al() subroutine
 			if (-d "$config_vars{'snapshot_root'}/$interval.0/") {
-				display_cp_al("$config_vars{'snapshot_root'}/$interval.0",
-					"$config_vars{'snapshot_root'}/$interval.1");
-				if (0 == $test) {
-					$result =
-					  cp_al("$config_vars{'snapshot_root'}/$interval.0/", "$config_vars{'snapshot_root'}/$interval.1/");
-					if (!$result) {
-						my $errstr = '';
-						$errstr .= "Error! cp_al(\"$config_vars{'snapshot_root'}/$interval.0/\", ";
-						$errstr .= "\"$config_vars{'snapshot_root'}/$interval.1/\")";
-						bail($errstr);
-					}
-				}
+
+                if (0 == $btrfs_mode) {
+                    display_cp_al("$config_vars{'snapshot_root'}/$interval.0",
+                                  "$config_vars{'snapshot_root'}/$interval.1");
+                    if (0 == $test) {
+                        $result =
+                            cp_al("$config_vars{'snapshot_root'}/$interval.0/", "$config_vars{'snapshot_root'}/$interval.1/");
+                        if (!$result) {
+                            my $errstr = '';
+                            $errstr .= "Error! cp_al(\"$config_vars{'snapshot_root'}/$interval.0/\", ";
+                            $errstr .= "\"$config_vars{'snapshot_root'}/$interval.1/\")";
+                            bail($errstr);
+                        }
+                    }
+                }
+                else {
+                    display_cp_subvolume("$config_vars{'snapshot_root'}/$interval.0",
+                                         "$config_vars{'snapshot_root'}/$interval.1");
+                    if (0 == $test) {
+                        $result =
+                            cp_subvolume("$config_vars{'snapshot_root'}/$interval.0/", "$config_vars{'snapshot_root'}/$interval.1/");
+                        if (!$result) {
+                            my $errstr = '';
+                            $errstr .= "Error! cp_subvolume(\"$config_vars{'snapshot_root'}/$interval.0/\", ";
+                            $errstr .= "\"$config_vars{'snapshot_root'}/$interval.1/\") did yield $result";
+                            bail($errstr);
+                        }
+                    }
+                }
 			}
 		}
 	}
@@ -5297,6 +5343,92 @@ sub cmd_rm_rf {
 		return (0);
 	}
 
+	return (1);
+}
+
+# accepts a path
+# displays the BTRFS command for removing a subvolume
+sub display_rm_subvolume {
+    my $path = shift(@_);
+
+	if (!defined($path)) { bail('display_rm_subvolume() requires an argument'); }
+
+	if (defined($config_vars{'cmd_btrfs'})) {
+		print_cmd("$config_vars{'cmd_btrfs'} subvolume delete $path");
+	}
+	else {
+		print_cmd("btrfs subvolume delete $path");
+	}
+}
+
+# calls btrfs to remove a subvolume
+# returns 1 on success, 0 on failure
+sub rm_subvolume {
+	my $path   = shift(@_);
+	my $result = 0;
+    my $btrfs  = "btrfs";
+    if (defined($config_vars{'cmd_btrfs'})) {
+        $btrfs = $config_vars{'cmd_btrfs'}
+    }
+
+	# make sure we were passed an argument
+	if (!defined($path)) { return (0); }
+
+	# extra bonus safety feature!
+	# confirm that whatever we're deleting must be inside the snapshot_root
+	if (index($path, $config_vars{'snapshot_root'}) != 0) {
+		bail("rm_subvolume() tried to delete something outside of $config_vars{'snapshot_root'}! Quitting now!");
+	}
+
+	$result = system($btrfs, 'subvolume', 'delete', "$path");
+	if ($result != 0) {
+        return (0);
+    }
+
+	return (1);
+}
+
+# accepts a path
+# displays the BTRFS command for duplicating a subvolume
+sub display_cp_subvolume {
+    my $src = shift(@_);
+    my $dst = shift(@_);
+
+	if (!defined($src) or !defined($dst)) { bail('display_cp_subvolume() requires two arguments'); }
+
+	if (defined($config_vars{'cmd_btrfs'})) {
+		print_cmd("$config_vars{'cmd_btrfs'} subvolume snapshot $src $dst");
+	}
+	else {
+		print_cmd("btrfs subvolume snapshot $src $dst");
+	}
+}
+
+# calls btrfs to diplicate a subvolume
+# returns 1 on success, 0 on failure
+sub cp_subvolume {
+    my $src = shift(@_);
+    my $dst = shift(@_);
+	my $result = 0;
+    my $btrfs  = "btrfs";
+    if (defined($config_vars{'cmd_btrfs'})) {
+        $btrfs = $config_vars{'cmd_btrfs'}
+    }
+
+	# make sure we were passed an argument
+	if (!defined($src) or !defined($dst)) { return (0); }
+
+	# extra bonus safety feature!
+	# confirm that whatever we're deleting must be inside the snapshot_root
+	if (index($src, $config_vars{'snapshot_root'}) != 0) {
+		bail("cp_subvolume() tried to copy something outside of $config_vars{'snapshot_root'}! Quitting now!");
+	}
+
+	$result = system($btrfs, 'subvolume', 'snapshot', "$src", "$dst");
+
+	if ($result != 0) {
+        return (0);
+    }
 	return (1);
 }
 
