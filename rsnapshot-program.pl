@@ -3947,13 +3947,13 @@ sub rsync_backup_point {
 	# delte the traps manually
 	# umount LVM Snapshot if it is mounted
 	if (1 == $traps{"linux_lvm_mountpoint"}) {
-		undef $traps{"linux_lvm_mountpoint"};
+		$traps{"linux_lvm_mountpoint"} = 0;
 		linux_lvm_unmount();
 	}
 
 	# destroy snapshot created by rsnapshot
 	if (0 ne $traps{"linux_lvm_snapshot"}) {
-		undef $traps{"linux_lvm_snapshot"};
+		$traps{"linux_lvm_snapshot"} = 0;
 		linux_lvm_snapshot_del(linux_lvm_parseurl($lvm_src));
 	}
 }
