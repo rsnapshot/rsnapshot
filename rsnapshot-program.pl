@@ -97,6 +97,7 @@ my $interval_data_ref;
 # intervals can't have these values, because they're either taken by other commands
 # or reserved for future use
 my @reserved_words = qw(
+  all
   archive
   check-config-version
   configtest
@@ -126,6 +127,9 @@ my $one_fs                 = 0;    # one file system (don't cross
                                    # partitions within a backup point)
 my $link_dest              = 0;    # use the --link-dest option to rsync
 my $stop_on_stale_lockfile = 0;    # stop if there is a stale lockfile
+
+my $jitter		   = 300;  # allow for some wiggle room to calculate
+				   # time difference which determines rotation
 
 # how much noise should we make? the default is 2
 #
@@ -301,7 +305,21 @@ chdir($config_vars{'snapshot_root'});
 
 # actually run the backup job
 # $cmd should store the name of the interval we'll run against
-handle_interval($cmd);
+# the special cmd 'all' will automatically run all applicable intervals
+#
+my @cmd_list = ($cmd);	# default list is just the original interval
+
+if ($cmd eq 'all') {
+	# overwrite list with all necessary intervals down to lowest
+	@cmd_list = find_intervals_to_run();
+	print_msg("Run in one go: " . join(", ", @cmd_list), 4);
+	$config_vars{'sync_first'} = 1;	# makes no sense without
+}
+foreach $cmd (@cmd_list) {
+	# actually run the backup job
+	print_msg("handle_interval($cmd)", 4);
+	handle_interval($cmd);
+}
 
 # if we have a lockfile, remove it
 # however, this will have already been done if use_lazy_deletes is turned
@@ -365,6 +383,10 @@ Commands:
                        enabled for this to work. If a full backup point
                        destination is given as an optional argument, only
                        those files will be synced.
+    all 	     - Run all backuplevels and sync as applicable which is
+    		       determined by relative time stamps of backups. This
+    		       is most useful for end users systems which are not
+    		       up 24x7.  Recommended to combine with sync_first.
     diff             - Front-end interface to the rsnapshot-diff program.
                        Accepts two optional arguments which can be either
                        filesystem paths or backup directories within the
@@ -480,7 +502,7 @@ sub parse_cmd_line_opts {
 	$cmd = $ARGV[0];
 
 	# check for extra bogus arguments that getopts() didn't catch
-	if (defined($cmd) && ('du' ne $cmd) && ('diff' ne $cmd) && ('sync' ne $cmd)) {
+	if (defined($cmd) && (not $cmd =~ /^(all|du|diff|sync)$/)) {
 		if (scalar(@ARGV) > 1) {
 			for (my $i = 1; $i < scalar(@ARGV); $i++) {
 				print STDERR "Unknown option: $ARGV[$i]\n";
@@ -916,6 +938,20 @@ sub parse_config_file {
 			}
 		}
 
+		# CHECK FOR jitter of snapshot timestamp values, i.e. backup runtime
+		if ($var eq 'jitter') {
+			my $seconds = string_to_seconds($value);
+			if ($seconds) {
+				$jitter = $seconds;
+				$line_syntax_ok = 1;
+				next;
+			}
+			else {
+				config_err($file_line_num, "$line - $value is no valid time interval");
+				next;
+			}
+		}
+
 		# INTERVALS
 		# 'retain' is the new name for this parameter, although for
 		# Laziness reasons (plus the fact that I'm making this change
@@ -967,9 +1003,31 @@ sub parse_config_file {
 				}
 			}
 
+			# optional rotation period = delta beween snapshots given?
+			my $delta = 0;		# force a numeric default of 0 = unknown
+			if (defined $value3  and  $value3 ne "") {
+				$delta = string_to_seconds($value3);
+				if (not $delta) {
+					config_err($file_line_num, "$line - can't convert \"$value3\" to seconds");
+					next;
+				}
+				print_msg ("Explicit delta $delta seconds for $value = $value3", 5);
+			}
+			# for 'all' mode we positively need a delta; none was given, so it must be in the name 
+			elsif ($cmd eq 'all') {
+				$delta = string_to_seconds($value);
+				if (not $delta) {
+					config_err($file_line_num,
+						"$line - name $value gives no hint on rotation period, need 3rd field with value");
+					next;
+				}
+				print_msg ("Implicit delta $delta seconds from name $value", 5);
+			}
+
 			my %hash;
 			$hash{'interval'} = $value;
 			$hash{'number'}   = $value2;
+			$hash{'delta'}	  = $delta	if $delta;
 			push(@intervals, \%hash);
 			$line_syntax_ok = 1;
 			next;
@@ -2674,6 +2732,96 @@ sub get_interval_data {
 
 	# and return the values
 	return (\%hash);
+}
+
+
+# needs no argument
+# returns a list of all intervals to be applied in the right order, ie oldest first
+# checks from oldest interval upwards if the time delta to the newer intervals is ok
+sub find_intervals_to_run {
+	my $rotate_lowers = 0;	# if an interval needs rotation, so do all lower ones
+	my @list = ();		# ~ of intervals to return
+	my $i;			# count from slowest to fastest rotation interval
+	push @list, 'sync'	if $config_vars{'sync_first'};	# normally you want that
+
+	for ($i = $#intervals; $i > 0; --$i) { # eg. yearly ... daily, NOT hourly
+
+		my $old_dir = "$config_vars{snapshot_root}/"
+			    . "$intervals[$i]{interval}.0";	# /e/g/monthly.0
+		my $new_dir = "$config_vars{snapshot_root}/"
+			    . "$intervals[$i - 1]{interval}."
+			    . ($intervals[$i - 1]{number} - 1);	# /e/g/weekly.3
+
+		# get snapshot modification times; 0 = does not exist = 1970-01-01
+		my $old_age = (CORE::stat($old_dir))[9]  || 0;
+		my $new_age = (CORE::stat($new_dir))[9]  || 0;
+		print_msg("$old_age utc	$old_dir", 5);
+		print_msg("$new_age utc	$new_dir", 5);
+
+		# get interval period from config
+		my $min_delta = $intervals[$i]{delta}
+				or bail "bug - no delta for $intervals[$i]{interval}!?";
+
+		if ($rotate_lowers) {	# higher interval forced rotation?
+			print_msg("rotate $intervals[$i]{interval} due to higher interval", 4);
+			push @list, $intervals[$i]{interval};
+		}
+		elsif (not $new_age) {	# eg weekly.3 not there yet?
+			print_msg("no $new_dir to rotate from", 5)
+		}
+		elsif (not $old_age) {	# eg monthly.0 missing?
+			print_msg("first creation of $old_dir", 4);
+			push @list, $intervals[$i]{interval};
+			$rotate_lowers = 1;
+		}
+		elsif ($new_age - $old_age  >  $min_delta - $jitter) {
+			print_msg("$old_dir ~> $min_delta sec older than $new_dir", 4);
+			push @list, $intervals[$i]{interval};
+			$rotate_lowers = 1;
+		}	
+		else {
+			print_msg("$old_dir <~ $min_delta sec older than $new_dir", 4);
+		}
+	}
+	push @list, ($intervals[0]{interval});	# always rotate shortest interval = actual copy
+	return @list;
+}
+
+
+# accept string as non-zero duration in plain English or SI units
+# returns positive seconds (implicit true)
+# returns 0 = false if conversion failed
+sub string_to_seconds($) {
+	my $s = "\L$_[0]";	# lowercase interval name string
+	$s =~ s/\s//g;		# strip leading/trailing/any blanks
+
+	return $s	if $s =~ /^[1-9]\d+$/;	# direct, plain number of secs
+
+	my $x = 1;		# numeric multiplier x for symbolic units
+	$s =~ s/^(\d+)//	and $x = $1;	# explicit prefix given?
+	$s =~ s/\/(\d+)$//	and $x = 1/$1;	# or divider /suffix?
+
+	$s =~ s/ly$//;				# ignore *ly suffix
+	$s =~ s/^bi-*//		and $x *= 2;	# map common prefixes to x
+	$s =~ s/^tri-*//	and $x *= 3;
+	$s =~ s/^quad-*//	and $x *= 4;
+	$s =~ s/^half-*//	and $x /= 2;
+	$s =~ s/^third-*//	and $x /= 3;
+
+	return $x *= 7776000	if $s =~ /^quarter[s]*$/; # year/4?
+	$s =~ s/^quarter-*//	and $x /= 4;	  # or prefix to other units?
+
+	# match units: abbreviated(full) with or w/o plural [s]
+	return $x *= 1		if $s =~ /^s(ec)*(ond)*[s]*$/;
+	return $x *= 60		if $s =~ /^min(ute)*[s]*$/;
+	return $x *= 3600	if $s =~ /^h(our)*[s]*$/;
+	return $x *= 86400	if $s =~ /^d(a[yi])*[s]*$/;
+	return $x *= 604800	if $s =~ /^w(eek)*[s]*$/;
+	return $x *= 2592000	if $s =~ /^m(onth)*[s]*$/;
+	return $x *= 31536000	if $s =~ /^y(ear)*[s]*$/;
+
+	# if we arrive here, there was no known format/name
+	return 0;	# return false to be tested by caller
 }
 
 # accepts no arguments
