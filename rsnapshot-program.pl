@@ -313,7 +313,6 @@ if ($cmd eq 'all') {
 	# overwrite list with all necessary intervals down to lowest
 	@cmd_list = find_intervals_to_run();
 	print_msg("Run in one go: " . join(", ", @cmd_list), 4);
-	$config_vars{'sync_first'} = 1;	# makes no sense without
 }
 foreach $cmd (@cmd_list) {
 	# actually run the backup job
@@ -2742,9 +2741,8 @@ sub find_intervals_to_run {
 	my $rotate_lowers = 0;	# if an interval needs rotation, so do all lower ones
 	my @list = ();		# ~ of intervals to return
 	my $i;			# count from slowest to fastest rotation interval
-	push @list, 'sync'	if $config_vars{'sync_first'};	# normally you want that
 
-	for ($i = $#intervals; $i > 0; --$i) { # eg. yearly ... daily, NOT hourly
+	for ($i = $#intervals; $i >= 0; --$i) {	# eg. yearly ... hourly
 
 		my $old_dir = "$config_vars{snapshot_root}/"
 			    . "$intervals[$i]{interval}.0";	# /e/g/monthly.0
@@ -2755,6 +2753,10 @@ sub find_intervals_to_run {
 		# get snapshot modification times; 0 = does not exist = 1970-01-01
 		my $old_age = (CORE::stat($old_dir))[9]  || 0;
 		my $new_age = (CORE::stat($new_dir))[9]  || 0;
+		if ($i == 0) {	# at lowest interval, pretend lower one
+			$new_age = time();
+			$new_dir = 'now/dummy'
+		}
 		print_msg("$old_age utc	$old_dir", 5);
 		print_msg("$new_age utc	$new_dir", 5);
 
@@ -2763,27 +2765,34 @@ sub find_intervals_to_run {
 				or bail "bug - no delta for $intervals[$i]{interval}!?";
 
 		if ($rotate_lowers) {	# higher interval forced rotation?
-			print_msg("rotate $intervals[$i]{interval} due to higher interval", 4);
+			print_msg("rotate $intervals[$i]{interval} due to level $rotate_lowers", 4);
 			push @list, $intervals[$i]{interval};
 		}
 		elsif (not $new_age) {	# eg weekly.3 not there yet?
 			print_msg("no $new_dir to rotate from", 5)
 		}
 		elsif (not $old_age) {	# eg monthly.0 missing?
-			print_msg("first creation of $old_dir", 4);
+			print_msg("first creation of $old_dir", 3);
 			push @list, $intervals[$i]{interval};
-			$rotate_lowers = 1;
+			$rotate_lowers = $intervals[$i]{interval};
 		}
 		elsif ($new_age - $old_age  >  $min_delta - $jitter) {
-			print_msg("$old_dir ~> $min_delta sec older than $new_dir", 4);
+			print_msg("$old_dir ~> $min_delta sec older than $new_dir", 3);
 			push @list, $intervals[$i]{interval};
-			$rotate_lowers = 1;
+			$rotate_lowers = $intervals[$i]{interval};
 		}	
 		else {
 			print_msg("$old_dir <~ $min_delta sec older than $new_dir", 4);
 		}
 	}
-	push @list, ($intervals[0]{interval});	# always rotate shortest interval = actual copy
+	if ($rotate_lowers) {	# found at least one interval to rotate?
+		if ($config_vars{'sync_first'}) {
+			@list =  ('sync', @list); # insert actual backup as first step
+		}
+	}
+	else {
+		print_msg("Nothing to do, $intervals[0]{interval}.0 fresh enough", 3)
+	}
 	return @list;
 }
 
@@ -2817,7 +2826,7 @@ sub string_to_seconds($) {
 	return $x *= 3600	if $s =~ /^h(our)*[s]*$/;
 	return $x *= 86400	if $s =~ /^d(a[yi])*[s]*$/;
 	return $x *= 604800	if $s =~ /^w(eek)*[s]*$/;
-	return $x *= 2592000	if $s =~ /^m(onth)*[s]*$/;
+	return $x *= 2592000	if $s =~ /^m(on)*(th)*[s]*$/;
 	return $x *= 31536000	if $s =~ /^y(ear)*[s]*$/;
 
 	# if we arrive here, there was no known format/name
@@ -6932,7 +6941,7 @@ managing snapshots of LVM volumes and are otherwise optional.
 
 =back
 
-B<retain>             [name]   [number]
+B<retain>             [name]   [number]  [interval]
 
 =over 4
 
@@ -6941,6 +6950,12 @@ so also called the 'interval'). "number"
 is the number of snapshots for this type of interval that will be retained.
 The value of "name" will be the command passed to B<rsnapshot> to perform
 this type of backup.
+"interval" optionally specifies the time between two backups of the same level
+needed by the "all" command.
+It understands units like 1s[econd], 2min[utes], 3h[our], 4d[ay], 5w[eek],
+6m[onth], 7y[ear] or halfyearly, biweekly etc.
+This is optional if "name" gives a hint about the duration,
+e.g. something like hourly, daily, weekly...
 
 A deprecated alias for 'retain' is 'interval'.
 
@@ -7586,6 +7601,134 @@ example.com/etc/, for example). In order to sync example.com/etc, you would need
 run rsnapshot again, using example.com/etc as the optional parameter.
 
 =back
+
+
+
+B<rsnapshot all>
+
+=over 4
+
+This runs the actual backup plus all applicable rotations in one go
+which is useful for desktop or notebook systems not up 24x7.
+They are prone to miss rotations and then the retain intervals get more and bigger gaps,
+i.e. backups which you actually want to keep get deleted because the rotation sequence is erratic.
+With this approach, the higher rotations converge on the intended periods.
+
+As a bonus, configuration is much easier.
+You define merely one cronjob for the lowest interval
+whereas the retain intervals are configured only in rsnapshot.conf.
+Also, these intervals are independent of the crontab raster,
+so you can choose values like biweekly or quarter-yearly.
+
+Configuration in rsnapshot.conf:
+
+=over 4
+
+=item retain	<name>	<number>	[interval]
+
+The all command must determine the precise time intervals
+between the various retain levels.
+Either the names of the level carry this information,
+e.g. hourly, daily, weekly ...
+or an optional fourth tab separated column provides this information.
+Recognised durations are:
+
+=over 4
+
+=item s[econd]
+
+=item min[ute]
+
+=item h[our]
+
+=item d[ay]
+
+=item w[eek]
+
+=item m[onth]
+
+=item quarter
+
+=item y[ear]
+
+=back
+
+These may have grammar suffixes like plural-s or ly, prefixed-numbers
+or textual prefixes like half- third- quarter- bi- tri- quad-
+
+=item jitter
+
+This variable accounts for slight differences in actual backup duration.
+Without this, higher rotations may get dropped to easily.
+Say, weekly.9 took 1 second longer to run than monthly.0.
+Then the delta will be 1 second below the precise threshold
+and weekly.9 gets deleted.
+The default setting of 300 seconds will prevent this -
+only a backup 300 seconds slower will be dropped in the example above.
+
+=item sync_first	1
+
+This setting is highly recommended for laptops.
+They are prone to power down in the middle of a backup.
+Without proper rollback,
+the incomplete backup will be the basis for the next run
+and thus cost much more disk space;
+not to mention the confusion about the files missing
+from a seemingly legit backup.
+And even if the rollback works,
+you throw away one perfect copy
+just to save the interim space usage of one incremental copy.
+
+=item lazy_delete	1
+
+Recommended to reduce jitter,
+but really only makes sense together with option sync_first.
+Otherwise, if a higher interval needs deletion,
+this will happen after the higher rotation moves,
+but before the actual backup of the lowest interval, i.e.:
+  [rotate -> delete -> ] [...] rotate -> backup -> delete
+Whereas with sync_first you'll get this sequence:
+  backup -> rotate -> delete [-> rotate -> delete] [...]
+
+=back
+
+
+Known restrictions:
+
+=over 4
+
+=item *
+
+The command looks at the actual times of the various interval directories
+to determine rotation vs deletion.
+If you touch these directories and thus alter their time stamps,
+all bets are off.
+But you don't muck with your backups, do you?
+
+=item *
+
+The time interval logic also applies for the lowest retain level.
+Say this is named 'hourly'.
+Then the actual backup runs only if the previous run is at least one hour old.
+This can be useful for a laptop:
+run 'rsnapshot all' every minute.
+It will actually backup right after wake up,
+from then on about every hour.
+If you want to enforce an actual backup with every run,
+set the lowest retain level to interval 1second.
+
+=item *
+
+Exception to the above:
+if the time difference between some higher retain intervals triggers a new rotation,
+then the actual backup will run in order to fill the gap,
+regardless of the actual age of the last backup.
+
+=back
+
+=back
+
+
 
 B<rsnapshot configtest>
 
