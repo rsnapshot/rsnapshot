@@ -2735,28 +2735,29 @@ sub get_interval_data {
 
 
 # needs no argument
-# returns a list of all intervals to be applied in the right order, ie oldest first
-# checks from oldest interval upwards if the time delta to the newer intervals is ok
+# checks from lowest interval upwards if there is anything to do
+# returns a - possibly empty - list of all intervals to be applied in the right order
 sub find_intervals_to_run {
-	my $rotate_lowers = 0;	# if an interval needs rotation, so do all lower ones
+	my $do_rotate = 0;	# need at least one rotation?
 	my @list = ();		# ~ of intervals to return
-	my $i;			# count from slowest to fastest rotation interval
+	my $i = 0;
 
-	for ($i = $#intervals; $i >= 0; --$i) {	# eg. yearly ... hourly
-
+	until ($i > $#intervals) # loop from lowest to highest interval
+	{
+		print_msg("Check level $i = $intervals[$i]{interval} for rotation...", 3);
 		my $old_dir = "$config_vars{snapshot_root}/"
 			    . "$intervals[$i]{interval}.0";	# /e/g/monthly.0
-		my $new_dir = "$config_vars{snapshot_root}/"
+		my $new_dir = ($i == 0) 
+			?   "compare/lowest/with/now"
+			:   "$config_vars{snapshot_root}/"
 			    . "$intervals[$i - 1]{interval}."
 			    . ($intervals[$i - 1]{number} - 1);	# /e/g/weekly.3
 
 		# get snapshot modification times; 0 = does not exist = 1970-01-01
 		my $old_age = (CORE::stat($old_dir))[9]  || 0;
-		my $new_age = (CORE::stat($new_dir))[9]  || 0;
-		if ($i == 0) {	# at lowest interval, pretend lower one
-			$new_age = time();
-			$new_dir = 'now/dummy'
-		}
+		my $new_age = ($i == 0)
+			?    time()	# compare lowest interval with now
+			:    ((CORE::stat($new_dir))[9]  || 0);
 		print_msg("$old_age utc	$old_dir", 5);
 		print_msg("$new_age utc	$new_dir", 5);
 
@@ -2764,28 +2765,27 @@ sub find_intervals_to_run {
 		my $min_delta = $intervals[$i]{delta}
 				or bail "bug - no delta for $intervals[$i]{interval}!?";
 
-		if ($rotate_lowers) {	# higher interval forced rotation?
-			print_msg("rotate $intervals[$i]{interval} due to level $rotate_lowers", 4);
-			push @list, $intervals[$i]{interval};
-		}
-		elsif (not $new_age) {	# eg weekly.3 not there yet?
-			print_msg("no $new_dir to rotate from", 5)
+		if (not $new_age) {	# eg weekly.3 not there yet?
+			print_msg("no $new_dir to rotate from", 5);
+	last; # because level is not full enough to rotate out something
 		}
 		elsif (not $old_age) {	# eg monthly.0 missing?
 			print_msg("first creation of $old_dir", 3);
-			push @list, $intervals[$i]{interval};
-			$rotate_lowers = $intervals[$i]{interval};
+			@list = ($intervals[$i]{interval}, @list);	# insert
+			$do_rotate = 1;
 		}
 		elsif ($new_age - $old_age  >  $min_delta - $jitter) {
 			print_msg("$old_dir ~> $min_delta sec older than $new_dir", 3);
-			push @list, $intervals[$i]{interval};
-			$rotate_lowers = $intervals[$i]{interval};
+			@list = ($intervals[$i]{interval}, @list);	# insert
+			$do_rotate = 1;
 		}	
 		else {
 			print_msg("$old_dir <~ $min_delta sec older than $new_dir", 4);
+	last; # because time delta is not yet big enough; don't look further
 		}
+		++$i;
 	}
-	if ($rotate_lowers) {	# found at least one interval to rotate?
+	if ($do_rotate) {	# found at least one interval to rotate?
 		if ($config_vars{'sync_first'}) {
 			@list =  ('sync', @list); # insert actual backup as first step
 		}
@@ -7716,13 +7716,6 @@ It will actually backup right after wake up,
 from then on about every hour.
 If you want to enforce an actual backup with every run,
 set the lowest retain level to interval 1second.
-
-=item *
-
-Exception to the above:
-if the time difference between some higher retain intervals triggers a new rotation,
-then the actual backup will run in order to fill the gap,
-regardless of the actual age of the last backup.
 
 =back
 
