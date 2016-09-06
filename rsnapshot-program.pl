@@ -1477,13 +1477,13 @@ sub parse_config_file {
 				config_err($file_line_num, "$line - use_lazy_deletes can not be blank");
 				next;
 			}
-			if (!is_boolean($value)) {
+			if ($value != 0 || $value != 1 || $value != 2) {
 				config_err($file_line_num,
-					"$line - \"$value\" is not a legal value for use_lazy_deletes, must be 0 or 1 only");
+					"$line - \"$value\" is not a legal value for use_lazy_deletes, must be 0, 1 or 2");
 				next;
 			}
 
-			if (1 == $value) { $use_lazy_deletes = 1; }
+			if ($value > 0) { $use_lazy_deletes = $value; }
 			$line_syntax_ok = 1;
 			next;
 		}
@@ -3210,24 +3210,30 @@ sub handle_interval {
 		# we remove the lockfile here since this delete shouldn't block other rsnapshot jobs from running
 		remove_lockfile();
 
-		# Check for the directory. It might not exist, e.g. in case of the 'sync' command.
-		if (-d "$config_vars{'snapshot_root'}/_delete.$$") {
+      if ( 2 == $use_lazy_deletes ) {
+         if (-d "$config_vars{'snapshot_root'}/_delete.$$") {
+            print_msg("Skipping deletion of directory $config_vars{'snapshot_root'}/_delete.$$ because of use_lazy_deletes set to 2", 5);
+         }
+      } else {
+   		# Check for the directory. It might not exist, e.g. in case of the 'sync' command.
+   		if (-d "$config_vars{'snapshot_root'}/_delete.$$") {
 
-			# start the delete
-			display_rm_rf("$config_vars{'snapshot_root'}/_delete.$$");
-			if (0 == $test) {
-				my $result = rm_rf("$config_vars{'snapshot_root'}/_delete.$$");
-				if (0 == $result) {
-					bail("Error! rm_rf(\"$config_vars{'snapshot_root'}/_delete.$$\")\n");
-				}
-			}
-		}
-		else {
-			# only spit this out if lazy deletes are turned on.
-			# Still need to suppress this if they're turned on but we've
-			# not done enough backups to yet need to delete anything
-			print_msg("No directory to delete: $config_vars{'snapshot_root'}/_delete.$$", 5);
-		}
+   			# start the delete
+   			display_rm_rf("$config_vars{'snapshot_root'}/_delete.$$");
+   			if (0 == $test) {
+   				my $result = rm_rf("$config_vars{'snapshot_root'}/_delete.$$");
+   				if (0 == $result) {
+   					bail("Error! rm_rf(\"$config_vars{'snapshot_root'}/_delete.$$\")\n");
+   				}
+   			}
+   		}
+   		else {
+   			# only spit this out if lazy deletes are turned on.
+   			# Still need to suppress this if they're turned on but we've
+   			# not done enough backups to yet need to delete anything
+   			print_msg("No directory to delete: $config_vars{'snapshot_root'}/_delete.$$", 5);
+   		}
+      }
 	}
 }
 
@@ -3368,7 +3374,7 @@ sub rotate_lowest_snapshots {
 	if ((-d "$config_vars{'snapshot_root'}/$interval.$interval_max") && ($interval_max > 0)) {
 
 		# if use_lazy_deletes is set move the oldest directory to _delete.$$
-		if (1 == $use_lazy_deletes) {
+		if ($use_lazy_deletes) {
 			print_cmd(
 				"mv",
 				"$config_vars{'snapshot_root'}/$interval.$interval_max/",
@@ -4671,7 +4677,7 @@ sub rotate_higher_interval {
 
 		# if use_lazy_deletes is set move the oldest directory to _delete.$$
 		# otherwise preform the default behavior
-		if (1 == $use_lazy_deletes) {
+		if ($use_lazy_deletes) {
 			print_cmd(
 				"mv ",
 				"$config_vars{'snapshot_root'}/$interval.$interval_max/ ",
@@ -7039,6 +7045,12 @@ Originally you could only ever have one .delete directory per backup level.
 Now you can have many, so if your next (eg) alpha backup kicks off while the
 previous one is still doing a lazy delete you may temporarily have extra
 _delete directories hanging around.
+
+Setting this to 2 will also skip the _delete directories deletion at all.
+This means that you have to delete the _delete directories with an external
+script called, in example, from a crontab during off-peak hours. This should
+increase the backup running time with huge hosts, because the deletions, that
+could take many hours to complete, will not executed
 
 =back
 
