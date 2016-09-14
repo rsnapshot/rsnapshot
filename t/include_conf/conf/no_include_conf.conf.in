@@ -1,0 +1,8 @@
+config_version	1.2
+
+snapshot_root	@SNAP@
+cmd_rsync		@RSYNC@
+
+interval		hourly	6
+
+backup	@TEST@/support/files/inc_conf_test/		no_include_file_test/

@@ -618,6 +618,29 @@ sub parse_config_file {
 			}
 		}
 
+		# Include from a directory
+		if ($var eq 'include_conf_dir') {
+			my $conf_pat = '';
+			if (defined($value) && -d $value && -r $value) {
+			# Check for a regex filter, default to .conf if not specified
+			if (defined($value2)) {
+				$conf_pat = $value2;
+				} else {
+				$conf_pat = '.*\.conf$';
+				}
+				opendir(CONF_DIR, $value) or die $!;
+				while (my $conf_file = readdir(CONF_DIR)) {
+					if ( -f "$value/$conf_file" && ($conf_file =~ m/$conf_pat/) ) {
+					parse_config_file("$value/$conf_file");
+					}
+				}
+				closedir(CONF_DIR);
+				next;
+			} else {
+				config_err($file_line_num, "$line - can't find or read directory '$value'");
+			}
+
+		}
 		# CONFIG_VERSION
 		if ($var eq 'config_version') {
 			if (defined($value)) {
@@ -6703,6 +6726,29 @@ path.  As a special case, include_conf's value may be enclosed in `backticks`
 in which case it will be executed and whatever it spits to STDOUT will
 be included in the configuration.  Note that shell meta-characters may be
 interpreted.
+
+=back
+
+B<include_conf_dir [conf-file-pattern=*\.conf]>   Include any files in this directory at this point. By default only ending in .conf are included.
+
+=over 4
+
+This is also recursive configuration so it's important to be careful about what may be
+include in this path to avoid an inifinite loop. This is mostly useful for providing drop
+in backup lines without needing to add them to a central configuration files. We check the
+path is a directory and is readable, and will yell an error if it isn't.
+
+This does not recurse down directories but only parses the config in the specified
+directory. A regex can be supplied to filter the files in the directory to be included.
+
+
+Example: B<include_conf_dir /etc/rsnapshot.d>
+
+In this example any files ending in .conf in /etc/rsnapshot.d get included
+
+Example: B<include_conf_dir /opt/snapshot_confs .*\.snaps$>
+
+In this example a regex is applied so files ending in .snaps get included
 
 =back
 
