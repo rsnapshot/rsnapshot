@@ -1010,7 +1010,6 @@ sub parse_config_file {
 					config_err($file_line_num, "$line - can't convert \"$value3\" to seconds");
 					next;
 				}
-				print_msg ("Explicit delta $delta seconds for $value = $value3", 5);
 			}
 			# for 'all' mode we positively need a delta; none was given, so it must be in the name 
 			elsif ($cmd eq 'all') {
@@ -1020,7 +1019,6 @@ sub parse_config_file {
 						"$line - name $value gives no hint on rotation period, need 3rd field with value");
 					next;
 				}
-				print_msg ("Implicit delta $delta seconds from name $value", 5);
 			}
 
 			my %hash;
@@ -1720,6 +1718,12 @@ sub validate_config_file {
 	if (($cmd eq 'sync') && (!$config_vars{'sync_first'})) {
 		print_err("\"sync_first\" must be enabled for \"sync\" to work", 1);
 		syslog_err("\"sync_first\" must be enabled for \"sync\" to work");
+		exit(1);
+	}
+	# when checking 'all' intervals, lazy_delete may interfere
+	if (($cmd eq 'all') && $use_lazy_deletes) {
+		print_err("use_lazy_deletes incompatible with 'all' command", 1);
+		syslog_err("use_lazy_deletes incompatible with 'all' command");
 		exit(1);
 	}
 
@@ -2748,7 +2752,7 @@ sub find_intervals_to_run {
 		my $old_dir = "$config_vars{snapshot_root}/"
 			    . "$intervals[$i]{interval}.0";	# /e/g/monthly.0
 		my $new_dir = ($i == 0) 
-			?   "compare/lowest/with/now"
+			?   "---now---"
 			:   "$config_vars{snapshot_root}/"
 			    . "$intervals[$i - 1]{interval}."
 			    . ($intervals[$i - 1]{number} - 1);	# /e/g/weekly.3
@@ -7620,6 +7624,10 @@ whereas the retain intervals are configured only in rsnapshot.conf.
 Also, these intervals are independent of the crontab raster,
 so you can choose values like biweekly or quarter-yearly.
 
+Alternatively, you may rsnapshot really frequently, like every minute.
+Then the lowest interval will typically run right after wake-up,
+from then on every hour - or whatever the lowest interval is.
+
 Configuration in rsnapshot.conf:
 
 =over 4
@@ -7658,13 +7666,21 @@ or textual prefixes like half- third- quarter- bi- tri- quad-
 
 =item jitter
 
-This variable accounts for slight differences in actual backup duration.
+This variable accounts for variations of actual backup duration.
 Without this, higher rotations may get dropped to easily.
 Say, weekly.9 took 1 second longer to run than monthly.0.
 Then the delta will be 1 second below the precise threshold
 and weekly.9 gets deleted.
 The default setting of 300 seconds will prevent this -
 only a backup 300 seconds slower will be dropped in the example above.
+
+As the times get compared at program start,
+for the lowest interval,
+you need to compensate not only for the jitter,
+but for the actual backup runtime.
+The default of 300 seconds = 5 minutes should cover
+a typical user system snapshot.
+If not, set interval = desired_interval - average_backup_duration - jitter.
 
 =item sync_first	1
 
@@ -7679,16 +7695,12 @@ And even if the rollback works,
 you throw away one perfect copy
 just to save the interim space usage of one incremental copy.
 
-=item lazy_delete	1
+=item use_lazy_deletes 0
 
-Recommended to reduce jitter,
-but really only makes sense together with option sync_first.
-Otherwise, if a higher interval needs deletion,
-this will happen after the higher rotation moves,
-but before the actual backup of the lowest interval, i.e.:
-  [rotate -> delete -> ] [...] rotate -> backup -> delete
-Whereas with sync_first you'll get this sequence:
-  backup -> rotate -> delete [-> rotate -> delete] [...]
+When multiple intervals get rotated and deleted,
+lazy deletes do interfere so they are not supported.
+As the sequence of intervals is handled directly,
+there is no more need to tweak the timing of rotation cron jobs.
 
 =back
 
