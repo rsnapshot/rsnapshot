@@ -3684,8 +3684,8 @@ sub rsync_backup_point {
 		$rsync_short_args = $$bp_ref{'opts'}->{'rsync_short_args'};
 	}
 	if (defined($$bp_ref{'opts'}) && defined($$bp_ref{'opts'}->{'extra_rsync_short_args'})) {
-		$rsync_short_args .= ' ' if ($rsync_short_args);
-		$rsync_short_args .= $$bp_ref{'opts'}->{'extra_rsync_short_args'};
+		$rsync_short_args .= '-' if (!$rsync_short_args);
+		$rsync_short_args .= substr $$bp_ref{'opts'}->{'extra_rsync_short_args'}, 1;
 	}
 
 	# RSYNC LONG ARGS
