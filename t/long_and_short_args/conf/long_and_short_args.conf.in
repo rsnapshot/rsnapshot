@@ -1,0 +1,10 @@
+config_version	1.2
+snapshot_root	@SNAP@
+cmd_rsync		@RSYNC@
+cmd_cp	@CP@
+interval		hourly	2
+sync_first	1
+rsync_short_args	-z
+rsync_long_args	--archive
+backup	@TEMP@		long_and_short_args/
+backup	@TEMP@		long_and_short_args/
