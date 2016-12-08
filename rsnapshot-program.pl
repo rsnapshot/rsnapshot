@@ -622,24 +622,25 @@ sub parse_config_file {
 		if ($var eq 'include_conf_dir') {
 			my $conf_pat = '';
 			if (defined($value) && -d $value && -r $value) {
-			# Check for a regex filter, default to .conf if not specified
-			if (defined($value2)) {
-				$conf_pat = $value2;
-				} else {
-				$conf_pat = '.*\.conf$';
+				# Check for a regex filter, default to .conf if not specified
+				if (defined($value2)) {
+					$conf_pat = $value2;
+				}
+				else {
+					$conf_pat = '.*\.conf$';
 				}
 				opendir(CONF_DIR, $value) or die $!;
 				while (my $conf_file = readdir(CONF_DIR)) {
 					if ( -f "$value/$conf_file" && ($conf_file =~ m/$conf_pat/) ) {
-					parse_config_file("$value/$conf_file");
+						parse_config_file("$value/$conf_file");
 					}
 				}
 				closedir(CONF_DIR);
 				next;
-			} else {
+			}
+			else {
 				config_err($file_line_num, "$line - can't find or read directory '$value'");
 			}
-
 		}
 		# CONFIG_VERSION
 		if ($var eq 'config_version') {
