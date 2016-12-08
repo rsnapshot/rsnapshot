@@ -26,10 +26,3 @@ t/*.pm
 t/*/*.t
 t/*/conf/*.conf
 t/support/snapshots/
-t/support/files/inc_dir_test/
-t/support/files/inc_conf_test/
-t/include_conf/conf/bad_include_file
-t/include_conf/conf/include_file
-t/include_conf_dir/conf/include.d/include_dir.conf
-t/include_conf_dir/conf/include.inc.d/include_dir.inc
-t/include_conf_dir/conf/include.conf.d/include_dir.conf
