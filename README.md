@@ -43,7 +43,10 @@ For installation or upgrade instructions please read the [INSTALL](INSTALL.md) d
 If you want to work on improving rsnapshot please read the
 [CONTRIBUTING](CONTRIBUTING.md) doc.
 
-COMPATIBILITY NOTICES (Please read)
+If you want to ask a question or have a general discussion use the
+[Mailing List](https://lists.sourceforge.net/lists/listinfo/rsnapshot-discuss).
+
+## COMPATIBILITY NOTICES (Please read)
 
  1. Note that systems which use GNU cp version 5.9 or later will have problems
     with rsnapshot versions up to and including 1.2.3, if `cmd_cp` is enabled

@@ -3684,8 +3684,8 @@ sub rsync_backup_point {
 		$rsync_short_args = $$bp_ref{'opts'}->{'rsync_short_args'};
 	}
 	if (defined($$bp_ref{'opts'}) && defined($$bp_ref{'opts'}->{'extra_rsync_short_args'})) {
-		$rsync_short_args .= ' ' if ($rsync_short_args);
-		$rsync_short_args .= $$bp_ref{'opts'}->{'extra_rsync_short_args'};
+		$rsync_short_args .= '-' if (!$rsync_short_args);
+		$rsync_short_args .= substr $$bp_ref{'opts'}->{'extra_rsync_short_args'}, 1;
 	}
 
 	# RSYNC LONG ARGS
@@ -3947,13 +3947,13 @@ sub rsync_backup_point {
 	# delte the traps manually
 	# umount LVM Snapshot if it is mounted
 	if (1 == $traps{"linux_lvm_mountpoint"}) {
-		undef $traps{"linux_lvm_mountpoint"};
+		$traps{"linux_lvm_mountpoint"} = 0;
 		linux_lvm_unmount();
 	}
 
 	# destroy snapshot created by rsnapshot
 	if (0 ne $traps{"linux_lvm_snapshot"}) {
-		undef $traps{"linux_lvm_snapshot"};
+		$traps{"linux_lvm_snapshot"} = 0;
 		linux_lvm_snapshot_del(linux_lvm_parseurl($lvm_src));
 	}
 }
