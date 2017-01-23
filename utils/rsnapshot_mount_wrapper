@@ -1,0 +1,51 @@
+#!/bin/sh
+#
+##############################################################################
+# rsnapshot_mount_wrapper
+# by Pieter Hollants <suserpms@hollants.com>
+#
+# Wrapper script for rsnapshot that mounts <snapshot_root> before running
+# rsnapshot and umounts it again afterwards. This way your snapshot_root
+# stays umounted most of the time, thereby reducing the risk of accidentally
+# causing damage to it.
+##############################################################################
+
+# What's your name, son?
+ME=`basename $0`
+
+# Make sure the configuration file is readable
+if [ ! -r /etc/rsnapshot.conf ] ; then
+	logger -s -t ${ME} "Could not read /etc/rsnapshot.conf, check file permissions!"
+	exit 1
+fi
+
+# Get snapshot_root from rsnapshot configuration file
+ROOT=`grep ^snapshot_root /etc/rsnapshot.conf | sed 's/^.*\t//'`
+
+# Check if snapshot_root volume is mounted
+MOUNTED=0
+if [ ! `cat /proc/mounts | cut -d' ' -f2 | grep ${ROOT}` ] ; then
+	logger -s -t ${ME} "Mounting snapshot_root ${ROOT}..."
+
+	# Try to mount snapshot_root volume (requires a /etc/fstab entry)
+	mount ${ROOT}
+	if [ ! `cat /proc/mounts | cut -d' ' -f2 | grep ${ROOT}` ] ; then
+		logger -s -t ${ME} "Could not mount snapshot_root ${ROOT}!"
+		logger -s -t ${ME} "Device may not be connected or /etc/fstab entry is missing."
+		exit 1
+	fi
+
+	# Record that we mounted the volume ourselves, and thus may unmount it later
+	MOUNTED=1
+else
+	logger -s -t ${ME} "snapshot_root ${ROOT} already mounted."
+fi
+
+# Now call rsnapshot
+rsnapshot $@
+
+# Now unmount snapshot_root volume again for safety purposes
+if [ ${MOUNTED} -eq 1 ] ; then
+	logger -s -t ${ME} "Unmounting snapshot_root ${ROOT}..."
+	umount ${ROOT}
+fi
