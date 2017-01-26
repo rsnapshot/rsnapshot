@@ -1943,12 +1943,26 @@ sub parse_backup_opts {
 
 			delete($parsed_opts{'exclude_file'});
 
+		# cmd_ssh
+		} elsif ( $name eq 'cmd_ssh' ) {
+			$value =~ s/\s+$//;
+			if (( ! -f "$value") || ( ! -x "$value") || (0 == is_real_local_abs_path($value))) {
+				print_err("cmd_ssh $value is not executable");
+				return (undef);
+			}
+
+		# cmd_rsync
+		} elsif ( $name eq 'cmd_rsync' ) {
+			$value =~ s/\s+$//;
+			if (( ! -f "$value") || ( ! -x "$value") || (0 == is_real_local_abs_path($value))) {
+				print_err("cmd_rsync $value is not executable");
+				return (undef);
+			}
+
 			# Not (yet?) implemented as per-backup-point options
 		}
 		elsif ($name eq 'cmd_preexec'
 			|| $name eq 'cmd_postexec'
-			|| $name eq 'cmd_ssh'
-			|| $name eq 'cmd_rsync'
 			|| $name eq 'verbose'
 			|| $name eq 'loglevel') {
 			print_err("$name is not implemented as a per-backup-point option in this version of rsnapshot", 2);
@@ -3571,6 +3585,8 @@ sub rsync_backup_point {
 	if (!defined($$bp_ref{'dest'})) { bail('dest not defined in rsync_backup_point()'); }
 
 	# set up default args for rsync and ssh
+	my $cmd_ssh          = $config_vars{'cmd_ssh'};
+	my $cmd_rsync        = $config_vars{'cmd_rsync'};
 	my $ssh_args         = $default_ssh_args;
 	my $rsync_short_args = $default_rsync_short_args;
 	my $rsync_long_args  = $default_rsync_long_args;
@@ -3679,6 +3695,16 @@ sub rsync_backup_point {
 	# we do the rsync args first since they overwrite the rsync_* variables,
 	# whereas the subsequent options append to them
 	#
+
+	# CMD SSH
+	if ( defined($$bp_ref{'opts'}) && defined($$bp_ref{'opts'}->{'cmd_ssh'}) ) {
+		$cmd_ssh = $$bp_ref{'opts'}->{'cmd_ssh'};
+	}
+	# CMD RSYNC
+	if ( defined($$bp_ref{'opts'}) && defined($$bp_ref{'opts'}->{'cmd_rsync'}) ) {
+		$cmd_rsync = $$bp_ref{'opts'}->{'cmd_rsync'};
+	}
+
 	# RSYNC SHORT ARGS
 	if (defined($$bp_ref{'opts'}) && defined($$bp_ref{'opts'}->{'rsync_short_args'})) {
 		$rsync_short_args = $$bp_ref{'opts'}->{'rsync_short_args'};
@@ -3734,13 +3760,13 @@ sub rsync_backup_point {
 
 		# if we have any args for SSH, add them
 		if (defined($ssh_args)) {
-			push(@rsync_long_args_stack, "--rsh=$config_vars{'cmd_ssh'} $ssh_args");
+			push(@rsync_long_args_stack, "--rsh=$cmd_ssh $ssh_args");
 
 		}
 
 		# no arguments is the default
 		else {
-			push(@rsync_long_args_stack, "--rsh=$config_vars{'cmd_ssh'}");
+			push(@rsync_long_args_stack, "--rsh=$cmd_ssh");
 		}
 
 		# anonymous rsync
@@ -3868,7 +3894,7 @@ sub rsync_backup_point {
 	@cmd_stack = ();
 	#
 	# rsync command
-	push(@cmd_stack, $config_vars{'cmd_rsync'});
+	push(@cmd_stack, $cmd_rsync);
 	#
 	# rsync short args
 	if (defined($rsync_short_args) && ($rsync_short_args ne '')) {
