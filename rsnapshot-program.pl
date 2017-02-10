@@ -7171,7 +7171,7 @@ B<backup  lvm://vg0/home/path2/       lvm-vg0/>
 =over 4
 
 Backs up the LVM logical volume called home, of volume group vg0, to
-<snapshot_root>/<interval>.0/lvm-vg0/. Will create, mount, backup, unmount and remove an LVM
+<snapshot_root>/<retain>.0/lvm-vg0/. Will create, mount, backup, unmount and remove an LVM
 snapshot for each lvm:// entry.
 
 =back
