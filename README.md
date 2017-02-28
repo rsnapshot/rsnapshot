@@ -78,16 +78,20 @@ the full list of configuration options.
 When `/etc/rsnapshot.conf` contains your chosen settings, do a quick sanity
 check to make sure everything is ready to go:
 
-    $ rsnapshot configtest
+    $ sudo rsnapshot configtest
 
 If this works, you can see essentially what will happen when you run it for
 real by executing the following command (where interval is `alpha`, `beta`, `etc`):
 
-    $ rsnapshot -t [interval]
+    $ sudo rsnapshot -t [interval]
 
 Once you are happy with everything, the final step is to setup a cron job to
 automate your backups. Here is a quick example which makes backups every four
 hours, and beta backups for a week:
+
+    $ sudo crontab -e # must use sudo
+
+Then, append the following cron job at end:
 
     0 */4 * * *     /usr/local/bin/rsnapshot alpha
     50 23 * * *     /usr/local/bin/rsnapshot beta
