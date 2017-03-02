@@ -128,7 +128,7 @@ my $one_fs                 = 0;    # one file system (don't cross
 my $link_dest              = 0;    # use the --link-dest option to rsync
 my $stop_on_stale_lockfile = 0;    # stop if there is a stale lockfile
 
-my $jitter		   = 300;  # allow for some wiggle room to calculate
+my $runtime		   = 300;  # allow for some wiggle room to calculate
 				   # time difference which determines rotation
 
 # how much noise should we make? the default is 2
@@ -938,10 +938,10 @@ sub parse_config_file {
 		}
 
 		# CHECK FOR jitter of snapshot timestamp values, i.e. backup runtime
-		if ($var eq 'jitter') {
+		if ($var eq 'runtime') {
 			my $seconds = string_to_seconds($value);
 			if ($seconds) {
-				$jitter = $seconds;
+				$runtime = $seconds;
 				$line_syntax_ok = 1;
 				next;
 			}
@@ -2778,7 +2778,7 @@ sub find_intervals_to_run {
 			@list = ($intervals[$i]{interval}, @list);	# insert
 			$do_rotate = 1;
 		}
-		elsif ($new_age - $old_age  >  $min_delta - $jitter) {
+		elsif ($new_age - $old_age  >  $min_delta - $runtime) {
 			print_msg("$old_dir ~> $min_delta sec older than $new_dir", 3);
 			@list = ($intervals[$i]{interval}, @list);	# insert
 			$do_rotate = 1;
@@ -7664,23 +7664,17 @@ Recognised durations are:
 These may have grammar suffixes like plural-s or ly, prefixed-numbers
 or textual prefixes like half- third- quarter- bi- tri- quad-
 
-=item jitter
+=item runtime
 
-This variable accounts for variations of actual backup duration.
-Without this, higher rotations may get dropped to easily.
-Say, weekly.9 took 1 second longer to run than monthly.0.
-Then the delta will be 1 second below the precise threshold
-and weekly.9 gets deleted.
-The default setting of 300 seconds will prevent this -
-only a backup 300 seconds slower will be dropped in the example above.
-
-As the times get compared at program start,
-for the lowest interval,
-you need to compensate not only for the jitter,
-but for the actual backup runtime.
-The default of 300 seconds = 5 minutes should cover
-a typical user system snapshot.
-If not, set interval = desired_interval - average_backup_duration - jitter.
+This variable accounts for the actual backup duration plus some jitter.
+If you schedule rsnapshot more frequently than your minimum interval,
+then you need this as correction factor
+to get close to the nominal spacing between actual backups.
+Also, this adds some wiggle room
+to calculate the delta for rotation between two backups.
+Otherwise, a backup might get thrown away
+even though it is merely a few seconds too young.
+Default value is 300 seconds.
 
 =item sync_first	1
 
