@@ -3497,10 +3497,10 @@ sub rotate_lowest_snapshots {
 			if (-d "$config_vars{'snapshot_root'}/.sync/") {
 				display_cp_al("$config_vars{'snapshot_root'}/.sync/", "$config_vars{'snapshot_root'}/$interval.0/");
 				if (0 == $test) {
-					$result = cp_al("$config_vars{'snapshot_root'}/.sync", "$config_vars{'snapshot_root'}/$interval.0");
+					$result = cp_al("$config_vars{'snapshot_root'}/.sync/", "$config_vars{'snapshot_root'}/$interval.0/");
 					if (!$result) {
 						bail(
-							"Error! cp_al(\"$config_vars{'snapshot_root'}/.sync\", \"$config_vars{'snapshot_root'}/$interval.0\")"
+							"Error! cp_al(\"$config_vars{'snapshot_root'}/.sync/\", \"$config_vars{'snapshot_root'}/$interval.0/\")"
 						);
 					}
 				}
