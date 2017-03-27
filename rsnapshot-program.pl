@@ -4201,7 +4201,7 @@ sub handle_rsync_error {
 	elsif (23 == $retval) {
 		print_warn(
 			"Some files and/or directories in $$bp_ref{'src'} only transferred partially during rsync operation",
-			4
+			2
 		);
 		syslog_warn(
 			"Some files and/or directories in $$bp_ref{'src'} only transferred partially during rsync operation"
