@@ -5145,12 +5145,6 @@ sub rsync_cleanup_after_native_cp_al {
 	if (!defined($src))  { return (0); }
 	if (!defined($dest)) { return (0); }
 
-	# make sure this is directory to directory
-	if (($src !~ m/\/$/o) or ($dest !~ m/\/$/o)) {
-		print_err("rsync_cleanup_after_native_cp_al() only works on directories", 2);
-		return (0);
-	}
-
 	# make sure we have a source directory
 	if (!-d "$src") {
 		print_err("rsync_cleanup_after_native_cp_al() needs a valid source directory as an argument", 2);
