@@ -7,6 +7,9 @@ perl:
   - "5.18"
   - "5.16"
   - "5.14"
+before_install:
+  - sudo apt-get -qq update
+  - sudo apt-get install -y fakeroot
 install:
   - "./autogen.sh"
   - "./configure"
