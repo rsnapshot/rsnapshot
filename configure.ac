@@ -107,6 +107,61 @@ fi
 dnl either way, set the cmd_cp var
 AC_SUBST(CMD_CP, "cmd_cp		$CP")
 
+dnl
+dnl TRUE CHECK (required test program)
+dnl
+dnl if the user specified a path, try that first
+AC_ARG_WITH(true,
+	[  --with-true=PATH          Specify the path to true ],
+	[
+		if test "x$withval" != "xno"; then
+			if test -x "$withval"; then
+				TRUE=$withval
+			else
+				AC_MSG_ERROR(true not found)
+			fi
+		else
+			TRUE=no
+		fi
+	]
+)
+
+dnl if the user didn't specify a path, hunt for it
+if test "$TRUE" != "no"; then
+	AC_PATH_PROG(TRUE, true, no)
+fi
+dnl if we couldn't find it, provide an example
+if test "$TRUE" = "no"; then
+	TRUE=/bin/true
+fi
+
+dnl
+dnl FALSE CHECK (required test program)
+dnl
+dnl if the user specified a path, try that first
+AC_ARG_WITH(false,
+	[  --with-false=PATH          Specify the path to false ],
+	[
+		if test "x$withval" != "xno"; then
+			if test -x "$withval"; then
+				FALSE=$withval
+			else
+				AC_MSG_ERROR(false not found)
+			fi
+		else
+			FALSE=no
+		fi
+	]
+)
+
+dnl if the user didn't specify a path, hunt for it
+if test "$FALSE" != "no"; then
+	AC_PATH_PROG(FALSE, false, no)
+fi
+dnl if we couldn't find it, provide an example
+if test "$FALSE" = "no"; then
+	FALSE=/bin/false
+fi
 
 
 dnl

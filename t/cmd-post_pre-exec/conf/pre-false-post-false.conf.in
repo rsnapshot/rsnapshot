@@ -5,7 +5,7 @@ cmd_rsync		@RSYNC@
 
 interval		hourly	2
 
-cmd_preexec	/bin/false
-cmd_postexec	/bin/false
+cmd_preexec	@FALSE@
+cmd_postexec	@FALSE@
 
 backup	@TEMP@	cmd_pre_postexectest/
