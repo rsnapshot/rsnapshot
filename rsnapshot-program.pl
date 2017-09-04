@@ -3916,7 +3916,7 @@ sub rsync_backup_point {
 			$rsync_out->autoflush();
 
 			while (<$rsync_out>) {
-				print_msg($_, 4);
+				print_msg($_, 3);
 			}
 
 			waitpid($pid, 0);
