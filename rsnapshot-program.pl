@@ -46,6 +46,7 @@ use Fcntl;                     # sysopen()
 use IO::File;                  # recursive open in parse_config_file
 use IPC::Open3 qw(open3);      # open rsync with error output
 use IO::Handle;                # handle autoflush for rsync-output
+use Text::ParseWords;        # parse_line()
 
 ########################################
 ###     DECLARE GLOBAL VARIABLES     ###
@@ -1785,7 +1786,7 @@ sub parse_backup_opts {
 	if (!$opts_str)          { return (undef); }
 
 	# split on commas first
-	@pairs = split(/,/, $opts_str);
+	@pairs = parse_line(',', 0, $opts_str);
 
 	# then loop through and split on equals
 	foreach my $pair (@pairs) {
