@@ -171,8 +171,8 @@ my $rsync_include_file_args = undef;
 
 # hash used to register traps and execute in bail
 my %traps;
-$traps{"linux_lvm_snapshot"}   = 0;
-$traps{"linux_lvm_mountpoint"} = 0;
+$traps{"linux_lvm_snapshot"}   = undef;
+$traps{"linux_lvm_mountpoint"} = undef;
 
 ########################################
 ###         SIGNAL HANDLERS          ###
@@ -2041,16 +2041,17 @@ sub bail {
 	}
 
 	# umount LVM Snapshot if it is mounted
-	if (1 == $traps{"linux_lvm_mountpoint"}) {
-		$traps{"linux_lvm_mountpoint"} = 0;
-		linux_lvm_unmount();
+	if ($traps{"linux_lvm_mountpoint"}) {
+		my ($tmp, $opts_ref) = @{$traps{"linux_lvm_mountpoint"}};
+		$traps{"linux_lvm_mountpoint"} = undef;
+		linux_lvm_unmount($opts_ref);
 	}
 
 	# destroy snapshot created by rsnapshot
-	if (0 ne $traps{"linux_lvm_snapshot"}) {
-		my $tmp = $traps{"linux_lvm_snapshot"};
-		$traps{"linux_lvm_snapshot"} = 0;
-		linux_lvm_snapshot_del(linux_lvm_parseurl($tmp));
+	if ($traps{"linux_lvm_snapshot"}) {
+		my ($tmp, $opts_ref) = @{$traps{"linux_lvm_snapshot"}};
+		$traps{"linux_lvm_snapshot"} = undef;
+		linux_lvm_snapshot_del(linux_lvm_parseurl($tmp), $opts_ref);
 	}
 
 	# get rid of the lockfile, if it exists
@@ -3609,6 +3610,7 @@ sub rsync_backup_point {
 
 	my $linux_lvm_oldpwd = undef;
 	my $lvm_src          = undef;
+	my %lvm_opts;
 
 	# if we're using link-dest later, that target depends on whether we're doing a 'sync' or a regular interval
 	# if we're doing a "sync", then look at [lowest-interval].0 instead of [cur-interval].1
@@ -3803,21 +3805,41 @@ sub rsync_backup_point {
 			bail("Missing required argument for LVM source: linux_lvm_mountpath");
 		}
 
+		$lvm_opts{'snapshotsize'} = $config_vars{'linux_lvm_snapshotsize'};
+		$lvm_opts{'snapshotname'} = $config_vars{'linux_lvm_snapshotname'};
+		$lvm_opts{'vgpath'} = $config_vars{'linux_lvm_vgpath'};
+		$lvm_opts{'mountpath'} = $config_vars{'linux_lvm_mountpath'};
+
+		if (defined($$bp_ref{'opts'})) {
+			if (defined($$bp_ref{'opts'}->{'linux_lvm_snapshotsize'})) {
+				$lvm_opts{'snapshotsize'} = $$bp_ref{'opts'}->{'linux_lvm_snapshotsize'};
+			}
+			if (defined($$bp_ref{'opts'}->{'linux_lvm_snapshotname'})) {
+				$lvm_opts{'snapshotname'} = $$bp_ref{'opts'}->{'linux_lvm_snapshotname'};
+			}
+			if (defined($$bp_ref{'opts'}->{'linux_lvm_vgpath'})) {
+				$lvm_opts{'vgpath'} = $$bp_ref{'opts'}->{'linux_lvm_vgpath'};
+			}
+			if (defined($$bp_ref{'opts'}->{'linux_lvm_mountpath'})) {
+				$lvm_opts{'mountpath'} = $$bp_ref{'opts'}->{'linux_lvm_mountpath'};
+			}
+		}
+
 		$lvm_src = $src;
 
-		linux_lvm_snapshot_create(linux_lvm_parseurl($lvm_src));
-		$traps{"linux_lvm_snapshot"} = $lvm_src;
-		linux_lvm_mount(linux_lvm_parseurl($lvm_src));
-		$traps{"linux_lvm_mountpoint"} = 1;
+		linux_lvm_snapshot_create(linux_lvm_parseurl($lvm_src), \%lvm_opts);
+		$traps{"linux_lvm_snapshot"} = [$lvm_src, \%lvm_opts];
+		linux_lvm_mount(linux_lvm_parseurl($lvm_src), \%lvm_opts);
+		$traps{"linux_lvm_mountpoint"} = [$lvm_src, \%lvm_opts];
 
 		# rewrite src to point to mount path
 		# - to avoid including the mountpath in the snapshot, change the working directory and use a relative source
 		$linux_lvm_oldpwd = cwd();
-		print_cmd("chdir($config_vars{'linux_lvm_mountpath'})");
+		print_cmd("chdir($lvm_opts{'mountpath'})");
 		if (0 == $test) {
-			$result = chdir($config_vars{'linux_lvm_mountpath'});
+			$result = chdir($lvm_opts{'mountpath'});
 			if (0 == $result) {
-				bail("Could not change directory to \"$config_vars{'linux_lvm_mountpath'}\"");
+				bail("Could not change directory to \"$lvm_opts{'mountpath'}\"");
 			}
 		}
 
@@ -3966,7 +3988,7 @@ sub rsync_backup_point {
 		}
 	}
 
-	if (1 == $traps{"linux_lvm_mountpoint"} || 0 ne $traps{"linux_lvm_snapshot"}) {
+	if ($traps{"linux_lvm_mountpoint"} || $traps{"linux_lvm_snapshot"}) {
 		print_cmd("chdir($linux_lvm_oldpwd)");
 		if (0 == $test) {
 			$result = chdir($linux_lvm_oldpwd);
@@ -3978,15 +4000,15 @@ sub rsync_backup_point {
 
 	# delete the traps manually
 	# umount LVM Snapshot if it is mounted
-	if (1 == $traps{"linux_lvm_mountpoint"}) {
-		$traps{"linux_lvm_mountpoint"} = 0;
-		linux_lvm_unmount();
+	if ($traps{"linux_lvm_mountpoint"}) {
+		$traps{"linux_lvm_mountpoint"} = undef;
+		linux_lvm_unmount(\%lvm_opts);
 	}
 
 	# destroy snapshot created by rsnapshot
-	if (0 ne $traps{"linux_lvm_snapshot"}) {
-		$traps{"linux_lvm_snapshot"} = 0;
-		linux_lvm_snapshot_del(linux_lvm_parseurl($lvm_src));
+	if ($traps{"linux_lvm_snapshot"}) {
+		$traps{"linux_lvm_snapshot"} = undef;
+		linux_lvm_snapshot_del(linux_lvm_parseurl($lvm_src), \%lvm_opts);
 	}
 }
 
@@ -4013,16 +4035,17 @@ sub linux_lvm_parseurl() {
 #
 # assemble and execute LVM snapshot command
 #
-# parameters: the return of linux_lvm_parseurl()
+# parameters: the return of linux_lvm_parseurl(), plus a reference to %lvm_opts
 #
 # returns: -
 sub linux_lvm_snapshot_create {
 
 	my $result = undef;
 
-	my ($linux_lvmvgname, $linux_lvmvolname, $linux_lvmpath) = @_;
-	unless (defined($linux_lvmvgname) and defined($linux_lvmvolname) and defined($linux_lvmpath)) {
-		bail("linux_lvm_snapshot_create needs 3 parameters!");
+	my ($linux_lvmvgname, $linux_lvmvolname, $linux_lvmpath, $opts_ref) = @_;
+	unless (defined($linux_lvmvgname) and defined($linux_lvmvolname) and
+			defined($linux_lvmpath) and defined($opts_ref)) {
+		bail("linux_lvm_snapshot_create needs 4 parameters!");
 	}
 
 	my @cmd_stack = ();
@@ -4030,11 +4053,11 @@ sub linux_lvm_snapshot_create {
 	push(@cmd_stack, '--snapshot');
 
 	push(@cmd_stack, '--size');
-	push(@cmd_stack, $config_vars{'linux_lvm_snapshotsize'});
+	push(@cmd_stack, $$opts_ref{'snapshotsize'});
 	push(@cmd_stack, '--name');
-	push(@cmd_stack, $config_vars{'linux_lvm_snapshotname'});
+	push(@cmd_stack, $$opts_ref{'snapshotname'});
 
-	push(@cmd_stack, join('/', $config_vars{'linux_lvm_vgpath'}, $linux_lvmvgname, $linux_lvmvolname));
+	push(@cmd_stack, join('/', $$opts_ref{'vgpath'}, $linux_lvmvgname, $linux_lvmvolname));
 
 	print_cmd(@cmd_stack);
 	if (0 == $test) {
@@ -4052,16 +4075,17 @@ sub linux_lvm_snapshot_create {
 #
 # delete LVM-snapshot
 #
-# parameters: the return of linux_lvm_parseurl()
+# parameters: the return of linux_lvm_parseurl(), plus a reference to %lvm_opts
 #
 # returns: -
 sub linux_lvm_snapshot_del {
 
 	my $result = undef;
 
-	my ($linux_lvmvgname, $linux_lvmvolname, $linux_lvmpath) = @_;
-	unless (defined($linux_lvmvgname) and defined($linux_lvmvolname) and defined($linux_lvmpath)) {
-		bail("linux_lvm_snapshot_del needs 3 parameters!");
+	my ($linux_lvmvgname, $linux_lvmvolname, $linux_lvmpath, $opts_ref) = @_;
+	unless (defined($linux_lvmvgname) and defined($linux_lvmvolname) and
+			defined($linux_lvmpath) and defined($opts_ref)) {
+		bail("linux_lvm_snapshot_del needs 4 parameters!");
 	}
 
 	my @cmd_stack = ();
@@ -4071,8 +4095,8 @@ sub linux_lvm_snapshot_del {
 	push(
 		@cmd_stack,
 		join('/',
-			$config_vars{'linux_lvm_vgpath'},
-			$linux_lvmvgname, $config_vars{'linux_lvm_snapshotname'})
+			$$opts_ref{'vgpath'},
+			$linux_lvmvgname, $$opts_ref{'snapshotname'})
 	);
 
 	print_cmd(@cmd_stack);
@@ -4091,16 +4115,17 @@ sub linux_lvm_snapshot_del {
 #
 # mount a LVM-snapshot
 #
-# parameters: the return of linux_lvm_parseurl()
+# parameters: the return of linux_lvm_parseurl(), plus a reference to %lvm_opts
 #
 # returns: -
 sub linux_lvm_mount {
 
 	my $result = undef;
 
-	my ($linux_lvmvgname, $linux_lvmvolname, $linux_lvmpath) = @_;
-	unless (defined($linux_lvmvgname) and defined($linux_lvmvolname) and defined($linux_lvmpath)) {
-		bail("linux_lvm_mount needs 3 parameters!");
+	my ($linux_lvmvgname, $linux_lvmvolname, $linux_lvmpath, $opts_ref) = @_;
+	unless (defined($linux_lvmvgname) and defined($linux_lvmvolname) and
+			defined($linux_lvmpath) and defined($opts_ref)) {
+		bail("linux_lvm_mount needs 4 parameters!");
 	}
 
 	# mount the snapshot
@@ -4110,10 +4135,10 @@ sub linux_lvm_mount {
 	push(
 		@cmd_stack,
 		join('/',
-			$config_vars{'linux_lvm_vgpath'},
-			$linux_lvmvgname, $config_vars{'linux_lvm_snapshotname'})
+			$$opts_ref{'vgpath'},
+			$linux_lvmvgname, $$opts_ref{'snapshotname'})
 	);
-	push(@cmd_stack, $config_vars{'linux_lvm_mountpath'});
+	push(@cmd_stack, $$opts_ref{'mountpath'});
 
 	print_cmd(@cmd_stack);
 	if (0 == $test) {
@@ -4128,17 +4153,22 @@ sub linux_lvm_mount {
 #
 # unmount a LVM-snapshot
 #
-# parameters: -
+# parameters: reference to %lvm_opts
 #
 # returns: -
 sub linux_lvm_unmount {
 
 	my $result = undef;
 
+	my ($opts_ref) = @_;
+	unless (defined($opts_ref)) {
+		bail("linux_lvm_unmount needs 1 parameter!");
+	}
+
 	my @cmd_stack = ();
 	push(@cmd_stack, split(' ', $config_vars{'linux_lvm_cmd_umount'}));
 
-	push(@cmd_stack, $config_vars{'linux_lvm_mountpath'});
+	push(@cmd_stack, $$opts_ref{'mountpath'});
 
 	print_cmd(@cmd_stack);
 	if (0 == $test) {
