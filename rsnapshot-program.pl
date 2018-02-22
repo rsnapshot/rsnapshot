@@ -1403,7 +1403,7 @@ sub parse_config_file {
 		}
 
 		# LVM ARGS
-		if ($var =~ m/^linux_lvm_(vgpath|snapshotname|snapshotsize|mountpath)$/) {
+		if ($var =~ m/^linux_lvm_(vgpath|snapshotname|snapshotsize|mountpath|mountargs)$/) {
 			$config_vars{$var} = $value;
 			$line_syntax_ok = 1;
 			next;
@@ -1850,7 +1850,7 @@ sub parse_backup_opts {
 
 			# lvm args
 		}
-		elsif ($name =~ m/^linux_lvm_(vgpath|snapshotname|snapshotsize|mountpath)$/) {
+		elsif ($name =~ m/^linux_lvm_(vgpath|snapshotname|snapshotsize|mountpath|mountargs)$/) {
 
 			# pass unchecked
 
@@ -3810,7 +3810,12 @@ sub rsync_backup_point {
 		$lvm_opts{'snapshotname'} = $config_vars{'linux_lvm_snapshotname'};
 		$lvm_opts{'vgpath'} = $config_vars{'linux_lvm_vgpath'};
 		$lvm_opts{'mountpath'} = $config_vars{'linux_lvm_mountpath'};
+		# Mount args are optional.
+		if (defined($config_vars{'linux_lvm_mountargs'})) {
+			$lvm_opts{'mountargs'} = $config_vars{'linux_lvm_mountargs'};
+		}
 
+		# Allow backup point option to override config variable value.
 		if (defined($$bp_ref{'opts'})) {
 			if (defined($$bp_ref{'opts'}->{'linux_lvm_snapshotsize'})) {
 				$lvm_opts{'snapshotsize'} = $$bp_ref{'opts'}->{'linux_lvm_snapshotsize'};
@@ -3823,6 +3828,9 @@ sub rsync_backup_point {
 			}
 			if (defined($$bp_ref{'opts'}->{'linux_lvm_mountpath'})) {
 				$lvm_opts{'mountpath'} = $$bp_ref{'opts'}->{'linux_lvm_mountpath'};
+			}
+			if (defined($$bp_ref{'opts'}->{'linux_lvm_mountargs'})) {
+				$lvm_opts{'mountargs'} = $$bp_ref{'opts'}->{'linux_lvm_mountargs'};
 			}
 		}
 
@@ -4132,6 +4140,10 @@ sub linux_lvm_mount {
 	# mount the snapshot
 	my @cmd_stack = ();
 	push(@cmd_stack, split(' ', $config_vars{'linux_lvm_cmd_mount'}));
+
+	if (defined($$opts_ref{'mountargs'})) {
+		push(@cmd_stack, split(' ', $$opts_ref{'mountargs'}));
+	}
 
 	push(
 		@cmd_stack,
@@ -7098,6 +7110,44 @@ Mount point to use to temporarily mount the snapshot(s).
 
 =back
 
+B<linux_lvm_mountargs		[args]>
+
+=over 4
+
+Arguments to be used when temporarily mounting the LVM snapshot(s).  This
+can be used supply any special mount options that may be needed.  For
+example, when mounting a snapshot of an xfs filesystem, it is necessary
+to use the nouuid mount option.
+
+=over 4
+
+Example:
+
+B<linux_lvm_mountargs   -o nouuid>
+
+=back
+
+This allows snapshots of xfs filesystems to be properly mounted.  If LVM
+snapshots are being used with a mix of xfs and non-xfs filesystems, the
+linux_lvm_mountargs option can be set on a per-backup-point basis.  The
+backup point option will override the config value.
+
+It is also common to mount the snapshot readonly.  This can be done by
+specifying the readonly argument when defining linux_lvm_cmd_mount, or by
+specifying it in linux_lvm_mountargs.
+
+=over 4
+
+Example:
+
+B<linux_lvm_mountargs   -o ro,nouuid>
+
+=back
+
+This supplies the proper arguments to mount an xfs snapshot in readonly mode.
+
+=back
+
 B<backup>  /etc/                       localhost/
 
 B<backup>  root@example.com:/etc/      example.com/
@@ -7107,6 +7157,8 @@ B<backup>  rsync://example.com/path2/  example.com/
 B<backup>  /var/                       localhost/      one_fs=1
 
 B<backup>  lvm://vg0/home/path2/       lvm-vg0/
+
+B<backup>  lvm://vg0/home/path2/       lvm-vg0/  linux_lvm_mountargs="-o ro,nouuid"
 
 B<backup_script>   /usr/local/bin/backup_pgsql.sh    pgsql_backup/
 
@@ -7198,6 +7250,17 @@ B<backup  lvm://vg0/home/path2/       lvm-vg0/>
 Backs up the LVM logical volume called home, of volume group vg0, to
 <snapshot_root>/<retain>.0/lvm-vg0/. Will create, mount, backup, unmount and remove an LVM
 snapshot for each lvm:// entry.
+
+=back
+
+
+B<backup>  lvm://vg0/home/path2/       lvm-vg0/  linux_lvm_mountargs="-o ro,nouuid"
+
+=over 4
+
+Backs up the LVM logical volume as in the previous example, but when the
+LVM snapshot is mounted, "-o ro,nouuid" will be used as an argument to the
+mount command.
 
 =back
 
