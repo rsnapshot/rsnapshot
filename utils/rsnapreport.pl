@@ -24,6 +24,7 @@
 use strict;
 use warnings;
 use English '-no_match_vars';
+use File::Spec;			# splitdir()
 
 my $bufsz = 2;
 my %bkdata=();
@@ -64,6 +65,7 @@ sub nextLine($){
 }
 
 
+my $linux_lvm_lv = undef;
 my @rsnapout = ();
 
 # load readahead buffer
@@ -72,14 +74,29 @@ for(my $i=0; $i < $bufsz; $i++){
 }
 
 while (my $line = nextLine(\@rsnapout)){
-	if($line =~ /^[\/\w]+\/rsync\h+-[-\w]/) { # find start rsync command line
+        while($line =~ /\s+\\$/){ # combine wrapped lines
+		$line =~ s/\\$//g;
+		$line .= nextLine(\@rsnapout);
+	}
+	if($line =~ /^[\/\w]+\/lvcreate\h+-[-\w]/) { # Look for LVM snapshot
+		# Extract the LVM logical volume from the lvcreate command.
+		my $lvpath = (split /\s+/, $line)[-1];
+		my ($vg, $lv) = (File::Spec->splitdir($lvpath))[-2,-1];
+		$linux_lvm_lv = 'lvm://' . $vg . '/' . $lv . '/';
+	}
+	# find start rsync command line
+	elsif($line =~ /^[\/\w]+\/rsync\h+-[-\w]/) {
 		my @rsynccmd=();
-		while($line =~ /\s+\\$/){ # combine wrapped lines
-			$line =~ s/\\$//g;
-			$line .= nextLine(\@rsnapout);
-		}
 		push(@rsynccmd,split(/\s+/,$line)); # split into command components
-		my $source = $rsynccmd[-2]; # count backwards: source always second to last
+		my $source;
+		# Use LVM logical volume name if it exists.
+		if ($linux_lvm_lv) {
+			$source = $linux_lvm_lv;
+		}
+		else {
+			# count backwards: source always second to last
+			$source = $rsynccmd[-2];
+		}
 		#print $source;
 		while($line = nextLine(\@rsnapout)){
   			# this means we are missing stats info
@@ -116,6 +133,8 @@ while (my $line = nextLine(\@rsnapout)){
 			}
 			elsif($line =~ /^(rsync error|ERROR): /){ push(@errors,"$source $line"); } # we encountered an rsync error
 		}
+		# If this was a logical volume, we are done with it.
+		$linux_lvm_lv = undef;
 	}
 	elsif($line =~ /^(rsync error|ERROR): /){ push(@errors,$line); } # we encountered an rsync error
 }
