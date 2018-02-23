@@ -45,7 +45,7 @@ sub pretty_print(){
 		my $bytest = $bkdata{$source}{'file_tran_size'}/1000000; # convert to MB
 		$source =~ s/^[^\@]+\@//; # remove username
 		format BREPORTHEAD =
-SOURCE                          TOTAL FILES   FILES TRANS      TOTAL MB     MB TRANS   LIST GEN TIME  FILE XFER TIME
+SOURCE                          TOTAL FILES   FILES TRANS      TOTAL MB     MB TRANS   LIST GEN TIME  LIST XFER TIME
 --------------------------------------------------------------------------------------------------------------------
 .
 		format BREPORTBODY =
