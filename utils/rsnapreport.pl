@@ -72,7 +72,7 @@ for(my $i=0; $i < $bufsz; $i++){
 }
 
 while (my $line = nextLine(\@rsnapout)){
-	if($line =~ /^[\/\w]+\/rsync/) { # find start rsync command line
+	if($line =~ /^[\/\w]+\/rsync\h+-[-\w]/) { # find start rsync command line
 		my @rsynccmd=();
 		while($line =~ /\s+\\$/){ # combine wrapped lines
 			$line =~ s/\\$//g;
@@ -83,7 +83,7 @@ while (my $line = nextLine(\@rsnapout)){
 		#print $source;
 		while($line = nextLine(\@rsnapout)){
   			# this means we are missing stats info
-			if($line =~ /^[\/\w]+\/rsync/){
+			if($line =~ /^[\/\w]+\/rsync\h+-[-\w]/){
 				unshift(@rsnapout,$line);
 				push(@errors,"$source NO STATS DATA");
 				last;
