@@ -5,6 +5,9 @@
 # and add --stats to rsync_long_args
 # then setup crontab 'rsnapshot daily 2>&1 | rsnapreport.pl | mail -s"SUBJECT" backupadm@adm.com
 # don't forget the 2>&1 or your errors will be lost to stderr
+# If you would prefer to leave the rsnapshot.conf verbose value unchanged,
+# an alternative is to pass the -V option to rsnapshot.
+# For example: rsnapshot -V daily 2>&1 | rsnapreport.pl
 ################################
 ## Copyright 2006 William Bear
 ## This program is free software; you can redistribute it and/or modify
