@@ -30,7 +30,7 @@ operating systems:
  - IRIX 6.5
 
 If this is your first experience with rsnapshot, you may want to read the
-rsnapshot HOWTO at http://www.rsnapshot.org/. The HOWTO will give you a detailed
+rsnapshot HOWTO at http://rsnapshot.org/rsnapshot/docs/docbook/rest.html. The HOWTO will give you a detailed
 walk-through on how to get rsnapshot up and running in explicit detail.
 
 For a reference of all available commands, see the rsnapshot man page.
