@@ -1821,8 +1821,8 @@ sub parse_backup_opts {
 		}
 		elsif ($name eq 'rsync_short_args') {
 
-			# must be in the format '-abcde'
-			if (0 == is_valid_rsync_short_args($value)) {
+			# if we are replacing the value, it must be in the format '-abcde'
+			if (!$additive && 0 == is_valid_rsync_short_args($value)) {
 				print_err("rsync_short_args \"$value\" not in correct format", 2);
 				return (undef);
 			}
