@@ -2257,7 +2257,7 @@ sub log_msg {
 				exit(1);
 			}
 
-			print LOG '[', get_current_date(), '] ', $str, "\n";
+			print LOG '[', get_current_date(), '][', $$, '] ', $str, "\n";
 
 			$result = close(LOG);
 			if (!defined($result)) {
