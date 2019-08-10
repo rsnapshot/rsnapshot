@@ -1,0 +1,9 @@
+#!@PERL@
+use strict;
+use Test::More tests => 1; # pack here your amount of subtests
+use SysWrap;
+
+#
+# Misc simple tests of thing that don't actually do a backup. TODO add more such tests here.
+#
+ok(`@PERL@ @CWD@/rsnapshot --version` eq "rsnapshot @VERSION@\n");
