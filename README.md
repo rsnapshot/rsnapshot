@@ -10,7 +10,7 @@ The code makes extensive use of hard links whenever possible, to greatly reduce
 the disk space required.
 
 It is written entirely in perl with no module dependencies, and has been
-tested with versions 5.004 through 5.16.3. It should work on any reasonably
+tested with versions 5.004 through 5.24.3. It should work on any reasonably
 modern UNIX compatible OS. It has been tested successfully on the following
 operating systems:
 
@@ -23,6 +23,7 @@ operating systems:
  - WhiteBox Enterprise Linux 3.0
  - Slackware 9.0
  - SuSE: 9.0
+ - Gentoo Linux
  - FreeBSD 4.9-STABLE
  - OpenBSD 3.x
  - Solaris 8 (SPARC and x86)
