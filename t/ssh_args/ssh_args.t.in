@@ -1,7 +1,7 @@
 #!@PERL@
 
 use strict;
-use Test::More tests => 2;
+use Test::More tests => 3;
 use SysWrap;
 
 # make sure snap_root directory does not exist before we start
@@ -13,4 +13,5 @@ SKIP: {
 	my $cant_ssh = system("$ssh_test");
 	skip("Cant SSH with \"$ssh_test\"", 1) if ($cant_ssh);
 	ok(!rsnapshot("-c @TEST@/ssh_args/conf/ssh_args.conf hourly"), "ssh_args parsed");
+	ok(!rsnapshot("-c @TEST@/ssh_args/conf/ssh_args_inline.conf hourly"), "ssh_args_inline parsed");
 }
