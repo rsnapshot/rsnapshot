@@ -14,7 +14,7 @@ tested with versions 5.004 through 5.24.3. It should work on any reasonably
 modern UNIX compatible OS. It has been tested successfully on the following
 operating systems:
 
- - Debian: 3.0 (woody), 3.1 (sarge), unstable (sid)
+ - Debian: 3.0 (woody), 9.9 (stretch)
  - Redhat: 7.x, 8.0
  - RedHat Enterprise Linux: 3.0 ES, 5, 6
  - Fedora Core: 1, 3
@@ -30,11 +30,9 @@ operating systems:
  - Mac OS X
  - IRIX 6.5
 
-If this is your first experience with rsnapshot, you may want to read the
-rsnapshot HOWTO at http://www.rsnapshot.org/. The HOWTO will give you a detailed
-walk-through on how to get rsnapshot up and running in explicit detail.
-
-For a reference of all available commands, see the rsnapshot man page.
+If this is your first experience with rsnapshot, you may want to read the man
+page which will give you a detailed walk-through on how to get rsnapshot up and
+running and also serve as a reference of all available commands.
 
 If you are upgrading from version 1.1.6 or earlier, make sure you read the
 file [Upgrading from 1.1](docs/Upgrading_from_1.1).
