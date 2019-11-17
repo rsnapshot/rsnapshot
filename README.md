@@ -1,4 +1,4 @@
-# RSNAPSHOT [![Build Status](https://api.travis-ci.org/rsnapshot/rsnapshot.png)](https://travis-ci.org/rsnapshot/rsnapshot)
+# RSNAPSHOT [![Build Status](https://api.travis-ci.org/rsnapshot/rsnapshot.png?branch=master)](https://travis-ci.org/rsnapshot/rsnapshot)
 
 rsnapshot comes with ABSOLUTELY NO WARRANTY.  This is free software,
 and you are welcome to redistribute it under certain conditions.
