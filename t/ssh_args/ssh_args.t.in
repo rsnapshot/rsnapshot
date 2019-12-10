@@ -11,7 +11,7 @@ ok(! remove_snapshot_root(),
 SKIP: {
 	my $ssh_test = "@SSH@ -p 22 -o StrictHostKeyChecking=no @TEST_SSH_USER@\@localhost true";
 	my $cant_ssh = system("$ssh_test");
-	skip("Cant SSH with \"$ssh_test\"", 1) if ($cant_ssh);
+	skip("Cant SSH with \"$ssh_test\"", 2) if ($cant_ssh);
 	ok(!rsnapshot("-c @TEST@/ssh_args/conf/ssh_args.conf hourly"), "ssh_args parsed");
 	ok(!rsnapshot("-c @TEST@/ssh_args/conf/ssh_args_inline.conf hourly"), "ssh_args_inline parsed");
 }
