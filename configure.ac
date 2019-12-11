@@ -1,3 +1,7 @@
+dnl Emulate m4_esyscmd_s for autoconf 2.63 (RHEL/CentOS 6)
+m4_ifndef([m4_esyscmd_s], [m4_define([m4_chomp_all], [m4_format([[%.*s]], m4_bregexp(m4_translit([[$1]], [/], [/ ]), [/*$]), [$1])])])
+m4_ifndef([m4_esyscmd_s], [m4_define([m4_esyscmd_s], [m4_chomp_all(m4_esyscmd([$1]))])])
+
 AC_INIT([rsnapshot],[m4_esyscmd_s([git describe --tags --always --dirty])],[rsnapshot-discuss@lists.sourceforge.net])
 AM_INIT_AUTOMAKE([foreign])
 AC_PROG_MAKE_SET
