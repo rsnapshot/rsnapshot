@@ -12,12 +12,9 @@ perl:
   - "5.18"
   - "5.16"
   - "5.14"
-before_install:
-  - sudo apt-get -qq update
-  - sudo apt-get install -y fakeroot
 install:
-  - "./autogen.sh"
-  - "./configure"
+  - ./autogen.sh
+  - ./configure
 before_script:
   # Allow us to SSH passwordless to localhost
   - ssh-keygen -t "rsa" -f ~/.ssh/id_rsa -N ""
@@ -25,12 +22,19 @@ before_script:
 script:
   - make
   - make test
+before_deploy:
+  - apt-get update -qq
+  - apt-get install fakeroot -y
   - make tar
 deploy:
   provider: releases
   api_key:
-    secure: vlYgJ2PWqfM1YA9Rw/qpJntaRl276uq8BcL7raDMNDySqO7QUg2TIilxWRxiiWLGjHUabAdsn8fsNEYmHfCLKywJdqzU90SS9KDWmSuVgzJfLBIPYlgfVMjEa0QQRZgJ7k1Oe2jsmH9lJuZw9jW/xG2C4eQRqAQ64m+UWwcDHqw=
+    secure: V981ylz1rHzSd405X/QBk/ER5QUETcrLpnJBwZyV088joa2TbeHdNgQMIEhx6oLlqtJiK2To8VEk3zZ2wJwESfVp7xlm5vp0dBMpYHGUbrW13QzWdRT42gc3/CGYl4GCtcs+tIeONWehR0ubdO+TlO9L6lXes+kEXEsTTvrLS0o=
   file: rsnapshot-${TRAVIS_TAG}.tar.gz
   skip_cleanup: true
   on:
     tags: true
+    branch: master
+    condition: "TRAVIS_OS_NAME = linux"
+    perl: "5.30"
+    repo: rsnapshot/rsnapshot
