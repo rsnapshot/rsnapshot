@@ -12,7 +12,7 @@ See the GNU General Public Licence for details.
 
 If you are installing for the first time (and just want the defaults):
 
-*   Run these commands for a quick installation from source code:
+ * Run these commands for a quick installation from source code:
     (skip these commands if you have installed rpm or debian package)
 
         $ ./autogen.sh # Generates the configure script.
@@ -20,15 +20,15 @@ If you are installing for the first time (and just want the defaults):
         $ sudo make install
         $ sudo cp /etc/rsnapshot.conf.default /etc/rsnapshot.conf
 
-*   Open up /etc/rsnapshot.conf with a text editor, and modify it for your system.
+ * Open up /etc/rsnapshot.conf with a text editor, and modify it for your system.
 
-*   Make sure the config file syntax is valid (remember, tabs, not spaces):
+ * Make sure the config file syntax is valid (remember, tabs, not spaces):
 
         $ /usr/local/bin/rsnapshot configtest
 
-The rsnapshot HOWTO is recommended reading for first time setups. It will
-walk you through this process in great detail. The rsnapshot HOWTO can be
-found online at http://www.rsnapshot.org/
+The rsnapshot man page installed with this software covers setup and all configuration
+options in detail. The [rsnapshot HOWTO](docs/HOWTOs/rsnapshot-HOWTO.en.html) may also be
+useful reading for first time setups.
 
 ## UPGRADING
 
@@ -41,14 +41,15 @@ There are no special instructions for upgrading from rsnapshot 1.2.x to
 If you are not sure whether you need to do anything to upgrade your
 old rsnapshot.conf, you can run
 
-    $ make upgrade
-or
-
-    $ rsnapshot upgrade-config-file
+        $ make upgrade
 
 or
 
-    $ rsnapshot -c /etc/rsnapshot.conf upgrade-config-file
+        $ rsnapshot upgrade-config-file
+
+or
+
+        $ rsnapshot -c /etc/rsnapshot.conf upgrade-config-file
 
 ## ADDITIONAL OPTIONS
 
@@ -58,11 +59,11 @@ You can pass the following options to ./configure for more control
 over where various parts of rsnapshot are installed. The example
 values shown also happen to be the defaults.
 
-*   --prefix=/usr/local
+ * --prefix=/usr/local
 
     This will install everything under /usr/local
 
-*   --sysconfdir=/usr/local/etc
+ * --sysconfdir=/usr/local/etc
 
     This will install the example config file
     (rsnapshot.conf.default) under /usr/local/etc. This will also be
@@ -70,28 +71,28 @@ values shown also happen to be the defaults.
     It is recommended that you copy rsnapshot.conf.default and use it
     as a basis for the actual config file (rsnapshot.conf).
 
-*   --bindir=/usr/local/bin
+ * --bindir=/usr/local/bin
 
     This will install the rsnapshot program under /usr/local/bin
 
-*   --mandir=/usr/local/man
+ * --mandir=/usr/local/man
 
     This will install the man page under /usr/local/man
 
-*   --with-perl=/usr/bin/perl
+ * --with-perl=/usr/bin/perl
 
     Specify your preferred path to perl. If you don't specify
     this, the build process will detect the first version of perl
     it finds in your path.
 
-*   --with-rsync=/usr/bin/rsync
+ * --with-rsync=/usr/bin/rsync
 
     Specify your preferred path to rsync. If you don't specify
     this, the build process will detect the first version of rsync
     it finds in your path. You can always change this later by
     editing the config file (rsnapshot.conf).
 
-*   --with-cp=/bin/cp
+ * --with-cp=/bin/cp
 
     Specify the path to GNU cp. The traditional UNIX cp command
     is not sufficient. If you don't specify this, the build process
@@ -99,13 +100,13 @@ values shown also happen to be the defaults.
     If you don't have the GNU version of cp, leave this commented
     out in the config file (rsnapshot.conf).
 
-*   --with-rm=/bin/rm
+ * --with-rm=/bin/rm
 
     Specify the path to the rm command. If you don't specify this,
     the build process will detect the first version of rm it finds
     in your path.
 
-*   --with-ssh=/usr/bin/ssh
+ * --with-ssh=/usr/bin/ssh
 
     Specify your preferred path to ssh. If you don't specify this,
     the build process will detect the first version of ssh it
@@ -114,7 +115,7 @@ values shown also happen to be the defaults.
     you need to specifically enable this feature by uncommenting
     the "cmd_ssh" parameter in the config file (rsnapshot.conf).
 
-*   --with-logger=/usr/bin/logger
+ * --with-logger=/usr/bin/logger
 
     Specify your preferred path to logger. If you don't specify
     this, the build process will detect the first version of
@@ -122,7 +123,7 @@ values shown also happen to be the defaults.
     make sure this is enabled in the config file. Syslog support
     is optional, so if you don't have it or comment it out it's OK.
 
-*   --with-du=/usr/bin/du
+ * --with-du=/usr/bin/du
 
     Specify your preferred path to du. If you don't specify
     this, the build process will detect the first version of

@@ -130,10 +130,10 @@ intervals just rotate snapshots around.  Unless you have enabled
 pseudo-interval does the actual rsync, and all real intervals
 just rotate snapshots.
 
-For the full documentation, type `man rsnapshot` once it is installed,
-or visit http://www.rsnapshot.org/.  The HowTo on the web site has a
-detailed overview of how to install and configure rsnapshot, and things
-like how to set it up so users can restore their own files.
+For the full documentation, type `man rsnapshot` once it is installed. The
+[HOWTO](docs/HOWTOs/rsnapshot-HOWTO.en.html) also has a detailed overview of
+how to install and configure rsnapshot, and things like how to set it up so
+users can restore their own files.
 
 If you plan on using the `backup_script` parameter in your backup scheme,
 take a look at the `utils/`-directory in the source distribution for several
