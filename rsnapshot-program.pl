@@ -5254,6 +5254,19 @@ sub rm_rf {
 	# make sure we were passed an argument
 	if (!defined($path)) { return (0); }
 
+	# added by Matthew Jurgens as part of the fix for rm -rf failing when the path contains ./
+	# make sure $path does not contain ./ at the end since this makes rm -rf fail
+	# however the side effect of doing this is that we also remove the directory so we will have to create it later
+	# we could have added a * at the end so we had something like rm -rf PATH/* but probably safer not to use the *
+	$path=~s/\.\/$//;
+	# in order to recreate the directory we will want to take a look at it before we remove it
+	my $st = lstat("$path");
+	if (!defined($st)) {
+			print_err("Could not lstat(\"$path\")", 2);
+			return(0);
+	}
+	# end addition
+
 	# extra bonus safety feature!
 	# confirm that whatever we're deleting must be inside the snapshot_root
 	if (index($path, $config_vars{'snapshot_root'}) != 0) {
@@ -5273,6 +5286,20 @@ sub rm_rf {
 		$path =~ s/\/$//;
 		$result = rmtree("$path", 0, 0);
 	}
+
+	# added by Matthew Jurgens as part of the fix for rm -rf failing when the path contains ./
+	# make sure the directory is still in place
+	# if you cannot create this directory and this rm is part of a rollback which uses cp -al, then the cp -al will fail shortly after 
+	# MKDIR DEST (AND SET MODE)
+	if (defined($st)) {
+		# create the directory
+		$result = mkdir("$path", $st->mode);
+		if ( ! $result ) {
+			print_err("Warning! Could not mkdir(\"$path\", $st->mode);", 2);
+			return(0);
+		}
+	}
+	# end addition
 
 	return ($result);
 }
