@@ -5258,7 +5258,7 @@ sub rm_rf {
 	# make sure $path does not contain ./ at the end since this makes rm -rf fail
 	# however the side effect of doing this is that we also remove the directory so we will have to create it later
 	# we could have added a * at the end so we had something like rm -rf PATH/* but probably safer not to use the *
-	$path=~s/\.\/$//;
+	$path=~s{/\./?$}{};
 	# in order to recreate the directory we will want to take a look at it before we remove it
 	my $st = lstat("$path");
 	if (!defined($st)) {
