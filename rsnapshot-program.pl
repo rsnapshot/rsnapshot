@@ -5145,12 +5145,6 @@ sub rsync_cleanup_after_native_cp_al {
 	if (!defined($src))  { return (0); }
 	if (!defined($dest)) { return (0); }
 
-	# make sure this is directory to directory
-	if (($src !~ m/\/$/o) or ($dest !~ m/\/$/o)) {
-		print_err("rsync_cleanup_after_native_cp_al() only works on directories", 2);
-		return (0);
-	}
-
 	# make sure we have a source directory
 	if (!-d "$src") {
 		print_err("rsync_cleanup_after_native_cp_al() needs a valid source directory as an argument", 2);
@@ -5163,6 +5157,10 @@ sub rsync_cleanup_after_native_cp_al {
 			2);
 		return (0);
 	}
+
+	# make sure src and dest both have a trailing slash for rsync
+	$src =~ s/\/?$/\//;
+	$dest =~ s/\/?$/\//;
 
 	# check verbose settings and modify rsync's short args accordingly
 	if ($verbose > 3) { $local_rsync_short_args .= 'v'; }
@@ -5289,7 +5287,7 @@ sub rm_rf {
 
 	# added by Matthew Jurgens as part of the fix for rm -rf failing when the path contains ./
 	# make sure the directory is still in place
-	# if you cannot create this directory and this rm is part of a rollback which uses cp -al, then the cp -al will fail shortly after 
+	# if you cannot create this directory and this rm is part of a rollback which uses cp -al, then the cp -al will fail shortly after
 	# MKDIR DEST (AND SET MODE)
 	if (defined($st)) {
 		# create the directory
