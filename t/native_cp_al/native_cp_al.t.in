@@ -1,0 +1,26 @@
+#!@PERL@
+use strict;
+use Test::More tests => 6;
+use SysWrap;
+
+#
+# Test native_cp_al works with cmd_cp option not set and sync_first on (see contig).
+#
+
+ok(! remove_snapshot_root(),
+	" snapshot root does not exist before testing starts");
+
+ok(0 == rsnapshot("-c @TEST@/native_cp_al/conf/native_cp_al.conf sync 2>&1"),
+	" sync success");
+
+ok(-d "@SNAP@/.sync/native_cp_al",
+	" sync directory exists");
+
+ok(0 == rsnapshot("-c @TEST@/native_cp_al/conf/native_cp_al.conf hourly 2>&1"),
+	" hourly backup after sync success");
+
+ok(-d "@SNAP@/hourly.0/native_cp_al",
+	" hourly backup directory exists");
+
+ok(0 == remove_snapshot_root(),
+	" Removed snapshot root to clean up");
