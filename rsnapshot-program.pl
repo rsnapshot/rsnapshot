@@ -3050,19 +3050,6 @@ sub remove_trailing_slash {
 	return ($str);
 }
 
-# accepts string
-# returns /. if passed /, returns input otherwise
-# this is to work around a bug in some versions of rsync
-sub add_slashdot_if_root {
-	my $str = shift(@_);
-
-	if ($str eq '/') {
-		return '/.';
-	}
-
-	return ($str);
-}
-
 # accepts the interval (cmd) to run against
 # returns nothing
 # calls the appropriate subroutine, depending on whether this is the lowest interval or a higher one
