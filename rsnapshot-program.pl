@@ -1109,7 +1109,7 @@ sub parse_config_file {
 			# remember src/dest
 			my %hash;
 			$hash{'src'}  = $src;
-			$hash{'dest'} = $dest;
+			$hash{'dest'} = normalize_dest_file_path_part($dest);
 			if (defined($opts_ref)) {
 				$hash{'opts'} = $opts_ref;
 			}
@@ -1173,7 +1173,7 @@ sub parse_config_file {
 			}
 
 			$hash{'script'} = $full_script;
-			$hash{'dest'}   = $dest;
+			$hash{'dest'}   = normalize_dest_file_path_part($dest);
 
 			$line_syntax_ok = 1;
 
@@ -3048,6 +3048,18 @@ sub remove_trailing_slash {
 	$str =~ s/\/+$//;
 
 	return ($str);
+}
+
+# accepts string
+# partially normalizes file path intended to be prefixed with some other path (such as backup dest)
+# does not handle symlinks or '..'
+sub normalize_dest_file_path_part {
+  my $str = shift(@_);
+  # it's not a trailing slash if it's the root filesystem
+  if ($str eq '/') { return ($str); }
+  $str =~ s/^\.\/|\/.\/|\.$/\//g;
+  $str =~ s/\/+/\//g;
+  return ($str);
 }
 
 # accepts the interval (cmd) to run against
@@ -5239,19 +5251,6 @@ sub rm_rf {
 	# make sure we were passed an argument
 	if (!defined($path)) { return (0); }
 
-	# added by Matthew Jurgens as part of the fix for rm -rf failing when the path contains ./
-	# make sure $path does not contain ./ at the end since this makes rm -rf fail
-	# however the side effect of doing this is that we also remove the directory so we will have to create it later
-	# we could have added a * at the end so we had something like rm -rf PATH/* but probably safer not to use the *
-	$path=~s{/\./?$}{};
-	# in order to recreate the directory we will want to take a look at it before we remove it
-	my $st = lstat("$path");
-	if (!defined($st)) {
-			print_err("Could not lstat(\"$path\")", 2);
-			return(0);
-	}
-	# end addition
-
 	# extra bonus safety feature!
 	# confirm that whatever we're deleting must be inside the snapshot_root
 	if (index($path, $config_vars{'snapshot_root'}) != 0) {
@@ -5271,20 +5270,6 @@ sub rm_rf {
 		$path =~ s/\/$//;
 		$result = rmtree("$path", 0, 0);
 	}
-
-	# added by Matthew Jurgens as part of the fix for rm -rf failing when the path contains ./
-	# make sure the directory is still in place
-	# if you cannot create this directory and this rm is part of a rollback which uses cp -al, then the cp -al will fail shortly after
-	# MKDIR DEST (AND SET MODE)
-	if (defined($st)) {
-		# create the directory
-		$result = mkdir("$path", $st->mode);
-		if ( ! $result ) {
-			print_err("Warning! Could not mkdir(\"$path\", $st->mode);", 2);
-			return(0);
-		}
-	}
-	# end addition
 
 	return ($result);
 }
