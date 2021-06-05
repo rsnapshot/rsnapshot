@@ -1677,21 +1677,14 @@ sub validate_config_file {
 			# skip for backup_exec since it uses no destination
 			next if (defined($$bp_ref{'cmd'}));
 
-			my $tmp_dest_path = $$bp_ref{'dest'};
-
-			# normalize multiple slashes, and strip trailing slash
-			# FIXME: Decide whether to allow an empty destination path, and reject or handle such paths accordingly.
-			$tmp_dest_path =~ s/\/+/\//g;
-			$tmp_dest_path =~ s/\/$//;
-
 			# backup
 			if (defined($$bp_ref{'src'})) {
-				push(@backup_dest, $tmp_dest_path);
+				push(@backup_dest, $$bp_ref{'dest'});
 
 				# backup_script
 			}
 			elsif (defined($$bp_ref{'script'})) {
-				push(@backup_script_dest, $tmp_dest_path);
+				push(@backup_script_dest, $$bp_ref{'dest'});
 
 			}
 
