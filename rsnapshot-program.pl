@@ -7151,8 +7151,9 @@ It is most useful when specifying per-backup rsync excludes thus:
 
 B<backup  root@somehost:/  somehost   +rsync_long_args=--exclude=/var/spool/>
 
-Note the + sign.  That tells rsnapshot to I<add> to the list of arguments
-to pass to rsync instead of replacing the list.
+Note the + sign.  That tells rsync_long_args to I<add> to the list of arguments
+to pass to rsync instead of replacing the list. The + sign is only supported for
+rsnapshot's rsync_long_args and rsync_short_args.
 
 =back
 
