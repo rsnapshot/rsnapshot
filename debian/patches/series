@@ -1,5 +1,0 @@
-01_rsnapshot_conf.diff
-02_rsnapshot-lvm-undef.diff
-05_backup_pgsql.diff
-15-remove-dead-external-css-link.patch
-18_rsnapreport_rsync_output.diff

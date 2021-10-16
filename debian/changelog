@@ -1,3 +1,33 @@
+rsnapshot (1.4.4-1) unstable; urgency=medium
+
+  VERSION 1.4.4 (Jun 12 2021)
+  ------------------------------------------------------------------------------
+  - Add sentence explaining rsync_long|short_args + sign to man page (ref #11)
+  - Fix rsnapreport problems (incorrect header, fail when rsync present, fail with LVM) (#204)
+  - Add notes about documentation, and link to the website repo
+  - Fix for 'rsync_cleanup_after_native_cp_al() only works on directories' fail when sync_first on and cmd_cp not set (#133). Add test
+  - Fix for rm -rf failing when the path contains ./
+  - Suppress noisy error from non-GNU cp on BSD-ish machines, including MacOS
+  - Add CentOS 7 to succesfully tested to docs
+  - Minor tidy up rel configure options --with-test-(true|false). Refs #189 (#248)
+  - Update travis build settings (#189). Dont use m4_esyscmd_s in configure.ac (#245)
+  - Update docs to remove dangling refs to HOWTO on rsnapshot.org.
+  - Skip both SSH tests (rather one) if SSH doesn't work
+  - Use perl-5.30 for tests (used in ubuntu 20.04 focal)
+  - Lower verbose level of rsync output to 1.3.x equivalent to work with rsnapreport.pl again
+  - Fix location of true and false binaries on macOS
+
+  VERSION 1.4.3 (Nov 17 2019)
+  ------------------------------------------------------------------------------
+  - Fixes and minor updates to Pod / man page.
+  - Adds more tests.
+  - Restore rsync error code 23 as an important warning.
+  - Fixes shortargs appending.
+  - Non-LVM backup source breaks after LVM backup source.
+  - Update rsnapreport.pl utility script to work with rsync >= 3.1.0 stats and bytes changes. 
+
+ -- sam <sgpinkus@gmail.com>  Sat, 16 Oct 2021 22:50:58 +1100
+
 rsnapshot (1.4.2-1) unstable; urgency=medium
 
   * New upstream release (Closes: #817071), refresh patches
