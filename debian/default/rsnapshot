@@ -1,0 +1,16 @@
+
+# There are already cron scripts installed to automatically run rsnapshot in
+# the background on a regular hourly/daily/weekly/monthly schedule.  If this
+# is on a machine that is shutdown or goes to sleep often, then install
+# anacron.
+#
+#ENABLE_CRON=yes
+
+# Also run the hourly job in addition to the daily, weekly, and monthly
+#ENABLE_HOURLY=yes
+
+# Specify the disk where the backups are written to, this is the same place as
+# is specified in /etc/rsnapshot.conf as 'snapshot_root'.  This is used to
+# detect if the disk is mounted or not when rsnapshot runs in a cron job.
+#
+#BACKUP_DISK="/media/backupdisk/hostname"

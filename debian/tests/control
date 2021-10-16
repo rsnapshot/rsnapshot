@@ -1,0 +1,3 @@
+Tests: test.sh
+Depends: @
+Restrictions: needs-root

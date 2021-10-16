@@ -1,0 +1,1 @@
+rsnapshot: non-standard-dir-perm var/cache/rsnapshot/ 0700 != 0755

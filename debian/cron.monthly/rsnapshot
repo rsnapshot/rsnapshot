@@ -1,0 +1,21 @@
+#!/bin/sh
+
+. /etc/default/rsnapshot
+test "$ENABLE_CRON" = yes || exit
+
+# 2592000 seconds in a month, retry every 10 minutes for 8 days
+until=`expr $(date +%s) + 691200`
+while [ $(date +%s) -lt $until ]; do
+    test -d "$BACKUP_DISK" && break
+    sleep 600
+done
+
+# See ionice(1)
+if [ -x /usr/bin/ionice ] &&
+    /usr/bin/ionice -c3 true 2>/dev/null; then
+    IONICE="/usr/bin/ionice -c3"
+fi
+
+
+test -d "$BACKUP_DISK" && \
+	nice -n 20 $IONICE /usr/bin/rsnapshot monthly

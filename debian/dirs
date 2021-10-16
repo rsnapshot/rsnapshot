@@ -1,0 +1,7 @@
+var/cache/rsnapshot
+usr/share/doc/rsnapshot/html
+usr/share/doc/rsnapshot/examples/anacron
+usr/share/doc/rsnapshot/examples/anacron/hourly
+usr/share/doc/rsnapshot/examples/anacron/daily
+usr/share/doc/rsnapshot/examples/anacron/weekly
+usr/share/doc/rsnapshot/examples/anacron/monthly

@@ -1,0 +1,49 @@
+#!/usr/bin/make -f
+# -*- makefile -*-
+
+UPSTREAM_AUTOCONF_GENERATED_FILES = \
+	aclocal.m4 configure install-sh missing Makefile.in
+
+override_dh_auto_clean:
+	[ ! -f Makefile ] || $(MAKE) clean
+
+override_dh_autoreconf_clean:
+	dh_autoreconf_clean
+	# restore upstream autoconf automatically generated files
+	$(foreach var,$(UPSTREAM_AUTOCONF_GENERATED_FILES), \
+		[ ! -f $(var).bak ] || cp -f $(var).bak $(var);)
+
+override_dh_autoreconf:
+	# backup upstream autoconf automatically generated files
+	$(foreach var,$(UPSTREAM_AUTOCONF_GENERATED_FILES), \
+		cp -f $(var) $(var).bak;)
+	dh_autoreconf
+
+override_dh_install:
+	dh_install
+	# rename default configfile
+	mv $(CURDIR)/debian/rsnapshot/etc/rsnapshot.conf.default \
+	   $(CURDIR)/debian/rsnapshot/etc/rsnapshot.conf
+	# lintian override on /var/cache/rsnapshot perms
+	mkdir -p $(CURDIR)/debian/rsnapshot/usr/share/lintian/overrides/
+	cp $(CURDIR)/debian/lintian-overrides \
+	   $(CURDIR)/debian/rsnapshot/usr/share/lintian/overrides/rsnapshot
+	# html doc, see debian/doc-base
+	cp $(CURDIR)/docs/HOWTOs/rsnapshot-HOWTO.en.html \
+	   $(CURDIR)/debian/rsnapshot/usr/share/doc/rsnapshot/html/
+
+override_dh_installexamples:
+	# Remove unnecessary extra license file, (Policy Manual section 12.5)
+	dh_installexamples -X utils/rsnapshotdb/LICENSE.txt
+
+override_dh_fixperms:
+	dh_fixperms
+	# Fix permissions of the default rsnapshot_root directory
+	chmod 0700 $(CURDIR)/debian/rsnapshot/var/cache/rsnapshot
+
+override_dh_compress:
+	# don't compress utils examples perl files
+	dh_compress --exclude=.pl
+
+%:
+	dh $@ --with autotools_dev --with autoreconf

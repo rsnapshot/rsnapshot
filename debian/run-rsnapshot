@@ -1,0 +1,335 @@
+#!/usr/bin/ruby -w
+
+# This program checks how long ago rsnapshot was last run.  Based on
+# that time, a suitable rsnapshot command line is launched.  This
+# program is intended to be run from (ana)cron.
+#
+# This program is in the public domain, do with it whatever you want.
+#
+# Author: johan.walles@gmail.com
+
+require 'time'
+require 'fileutils'
+
+RSNAPSHOT_CONF = "/etc/rsnapshot.conf"
+
+SYNTAX = "Syntax: run-rsnapshot [selftest]"
+
+# Rsnapshot's definition of hourly is "once every 4 hours".  Yes,
+# really.  Look it up.
+HOURS_PER_HOURLY = 4
+
+# Find the snapshot root from /etc/rsnapshot.conf
+def snapshot_root
+  File.new(RSNAPSHOT_CONF).each_line do |line|
+    line.chomp!
+    if line =~ /^snapshot_root\s+(.*)$/
+      return $1
+    end
+  end
+  return nil
+end
+
+# Finds the number of files that must be in each interval
+def interval_sizes
+  sizes = {}
+  File.new(RSNAPSHOT_CONF).each_line do |line|
+    line.chomp!
+    if line =~ /^interval\s+([a-z]+)\s+([0-9]+)$/
+      name = $1
+      number = $2.to_i
+      sizes[name] = number
+    end
+  end
+  return sizes
+end
+
+# An interval like "daily" or "monthly"
+class Interval
+  attr_reader :name
+  attr_reader :amount
+  attr_reader :parent
+
+  # Either just the name or all parameters must be non-nil.
+  # frequency_hours - how many time units are there between each generation?
+  # amount - how many generations are there?
+  # parent - from where do I get my updates?
+  def initialize(name, snapshot_root, frequency_hours = nil, amount = nil, parent = nil)
+    @name = name
+    @snapshot_root = snapshot_root
+
+    if frequency_hours != nil
+      raise "Must specify all parameters for #{name}" unless (amount && parent)
+    end
+
+    @frequency_hours = frequency_hours
+    @amount = amount
+    @parent = parent
+  end
+
+  # Return current time of day.  In a method by itself to be
+  # overridable by the unit tests.
+  def now
+    return Time.now
+  end
+
+  # Return age in hours of the newest or oldest snapshot
+  # kind - :newest or :oldest
+  def age_hours(kind)
+    raise "Kind must be :newest or :oldest" unless [:newest, :oldest].include? kind
+
+    # Being parentless means that we represent the contents of the
+    # actual file system, and as such we're always entirely up to
+    # date.
+    return 0 unless @parent
+
+    # No files means no "hours since"
+    return nil if snapshots.size == 0
+
+    best = nil
+    snapshots.each do |snapshot|
+      mtime = File.mtime(snapshot)
+      best = mtime unless best
+      if kind == :newest
+        best = mtime if mtime > best
+      elsif kind == :oldest
+        best = mtime if mtime < best
+      end
+    end
+
+    age = ((now - best) / 3600.0).round
+    return age
+  end
+
+  def snapshots
+    return Dir["#{@snapshot_root}/#{@name}*"].sort
+  end
+
+  def [](snapshot)
+    return snapshots[snapshot]
+  end
+
+  def size
+    return snapshots.size
+  end
+
+  def empty?
+    return size == 0
+  end
+
+  # Is this the original file source rather than a snapshot?
+  def origin?
+    return @parent == nil
+  end
+
+  # Am I ready to have my snapshot taken?
+  def complete?
+    # The original file system source is always complete.
+    return true if origin?
+
+    return size >= @amount
+  end
+
+  # Do I feel like I'm out of date?
+  def want_update?
+    # The original file system source never wants any updates from us.
+    return false if origin?
+
+    return true unless complete?
+    return true if age_hours(:newest) >= @frequency_hours
+    return false
+  end
+
+  # Would trying to update this interval get me back in shape?
+  def can_update?
+    # We can never update the original file system source
+    return false if origin?
+
+    return false unless @parent.complete?
+    return true if empty?
+
+    improvement_hours = age_hours(:newest) - @parent.age_hours(:oldest)
+    return improvement_hours >= @frequency_hours
+  end
+
+  def to_s
+    return "#{@name} interval"
+  end
+end
+
+# Given some intervals, the Evaluator suggests the correct kind of
+# rsnapshot job
+class Evaluator
+  def initialize(intervals)
+    @intervals = intervals
+  end
+
+  def suggest_update_interval
+    @intervals.each do |interval|
+      return interval if (interval.want_update? && interval.can_update?)
+    end
+    return nil
+  end
+end
+
+# This is the program's main piece of code
+def run_rsnapshot
+  # Set up the intervals
+  origin = Interval.new("origin", snapshot_root)
+  hourly =
+    Interval.new("hourly", snapshot_root, HOURS_PER_HOURLY, interval_sizes["hourly"], origin)
+  daily =
+    Interval.new("daily", snapshot_root, 24, interval_sizes["daily"], hourly)
+  weekly =
+    Interval.new("weekly", snapshot_root, 7 * 24, interval_sizes["weekly"], daily)
+  monthly =
+    Interval.new("monthly", snapshot_root, 28 * 24, interval_sizes["monthly"], weekly)
+
+  # Find out what interval to update (if any)
+  evaluator = Evaluator.new([monthly, weekly, daily, hourly, origin])
+  update_interval = evaluator.suggest_update_interval
+
+  if update_interval
+    # Launch rsnapshot with the given interval
+    system("nice rsnapshot #{update_interval.name}")
+    return $?.exitstatus
+  else
+    return 0
+  end
+end
+
+if ARGV == []
+  exit run_rsnapshot
+elsif ARGV == [ "selftest" ]
+  require 'test/unit/autorunner'
+  require 'tempfile'
+
+  class MockEvaluator < Evaluator
+    def initialize(time_source, root_dir, intervals)
+      super(intervals)
+
+      @time_source = time_source
+      @root_dir = root_dir
+    end
+
+    # Simulate calling rsnapshot
+    def update_interval(interval_name)
+      basename = @root_dir + "/" + interval_name
+      interval = @intervals.find { |interval| interval.name == interval_name }
+      parent_interval = interval.parent
+
+      # Increase the numerical suffix of all my files
+      interval.snapshots.reverse.each do |snapshot|
+        snapshot =~ /\.([0-9]+)$/
+        number = $1.to_i
+        number += 1
+        new_name = "#{basename}.#{number}"
+        File.rename(snapshot, new_name)
+      end
+
+      # Rotate my parent's last file into my file 0
+      if parent_interval.origin?
+        # Simulate taking a file system snapshot
+        destination = "#{basename}.0"
+        File.open(destination, 'w').close
+        File.utime(@time_source.now, @time_source.now, destination)
+      else
+        if parent_interval.empty?
+          raise "#{interval_name}'s parent #{parent_interval.name} has no files in it"
+        end
+        File.rename(parent_interval[-1], "#{basename}.0")
+      end
+
+      # If my last file has too high a number, remove it
+      last_file = interval[-1]
+      last_file =~ /\.([0-9]+)$/
+      number = $1.to_i
+      File.delete(last_file) if number >= interval.amount
+    end
+  end
+
+  # An interval taking its time from an artificial time source rather
+  # than from the system clock.
+  class MockInterval < Interval
+    def initialize(time_source,
+                   name, snapshot_root, frequency_hours = nil, amount = nil, parent = nil)
+      super(name, snapshot_root, frequency_hours, amount, parent)
+      @time_source = time_source
+    end
+
+    def now
+      return @time_source.now
+    end
+  end
+
+  class TestInterval < Test::Unit::TestCase
+    # This is our simulated clock
+    attr_accessor :now
+
+    def initialize(foo)
+      super(foo)
+      @now = Time.now
+    end
+
+    # Execute a block with a temporary directory that will be nuked
+    # after the block is run
+    def with_tempdir(&block)
+      tempdir = Tempfile.new("run-rsnapshot-selftest")
+      path = tempdir.path
+      tempdir.close!
+      tempdir = path
+      begin
+        FileUtils.rm_f tempdir
+        Dir.mkdir(tempdir)
+        block.call(tempdir)
+      ensure
+        FileUtils.rm_rf tempdir
+      end
+    end
+
+    # Simulate calling rsnapshot several times while the clock is
+    # ticking, and verify that we're getting the suggestions we
+    # expect.
+    def test_interval
+      with_tempdir do |tempdir|
+        origin = MockInterval.new(self, "origin", tempdir)
+        daily = MockInterval.new(self, "daily", tempdir, 24, 7, origin)
+        weekly = MockInterval.new(self, "weekly", tempdir, 7 * 24, 4, daily)
+        monthly = MockInterval.new(self, "monthly", tempdir, 28 * 24, 6, weekly)
+
+        evaluator = MockEvaluator.new(self, tempdir, [monthly, weekly, daily, origin])
+        10.times do |month_number|
+          4.times do |week_number|
+            7.times do |day_number|
+              update_interval = evaluator.suggest_update_interval
+              assert_equal("daily", update_interval ? update_interval.name : "<nil>",
+                           "Daily: m#{month_number}, w#{week_number}, d#{day_number}")
+              evaluator.update_interval(update_interval.name)
+              @now += 12 * 60 * 60
+
+              update_interval = evaluator.suggest_update_interval
+              assert_not_equal("daily", update_interval && update_interval.name,
+                               "Not daily twice per day: m#{month_number}, w#{week_number}, d#{day_number}")
+              # Don't call any interval we got, we're just looking at
+              # what interval we got here
+              @now += 12 * 60 * 60
+            end
+            update_interval = evaluator.suggest_update_interval
+            assert_equal("weekly", update_interval ? update_interval.name : "<nil>",
+                         "Weekly: m#{month_number}, w#{week_number}")
+            evaluator.update_interval(update_interval.name)
+            @now += 24 * 60 * 60
+          end
+          update_interval = evaluator.suggest_update_interval
+          assert_equal("monthly", update_interval ? update_interval.name : "<nil>",
+                       "Monthly: m#{month_number}")
+          evaluator.update_interval(update_interval.name)
+          @now += 24 * 60 * 60
+        end
+      end
+    end
+  end
+else
+  STDERR.puts SYNTAX
+  exit 1
+end

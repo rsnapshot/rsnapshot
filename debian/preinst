@@ -1,0 +1,13 @@
+#!/bin/sh
+set -e
+
+#DEBHELPER#
+
+files="/etc/cron.monthly/rsnapshot /etc/cron.daily/rsnapshot \
+	/etc/cron.hourly/rsnapshot /etc/cron.weekly/rsnapshot \
+	/etc/default/rsnapshot"
+for file_to_remove in $files
+do
+	dpkg-maintscript-helper rm_conffile \
+		$file_to_remove 1.3.1-6 rsnapshot -- "$@"
+done

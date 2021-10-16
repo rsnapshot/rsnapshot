@@ -1,0 +1,32 @@
+rsnapshot (1.4.0-1) unstable; urgency=medium
+
+    hourly/daily/weekly/monthly default retains are now alpha/beta/gamma/delta.
+    If you want to keep your backup history, you must rename all your
+    already generated directories in your snapshot_root directory;
+    you can use the helper script /usr/share/doc/rsnapshot/rename_retains.sh.
+    It is also possible to use the previous names in /etc/rsnapshot.conf and
+    changes them in your cron jobs.
+
+ -- Guillaume Delacour <gui@iroqwa.org>  Sun, 12 Jul 2015 14:56:48 +0000
+
+rsnapshot (1.3.0-1) unstable; urgency=low
+
+    Until now, the Debian package of rsnapshot included a patch to ensure
+    backward compatibility with pre-1.2 configuration files (see below). This
+    patch has been dropped in this release, and all users are now forced to
+    upgrade their configuration files to the 1.2 format. Please see the UPGRADE
+    section from /usr/share/doc/rsnapshot/README.Debian if you are still using
+    1.1.x configuration files.
+
+ -- Simon Boulet <simon@nostalgeek.com>  Mon, 13 Nov 2006 13:16:38 -0500
+
+rsnapshot (1.2.0-1) unstable; urgency=low
+
+    In this release the default rsync long_args have changed, --relative and
+    --delete-excluded have been added. --relative will affect the destination
+    of the backup points. However your current config will continue to work in
+    a compatibility mode where --relative is not used. To benefit of all new
+    features and bugfixes you have to change your config file. Be sure to read
+    /usr/share/doc/rsnapshot/README.Debian
+
+ -- Christoph Wegscheider <christoph.wegscheider@wegi.net>  Fri,  4 Feb 2005 12:33:31 +0100

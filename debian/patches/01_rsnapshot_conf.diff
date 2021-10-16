@@ -1,0 +1,121 @@
+From: Guillaume Delacour <gui@iroqwa.org>
+Subject: rsnapshot Debian configuration choices
+
+ * Change (default commented) log filename as per Debian Policy section 10.8
+ * Change default Debian directory for snapshots
+ * Change path for rsnapshot-diff
+ * Manpage: point to the real default file  and binary on Debian systems
+ * Use GNU cp, to take care of special files
+ * Document use of stop_on_stale_lockfile option
+ * Document loglevel => 4 for rsync output
+Forwarded: not-needed
+
+Index: rsnapshot/rsnapshot.conf.default.in
+===================================================================
+--- rsnapshot.orig/rsnapshot.conf.default.in
++++ rsnapshot/rsnapshot.conf.default.in
+@@ -20,7 +20,7 @@ config_version	1.2
+ 
+ # All snapshots will be stored under this root directory.
+ #
+-snapshot_root	/.snapshots/
++snapshot_root	/var/cache/rsnapshot/
+ 
+ # If no_create_root is enabled, rsnapshot will not automatically create the
+ # snapshot_root directory. This is particularly useful if you are backing
+@@ -37,7 +37,7 @@ snapshot_root	/.snapshots/
+ #
+ # See the README file or the man page for more details.
+ #
+-#@CMD_CP@
++@CMD_CP@
+ 
+ # uncomment this to use the rm program instead of the built-in perl routine.
+ #
+@@ -64,7 +64,7 @@ snapshot_root	/.snapshots/
+ 
+ # Uncomment this to specify the path to rsnapshot-diff.
+ #
+-#cmd_rsnapshot_diff	/usr/local/bin/rsnapshot-diff
++#cmd_rsnapshot_diff	/usr/bin/rsnapshot-diff
+ 
+ # Specify the path to a script (and any optional arguments) to run right
+ # before rsnapshot syncs files
+@@ -111,13 +111,14 @@ verbose		2
+ 
+ # Same as "verbose" above, but controls the amount of data sent to the
+ # logfile, if one is being used. The default is 3.
++# If you want the rsync output, you have to set it to 4
+ #
+ loglevel	3
+ 
+ # If you enable this, data will be written to the file you specify. The
+ # amount of data written is controlled by the "loglevel" parameter.
+ #
+-#logfile	/var/log/rsnapshot
++#logfile	/var/log/rsnapshot.log
+ 
+ # If enabled, rsnapshot will write a lockfile to prevent two instances
+ # from running simultaneously (and messing up the snapshot_root).
+Index: rsnapshot/rsnapshot-program.pl
+===================================================================
+--- rsnapshot.orig/rsnapshot-program.pl
++++ rsnapshot/rsnapshot-program.pl
+@@ -6684,10 +6684,10 @@ B<-D> a firehose of diagnostic informati
+ =head1 CONFIGURATION
+ 
+ B</etc/rsnapshot.conf> is the default configuration file. All parameters
+-in this file must be separated by tabs. B</etc/rsnapshot.conf.default>
++in this file must be separated by tabs. B</usr/share/doc/rsnapshot/examples/rsnapshot.conf.default.gz>
+ can be used as a reference.
+ 
+-It is recommended that you copy B</etc/rsnapshot.conf.default> to
++It is recommended that you copy B</usr/share/doc/rsnapshot/examples/rsnapshot.conf.default.gz> to
+ B</etc/rsnapshot.conf>, and then modify B</etc/rsnapshot.conf> to suit
+ your needs.
+ 
+@@ -7302,13 +7302,13 @@ B<beta>, B<gamma> and B<delta> have been
+ 
+ =over 4
+ 
+-B<0 */4 * * *         /usr/local/bin/rsnapshot alpha>
++B<0 */4 * * *         /usr/bin/rsnapshot alpha>
+ 
+-B<50 23 * * *         /usr/local/bin/rsnapshot beta>
++B<50 23 * * *         /usr/bin/rsnapshot beta>
+ 
+-B<40 23 * * 6         /usr/local/bin/rsnapshot gamma>
++B<40 23 * * 6         /usr/bin/rsnapshot gamma>
+ 
+-B<30 23 1 * *         /usr/local/bin/rsnapshot delta>
++B<30 23 1 * *         /usr/bin/rsnapshot delta>
+ 
+ =back
+ 
+@@ -7402,13 +7402,13 @@ the lowest, most frequent backup level,
+ 
+ =over 4
+ 
+-B<0 */4 * * *         /usr/local/bin/rsnapshot sync && /usr/local/bin/rsnapshot alpha>
++B<0 */4 * * *         /usr/bin/rsnapshot sync && /usr/bin/rsnapshot alpha>
+ 
+-B<50 23 * * *         /usr/local/bin/rsnapshot beta>
++B<50 23 * * *         /usr/bin/rsnapshot beta>
+ 
+-B<40 23 1,8,15,22 * * /usr/local/bin/rsnapshot gamma>
++B<40 23 1,8,15,22 * * /usr/bin/rsnapshot gamma>
+ 
+-B<30 23 1 * *         /usr/local/bin/rsnapshot delta>
++B<30 23 1 * *         /usr/bin/rsnapshot delta>
+ 
+ =back
+ 
+@@ -7494,7 +7494,7 @@ B<http://lists.sourceforge.net/lists/lis
+ =head1 NOTES
+ 
+ Make sure your /etc/rsnapshot.conf file has all elements separated by tabs.
+-See /etc/rsnapshot.conf.default for a working example file.
++See /usr/share/doc/rsnapshot/examples/rsnapshot.conf.default.gz for a working example file.
+ 
+ Make sure you put a trailing slash on the end of all directory references.
+ If you don't, you may have extra directories created in your snapshots.

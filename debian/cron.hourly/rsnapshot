@@ -1,0 +1,14 @@
+#!/bin/sh
+
+. /etc/default/rsnapshot
+test "$ENABLE_CRON" = yes || exit
+test "$ENABLE_HOURLY" = yes || exit
+
+# See ionice(1)
+if [ -x /usr/bin/ionice ] &&
+    /usr/bin/ionice -c3 true 2>/dev/null; then
+    IONICE="/usr/bin/ionice -c3"
+fi
+
+test -d "$BACKUP_DISK" && \
+	nice -n 20 $IONICE /usr/bin/rsnapshot hourly

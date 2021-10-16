@@ -1,0 +1,10 @@
+Document: rsnapshot
+Title: Rsnapshot Documentation
+Author: David Cantrell
+Abstract: rsnapshot is a filesystem backup utility based on rsync. It is
+ possible to take snapshots of your filesystems at different points in time.
+Section: File Management
+
+Format: HTML
+Index: /usr/share/doc/rsnapshot/html/rsnapshot-HOWTO.en.html
+Files: /usr/share/doc/rsnapshot/html/rsnapshot-HOWTO.en.html
