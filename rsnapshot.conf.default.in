@@ -64,7 +64,7 @@ snapshot_root	/.snapshots/
 
 # Uncomment this to specify the path to rsnapshot-diff.
 #
-#cmd_rsnapshot_diff	/usr/local/bin/rsnapshot-diff
+#cmd_rsnapshot_diff	@prefix@/bin/rsnapshot-diff
 
 # Specify the path to a script (and any optional arguments) to run right
 # before rsnapshot syncs files
