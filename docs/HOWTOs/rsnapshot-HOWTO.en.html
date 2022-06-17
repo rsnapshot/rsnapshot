@@ -12,6 +12,11 @@
   "rsnapshot is a filesystem backup utility based on rsync. Using rsnapshot, it is possible to take snapshots 				of your filesystems at different points in time. Using hard links, rsnapshot creates the illusion of 				multiple full backups, while only taking up the space of one full backup plus differences. When coupled 				with ssh, it is possible to take snapshots of remote filesystems as well. This document is a tutorial in 				the installation and configuration of rsnapshot." />
   <meta xmlns="http://www.w3.org/1999/xhtml" content=
   "Experimental LDP.XSL $Revision: 1.2 $" name="generator" />
+  <style>
+    span.quote { quotes: "“" "”" "‘" "’"; }
+    span.quote::before { content: open-quote; }
+    span.quote::after { content: close-quote; }
+  </style>
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084"
 alink="#0000FF">
@@ -637,8 +642,8 @@ alink="#0000FF">
         <p>In this example, we will be using the <tt class=
         "filename">/.snapshots/</tt> directory to hold the
         filesystem snapshots. This is referred to as the
-        &#226;&#8364;&#339;<span class="quote">snapshot
-        root</span>&#226;&#8364;. Feel free to put this anywhere
+        <span class="quote">snapshot
+        root</span>. Feel free to put this anywhere
         you have lots of free disk space. However, the examples in
         this document assume you have not changed this parameter,
         so you will have to substitute this in your commands if you
@@ -665,8 +670,8 @@ alink="#0000FF">
           <p>What makes GNU <tt class="filename">cp</tt> so special
           is that unlike the traditional UNIX <tt class=
           "filename">cp</tt>, it has the ability to make recursive
-          &#226;&#8364;&#339;<span class=
-          "quote">copies</span>&#226;&#8364; of directories as hard
+          <span class=
+          "quote">copies</span> of directories as hard
           links.</p>
           <p>If you don't have GNU <tt class="filename">cp</tt>,
           there is a subroutine in rsnapshot that somewhat
@@ -703,7 +708,7 @@ alink="#0000FF">
           <p>Please note that if you are using IRIX, there is
           another program named <tt class="filename">rsync</tt>
           that is different than the
-          &#226;&#8364;&#339;<span class="quote">real</span>&#226;&#8364;
+          <span class="quote">real</span>
           <tt class="filename">rsync</tt> most people know of. If
           you're on an IRIX machine, you should double check
           this.</p>
@@ -803,45 +808,48 @@ alink="#0000FF">
             <div>
               <div>
                 <h4 class="title"><a name=
-                "interval"></a>4.3.7.&nbsp;interval</h4>
+                "retain"></a>4.3.7.&nbsp;retain</h4>
               </div>
             </div>
           </div>
           <p>rsnapshot has no idea how often you want to take
           snapshots. Everyone's backup scheme may be different. In
           order to specify how much data to save, you need to tell
-          rsnapshot which &#226;&#8364;&#339;<span class=
-          "quote">intervals</span>&#226;&#8364; to keep, and how
-          many of each. An interval, in the context of the
-          rsnapshot config file, is a unit of time measurement.
+          rsnapshot which backups
+          to keep, and how
+          many of each. A backup, in the context of the
+          rsnapshot config file, is just a name.
           These can actually be named anything (as long as it's
-          alphanumeric, and not a reserved word), but by convention
-          we will call ours <i class="emphasis">hourly</i> and
-          <i class="emphasis">daily</i>. In this example, we want
+          alphanumeric, and not a reserved word), but a very common
+          convention is to use names like <i class="emphasis">hourly</i> and
+          <i class="emphasis">daily</i> and so on. In this example, we want
           to take a snapshot every four hours, or six times a day
-          (these are the <i class="emphasis">hourly</i> intervals).
+          (these are the <i class="emphasis">hourly</i> backups).
           We also want to keep a second set, which are taken once a
-          day, and stored for a week (or seven days). This happens
-          to be the default, so as you can see the config file
-          reads:</p>
+          day, and stored for a week (or seven days). The relevant
+          section of the config file would, in this case, look like:</p>
           <pre class="screen">
-interval    hourly  6
-interval    daily   7
+retain    hourly  6
+retain    daily   7
 </pre>
+          <p>We use the <span class="quote">retain</span>
+          keyword to describe how many of which level of backup to keep.
+          <span class="quote">interval</span>
+          is a deprecated synonym.
           <p>It also has some other entries, but you can either
           ignore them or comment them out for now.</p>
           <p>Please note that the <i class="emphasis">hourly</i>
-          interval is specified first. This is very important. The
-          first <i class="emphasis">interval</i> line is assumed to
+          backup is specified first. This is very important. The
+          first <i class="emphasis">retain</i> line is assumed to
           be the smallest unit of time, with each additional line
           getting successively larger. Thus, if you add a <i class=
-          "emphasis">yearly</i> interval, it should go at the
+          "emphasis">yearly</i> backup, it should go at the
           bottom, and if you add a <i class="emphasis">minutes</i>
-          interval, it should go before hourly. It's also worth
+          backup, it should go before hourly. It's also worth
           noting that the snapshots get
-          &#226;&#8364;&#339;<span class="quote">pulled
-          up</span>&#226;&#8364; from the smallest interval to the
-          largest. In this example, the daily snapshots get pulled
+          <span class="quote">promoted</span>
+          from the most first-mentioned to the
+          later ones in sequence. In this example, the daily snapshots get pulled
           from the oldest hourly snapshot, not directly from the
           main filesystem.</p>
         </div>
@@ -865,8 +873,8 @@ interval    daily   7
           with the source distribution for more information.</p>
           <p>This is the section where you tell rsnapshot what
           files you actually want to back up. You put a
-          &#226;&#8364;&#339;<span class=
-          "quote">backup</span>&#226;&#8364; parameter first,
+          <span class=
+          "quote">backup</span> parameter first,
           followed by the full path to the directory or network
           path you're backing up. The third column is the relative
           path you want to back up to inside the snapshot root.
@@ -1111,8 +1119,8 @@ drwxr-xr-x    7 root     root         4096 Dec 28 08:00 hourly.4
 drwxr-xr-x    7 root     root         4096 Dec 28 04:00 hourly.5
 </pre>
       <p>Inside each of these directories is a
-      &#226;&#8364;&#339;<span class=
-      "quote">full</span>&#226;&#8364; backup of that point in
+      <span class=
+      "quote">full</span> backup of that point in
       time. The destination directory paths you specified under the
       <i class="emphasis">backup</i> and <i class=
       "emphasis">backup_script</i> parameters get stuck directly
@@ -1126,8 +1134,8 @@ backup          /etc/           localhost/
       <p>Each subsequent time rsnapshot is run with the <i class=
       "emphasis">hourly</i> command, it will rotate the <tt class=
       "filename">hourly.X</tt> directories, and then
-      &#226;&#8364;&#339;<span class=
-      "quote">copy</span>&#226;&#8364; the contents of the
+      <span class=
+      "quote">copy</span> the contents of the
       <tt class="filename">hourly.0</tt> directory (using hard
       links) into <tt class="filename">hourly.1</tt>.</p>
       <p>When <span><b class="command">rsnapshot daily</b></span>
@@ -1139,8 +1147,8 @@ backup          /etc/           localhost/
       most recent snapshot, and <tt class="filename">daily.6</tt>
       will always contain a snapshot from a week ago. Unless the
       files change between snapshots, the
-      &#226;&#8364;&#339;<span class=
-      "quote">full</span>&#226;&#8364; backups are really just
+      <span class=
+      "quote">full</span> backups are really just
       multiple hard links to the same files. Thus, if your
       <tt class="filename">/etc/passwd</tt> file doesn't change in
       a week, <tt class=
