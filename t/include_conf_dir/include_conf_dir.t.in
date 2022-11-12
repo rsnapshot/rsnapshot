@@ -1,6 +1,6 @@
 #!@PERL@
 use strict;
-use Test::More tests => 2; # pack here your amount of subtests
+use Test::More tests => 3; # pack here your amount of subtests
 use SysWrap;
 
 # This test checks that various uses of the include_conf_dir option
@@ -10,4 +10,23 @@ mkdir("@TEST@/support/files/inc_dir_test") unless -d "@TEST@/support/files/inc_d
 execute("cp @TEMP@/a/1 @TEMP@/a/2 @TEST@/support/files/inc_dir_test/");
 ok(0 == rsnapshot("-c @TEST@/include_conf_dir/conf/include_conf_dir.conf hourly"));
 ok(0 == rsnapshot("-c @TEST@/include_conf_dir/conf/include_conf_dir_regex.conf hourly"));
+
+#
+# test multiple dirs
+#
+
+rsnapshot("-c @TEST@/include_conf_dir/conf/include_conf_dir_subdirs.conf hourly");
+
+my $cmd = "find "
+     . " @TEST@/support/snapshots/hourly.0/dstdir1-1/@TEST@/support/files/inc_dir_1-1 "
+     . " @TEST@/support/snapshots/hourly.0/dstdir1-2/@TEST@/support/files/inc_dir_1-2 "
+     . " @TEST@/support/snapshots/hourly.0/dstdir1-3/@TEST@/support/files/inc_dir_1-3 "
+     . " @TEST@/support/snapshots/hourly.0/dstdir2-1/@TEST@/support/files/inc_dir_2-1 "
+     . " @TEST@/support/snapshots/hourly.0/dstdir2-2/@TEST@/support/files/inc_dir_2-2 "
+     . " @TEST@/support/snapshots/hourly.0/dstdir2-3/@TEST@/support/files/inc_dir_2-3 "
+     . " -type f | wc -l 2> /dev/null ";
+my $filesCopied = `$cmd`;
+
+ok( 6 == $filesCopied );
+execute("rm -rf @TEST@/support/snapshots/hourly.? 2> /dev/null");
 
