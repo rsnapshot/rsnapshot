@@ -1,0 +1,8 @@
+
+config_version	1.2
+snapshot_root	@SNAP@
+cmd_rsync		@RSYNC@
+interval		hourly	6
+
+include_conf_dir	t/include_conf_dir/conf/inc1.conf.d
+include_conf_dir	t/include_conf_dir/conf/inc2.conf.d
