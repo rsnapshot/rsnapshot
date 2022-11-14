@@ -6,7 +6,7 @@ use Exporter 'import';
 
 our $VERSION = '1.0';
 
-our @EXPORT = qw(execute rsnapshot remove_snapshot_root rsnapshot_output);
+our @EXPORT = qw(execute rsnapshot remove_snapshot_root rsnapshot_output write_to_file);
 
 sub remove_snapshot_root {
 	my $args = shift(@_);
@@ -39,4 +39,12 @@ sub rsnapshot_output {
 	return `@PERL@ @CWD@/rsnapshot $args`;
 }
 
+sub write_to_file {
+	my $filename = $_[0];
+	my $content  = $_[1];
+
+	open(FH, '>', $filename) 
+		and print FH $content
+		and close(FH);
+}
 1;
