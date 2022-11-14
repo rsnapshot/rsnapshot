@@ -1,0 +1,11 @@
+#!@PERL@
+use strict;
+use Test::More tests => 2; # pack here your amount of subtests
+use SysWrap;
+
+#
+# This test merely confirms rsync doesn't blow up with long & short args. Previously it did.
+#
+
+ok(0 == rsnapshot("-c @TEST@/long_and_short_args/conf/long_and_short_args.conf sync"));
+ok(0 == rsnapshot("-c @TEST@/long_and_short_args/conf/long_and_short_args_inline.conf sync"));

@@ -1,0 +1,7 @@
+config_version	1.2
+snapshot_root	@SNAP@
+cmd_rsync		@RSYNC@
+sync_first	1
+link_dest	0
+interval		hourly	6
+backup			@TEMP@	native_cp_al

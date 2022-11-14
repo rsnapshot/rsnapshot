@@ -56,6 +56,12 @@ Fork the repository and open a new branch prefixed with `feature/`. Keep the nam
 
 If it is not the case, please rebase/revise your branch. When you're finished you can create a pull request. Your changes will then be reviewed by a team member, before they can get merged into `master`.
 
+### Documentation
+
+We very much welcome improvements to the documentation. It lives in two places. First, the program itself is
+documented in this repository. Second, the website [rsnapshot.org](https://rsnapshot.org) lives in a separate
+[Git repository](https://github.com/rsnapshot/rsnapshot.github.io).
+
 ### Fixing Bugs
 
 Create a new branch, prefix it with `issue/` and, if available, the github issue number. (e.g. `issue/35-umount-lvm`).
@@ -66,33 +72,30 @@ Add your commits to the branch. They should be logically ordered and clean. Reba
 
 We encourage you to write a test case for your pull-request. rsnapshot lacks of a proper testsuite, so please write tests whenever you create a Pull-request touching code at the program. We can verify your changes and intentions easier.
 
-1. Create a directory in the testsuite-folder (`t/`) with the desired test-name. And create in this also a subfolder named `conf`.
-2. Copy the skelleton-file from `t/support/skel/testcase` into your testcase-folder and name it like your folder with the **ending `.t.in`**.
-3. Do the same with the conf-file `t/support/skel/testconf`, but copy it into your conf-folder. Give the file the same name and with the **ending `.conf.in`**.
-4. Write your tests and of course test them.
+ 1. Create a directory in the testsuite-folder (`t/`) with the desired test-name. And create in this also a subfolder named `conf`.
+ 2. Copy the skelleton-file from `t/support/skel/testcase` into your testcase-folder and name it like your folder with the **ending `.t.in`**.
+ 3. Do the same with the conf-file `t/support/skel/testconf`, but copy it into your conf-folder. Give the file the same name and with the **ending `.conf.in`**.
+ 4. Write your tests and of course test them.
 
 A few notes on the testsuite:
 
-- Use the SysWrap-module actively.
-- Any file commited in the testsuite-folder ending with `.conf` or `.t` is commited or named wrong.
-- Let your files always end with `.in` and execute `autogen.sh` before you run your testsuite.
-- Always place your configuration-files into the `conf`-subfolder.
-- If you have got multiple tests to check, which are quite similar, use one test-file, and multiple configuration-files located in your test-folder. (Look at the cmd-post_pre-exec testcase).
+ - Use the SysWrap-module actively.
+ - Any file commited in the testsuite-folder ending with `.conf` or `.t` is commited or named wrong.
+ - Let your files always end with `.in` and execute `autogen.sh` before you run your testsuite.
+ - Always place your configuration-files into the `conf`-subfolder.
+ - If you have got multiple tests to check, which are quite similar, use one test-file, and multiple configuration-files located in your test-folder. (Look at the cmd-post_pre-exec testcase).
 
 ## Releases and versions
+
 ### release-branches
 
-Releases should be done from branches, named for the release version,
-e.g. `release-1.4`. The first release of that version should be tagged `1.4.0`.
-Subsequent releases of that version, which should contain no changes other
-than bugfixes and security fixes, should also be tagged, e.g. `1.4.1`.
+Releases should be done from branches, named for the release version, e.g. `release-1.4`. The first release of that version should be tagged `1.4.0`. Subsequent releases of that version, which should contain no changes other than bugfixes and security fixes, should also be tagged, e.g. `1.4.1`.
 
 In the end, there should be for every minor release a branch like `release-X.Y`. The sub-releases should only get tagged on their specific branches.
 
 ### release-model in practice
 
-Here is a model presented for release 1.4.0. Make sure, that you start
-on the master-branch and have a clean working-directory!
+Here is a model presented for release 1.4.0. Make sure, that you start on the master-branch and have a clean working-directory!
 
  1.  You start branching out of the master-branch
     - `git checkout -b release-1-4`

@@ -64,7 +64,7 @@ snapshot_root	/.snapshots/
 
 # Uncomment this to specify the path to rsnapshot-diff.
 #
-#cmd_rsnapshot_diff	/usr/local/bin/rsnapshot-diff
+#cmd_rsnapshot_diff	@prefix@/bin/rsnapshot-diff
 
 # Specify the path to a script (and any optional arguments) to run right
 # before rsnapshot syncs files
@@ -156,8 +156,8 @@ lockfile	/var/run/rsnapshot.pid
 # The include and exclude parameters, if enabled, simply get passed directly
 # to rsync. If you have multiple include/exclude patterns, put each one on a
 # separate line. Please look up the --include and --exclude options in the
-# rsync man page for more details on how to specify file name patterns. 
-# 
+# rsync man page for more details on how to specify file name patterns.
+#
 #include	???
 #include	???
 #exclude	???
@@ -229,7 +229,7 @@ backup	/usr/local/	localhost/
 #backup	/var/log/rsnapshot		localhost/
 #backup	/etc/passwd	localhost/
 #backup	/home/foo/My Documents/		localhost/
-#backup	/foo/bar/	localhost/	one_fs=1, rsync_short_args=-urltvpog
+#backup	/foo/bar/	localhost/	one_fs=1,rsync_short_args=-urltvpog
 #backup_script	/usr/local/bin/backup_pgsql.sh	localhost/postgres/
 # You must set linux_lvm_* parameters below before using lvm snapshots
 #backup	lvm://vg0/xen-home/	lvm-vg0/xen-home/
@@ -247,4 +247,3 @@ backup	/usr/local/	localhost/
 
 # RSYNC.SAMBA.ORG
 #backup	rsync://rsync.samba.org/rsyncftp/	rsync.samba.org/rsyncftp/
-

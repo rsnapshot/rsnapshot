@@ -1,4 +1,4 @@
-# RSNAPSHOT [![Build Status](https://api.travis-ci.org/rsnapshot/rsnapshot.png)](https://travis-ci.org/rsnapshot/rsnapshot)
+# RSNAPSHOT [![Build Status](https://api.travis-ci.org/rsnapshot/rsnapshot.png?branch=master)](https://travis-ci.org/rsnapshot/rsnapshot)
 
 rsnapshot comes with ABSOLUTELY NO WARRANTY.  This is free software,
 and you are welcome to redistribute it under certain conditions.
@@ -10,30 +10,29 @@ The code makes extensive use of hard links whenever possible, to greatly reduce
 the disk space required.
 
 It is written entirely in perl with no module dependencies, and has been
-tested with versions 5.004 through 5.16.3. It should work on any reasonably
+tested with versions 5.004 through 5.24.3. It should work on any reasonably
 modern UNIX compatible OS. It has been tested successfully on the following
 operating systems:
 
- - Debian: 3.0 (woody), 3.1 (sarge), unstable (sid)
+ - Debian: 3.0 (woody), 9.9 (stretch)
  - Redhat: 7.x, 8.0
- - RedHat Enterprise Linux: 3.0 ES, 5, 6
+ - RedHat Enterprise Linux: 3.0 ES, 5, 6, 7
  - Fedora Core: 1, 3
  - Fedora: 17, 18
- - CentOS: 3, 4, 5, 6
+ - CentOS: 3, 4, 5, 6, 7
  - WhiteBox Enterprise Linux 3.0
  - Slackware 9.0
  - SuSE: 9.0
+ - Gentoo Linux
  - FreeBSD 4.9-STABLE
  - OpenBSD 3.x
  - Solaris 8 (SPARC and x86)
  - Mac OS X
  - IRIX 6.5
 
-If this is your first experience with rsnapshot, you may want to read the
-rsnapshot HOWTO at http://www.rsnapshot.org/. The HOWTO will give you a detailed
-walk-through on how to get rsnapshot up and running in explicit detail.
-
-For a reference of all available commands, see the rsnapshot man page.
+If this is your first experience with rsnapshot, you may want to read the man
+page which will give you a detailed walk-through on how to get rsnapshot up and
+running and also serve as a reference of all available commands.
 
 If you are upgrading from version 1.1.6 or earlier, make sure you read the
 file [Upgrading from 1.1](docs/Upgrading_from_1.1).
@@ -131,10 +130,10 @@ intervals just rotate snapshots around.  Unless you have enabled
 pseudo-interval does the actual rsync, and all real intervals
 just rotate snapshots.
 
-For the full documentation, type `man rsnapshot` once it is installed,
-or visit http://www.rsnapshot.org/.  The HowTo on the web site has a
-detailed overview of how to install and configure rsnapshot, and things
-like how to set it up so users can restore their own files.
+For the full documentation, type `man rsnapshot` once it is installed. The
+[HOWTO](docs/HOWTOs/rsnapshot-HOWTO.en.html) also has a detailed overview of
+how to install and configure rsnapshot, and things like how to set it up so
+users can restore their own files.
 
 If you plan on using the `backup_script` parameter in your backup scheme,
 take a look at the `utils/`-directory in the source distribution for several

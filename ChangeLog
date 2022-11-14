@@ -3,12 +3,42 @@ rsnapshot changelog
 http://www.rsnapshot.org/
 ------------------------------------------------------------------------------
 
-current master
+VERSION 1.4.4 (Jun 12 2021)
 ------------------------------------------------------------------------------
-- Display warning, when the verbosity is set multiple times (e.g. on
-  command-line and logfile at the same time)
-- Changed maintainership in all files.
-- Capture rsync's output right (Github issue 102)
+- Add sentence explaining rsync_long|short_args + sign to man page (ref #11)
+- Fix rsnapreport problems (incorrect header, fail when rsync present, fail with LVM) (#204)
+- Add notes about documentation, and link to the website repo
+- Fix for 'rsync_cleanup_after_native_cp_al() only works on directories' fail when sync_first on and cmd_cp not set (#133). Add test
+- Fix for rm -rf failing when the path contains ./
+- Suppress noisy error from non-GNU cp on BSD-ish machines, including MacOS
+- Add CentOS 7 to succesfully tested to docs
+- Minor tidy up rel configure options --with-test-(true|false). Refs #189 (#248)
+- Update travis build settings (#189). Dont use m4_esyscmd_s in configure.ac (#245)
+- Update docs to remove dangling refs to HOWTO on rsnapshot.org.
+- Skip both SSH tests (rather one) if SSH doesn't work
+- Use perl-5.30 for tests (used in ubuntu 20.04 focal)
+- Lower verbose level of rsync output to 1.3.x equivalent to work with rsnapreport.pl again
+- Fix location of true and false binaries on macOS
+
+VERSION 1.4.3 (Nov 17 2019)
+------------------------------------------------------------------------------
+- Fixes and minor updates to Pod / man page.
+- Adds more tests.
+- Restore rsync error code 23 as an important warning.
+- Fixes shortargs appending.
+- Non-LVM backup source breaks after LVM backup source.
+- Update rsnapreport.pl utility script to work with rsync >= 3.1.0 stats and bytes changes.
+
+VERSION 1.4.2
+------------------------------------------------------------------------------
+- Fix and update Travis builds.
+- Fix double 8 bit shift regression in #65.
+- Display warning, when the verbosity is set multiple times.
+- Changed maintainership in all files. Other minor doc updates.
+
+VERSION 1.4.1
+------------------------------------------------------------------------------
+- Properly capture rsyncs exitcode.
 
 VERSION 1.4.0
 ------------------------------------------------------------------------------
@@ -37,26 +67,25 @@ VERSION 1.4.0
 - When snapshot_root does not exist, check existence of parent directories.
 - include_conf `command` now strips backticks before execution (bug fix
   based on suggestion from David Osborn).
-- Ignore extraneous output from lvremove command.  (patch by Tim Connors) 
+- Ignore extraneous output from lvremove command.  (patch by Tim Connors)
 - Update current maintainer status in Authors section of man page.
-  (David Cantrell stepped down between 1.3.0 and 1.3.1.) 
+  (David Cantrell stepped down between 1.3.0 and 1.3.1.)
 - Remove some old (1.1.x -> 1.2.0) upgrade notices from man page.
 - Allow linux_lvm_cmd_* in config file to have options also.
 - Allow `backticks with options` in include_conf.
 - Fix inaccurate omission of --link-dest in test-mode output
 - rsnapshot-diff: Add -s option to show size of each file.
 
-
 VERSION 1.3.1  (Aug 31 2008)
 ------------------------------------------------------------------------------
 - Fix help message mixup in lines between -c and -t.
-- Add more specific error messages for not currently implemented potential 
+- Add more specific error messages for not currently implemented potential
   per backup point options, like cmd_preexec.
 - Allow named pipe as logfile - suggested by Patrice Levesque.
 - Include rsnapshot-copy script written by Matt McCutchen.
 - Allow `backticks` in include_conf.
 - Apply fix-sync_first-rollback.diff patch from Matt McCutchen (02 Apr 2008).
-- Fix bug with link_dest not being used on second and later backups 
+- Fix bug with link_dest not being used on second and later backups
   when you have link_dest 1 and sync_first 1. (Ignore $sync_dir_was_present)
 - Patch from Adam Greenbaum to allow passing of ssh arguments correctly.
 - David Grant added rsync_numtries to rsnapshot.conf.
@@ -74,7 +103,6 @@ VERSION 1.3.1  (Aug 31 2008)
 - Fix bug with rsnapshot sync the first time (when .sync does not exist)
   trying to copy hourly.0 to .sync, even if hourly.0 doesn't exist.
   http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=413439
-
 
 VERSION 1.3.0  (Oct 21 2006)
 ------------------------------------------------------------------------------
@@ -95,7 +123,7 @@ VERSION 1.3.0  (Oct 21 2006)
 - Updates to rsnapshot man pages (via perldoc).
   - Use =item in AUTHORS section
   - move mis-placed =back
-  - document stale lock file detection 
+  - document stale lock file detection
   - strongly recommend using a lock file
   - add a chmod to example backup script
   - change crontab example for weekly from 4 "weekly"s per month to 1 per week
@@ -104,7 +132,7 @@ VERSION 1.3.0  (Oct 21 2006)
 - In rpm patch, set cmd_rsnapshot_diff to /usr/bin/rsnapshot-diff.
 - Set the test scripts t/*.t.in to run from the source directory
   and create directory t/support/files/a if necessary.
-- Trim comments in README about gnu cp versions > 5.3 since rsnapshot 
+- Trim comments in README about gnu cp versions > 5.3 since rsnapshot
   strips trailing slashes for gnu cp with rsnapshot 1.2.9 and later.
 - Add pointers to HOWTO and utils/rsnapreport.pl in README.
 - More examples (eg: timestamp backup_script) in rsnapshot.conf.default.in.
@@ -154,7 +182,7 @@ VERSION 1.2.9  (May 18 2006)
 - Added fixes in sync_cp_src_dest() and sync_rm_dest() to properly delete a
   file that is being replaced with a directory
 - Fixed error message for dest not being specified in sync_rm_dest()
-- Changed skip message level to 2 in rsync_backup_point() 
+- Changed skip message level to 2 in rsync_backup_point()
 - Added better file type checking in sync_cp_src_dest()
 - Removed redundant stat() calls in sync_cp_src_dest() and sync_rm_dest()
 - Removed trailing slashes from file paths when calling cp -al subroutines

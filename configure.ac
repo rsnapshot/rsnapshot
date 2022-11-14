@@ -1,4 +1,4 @@
-AC_INIT([rsnapshot],[m4_esyscmd_s([git describe --tags --always --dirty])],[rsnapshot-discuss@lists.sourceforge.net])
+AC_INIT([rsnapshot],[m4_chomp_all(m4_esyscmd([git describe --tags --always --dirty]))],[rsnapshot-discuss@lists.sourceforge.net])
 AM_INIT_AUTOMAKE([foreign])
 AC_PROG_MAKE_SET
 AC_CONFIG_FILES(Makefile)
@@ -75,7 +75,6 @@ if test "$RSYNC" = "no"; then
 fi
 
 
-
 dnl
 dnl CP CHECK (optional program)
 dnl
@@ -108,7 +107,6 @@ dnl either way, set the cmd_cp var
 AC_SUBST(CMD_CP, "cmd_cp		$CP")
 
 
-
 dnl
 dnl RM CHECK (optional program)
 dnl
@@ -139,7 +137,6 @@ if test "$RM" = "no"; then
 fi
 dnl either way, set the cmd_rm var
 AC_SUBST(CMD_RM, "cmd_rm		$RM")
-
 
 
 dnl
@@ -238,7 +235,6 @@ dnl either way, set the cmd_logger var
 AC_SUBST(CMD_LOGGER, "cmd_logger	$LOGGER")
 
 
-
 dnl
 dnl DU CHECK (optional program)
 dnl
@@ -276,7 +272,7 @@ dnl TEST_SSH_USER CHECK (optional param)
 dnl
 dnl if the user specified a path, try that first
 AC_ARG_WITH(test-ssh-user,
-	[  --with-test-ssh-user=USER       Specify the path to rsync ],
+	[  --with-test-ssh-user=USER       Specify ssh user for tests ],
 	[
 		if test "x$withval" != "xno"; then
 			TEST_SSH_USER="$withval"
@@ -290,10 +286,65 @@ if test "$TEST_SSH_USER" = ""; then
 fi
 
 
+dnl
+dnl TRUE CHECK (required program in tests)
+dnl
+dnl if the user specified a path, try that first
+AC_ARG_WITH(test-true,
+	[  --with-test-true=PATH           Specify the path to true ],
+	[
+		if test "x$withval" != "xno"; then
+			if test -x "$withval"; then
+				TRUE=$withval
+			else
+				AC_MSG_ERROR(true not found)
+			fi
+		else
+			TRUE=no
+		fi
+	]
+)
+dnl if the user didn't specify a path, hunt for it
+if test "$TRUE" != "no"; then
+	AC_PATH_PROG(TRUE, true, no)
+fi
+dnl if we couldn't find it, provide an example
+if test "$TRUE" = "no"; then
+	TRUE=/bin/true
+fi
+
+
+dnl
+dnl FALSE CHECK (required program in tests)
+dnl
+dnl if the user specified a path, try that first
+AC_ARG_WITH(test-false,
+	[  --with-test-false=PATH          Specify the path to false ],
+	[
+		if test "x$withval" != "xno"; then
+			if test -x "$withval"; then
+				FALSE=$withval
+			else
+				AC_MSG_ERROR(false not found)
+			fi
+		else
+			FALSE=no
+		fi
+	]
+)
+dnl if the user didn't specify a path, hunt for it
+if test "$FALSE" != "no"; then
+	AC_PATH_PROG(FALSE, false, no)
+fi
+dnl if we couldn't find it, provide an example
+if test "$FALSE" = "no"; then
+	FALSE=/bin/false
+fi
+
+
 # replace perl paths
 AC_CONFIG_FILES(rsnapshot:rsnapshot-program.pl)
 AC_CONFIG_FILES(rsnapshot-diff:rsnapshot-diff.pl)
-
 dnl try to find dependent programs for the config file
 AC_CONFIG_FILES(rsnapshot.conf.default:rsnapshot.conf.default.in)
 
