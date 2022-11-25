@@ -3050,7 +3050,7 @@ sub normalize_dest_file_path_part {
   my $str = shift(@_);
   # it's not a trailing slash if it's the root filesystem
   if ($str eq '/') { return ($str); }
-  $str =~ s/^\.\/|\/.\/|\.$/\//g;
+  $str =~ s/^\.\/|\/\.\/|\.$/\//g;
   $str =~ s/\/+/\//g;
   return ($str);
 }
