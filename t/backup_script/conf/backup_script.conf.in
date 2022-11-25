@@ -1,0 +1,12 @@
+config_version	1.2
+snapshot_root	@SNAP@
+cmd_rsync		@RSYNC@
+cmd_cp	@CP@
+interval		hourly	2
+sync_first	1
+backup_script	@TRUE@		a
+backup_script	@TRUE@		b/
+backup_script	@TRUE@		c/1
+backup_script	@TRUE@		c/2
+backup_script	@TRUE@		c/3/
+
