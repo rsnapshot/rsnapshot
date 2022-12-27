@@ -1,3 +1,15 @@
+rsnapshot (1.4.5-1) unstable; urgency=medium
+
+  VERSION 1.4.5 (Dec 27 2022)
+  ------------------------------------------------------------------------------
+  - Fix regression in backup dest path normaliser (#310)
+  - Merge pull request #303 from rsnapshot/update-HOWTO-to-talk-about-retain-instead-of-interval
+  - Removing legacy Docbook files, as per discussion at https://github.com/rsnapshot/rsnapshot/pull/296
+  - Merge pull request #296 from hoclun-rigsep/hoclun-rigsep-patch-1
+  - Use @prefix@ instead of hardcoded value in rsnapshot.conf.default.in comment line (#289).
+
+ -- sam <sgpinkus@gmail.com>  Tue, 27 Dec 2022 18:09:58 +1100
+
 rsnapshot (1.4.4-1) unstable; urgency=medium
 
   VERSION 1.4.4 (Jun 12 2021)
