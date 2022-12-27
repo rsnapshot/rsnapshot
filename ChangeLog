@@ -3,6 +3,14 @@ rsnapshot changelog
 http://www.rsnapshot.org/
 ------------------------------------------------------------------------------
 
+VERSION 1.4.5 (Dec 27 2022)
+------------------------------------------------------------------------------
+- Fix regression (#310)
+- Merge pull request #303 from rsnapshot/update-HOWTO-to-talk-about-retain-instead-of-interval
+- Removing legacy Docbook files, as per discussion at https://github.com/rsnapshot/rsnapshot/pull/296
+- Merge pull request #296 from hoclun-rigsep/hoclun-rigsep-patch-1
+- Use @prefix@ instead of hardcoded value in rsnapshot.conf.default.in comment line (#289).
+
 VERSION 1.4.4 (Jun 12 2021)
 ------------------------------------------------------------------------------
 - Add sentence explaining rsync_long|short_args + sign to man page (ref #11)
