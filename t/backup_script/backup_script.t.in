@@ -1,0 +1,14 @@
+#!@PERL@
+use strict;
+use Test::More tests => 3; # pack here your amount of subtests
+use SysWrap;
+
+#
+# Test touches backup_script type backup.
+#
+
+ok(0 == rsnapshot("-c @TEST@/backup_script/conf/backup_script.conf sync"));
+ok(1 == rsnapshot("-c @TEST@/backup_exec/conf/backup_duplicate_dest_1.conf sync"));
+ok(1 == rsnapshot("-c @TEST@/backup_exec/conf/backup_duplicate_dest_2.conf sync"));
+
+
