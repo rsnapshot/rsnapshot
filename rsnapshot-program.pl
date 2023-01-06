@@ -7201,9 +7201,9 @@ additional disk space will be taken up.
 
 =back
 
-B<backup_exec      ssh root@1.2.3.4 "du -sh /.offsite_backup"                     optional/>
+B<backup_exec      ssh root@1.2.3.4 "du -sh /.offsite_backup"                     optional>
 
-B<backup_exec      rsync -az /.snapshots/daily.0 root@1.2.3.4:/.offsite_backup/   required/>
+B<backup_exec      rsync -az /.snapshots/daily.0 root@1.2.3.4:/.offsite_backup/   required>
 
 B<backup_exec      /bin/true/>
 
