@@ -6091,10 +6091,10 @@ sub get_retval {
 		bail("get_retval() was passed $retval, a number is required");
 	}
 
-    # Check WIFSIGNALED and rerturn 128 + signo
-    if ($retval & 0x7f > 0) {
-        return (128 + ($retval & 0x7f));
-    }
+	# Check WIFSIGNALED and rerturn 128 + signo
+	if ($retval & 0x7f > 0) {
+		return (128 + ($retval & 0x7f));
+	}
 
 	return ($retval / 256);
 }
