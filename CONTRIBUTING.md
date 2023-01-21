@@ -56,6 +56,12 @@ Fork the repository and open a new branch prefixed with `feature/`. Keep the nam
 
 If it is not the case, please rebase/revise your branch. When you're finished you can create a pull request. Your changes will then be reviewed by a team member, before they can get merged into `master`.
 
+### Documentation
+
+We very much welcome improvements to the documentation. It lives in two places. First, the program itself is
+documented in this repository. Second, the website [rsnapshot.org](https://rsnapshot.org) lives in a separate
+[Git repository](https://github.com/rsnapshot/rsnapshot.github.io).
+
 ### Fixing Bugs
 
 Create a new branch, prefix it with `issue/` and, if available, the github issue number. (e.g. `issue/35-umount-lvm`).

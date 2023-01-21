@@ -9,7 +9,7 @@ ok(! remove_snapshot_root(),
 	" snapshot root does not exist before testing starts");
 
 # check for GNU cp
-my @lines = `@CP@ --help | grep -i 'gnu'`;
+my @lines = `@CP@ --help 2>/dev/null | grep -i 'gnu'`;
 
 SKIP: {
 	skip('GNU cp not found', 1) if (@lines == 0);

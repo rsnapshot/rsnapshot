@@ -3,6 +3,6 @@ snapshot_root	@SNAP@
 cmd_rsync		@RSYNC@
 interval		hourly	6
 backup			@TEMP@/a/	localhost/
-backup_exec		/bin/true
-backup_exec		/bin/true		optional
-backup_exec		/bin/true		required
+backup_exec		@TRUE@
+backup_exec		@TRUE@		optional
+backup_exec		@TRUE@		required

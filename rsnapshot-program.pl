@@ -1136,7 +1136,7 @@ sub parse_config_file {
 			# remember src/dest
 			my %hash;
 			$hash{'src'}  = $src;
-			$hash{'dest'} = $dest;
+			$hash{'dest'} = normalize_dest_file_path_part($dest);
 			if (defined($opts_ref)) {
 				$hash{'opts'} = $opts_ref;
 			}
@@ -1200,7 +1200,7 @@ sub parse_config_file {
 			}
 
 			$hash{'script'} = $full_script;
-			$hash{'dest'}   = $dest;
+			$hash{'dest'}   = normalize_dest_file_path_part($dest);
 
 			$line_syntax_ok = 1;
 
@@ -1713,21 +1713,14 @@ sub validate_config_file {
 			# skip for backup_exec since it uses no destination
 			next if (defined($$bp_ref{'cmd'}));
 
-			my $tmp_dest_path = $$bp_ref{'dest'};
-
-			# normalize multiple slashes, and strip trailing slash
-			# FIXME: Decide whether to allow an empty destination path, and reject or handle such paths accordingly.
-			$tmp_dest_path =~ s/\/+/\//g;
-			$tmp_dest_path =~ s/\/$//;
-
 			# backup
 			if (defined($$bp_ref{'src'})) {
-				push(@backup_dest, $tmp_dest_path);
+				push(@backup_dest, $$bp_ref{'dest'});
 
 				# backup_script
 			}
 			elsif (defined($$bp_ref{'script'})) {
-				push(@backup_script_dest, $tmp_dest_path);
+				push(@backup_script_dest, $$bp_ref{'dest'});
 
 			}
 
@@ -3099,16 +3092,15 @@ sub remove_trailing_slash {
 }
 
 # accepts string
-# returns /. if passed /, returns input otherwise
-# this is to work around a bug in some versions of rsync
-sub add_slashdot_if_root {
-	my $str = shift(@_);
-
-	if ($str eq '/') {
-		return '/.';
-	}
-
-	return ($str);
+# partially normalizes file path intended to be prefixed with some other path (such as backup dest)
+# does not handle symlinks or '..'
+sub normalize_dest_file_path_part {
+  my $str = shift(@_);
+  # it's not a trailing slash if it's the root filesystem
+  if ($str eq '/') { return ($str); }
+  $str =~ s/^\.\/|\/\.\/|\.$/\//g;
+  $str =~ s/\/+/\//g;
+  return ($str);
 }
 
 # accepts the interval (cmd) to run against
@@ -5332,12 +5324,6 @@ sub rsync_cleanup_after_native_cp_al {
 	if (!defined($src))  { return (0); }
 	if (!defined($dest)) { return (0); }
 
-	# make sure this is directory to directory
-	if (($src !~ m/\/$/o) or ($dest !~ m/\/$/o)) {
-		print_err("rsync_cleanup_after_native_cp_al() only works on directories", 2);
-		return (0);
-	}
-
 	# make sure we have a source directory
 	if (!-d "$src") {
 		print_err("rsync_cleanup_after_native_cp_al() needs a valid source directory as an argument", 2);
@@ -5350,6 +5336,10 @@ sub rsync_cleanup_after_native_cp_al {
 			2);
 		return (0);
 	}
+
+	# make sure src and dest both have a trailing slash for rsync
+	$src =~ s/\/?$/\//;
+	$dest =~ s/\/?$/\//;
 
 	# check verbose settings and modify rsync's short args accordingly
 	if ($verbose > 3) { $local_rsync_short_args .= 'v'; }
@@ -7368,8 +7358,9 @@ It is most useful when specifying per-backup rsync excludes thus:
 
 B<backup  root@somehost:/  somehost   +rsync_long_args=--exclude=/var/spool/>
 
-Note the + sign.  That tells rsnapshot to I<add> to the list of arguments
-to pass to rsync instead of replacing the list.
+Note the + sign.  That tells rsync_long_args to I<add> to the list of arguments
+to pass to rsync instead of replacing the list. The + sign is only supported for
+rsnapshot's rsync_long_args and rsync_short_args.
 
 =back
 
@@ -7427,9 +7418,9 @@ additional disk space will be taken up.
 
 =back
 
-B<backup_exec      ssh root@1.2.3.4 "du -sh /.offsite_backup"                     optional/>
+B<backup_exec      ssh root@1.2.3.4 "du -sh /.offsite_backup"                     optional>
 
-B<backup_exec      rsync -az /.snapshots/daily.0 root@1.2.3.4:/.offsite_backup/   required/>
+B<backup_exec      rsync -az /.snapshots/daily.0 root@1.2.3.4:/.offsite_backup/   required>
 
 B<backup_exec      /bin/true/>
 

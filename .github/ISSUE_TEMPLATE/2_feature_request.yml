@@ -1,0 +1,37 @@
+name: Feature request
+description: Request a feature to be added or changed in rsnapshot
+labels: [feature]
+body:
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      description: Carefully read and work through this check list
+      options:
+        - label: I'm asking for a feature to be changed or added
+          required: true
+        - label: I've searched the [bugtracker](https://github.com/rsnapshot/rsnapshot/issues) for similar issues, including closed ones.
+          required: true
+        - label: I realise that rsnapshot is stable software and most feature requests will be rejected
+          required: true
+  - type: textarea
+    id: what-i-want
+    attributes:
+      label: My suggestion is ...
+      description: What would you like to see changed or added?
+    validations:
+      required: true
+  - type: textarea
+    id: why-i-want-it
+    attributes:
+      label: Why I want it
+      description: Why would this be useful?
+    validations:
+      required: true
+  - type: textarea
+    id: why-in-rsnapshot
+    attributes:
+      label: Why should this be in rsnapshot and not implemented using some external tool?
+      description: What other approaches have you considered and why have you rejected them?
+    validations:
+      required: true

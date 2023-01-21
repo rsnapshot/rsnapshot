@@ -16,10 +16,10 @@ operating systems:
 
  - Debian: 3.0 (woody), 9.9 (stretch)
  - Redhat: 7.x, 8.0
- - RedHat Enterprise Linux: 3.0 ES, 5, 6
+ - RedHat Enterprise Linux: 3.0 ES, 5, 6, 7
  - Fedora Core: 1, 3
  - Fedora: 17, 18
- - CentOS: 3, 4, 5, 6
+ - CentOS: 3, 4, 5, 6, 7
  - WhiteBox Enterprise Linux 3.0
  - Slackware 9.0
  - SuSE: 9.0

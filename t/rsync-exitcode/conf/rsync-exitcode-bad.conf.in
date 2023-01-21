@@ -1,5 +1,5 @@
 config_version	1.2
 snapshot_root	@SNAP@
-cmd_rsync		/bin/false
+cmd_rsync		@FALSE@
 interval		hourly	6
 backup			@TEST@/support/files/a/	localhost/
