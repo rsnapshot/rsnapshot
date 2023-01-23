@@ -291,6 +291,10 @@ add_lockfile();
 # create snapshot_root if it doesn't exist (and no_create_root != 1)
 create_snapshot_root();
 
+# check that snapshot_root supports hard-links (fatal if not)
+# and case-insensitive filenames (warn if not)
+check_snapshot_root();
+
 # now chdir to the snapshot_root.
 # note that this is needed because in the rare case that you do this ...
 # sudo -u peon rsnapshot ... and are in a directory that 'peon' can't
@@ -2582,6 +2586,43 @@ sub create_snapshot_root {
 			}
 		}
 	}
+}
+
+# by the time this is run we *know* that $config_vars{'snapshot_root'} exists.
+# This checks that the filesystem is case-sensitive and supports hard links.
+sub check_snapshot_root {
+	my @test_files = map { "$config_vars{snapshot_root}/$_" } (qw(_test_file _TEST_FILE));
+
+	# skip tests if either of the two test files exists
+	foreach my $test_file (@test_files) {
+		if(-e $test_file) {
+			print_warn("$test_file already exists, not probing for filesystem feature support", 2);
+			return;
+		}
+	}
+
+	# otherwise create test files, and die loudly if we can't
+	foreach my $test_file (@test_files) {
+		if(!open(my $fh, '>', $test_file)) {
+			print_err("couldn't create $test_file: $!", 1);
+			syslog_err("couldn't create $test_file: $!");
+			bail();
+		}
+	}
+
+	# on a case-insensitive FS the files will have the same inode
+	if(stat($test_files[0])->ino() == stat($test_files[1])->ino()) {
+		print_warn("$config_vars{snapshot_root} appears to be case-insensitive", 1);
+	}
+
+	# now see if we can create hard links
+	unlink($test_files[1]);
+	if(!link($test_files[0], $test_files[1])) {
+		print_err("couldn't create hard link between $test_files[0] and $test_files[1]", 1);
+		syslog_err("couldn't create hard link between $test_files[0] and $test_files[1]");
+		bail();
+	}
+	unlink(@test_files);
 }
 
 # accepts current interval
@@ -7495,6 +7536,10 @@ Make sure to make the snapshot directory chmod 700 and owned by root
 (assuming backups are made by the root user). If the snapshot directory
 is readable by other users, they will be able to modify the snapshots
 containing their files, thus destroying the integrity of the snapshots.
+The snapshot directory B<must> be on a filesystem that supports hard links,
+and B<should> be on a fileystem that is case-sensitive. If you don't make
+sure that's the case then you will get fatal errors (for no hard links) and
+warnings (for case-insensitivity).
 
 If you would like regular users to be able to restore their own backups,
 there are a number of ways this can be accomplished. One such scenario
