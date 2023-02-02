@@ -6091,7 +6091,11 @@ sub get_retval {
 		bail("get_retval() was passed $retval, a number is required");
 	}
 
-	return ($retval / 256);
+	if ($retval & 0x7f) {
+		return (128 + ($retval & 0x7f));
+	}
+
+	return ($retval >> 8);
 }
 
 # accepts two file paths
