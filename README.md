@@ -99,7 +99,7 @@ snapshots that are saved depends on the "interval" settings in
 
 For example:
 
-    interval	alpha		6
+    retain	alpha		6
 
 This means that every time `rsnapshot alpha` is run, it will make a
 new snapshot, rotate the old ones, and retain the most recent six
