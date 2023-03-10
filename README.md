@@ -84,7 +84,7 @@ real by executing the following command (where interval is `alpha`, `beta`, `etc
 
     $ rsnapshot -t [interval]
 
-Once you are happy with everything, the final step is to setup a cron job to
+Once you are happy with everything, the final step is to set up a cron job to
 automate your backups. Here is a quick example which makes backups every four
 hours, and beta backups for a week:
 
