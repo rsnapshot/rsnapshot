@@ -1,7 +1,7 @@
 #!@PERL@
 
 use strict;
-use Test::More tests => 3;
+use Test::More tests => 4;
 use SysWrap;
 
 # rsync_numtries	1	-> okay
@@ -12,3 +12,6 @@ ok(0 != rsnapshot("-c @TEST@/numtries/conf/numtries_fail_negative.conf configtes
 
 # rsync_numtries	notanumber	-> not okay
 ok(0 != rsnapshot("-c @TEST@/numtries/conf/numtries_fail_notanumber.conf configtest"));
+
+# rsync_numtries	0	-> not okay
+ok(0 != rsnapshot("-c @TEST@/numtries/conf/numtries_fail_zero.conf configtest"));

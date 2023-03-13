@@ -1496,7 +1496,7 @@ sub parse_config_file {
 			}
 			if (!is_valid_rsync_numtries($value)) {
 				config_err($file_line_num,
-					"$line - \"$value\" is not a legal value for rsync_numtries, must be greater than or equal to 0");
+					"$line - \"$value\" is not a legal value for rsync_numtries, must be greater than or equal to 1");
 				next;
 			}
 
@@ -2788,7 +2788,7 @@ sub is_valid_rsync_numtries {
 	if (!defined($value)) { return (0); }
 
 	if ($value =~ m/^\d+$/) {
-		if (($value >= 0)) {
+		if (($value >= 1)) {
 			return (1);
 		}
 	}

@@ -85,7 +85,7 @@ Ben Low <ben@bdlow.net>
     - Added support for Linux LVM snapshots
 
 David Grant <davidgrant@gmail.com>
-    - Added support for retrying rsync "rsync_numtries" number of times
+    - Added support for trying rsync "rsync_numtries" number of times
 
 Matt McCutchen <matt@mattmccutchen.net>
     - Wrote rsnapshot-copy (to copy snapshot roots using rsync --link-dest)
@@ -95,3 +95,5 @@ Imran Chaudhry <ichaudhry@gmail.com>
 
 Stefan Moch <stefanmoch@mail.de>
     - Added test cases for rsync_numtries validation
+    - Fix validation of rsync_numtries = 0, error message, configuration
+      example and related text.
