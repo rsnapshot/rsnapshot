@@ -92,3 +92,6 @@ Matt McCutchen <matt@mattmccutchen.net>
 
 Imran Chaudhry <ichaudhry@gmail.com>
     - added -H to rsnapshot-diff
+
+Stefan Moch <stefanmoch@mail.de>
+    - Added test cases for rsync_numtries validation
