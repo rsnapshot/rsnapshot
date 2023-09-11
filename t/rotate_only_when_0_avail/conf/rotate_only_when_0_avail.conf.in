@@ -1,0 +1,6 @@
+config_version	1.2
+snapshot_root	@SNAP@
+cmd_rsync		@RSYNC@
+interval		hourly	3
+interval		weekly	6
+backup			@TEMP@	localhost/
