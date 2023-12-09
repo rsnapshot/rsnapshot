@@ -196,7 +196,7 @@ lockfile	/var/run/rsnapshot.pid
 # "Corrupted MAC on input", for example, set this to a value > 1
 # to have the rsync operation re-tried. The default is 1.
 #
-#rsync_numtries 1
+#rsync_numtries	1
 
 # LVM parameters. Used to backup with creating lvm snapshot before backup
 # and removing it after. This should ensure consistency of data in some special
