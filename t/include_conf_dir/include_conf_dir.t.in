@@ -1,0 +1,84 @@
+#!@PERL@
+use strict;
+use Test::More tests => 3; # pack here your amount of subtests
+use SysWrap;
+
+# This test checks that various uses of the include_conf_dir option
+# correctly import the correct files, and only the correct files
+
+mkdir("@TEST@/support/files/inc_dir_test") unless -d "@TEST@/support/files/inc_dir_test";
+execute("cp @TEMP@/a/1 @TEMP@/a/2 @TEST@/support/files/inc_dir_test/");
+ok(0 == rsnapshot("-c @TEST@/include_conf_dir/conf/include_conf_dir.conf hourly"));
+ok(0 == rsnapshot("-c @TEST@/include_conf_dir/conf/include_conf_dir_regex.conf hourly"));
+
+#
+# test multiple dirs
+#
+
+# Create dummydata dirs
+
+mkdir("@TEST@//support/files/inc_dir_1-1") unless -d "@TEST@/support/files/inc_dir_1-1";
+mkdir("@TEST@//support/files/inc_dir_1-2") unless -d "@TEST@/support/files/inc_dir_1-2";
+mkdir("@TEST@//support/files/inc_dir_1-3") unless -d "@TEST@/support/files/inc_dir_1-3";
+mkdir("@TEST@//support/files/inc_dir_2-1") unless -d "@TEST@/support/files/inc_dir_2-1";
+mkdir("@TEST@//support/files/inc_dir_2-2") unless -d "@TEST@/support/files/inc_dir_2-2";
+mkdir("@TEST@//support/files/inc_dir_2-3") unless -d "@TEST@/support/files/inc_dir_2-3";
+
+
+# Populate dummydata dirs
+
+my $filename; my $content;
+write_to_file( $filename="@TEST@//support/files/inc_dir_1-1/dummydata_1-1", $content="dummydata_1-1" ) unless -f "@TEST@//support/files/inc_dir_1-1/dummydata_1-1";
+write_to_file( $filename="@TEST@//support/files/inc_dir_1-2/dummydata_1-2", $content="dummydata_1-2" ) unless -f "@TEST@//support/files/inc_dir_1-2/dummydata_1-2";
+write_to_file( $filename="@TEST@//support/files/inc_dir_1-3/dummydata_1-3", $content="dummydata_1-3" ) unless -f "@TEST@//support/files/inc_dir_1-3/dummydata_1-3";
+write_to_file( $filename="@TEST@//support/files/inc_dir_2-1/dummydata_2-1", $content="dummydata_2-1" ) unless -f "@TEST@//support/files/inc_dir_2-1/dummydata_2-1";
+write_to_file( $filename="@TEST@//support/files/inc_dir_2-2/dummydata_2-2", $content="dummydata_2-2" ) unless -f "@TEST@//support/files/inc_dir_2-2/dummydata_2-2";
+write_to_file( $filename="@TEST@//support/files/inc_dir_2-3/dummydata_2-3", $content="dummydata_2-3" ) unless -f "@TEST@//support/files/inc_dir_2-3/dummydata_2-3";
+
+
+# Create config include dirs
+
+mkdir("@TEST@/include_conf_dir/conf/inc1.conf.d") unless -d "@TEST@/include_conf_dir/conf/inc1.conf.d";
+mkdir("@TEST@/include_conf_dir/conf/inc2.conf.d") unless -d "@TEST@/include_conf_dir/conf/inc2.conf.d";
+
+
+# Create config include files
+#
+# backup	@TEST@/support/files/inc_dir_1-1/	dstdir1-1
+#
+
+write_to_file( $filename="@TEST@/include_conf_dir/conf/inc1.conf.d/inc1.conf", $content="\nbackup	@TEST@/support/files/inc_dir_1-1/	dstdir1-1\n\n" ) unless -f "@TEST@/include_conf_dir/conf/inc1.conf.d/inc1.conf" ;
+write_to_file( $filename="@TEST@/include_conf_dir/conf/inc1.conf.d/inc2.conf", $content="\nbackup	@TEST@/support/files/inc_dir_1-2/	dstdir1-2\n\n" ) unless -f "@TEST@/include_conf_dir/conf/inc1.conf.d/inc2.conf" ;
+write_to_file( $filename="@TEST@/include_conf_dir/conf/inc1.conf.d/inc3.conf", $content="\nbackup	@TEST@/support/files/inc_dir_1-3/	dstdir1-3\n\n" ) unless -f "@TEST@/include_conf_dir/conf/inc1.conf.d/inc3.conf" ;
+write_to_file( $filename="@TEST@/include_conf_dir/conf/inc2.conf.d/inc1.conf", $content="\nbackup	@TEST@/support/files/inc_dir_2-1/	dstdir2-1\n\n" ) unless -f "@TEST@/include_conf_dir/conf/inc2.conf.d/inc1.conf" ;
+write_to_file( $filename="@TEST@/include_conf_dir/conf/inc2.conf.d/inc2.conf", $content="\nbackup	@TEST@/support/files/inc_dir_2-2/	dstdir2-2\n\n" ) unless -f "@TEST@/include_conf_dir/conf/inc2.conf.d/inc2.conf" ;
+write_to_file( $filename="@TEST@/include_conf_dir/conf/inc2.conf.d/inc3.conf", $content="\nbackup	@TEST@/support/files/inc_dir_2-3/	dstdir2-3\n\n" ) unless -f "@TEST@/include_conf_dir/conf/inc2.conf.d/inc3.conf" ;
+
+
+# run rsnapshot
+
+rsnapshot("-c @TEST@/include_conf_dir/conf/include_conf_dir_subdirs.conf hourly");
+
+
+# Count the amount of files in destination dirs
+
+my $cmd = "find "
+     . " @TEST@/support/snapshots/hourly.0/dstdir1-1/@TEST@/support/files/inc_dir_1-1 "
+     . " @TEST@/support/snapshots/hourly.0/dstdir1-2/@TEST@/support/files/inc_dir_1-2 "
+     . " @TEST@/support/snapshots/hourly.0/dstdir1-3/@TEST@/support/files/inc_dir_1-3 "
+     . " @TEST@/support/snapshots/hourly.0/dstdir2-1/@TEST@/support/files/inc_dir_2-1 "
+     . " @TEST@/support/snapshots/hourly.0/dstdir2-2/@TEST@/support/files/inc_dir_2-2 "
+     . " @TEST@/support/snapshots/hourly.0/dstdir2-3/@TEST@/support/files/inc_dir_2-3 "
+     . " -type f | wc -l 2> /dev/null ";
+
+my $filesCopied = `$cmd`;
+
+ok( 6 == $filesCopied );
+
+# cleanup
+
+execute("rm -rf @TEST@/support/snapshots/hourly.? @TEST@/support/files/inc_dir_?-? 2> /dev/null");
+
+
+
+

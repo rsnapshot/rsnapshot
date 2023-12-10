@@ -1,0 +1,14 @@
+#!@PERL@
+use strict;
+use Test::More tests => 3; # pack here your amount of subtests
+use SysWrap;
+
+# This test checks that various uses of the include_conf option
+# correctly import the correct files, and only the correct files
+
+mkdir("@TEST@/support/files/inc_conf_test") unless -d "@TEST@/support/files/inc_conf_test";
+execute("cp @TEMP@/a/1 @TEMP@/a/2 @TEST@/support/files/inc_conf_test/");
+ok(0 == rsnapshot("-c @TEST@/include_conf/conf/no_include_conf.conf hourly"));
+ok(0 == rsnapshot("-c @TEST@/include_conf/conf/include_conf.conf hourly"));
+ok(1 == rsnapshot("-c @TEST@/include_conf/conf/bad_include_conf.conf hourly"));
+
