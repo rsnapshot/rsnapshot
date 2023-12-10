@@ -1,0 +1,8 @@
+config_version	1.2
+
+snapshot_root	@SNAP@
+cmd_rsync		@RSYNC@
+
+interval		hourly	6
+
+include_conf	@TEST@/include_conf/conf/bad_include_file
