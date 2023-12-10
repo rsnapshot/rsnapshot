@@ -786,6 +786,20 @@ sub parse_config_file {
 			}
 		}
 
+		# CHECK FOR mkbackupdir (optional)
+		if ($var eq 'cmd_mkbackupdir') {
+			$value =~ s/\s+$//;
+			if ((-f "$value") && (-x "$value") && (1 == is_real_local_abs_path($value))) {
+				$config_vars{'cmd_mkbackupdir'} = $value;
+				$line_syntax_ok = 1;
+				next;
+			}
+			else {
+				config_err($file_line_num, "$line - $value is not executable");
+				next;
+			}
+		}
+
 		# CHECK FOR LOGGER (syslog program) (optional)
 		if ($var eq 'cmd_logger') {
 			$value =~ s/\s+$//;
@@ -4513,12 +4527,25 @@ sub create_backup_point_dir {
 
 	# create the directory if it doesn't exist
 	if (!-e "$destpath") {
-		print_cmd("mkdir -m 0755 -p $destpath/");
+		if (defined($config_vars{'cmd_mkbackupdir'})) {
+			my $result;
+			my $status;
+			print_cmd("$config_vars{'cmd_mkbackupdir'} -m 0755 -p $destpath");
+			$result = system($config_vars{'cmd_mkbackupdir'}, "-m", "0755", "-p", "$destpath");
 
-		if (0 == $test) {
-			eval { mkpath("$destpath", 0, 0755); };
-			if ($@) {
-				bail("Could not mkpath(\"$destpath/\", 0, 0755);");
+			if ($result != 0) {
+				$status = get_retval($result);
+				bail("$config_vars{'cmd_mkbackupdir'} $destpath failed (result $result, exit status $status).");
+			}
+		}
+		else {
+			print_cmd("mkdir -m 0755 -p $destpath/");
+
+			if (0 == $test) {
+				eval { mkpath("$destpath", 0, 0755); };
+				if ($@) {
+					bail("Could not mkpath(\"$destpath/\", 0, 0755);");
+				}
 			}
 		}
 	}
@@ -6734,6 +6761,8 @@ files over (assuming there are any).
 =back
 
 B<cmd_rm>             Full path to rm (optional)
+
+B<cmd_mkbackupdir>    Full path to mkdir or equivalent (optional)
 
 B<cmd_logger>         Full path to logger (optional, for syslog support)
 
