@@ -6710,7 +6710,7 @@ interpreted.
 
 =back
 
-B<no_create_root>     If set to 1, rsnapshot won't create snapshot_root directory
+B<no_create_root>     If set to 1, rsnapshot won't create B<snapshot_root> directory
 
 B<cmd_rsync>          Full path to C<rsync> (required)
 
@@ -6956,10 +6956,10 @@ List of long arguments to pass to rsync.  The default values are
 This means that the directory structure in each backup point destination
 will match that in the backup point source.
 
-Quotes are permitted in rsync_long_args, eg C<--rsync-path='sudo /usr/bin/rsync'>.
+Quotes are permitted in B<rsync_long_args>, eg C<--rsync-path='sudo /usr/bin/rsync'>.
 You may use either single (') or double (") quotes, but nested quotes (including
 mixed nested quotes) are not permitted.  Similar quoting is also allowed in
-per-backup-point rsync_long_args.
+per-backup-point B<rsync_long_args>.
 
 =back
 
@@ -7209,7 +7209,7 @@ B<backup_exec      /bin/true/>
 
 =over 4
 
-backup_exec simply runs the command listed. The second argument is not
+B<backup_exec> simply runs the command listed. The second argument is not
 required and defaults to a value of 'optional'. It specifies the importance
 that the command return 0. Valid values are 'optional' and 'required'. If the
 command is specified as optional, a non-zero exit status from the command will
@@ -7626,7 +7626,7 @@ Current rsnapshot maintainer
 
 =back
 
-Carl Wilhelm Soderstrom B<(chrome@real-time.com)>
+Carl Wilhelm Soderstrom (B<chrome@real-time.com>)
 
 =over 4
 
