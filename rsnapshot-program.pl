@@ -7147,7 +7147,7 @@ B<backup   /var/     localhost/   one_fs=1>
 =over 4
 
 This is the same as the other examples, but notice the fourth column.
-This is how you specify per-backup-point options to over-ride global
+This is how you specify per-backup-point options to override global
 settings.  This extra parameter can take several options, separated
 by B<commas>.
 
