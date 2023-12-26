@@ -6648,7 +6648,7 @@ of cron jobs. It is possible, however, to run as any arbitrary user
 with an alternate configuration file.
 
 All important options are specified in a configuration file, which is
-located by default at B</etc/rsnapshot.conf>. An alternate file can be
+located by default at F</etc/rsnapshot.conf>. An alternate file can be
 specified on the command line. There are also additional options which
 can be passed on the command line.
 
@@ -6674,12 +6674,12 @@ B<-D> a firehose of diagnostic information
 
 =head1 CONFIGURATION
 
-B</etc/rsnapshot.conf> is the default configuration file. All parameters
-in this file must be separated by tabs. B</etc/rsnapshot.conf.default>
+F</etc/rsnapshot.conf> is the default configuration file. All parameters
+in this file must be separated by tabs. F</etc/rsnapshot.conf.default>
 can be used as a reference.
 
-It is recommended that you copy B</etc/rsnapshot.conf.default> to
-B</etc/rsnapshot.conf>, and then modify B</etc/rsnapshot.conf> to suit
+It is recommended that you copy F</etc/rsnapshot.conf.default> to
+F</etc/rsnapshot.conf>, and then modify F</etc/rsnapshot.conf> to suit
 your needs.
 
 Long lines may be split over several lines.  "Continuation" lines
@@ -7288,7 +7288,7 @@ also want to run it from the command line once or twice to get
 a feel for what it's doing.
 
 Here is an example crontab entry, assuming that backup levels B<alpha>,
-B<beta>, B<gamma> and B<delta> have been defined in B</etc/rsnapshot.conf>
+B<beta>, B<gamma> and B<delta> have been defined in F</etc/rsnapshot.conf>
 
 =over 4
 
@@ -7333,7 +7333,7 @@ your alpha snapshot will fail sometimes because the beta still has the lock.
 
 Remember that these are just the times that the program runs.
 To set the number of backups stored, set the B<retain> numbers in
-B</etc/rsnapshot.conf>
+F</etc/rsnapshot.conf>
 
 To check the disk space used by rsnapshot, you can call it with the "du" argument.
 
@@ -7483,8 +7483,8 @@ B<http://lists.sourceforge.net/lists/listinfo/rsnapshot-discuss>
 
 =head1 NOTES
 
-Make sure your /etc/rsnapshot.conf file has all elements separated by tabs.
-See /etc/rsnapshot.conf.default for a working example file.
+Make sure your F</etc/rsnapshot.conf> file has all elements separated by tabs.
+See F</etc/rsnapshot.conf.default> for a working example file.
 
 Make sure you put a trailing slash on the end of all directory references.
 If you don't, you may have extra directories created in your snapshots.
@@ -7500,7 +7500,7 @@ If you would like regular users to be able to restore their own backups,
 there are a number of ways this can be accomplished. One such scenario
 would be:
 
-Set B<snapshot_root> to B</.private/.snapshots> in B</etc/rsnapshot.conf>
+Set B<snapshot_root> to B</.private/.snapshots> in F</etc/rsnapshot.conf>
 
 Set the file permissions on these directories as follows:
 
@@ -7543,7 +7543,7 @@ backups will be restored in the same environment they came from. Without
 this option, restoring backups for multiple heterogeneous servers would
 be unmanageable. If you are archiving snapshots with GNU tar, you may
 want to use the --numeric-owner parameter. Also, keep a copy of the
-archived system's /etc/passwd and /etc/group files handy for the UID/GID
+archived system's F</etc/passwd> and F</etc/group> files handy for the UID/GID
 to name mapping.
 
 If you remove backup points in the config file, the previously archived
