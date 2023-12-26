@@ -6632,8 +6632,8 @@ B<rsnapshot> [B<-vtxqVD>] [B<-c> cfgfile] [command] [args]
 B<rsnapshot> is a filesystem snapshot utility. It can take incremental
 snapshots of local and remote filesystems for any number of machines.
 
-Local filesystem snapshots are handled with B<rsync(1)>. Secure remote
-connections are handled with rsync over B<ssh(1)>, while anonymous
+Local filesystem snapshots are handled with L<rsync(1)>. Secure remote
+connections are handled with rsync over L<ssh(1)>, while anonymous
 rsync connections simply use an rsync server. Both remote and local
 transfers depend on rsync.
 
@@ -7489,7 +7489,7 @@ See F</etc/rsnapshot.conf.default> for a working example file.
 Make sure you put a trailing slash on the end of all directory references.
 If you don't, you may have extra directories created in your snapshots.
 For more information on how the trailing slash is handled, see the
-B<rsync(1)> manpage.
+L<rsync(1)> manpage.
 
 Make sure to make the snapshot directory chmod 700 and owned by root
 (assuming backups are made by the root user). If the snapshot directory
@@ -7526,7 +7526,7 @@ configuration, or using an alternate shell.
 
 BE CAREFUL! If the private key is obtained by an attacker, they will
 have free run of all the systems involved. If you are unclear on how
-to do this, see B<ssh(1)>, B<sshd(1)>, and B<ssh-keygen(1)>.
+to do this, see L<ssh(1)>, L<sshd(1)>, and L<ssh-keygen(1)>.
 
 Backup scripts are run as the same user that rsnapshot is running as.
 Typically this is root. Make sure that all of your backup scripts are
