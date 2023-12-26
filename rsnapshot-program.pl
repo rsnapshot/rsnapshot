@@ -6712,11 +6712,11 @@ interpreted.
 
 B<no_create_root>     If set to 1, rsnapshot won't create snapshot_root directory
 
-B<cmd_rsync>          Full path to rsync (required)
+B<cmd_rsync>          Full path to C<rsync> (required)
 
-B<cmd_ssh>            Full path to ssh (optional)
+B<cmd_ssh>            Full path to C<ssh> (optional)
 
-B<cmd_cp>             Full path to cp  (optional, but must be GNU version)
+B<cmd_cp>             Full path to C<cp> (optional, but must be GNU version)
 
 =over 4
 
@@ -6733,13 +6733,13 @@ files over (assuming there are any).
 
 =back
 
-B<cmd_rm>             Full path to rm (optional)
+B<cmd_rm>             Full path to C<rm> (optional)
 
-B<cmd_logger>         Full path to logger (optional, for syslog support)
+B<cmd_logger>         Full path to C<logger> (optional, for syslog support)
 
-B<cmd_du>             Full path to du (optional, for disk usage reports)
+B<cmd_du>             Full path to C<du> (optional, for disk usage reports)
 
-B<cmd_rsnapshot_diff> Full path to rsnapshot-diff (optional)
+B<cmd_rsnapshot_diff> Full path to C<rsnapshot-diff> (optional)
 
 B<cmd_preexec>
 
@@ -6956,7 +6956,7 @@ List of long arguments to pass to rsync.  The default values are
 This means that the directory structure in each backup point destination
 will match that in the backup point source.
 
-Quotes are permitted in rsync_long_args, eg --rsync-path="sudo /usr/bin/rsync".
+Quotes are permitted in rsync_long_args, eg C<--rsync-path='sudo /usr/bin/rsync'>.
 You may use either single (') or double (") quotes, but nested quotes (including
 mixed nested quotes) are not permitted.  Similar quoting is also allowed in
 per-backup-point rsync_long_args.
@@ -7186,15 +7186,11 @@ a destination directory for a backup_script that will clobber other backups.
 
 So in this example, say the backup_database.sh script simply runs a command like:
 
-=over 4
+    #!/bin/sh
 
-#!/bin/sh
+    mysqldump -uusername mydatabase > mydatabase.sql
 
-mysqldump -uusername mydatabase > mydatabase.sql
-
-chmod u=r,go= mydatabase.sql	# r-------- (0400)
-
-=back
+    chmod u=r,go= mydatabase.sql	# r-------- (0400)
 
 rsnapshot will take the generated "mydatabase.sql" file and move it into the
 <snapshot_root>/<retain>.0/db_backup/ directory. On subsequent runs,
@@ -7383,7 +7379,7 @@ B<rsnapshot diff /.snapshots/beta.0 /.snapshots/beta.1>
 
 =back
 
-This will call the rsnapshot-diff program, which will scan both directories
+This will call the C<rsnapshot-diff> program, which will scan both directories
 looking for differences (based on hard links).
 
 B<rsnapshot sync>
@@ -7508,13 +7504,9 @@ Set B<snapshot_root> to B</.private/.snapshots> in B</etc/rsnapshot.conf>
 
 Set the file permissions on these directories as follows:
 
-=over 4
+    drwx------    /.private
 
-drwx------    /.private
-
-drwxr-xr-x    /.private/.snapshots
-
-=back
+    drwxr-xr-x    /.private/.snapshots
 
 Export the /.private/.snapshots directory over read-only NFS, a read-only
 Samba share, etc.
@@ -7564,11 +7556,7 @@ For example, if you were previously backing up /home/ with a destination
 of localhost/, and alpha is your smallest backup level, you would need to do
 the following to reclaim that disk space:
 
-=over 4
-
-rm -rf <snapshot_root>/alpha.0/localhost/home/
-
-=back
+    rm -rf <snapshot_root>/alpha.0/localhost/home/
 
 Please note that the other snapshots previously made of /home/ will still
 be using that disk space, but since the files are flushed out of alpha.0/,
@@ -7603,7 +7591,7 @@ David Cantrell (B<david@cantrell.org.uk>)
 Previous maintainer of rsnapshot
 
 =item -
-Wrote the rsnapshot-diff utility
+Wrote the C<rsnapshot-diff> utility
 
 =item -
 Improved how use_lazy_deletes work so slow deletes don't screw up the next
@@ -7758,7 +7746,7 @@ Anthony Ettinger (B<apwebdesign@yahoo.com>)
 
 =over 4
 
-Wrote the utils/mysqlbackup.pl script
+Wrote the C<utils/mysqlbackup.pl> script
 
 =back
 
@@ -7766,7 +7754,7 @@ Sherman Boyd
 
 =over 4
 
-Wrote utils/random_file_verify.sh script
+Wrote C<utils/random_file_verify.sh> script
 
 =back
 
@@ -7774,7 +7762,7 @@ William Bear (B<bear@umn.edu>)
 
 =over 4
 
-Wrote the utils/rsnapreport.pl script (pretty summary of rsync stats)
+Wrote the C<utils/rsnapreport.pl> script (pretty summary of rsync stats)
 
 =back
 
@@ -7782,7 +7770,7 @@ Eric Anderson (B<anderson@centtech.com>)
 
 =over 4
 
-Improvements to utils/rsnapreport.pl.
+Improvements to C<utils/rsnapreport.pl>.
 
 =back
 
