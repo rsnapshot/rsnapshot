@@ -1426,10 +1426,6 @@ sub parse_config_file {
 				config_err($file_line_num, "$line - Directory traversal attempted in $value");
 				next;
 			}
-			elsif ((-e "$value") && (!-f "$value") && (!-p "$value")) {
-				config_err($file_line_num, "$line - logfile $value exists, but is not a file");
-				next;
-			}
 			else {
 				$config_vars{'logfile'} = $value;
 				$line_syntax_ok = 1;
