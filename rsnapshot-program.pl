@@ -4,7 +4,6 @@
 #                                                                      #
 # rsnapshot                                                            #
 # by Nathan Rosenquist                                                 #
-# now maintained by Benedikt Heine                                     #
 #                                                                      #
 # The official rsnapshot website is located at                         #
 # http://www.rsnapshot.org/                                            #
@@ -7617,12 +7616,12 @@ Fixed a number of other bugs and buglets
 
 =back
 
-Benedikt Heine <benedikt@heine.rocks>
+Benedikt Heine <bebe@bebehei.de>
 
 =over 4
 
 =item -
-Current rsnapshot maintainer
+ex-maintainer of rsnapshot (2015-2017)
 
 =back
 
