@@ -1,0 +1,15 @@
+#!/usr/bin/perl
+
+use strict;
+use File::Basename;
+
+# Simple wrapper that records the command line arguments to a log
+# file.
+my $execname = basename($0);
+my $logfile  = "@TEST@/mock/logs/$execname.log";
+open(FH, ">>", $logfile)
+  or die "$logfile couldn't be opened";
+
+my $args = join " ", @ARGV, "\n";
+print FH $args;
+close FH or "failure to close $logfile";
