@@ -7404,6 +7404,18 @@ B<30 23 1 * *         /usr/local/bin/rsnapshot delta>
 The sync operation simply runs rsync and all backup scripts. In this scenario, all
 calls simply rotate directories, even the lowest backup level.
 
+Please note, that the above "rsnapshot sync && rsnapshot alpha" command will
+skip rotation, whenever rsnapshot finishes its sync operation "with warnings"
+(e.g. some files vanished, while rsync was running).
+If you want to ensure rotation even in case of warnings, then the following
+command may be suitable for your cron job:
+
+=over 4
+
+B<0 */4 * * *         /usr/local/bin/rsnapshot sync || [ $? -eq 2 ] && /usr/local/bin/rsnapshot alpha>
+
+=back
+
 =back
 
 B<rsnapshot sync [dest]>
