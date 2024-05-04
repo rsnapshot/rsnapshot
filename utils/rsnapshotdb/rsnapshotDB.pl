@@ -60,7 +60,7 @@ Note: rsnapshotdb.list is deprecated in favor of XML config rsnapshotDB.conf and
 
 my $dbpasswd = '/etc/rsnapshotDB.conf';
 my $xsd = '/etc/rsnapshotDB.xsd'; #used to validate config file
-my $xmlUsage = 1; #0 if using flat-list configuation file (deprecated).
+my $xmlUsage = 1; #0 if using flat-list configuration file (deprecated).
 my $verbose = 2; #0 for no warning/status messages, increase for more.
 
 =head2 WARNING:
