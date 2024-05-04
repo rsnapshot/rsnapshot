@@ -936,7 +936,7 @@ sub parse_config_file {
 				}
 			}
 
-			# make sure interval is alpha-numeric
+			# make sure interval is alphanumeric
 			if ($value !~ m/^[\w\d]+$/) {
 				config_err($file_line_num,
 					"$line - \"$value\" is not a valid $retain name, must be alphanumeric characters only");
@@ -3935,7 +3935,7 @@ sub rsync_backup_point {
 		}
 	}
 
-	# delte the traps manually
+	# delete the traps manually
 	# umount LVM Snapshot if it is mounted
 	if (1 == $traps{"linux_lvm_mountpoint"}) {
 		$traps{"linux_lvm_mountpoint"} = 0;
@@ -4661,7 +4661,7 @@ sub rotate_higher_interval {
 	if (-d "$config_vars{'snapshot_root'}/$interval.$interval_max") {
 
 		# if use_lazy_deletes is set move the oldest directory to _delete.$$
-		# otherwise preform the default behavior
+		# otherwise perform the default behavior
 		if (1 == $use_lazy_deletes) {
 			print_cmd(
 				"mv ",

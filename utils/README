@@ -65,7 +65,7 @@ make_cvs_snapshot.sh
 rsnapshot_if_mounted.sh
 ------------------------------------------------------------------------------
     Deprecated. A work-around for using removable drives as the snapshot
-    root. Superceded by the "no_create_root" option in rsnapshot proper.
+    root. Superseded by the "no_create_root" option in rsnapshot proper.
 
 rsnapreport.pl
 ------------------------------------------------------------------------------

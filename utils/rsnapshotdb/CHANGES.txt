@@ -13,7 +13,7 @@ Cleaned up code and removed password requirement for ssh server connection.
 
 Removed requirement of Net::SSH::Perl
 
-Speed optimization done with remote database dump and gzip compression before transfering file locally.
+Speed optimization done with remote database dump and gzip compression before transferring file locally.
 
 1/4/05
 

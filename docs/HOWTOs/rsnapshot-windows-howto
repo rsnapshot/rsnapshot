@@ -282,7 +282,7 @@ E- Restoring Files:
     b- Set the homes shares to read only in /etc/samba/smb.conf.
        [homes]
        comment = Home Directories
-       browseable = no
+       browsable = no
        writable = no
    
     c- Create home directories as needed:
