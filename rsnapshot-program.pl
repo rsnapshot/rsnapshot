@@ -6962,6 +6962,18 @@ per-backup-point B<rsync_long_args>.
 
 =back
 
+B<rsync_numtries    0>
+
+=over 4
+
+Number of additional attempts for running rsync for each given backup source.
+Whenever the rsync operation for a source finishes with a non-zero exitcode,
+rsnapshot will repeat this operation until the configured number of
+"rsync_numtries" is reached or rsync finishes successfully.
+By default no repeated attempts are performed ("rsync_numtries 0").
+
+=back
+
 B<ssh_args    -p 22>
 
 =over 4
