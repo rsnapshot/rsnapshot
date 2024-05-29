@@ -7391,7 +7391,7 @@ the lowest, most frequent backup level, and right before. For example:
 
 =over 4
 
-B<0 */4 * * *         /usr/local/bin/rsnapshot sync && /usr/local/bin/rsnapshot alpha>
+B<0 */4 * * *         /usr/local/bin/rsnapshot sync; [ $? != 1 ] && /usr/local/bin/rsnapshot alpha>
 
 B<50 23 * * *         /usr/local/bin/rsnapshot beta>
 
