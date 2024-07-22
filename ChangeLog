@@ -19,7 +19,7 @@ VERSION 1.4.4 (Jun 12 2021)
 - Fix for 'rsync_cleanup_after_native_cp_al() only works on directories' fail when sync_first on and cmd_cp not set (#133). Add test
 - Fix for rm -rf failing when the path contains ./
 - Suppress noisy error from non-GNU cp on BSD-ish machines, including MacOS
-- Add CentOS 7 to succesfully tested to docs
+- Add CentOS 7 to successfully tested to docs
 - Minor tidy up rel configure options --with-test-(true|false). Refs #189 (#248)
 - Update travis build settings (#189). Dont use m4_esyscmd_s in configure.ac (#245)
 - Update docs to remove dangling refs to HOWTO on rsnapshot.org.
@@ -52,7 +52,7 @@ VERSION 1.4.0
 ------------------------------------------------------------------------------
 - Tidy the code with perltidy
 - Fix --rsh command line option
-  The --rsh option of rsync got errornously quoted (Debian Bug #743310)
+  The --rsh option of rsync got erroneously quoted (Debian Bug #743310)
 - Define traps to unmount LVM parts after fail
   If you use LVM snapshots and rsnapshot fails, rsnapshot will unmount and
   remove the snapshot, too.
@@ -393,7 +393,7 @@ VERSION 1.1.0 (Jan 24 16:41 2004)
 - Added subroutines for centralized print/logging
 - Added logfile and loglevel parameters to the config file
 - Added logging feature
-- Moved loglevel/verbose number validation into a seperate subroutine
+- Moved loglevel/verbose number validation into a separate subroutine
 - Added much more error checking on the config file
 - Changed @snapshot_points to @backup_points for more consistent terminology
 - Made all "-x" executable checks also check for "-f" file
@@ -533,7 +533,7 @@ VERSION 0.9.2 (Aug 31 04:08 2003)
 - Optimized rotating snapshot intervals by recycling the last directory to the
   first, instead of deleting the last and copying .0 to .1
 - Added support for spaces in path names.
-- The config file now requires tabs to seperate all entries, where spaces were
+- The config file now requires tabs to separate all entries, where spaces were
   before acceptable. This was the easiest way to support spaces in path names.
 - Directory entries now require a trailing slash. This is so that files can be
   treated correctly without having to be examined directly (which is
