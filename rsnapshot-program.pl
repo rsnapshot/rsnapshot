@@ -4657,9 +4657,8 @@ sub rotate_higher_interval {
 
 	# ROTATE DIRECTORIES
 	#
-	# delete the oldest one (if we're keeping more than one)
-	if (-d "$config_vars{'snapshot_root'}/$interval.$interval_max") {
-
+	# delete the oldest one (if we're keeping more than one), if needed
+	if ((-d "$config_vars{'snapshot_root'}/$prev_interval.$prev_interval_max") and (-d "$config_vars{'snapshot_root'}/$interval.$interval_max")) { 
 		# if use_lazy_deletes is set move the oldest directory to _delete.$$
 		# otherwise perform the default behavior
 		if (1 == $use_lazy_deletes) {
@@ -4694,35 +4693,45 @@ sub rotate_higher_interval {
 		}
 
 	}
-	else {
+	elsif (-d "$config_vars{'snapshot_root'}/$prev_interval.$prev_interval_max") {
 		print_msg(
 			"$config_vars{'snapshot_root'}/$interval.$interval_max not present (yet), nothing to delete", 4);
 	}
+	else {
+		print_msg(
+			"$config_vars{'snapshot_root'}/$interval.$prev_interval_max not present (yet), no need to delete $config_vars{'snapshot_root'}/$interval.$interval_max", 4);
+	}
 
-	# rotate the middle ones
-	for (my $i = ($interval_max - 1); $i >= 0; $i--) {
-		if (-d "$config_vars{'snapshot_root'}/$interval.$i") {
-			print_cmd(
-				"mv $config_vars{'snapshot_root'}/$interval.$i/ ",
-				"$config_vars{'snapshot_root'}/$interval." . ($i + 1) . "/"
-			);
-
-			if (0 == $test) {
-				my $result = safe_rename(
-					"$config_vars{'snapshot_root'}/$interval.$i",
-					("$config_vars{'snapshot_root'}/$interval." . ($i + 1))
+	# rotate the middle ones, if needed
+	if (-d "$config_vars{'snapshot_root'}/$prev_interval.$prev_interval_max") {
+		for (my $i = ($interval_max - 1); $i >= 0; $i--) {
+			if (-d "$config_vars{'snapshot_root'}/$interval.$i") {
+				print_cmd(
+					"mv $config_vars{'snapshot_root'}/$interval.$i/ ",
+					"$config_vars{'snapshot_root'}/$interval." . ($i + 1) . "/"
 				);
-				if (0 == $result) {
-					my $errstr = '';
-					$errstr .= "Error! safe_rename(\"$config_vars{'snapshot_root'}/$interval.$i/\", \"";
-					$errstr .= "$config_vars{'snapshot_root'}/$interval." . ($i + 1) . '/' . "\")";
-					bail($errstr);
+	
+				if (0 == $test) {
+					my $result = safe_rename(
+						"$config_vars{'snapshot_root'}/$interval.$i",
+						("$config_vars{'snapshot_root'}/$interval." . ($i + 1))
+					);
+					if (0 == $result) {
+						my $errstr = '';
+						$errstr .= "Error! safe_rename(\"$config_vars{'snapshot_root'}/$interval.$i/\", \"";
+						$errstr .= "$config_vars{'snapshot_root'}/$interval." . ($i + 1) . '/' . "\")";
+						bail($errstr);
+					}
 				}
 			}
+			else {
+				print_msg("$config_vars{'snapshot_root'}/$interval.$i not present (yet), nothing to rotate", 4);
+			}
 		}
-		else {
-			print_msg("$config_vars{'snapshot_root'}/$interval.$i not present (yet), nothing to rotate", 4);
-		}
+	}
+	else {
+		print_msg(
+			"$config_vars{'snapshot_root'}/$interval.$prev_interval_max not present (yet), no need to rotate $config_vars{'snapshot_root'}/$interval.$interval.*", 4);
 	}
 
 	# prev.max and interval.0 require more attention
