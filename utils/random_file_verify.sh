@@ -12,7 +12,7 @@
 # to the admin.
 #
 # As it is currently implemented, it is a wrapper around an "rsnapshot daily"
-# command. It could probably be broken out into seperate preexec annd
+# command. It could probably be broken out into separate preexec and
 # postexec commands as well.
 #
 # Feel free to use and improve ...

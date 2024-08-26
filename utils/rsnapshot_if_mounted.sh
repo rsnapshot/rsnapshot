@@ -10,7 +10,7 @@
 ##############################################################################
 ##############################################################################
 #
-# NOTE: THIS SCRIPT HAS BEEN SUPERCEDED BY THE "no_create_root" OPTION IN
+# NOTE: THIS SCRIPT HAS BEEN SUPERSEDED BY THE "no_create_root" OPTION IN
 # rsnapshot. IT IS LEFT HERE JUST IN CASE ANYONE WANTS TO USE IT.
 #
 ##############################################################################

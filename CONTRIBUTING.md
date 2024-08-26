@@ -66,7 +66,7 @@ documented in this repository. Second, the website [rsnapshot.org](https://rsnap
 
 Create a new branch, prefix it with `issue/` and, if available, the github issue number. (e.g. `issue/35-umount-lvm`).
 
-Add your commits to the branch. They should be logically ordered and clean. Rebase them, if neccessary. Make sure that `make test` passes. Finished? Open a pull-request! The code will get reviewed. If the review passes, a project-member will merge it onto `master` and `release-*` (see below), and will release new bugfix-versions.
+Add your commits to the branch. They should be logically ordered and clean. Rebase them, if necessary. Make sure that `make test` passes. Finished? Open a pull-request! The code will get reviewed. If the review passes, a project-member will merge it onto `master` and `release-*` (see below), and will release new bugfix-versions.
 
 ### Test cases
 
@@ -80,7 +80,7 @@ We encourage you to write a test case for your pull-request. rsnapshot lacks of 
 A few notes on the testsuite:
 
  - Use the SysWrap-module actively.
- - Any file commited in the testsuite-folder ending with `.conf` or `.t` is commited or named wrong.
+ - Any file committed in the testsuite-folder ending with `.conf` or `.t` is committed or named wrong.
  - Let your files always end with `.in` and execute `autogen.sh` before you run your testsuite.
  - Always place your configuration-files into the `conf`-subfolder.
  - If you have got multiple tests to check, which are quite similar, use one test-file, and multiple configuration-files located in your test-folder. (Look at the cmd-post_pre-exec testcase).

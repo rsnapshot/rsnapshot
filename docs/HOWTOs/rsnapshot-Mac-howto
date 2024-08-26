@@ -308,7 +308,7 @@ to launch: %d", err);
            // // This handler is pointless. The disk won't unmount as  
 long as the process is running,
            // // so the the process must be killed first, which means  
-there's nothign to kill here.
+there's nothing to kill here.
            // // I welcome suggestions of how to do something useful  
 with this
            // void goodbye_disk(DADiskRef disk, void *contextP)
