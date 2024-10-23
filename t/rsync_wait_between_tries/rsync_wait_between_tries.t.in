@@ -1,0 +1,11 @@
+#!@PERL@
+
+use strict;
+use Test::More tests => 2;
+use SysWrap;
+
+# rsync_wait_between_tries	1	-> okay
+ok(0 == rsnapshot("-c @TEST@/rsync_wait_between_tries/conf/rsync_wait_between_tries_ok.conf configtest"));
+
+# rsync_wait_between_tries	-1	-> not okay
+ok(0 != rsnapshot("-c @TEST@/rsync_wait_between_tries/conf/rsync_wait_between_tries_fail_negative.conf configtest"));

@@ -161,6 +161,9 @@ my $use_lazy_deletes = 0;    # do not delete the oldest archive until after back
 # set default for number of tries
 my $rsync_numtries = 1;      # by default, try once
 
+# set default wait time between tries
+my $rsync_wait_between_tries = 0;      # by default, don't wait
+
 # exactly how the program was called, with all arguments
 # this is set before getopts() modifies @ARGV
 my $run_string = "$0 " . join(' ', @ARGV);
@@ -1500,6 +1503,24 @@ sub parse_config_file {
 			}
 
 			$rsync_numtries = int($value);
+			$line_syntax_ok = 1;
+			next;
+		}
+
+		# RSYNC WAIT BETWEEN TRIES
+		if ($var eq 'rsync_wait_between_tries') {
+			if (!defined($value)) {
+				config_err($file_line_num, "$line - rsync_wait_between_tries can not be blank");
+				next;
+			}
+
+			$rsync_wait_between_tries = int($value);
+			if ($rsync_wait_between_tries < 0) {
+				config_err($file_line_num,
+					"$line - \"$value\" is not a legal value for rsync_wait_between_tries, must be greater than or equal to 0");
+				next;
+			}
+
 			$line_syntax_ok = 1;
 			next;
 		}
@@ -3895,6 +3916,11 @@ sub rsync_backup_point {
 	$result = 1;
 	if (0 == $test) {
 		while ($tryCount < $rsync_numtries && $result != 0) {
+
+			if($tryCount > 0 && $rsync_wait_between_tries > 0) {
+				print_msg("retrying rsync in $rsync_wait_between_tries seconds", 5);
+				sleep($rsync_wait_between_tries);
+			}
 
 			# open rsync and capture STDOUT and STDERR
 			# the 3rd argument is undefined, that STDERR gets mashed into STDOUT and we
