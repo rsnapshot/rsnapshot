@@ -1,0 +1,7 @@
+config_version	1.2
+snapshot_root	@SNAP@
+cmd_rsync		@RSYNC@
+interval		hourly	6
+backup			@TEMP@/a/	localhost/
+rsync_numtries	2
+rsync_wait_between_tries	notanumber	# needs to be a number

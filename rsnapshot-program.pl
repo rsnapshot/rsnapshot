@@ -1514,6 +1514,11 @@ sub parse_config_file {
 				next;
 			}
 
+			if (!is_integer($value)) {
+				config_err($file_line_num, "$line - rsync_wait_between_tries must be an integer");
+				next;
+			}
+
 			$rsync_wait_between_tries = int($value);
 			if ($rsync_wait_between_tries < 0) {
 				config_err($file_line_num,
@@ -2812,6 +2817,18 @@ sub is_valid_rsync_numtries {
 			return (1);
 		}
 	}
+}
+
+# accepts one argument
+# checks if argument is a integer
+# returns 1 on success, 0 on failure
+sub is_integer {
+	my $var = shift(@_);
+
+	if (!defined($var))   { return (0); }
+	if ($var !~ m/^\d+$/) { return (0); }
+
+	return (1);
 }
 
 # accepts one argument
