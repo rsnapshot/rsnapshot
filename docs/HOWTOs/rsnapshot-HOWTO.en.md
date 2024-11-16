@@ -1,23 +1,15 @@
- rsnapshot HOWTO     span.quote { quotes: "“" "”" "‘" "’"; } span.quote::before { content: open-quote; } span.quote::after { content: close-quote; }
-
 rsnapshot HOWTO
 ===============
 
-### David Cantrell
-
-<[david@cantrell.org.uk](mailto:david@cantrell.org.uk)\>
-
-2004-01-20
-
-**Abstract**
+### **Abstract**
 
 rsnapshot is a filesystem backup utility based on rsync. Using rsnapshot, it is possible to take snapshots of your filesystems at different points in time. Using hard links, rsnapshot creates the illusion of multiple full backups, while only taking up the space of one full backup plus differences. When coupled with ssh, it is possible to take snapshots of remote filesystems as well. This document is a tutorial in the installation and configuration of rsnapshot.
 
 * * *
 
-**Table of Contents**
+### **Table of Contents**
 
-[1\. Introduction](#intro)
+[1. Introduction](#intro)
 
 [1.1. What you will need](#what_you_will_need)
 
@@ -27,9 +19,9 @@ rsnapshot is a filesystem backup utility based on rsync. Using rsnapshot, it is 
 
 [1.4. Feedback](#feedback)
 
-[2\. Motivation](#motivation)
+[2. Motivation](#motivation)
 
-[3\. Installation](#installation)
+[3. Installation](#installation)
 
 [3.1. 30 second version (for the impatient)](#thirty_second_version)
 
@@ -43,7 +35,7 @@ rsnapshot is a filesystem backup utility based on rsync. Using rsnapshot, it is 
 
 [3.6. Install the program](#install_the_program)
 
-[4\. Configuration](#configuration)
+[4. Configuration](#configuration)
 
 [4.1. Create the config file](#create_the_config_file)
 
@@ -53,19 +45,19 @@ rsnapshot is a filesystem backup utility based on rsync. Using rsnapshot, it is 
 
 [4.4. Testing your config file](#testing_your_config_file)
 
-[5\. Automation](#automation)
+[5. Automation](#automation)
 
-[6\. How it works](#how_it_works)
+[6. How it works](#how_it_works)
 
-[7\. Restoring backups](#restoring_backups)
+[7. Restoring backups](#restoring_backups)
 
 [7.1. root only](#root_only)
 
 [7.2. All users](#all_users)
 
-[8\. Conclusion](#conclusion)
+[8. Conclusion](#conclusion)
 
-[9\. More resources](#more_resources)
+[9. More resources](#more_resources)
 
 1. Introduction
 ---------------
@@ -96,7 +88,7 @@ All copyrights are held by their by their respective owners, unless specifically
 
 ### 1.4. Feedback
 
-Feedback is most certainly welcome for this document. Send your additions, comments and criticisms to the following email address : <[david@cantrell.org.uk](mailto:david@cantrell.org.uk)\>.
+Feedback is welcome for this document. Please raise issues on the rsnapshot mailing list at [http://lists.sourceforge.net/lists/listinfo/rsnapshot-discuss](http://lists.sourceforge.net/lists/listinfo/rsnapshot-discuss).
 
 2. Motivation
 -------------
@@ -114,25 +106,33 @@ This guide assumes you are installing rsnapshot 1.2.0 for the first time. If you
 
 ### 3.1. 30 second version (for the impatient)
 
-**./configure --sysconfdir=/etc**
-**su**
-**make install**
-**cp /etc/rsnapshot.conf.default /etc/rsnapshot.conf**
+```
+./configure --sysconfdir=/etc
+su
+make install
+cp /etc/rsnapshot.conf.default /etc/rsnapshot.conf
+```
 
 The rest of this section is the long version.
 
 ### 3.2. Untar the source code package
 
-**tar xzvf rsnapshot-1.2.0.tar.gz**
+```
+tar xzvf rsnapshot-1.2.0.tar.gz
+```
 
 If you don't have GNU tar, you may have to do this in two steps instead:
 
-**gunzip rsnapshot-1.2.0.tar.gz**
-**tar xvf rsnapshot-1.2.0.tar**
+```
+gunzip rsnapshot-1.2.0.tar.gz
+tar xvf rsnapshot-1.2.0.tar
+```
 
 ### 3.3. Change to the source directory
 
-**cd rsnapshot-1.2.0/**
+```
+cd rsnapshot-1.2.0/
+```
 
 ### 3.4. Decide where you want to install
 
@@ -140,13 +140,17 @@ By default, the installation procedure will install all files under /usr/local. 
 
 We are assuming that rsync, ssh, logger, and du are all in your search path. If this is not the case, you can specify the path to any of these programs using the typical Autoconf _\--with-program=/path/to/program_ syntax. For example, if Perl was in /opt/bin/perl and rsync was in /home/me/bin/rsync, you could run configure like:
 
-**./configure --with-perl=/opt/bin/perl --with-rsync=/home/me/bin/rsync**
+```
+./configure --with-perl=/opt/bin/perl --with-rsync=/home/me/bin/rsync
+```
 
 ### 3.5. Run the configure script
 
 This will poke and prod your system to figure out where the various external programs that rsnapshot depends on live. It also generates the Makefile that we will use to install the program. The configure script accepts arguments that can be used to tell it where to install the program, and also where to find the supporting programs. For this installation, the only non-default option we want is to put the config file in the /etc directory. To do this, run this command at the shell:
 
-**./configure --sysconfdir=/etc**
+```
+./configure --sysconfdir=/etc
+```
 
 If all goes well, you're ready to install the program. If there was a problem, it should be descriptive. Most likely a problem would be the result of something that was required and not found (like rsync or perl). If this happens, you must figure out where the missing program is located on your system, or install it if necessary. If you know where it is but configure couldn't find it, you can specify the path using the _\--with-program=/path/to/program_ options described above.
 
@@ -154,13 +158,17 @@ If all goes well, you're ready to install the program. If there was a problem, i
 
 If you've followed these instructions so far, you will have configured rsnapshot to be installed under /usr/local, with the config file in /etc. Under these circumstances, it will be necessary to become root to install the program. Now is the time to do so. You will, of course, need the root password to do this:
 
-**su**
+```
+su
+```
 
 This will prompt you for the root password.
 
 Now, to install rsnapshot, run the following command:
 
-**make install**
+```
+make install
+```
 
 This will install rsnapshot with all the settings you specified in the ./configure stage. If all goes well, you will have the following files on your system:
 
@@ -179,7 +187,9 @@ If you decide later that you don't want rsnapshot on your system anymore, simply
 
 In the install process, the config file is not created or installed. However, a working example is provided that you can copy. To copy the example config file into the location rsnapshot will be looking for the real config file:
 
-**cp /etc/rsnapshot.conf.default /etc/rsnapshot.conf**
+```
+cp /etc/rsnapshot.conf.default /etc/rsnapshot.conf
+```
 
 As a general rule, you should avoid modifying /etc/rsnapshot.conf.default, simply because it is a working example that you may wish to refer to later. Also, if you perform an upgrade, the rsnapshot.conf.default file will always be upgraded to the latest version, while your real config file will be safe out of harm's way. Please note that if you run **make upgrade** during an upgrade, your rsnapshot.conf may be modified slightly, and the original will then be saved in rsnapshot.conf.backup in the same directory.
 
@@ -187,7 +197,9 @@ As a general rule, you should avoid modifying /etc/rsnapshot.conf.default, simpl
 
 The rsnapshot.conf config file is well commented, and much of it should be fairly self-explanatory. For a full reference of all the various options, please consult the rsnapshot man page. Type:
 
-**man rsnapshot**
+```
+man rsnapshot
+```
 
 This will give you the complete documentation. However, it assumes that you already know what you're doing to a certain extent. If you just want to get something up and running, this tutorial is a better place to start. If your system can't find the man page, /usr/local/man probably isn't in your $MANPATH environmental variable. This is beyond the scope of this document, but if it isn't working for you, you can always read the newest man page on the rsnapshot web site at [http://www.rsnapshot.org/](http://www.rsnapshot.org/)
 
@@ -273,15 +285,19 @@ This behaves fundamentally the same way, but you must take a few extra things in
 
 With this parameter, the second column is the full path to an executable backup script, and the third column is the local path you want to store it in (just like with the "backup" parameter). For example:
 
-backup\_script      /usr/local/bin/backup\_pgsql.sh       localhost/postgres/
+```
+backup_script      /usr/local/bin/backup_pgsql.sh       localhost/postgres/
+```
 
 In this example, rsnapshot will run the script /usr/local/bin/backup\_pgsql.sh in a temp directory, then sync the results into the localhost/postgres/ directory under the snapshot root. You can find the backup\_pgsql.sh example script in the utils/ directory of the source distribution. Feel free to modify it for your system.
 
 Your backup script simply needs to dump out the contents of whatever it does into its current working directory. It can create as many files and/or directories as necessary, but it should not put its files in any pre-determined path. The reason for this is that rsnapshot creates a temp directory, changes to that directory, runs the backup script, and then syncs the contents of the temp directory to the local path you specified in the third column. A typical backup script would be one that archives the contents of a database. It might look like this:
 
-**#!/bin/sh
+```
+#!/bin/sh
 /usr/bin/mysqldump -uroot mydatabase > mydatabase.sql
-/bin/chmod 644 mydatabase.sql**
+/bin/chmod 644 mydatabase.sql
+```
 
 There are several example scripts in the utils/ directory of the rsnapshot source distribution to give you more ideas.
 
@@ -293,13 +309,17 @@ Please remember that these backup scripts will be invoked as the user running rs
 
 When you have made all your changes, you should verify that the config file is syntactically valid, and that all the supporting programs are where you think they are. To do this, run rsnapshot with the configtest argument:
 
-**rsnapshot configtest**
+```
+rsnapshot configtest
+```
 
 If all is well, it should say Syntax OK. If there's a problem, it should tell you exactly what it is. Make sure your config file is using tabs and not spaces, etc.
 
 The final step to test your configuration is to run rsnapshot in test mode. This will print out a verbose list of the things it will do, without actually doing them. To do a test run, run this command:
 
-**rsnapshot -t hourly**
+```
+rsnapshot -t hourly
+```
 
 This tells rsnapshot to simulate an "hourly" backup. It should print out the commands it will perform when it runs for real. Please note that the test output might be slightly different than the real execution, but only because the test doesn't actually do things that may be checked for later in the program. For example, if the program will create a directory and then later test to see if that directory exists, the test run might claim that it would create the directory twice, since it didn't actually get created during the test. This should be the only type of difference you will see while running a test.
 
@@ -308,12 +328,16 @@ This tells rsnapshot to simulate an "hourly" backup. It should print out the com
 
 Now that you have your config file set up, it's time to set up rsnapshot to be run from cron. As the root user, edit root's crontab by typing:
 
-**crontab -e**
+```
+crontab -e
+```
 
 You could alternately keep a crontab file that you load in, but the concepts are the same. You want to enter the following information into root's crontab:
 
-0 \*/4 \* \* \*       /usr/local/bin/rsnapshot hourly
-30 23 \* \* \*       /usr/local/bin/rsnapshot daily
+```
+0 */4 * * *       /usr/local/bin/rsnapshot hourly
+30 23 * * *       /usr/local/bin/rsnapshot daily
+```
 
 It is usually a good idea to schedule the larger intervals to run a bit before the lower ones. For example, in the crontab above, notice that _daily_ runs 30 minutes before _hourly_. This helps prevent race conditions where the _daily_ would try to run before the _hourly_ job had finished. This same strategy should be extended so that a _weekly_ entry would run before the _daily_ and so on.
 
@@ -322,7 +346,8 @@ It is usually a good idea to schedule the larger intervals to run a bit before t
 
 We have a snapshot root under which all backups are stored. By default, this is the directory /.snapshots/. Within this directory, other directories are created for the various intervals that have been defined. In the beginning it will be empty, but once rsnapshot has been running for a week, it should look something like this:
 
-\[root@localhost\]# **ls -l /.snapshots/**
+```
+[root@localhost]# **ls -l /.snapshots/**
 drwxr-xr-x    7 root     root         4096 Dec 28 00:00 daily.0
 drwxr-xr-x    7 root     root         4096 Dec 27 00:00 daily.1
 drwxr-xr-x    7 root     root         4096 Dec 26 00:00 daily.2
@@ -336,10 +361,13 @@ drwxr-xr-x    7 root     root         4096 Dec 28 16:00 hourly.2
 drwxr-xr-x    7 root     root         4096 Dec 28 12:00 hourly.3
 drwxr-xr-x    7 root     root         4096 Dec 28 08:00 hourly.4
 drwxr-xr-x    7 root     root         4096 Dec 28 04:00 hourly.5
+```
 
 Inside each of these directories is a full backup of that point in time. The destination directory paths you specified under the _backup_ and _backup\_script_ parameters get stuck directly under these directories. In the example:
 
+```
 backup          /etc/           localhost/
+```
 
 The /etc/ directory will initially get backed up into /.snapshots/hourly.0/localhost/etc/
 
@@ -368,43 +396,61 @@ If users need to be able to pull their own backups, you will need to do a little
 
 Set the snapshot\_root variable in /etc/rsnapshot.conf equal to /.private/.snapshots/
 
-snapshot\_root       /.private/.snapshots/
+```
+snapshot_root       /.private/.snapshots/
+```
 
 Create the container directory:
 
-**mkdir /.private/**
+```
+mkdir /.private/
+```
 
 Create the real snapshot root:
 
-**mkdir /.private/.snapshots/**
+```
+mkdir /.private/.snapshots/
+```
 
 Create the read-only snapshot root mount point:
 
-**mkdir /.snapshots/**
+```
+mkdir /.snapshots/
+```
 
 Set the proper permissions on these new directories:
 
-**chmod 0700 /.private/
+```
+chmod 0700 /.private/
 chmod 0755 /.private/.snapshots/
-chmod 0755 /.snapshots/**
+chmod 0755 /.snapshots/
+```
 
 In /etc/exports, add /.private/.snapshots/ as a read only NFS export:
 
-/.private/.snapshots/  127.0.0.1(ro,no\_root\_squash)
+```
+/.private/.snapshots/  127.0.0.1(ro,no_root_squash)
+```
 
 In /etc/fstab, mount /.private/.snapshots/ read-only under /.snapshots/
 
+```
 localhost:/.private/.snapshots/   /.snapshots/   nfs    ro   0 0
+```
 
 You should now restart your NFS daemon.
 
 Now mount the read-only snapshot root:
 
-**mount /.snapshots/**
+```
+mount /.snapshots/
+```
 
 To test this, go into the /.snapshots/ directory as root. It is set to read-only, so even root shouldn't be able to write to it. As root, try:
 
-**touch /.snapshots/testfile**
+```
+touch /.snapshots/testfile
+```
 
 This should fail, citing insufficient permissions. This is what you want. It means that your users won't be able to mess with the snapshots either.
 
@@ -421,11 +467,15 @@ The amount of disk space taken up will be equal to one full backup, plus an addi
 
 You can use the _du_ option to rsnapshot to generate disk usage reports. To see the sum total of all space used, try:
 
-**rsnapshot du**
+```
+rsnapshot du
+```
 
 If you were storing backups under localhost/home/ and wanted to see how much this subdirectory takes up throughout all your backups, try this instead:
 
-**rsnapshot du localhost/home/**
+```
+rsnapshot du localhost/home/
+```
 
 The latest version of this document and the rsnapshot program can always be found at [http://www.rsnapshot.org/](http://www.rsnapshot.org/)
 
@@ -436,7 +486,7 @@ The latest version of this document and the rsnapshot program can always be foun
 
 Mike Rubel's original shell scripts, upon which this project is based
 
-[http://www.mikerubel.org/computers/rsync\_snapshots/](http://www.mikerubel.org/computers/rsync_snapshots/)
+[http://www.mikerubel.org/computers/rsync_snapshots/](http://www.mikerubel.org/computers/rsync_snapshots/)
 
 Perl
 
