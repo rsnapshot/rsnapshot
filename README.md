@@ -137,7 +137,7 @@ newest snapshot for `weekly` will be the oldest (30 day old) `daily`
 snapshot after a rotation.
 
 For the full documentation, type `man rsnapshot` once it is installed. The
-[HOWTO](docs/HOWTOs/rsnapshot-HOWTO.en.html) also has a detailed overview of
+[HOWTO](docs/HOWTOs/rsnapshot-HOWTO.en.md) also has a detailed overview of
 how to install and configure rsnapshot, and things like how to set it up so
 users can restore their own files.
 
