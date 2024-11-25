@@ -47,7 +47,7 @@ Several months later, the IDE controller on my web server failed horribly (when 
 
 This section will walk you through the installation of rsnapshot, step by step. This is not the only way to do it, but it is a way that works and that is well documented. Feel free to improvise if you know what you're doing.
 
-This guide assumes you are installing rsnapshot 1.2.0 for the first time. If you are upgrading from an earlier version, please read the INSTALL file that comes with the source distribution instead.
+This guide assumes you are installing rsnapshot 1.2.0 for the first time. If you are upgrading from an earlier version, please read the `INSTALL` file that comes with the source distribution instead.
 
 ### 3.1. 30 second version (for the impatient)
 
@@ -115,7 +115,7 @@ Now, to install rsnapshot, run the following command:
 make install
 ```
 
-This will install rsnapshot with all the settings you specified in the ./configure stage. If all goes well, you will have the following files on your system:
+This will install rsnapshot with all the settings you specified in the `./configure` stage. If all goes well, you will have the following files on your system:
 
 `/usr/local/bin/rsnapshot` The rsnapshot program
 
@@ -139,13 +139,13 @@ As a general rule, you should avoid modifying `/etc/rsnapshot.conf.default`, sim
 
 ### 4.2. Where to go for more info
 
-The `rsnapshot.conf` config file is well commented, and much of it should be fairly self-explanatory. For a full reference of all the various options, please consult the rsnapshot man page. Type:
+The `rsnapshot.conf` config file is well commented, and much of it should be fairly self-explanatory. For a full reference of all the various options, please consult the rsnapshot `man` page. Type:
 
 ```sh
 man rsnapshot
 ```
 
-This will give you the complete documentation. However, it assumes that you already know what you're doing to a certain extent. If you just want to get something up and running, this tutorial is a better place to start. If your system can't find the man page, `/usr/local/man` probably isn't in your `$MANPATH` environmental variable. This is beyond the scope of this document, but if it isn't working for you, you can always read the newest man page on the rsnapshot web site at [http://www.rsnapshot.org/](http://www.rsnapshot.org/)
+This will give you the complete documentation. However, it assumes that you already know what you're doing to a certain extent. If you just want to get something up and running, this tutorial is a better place to start. If your system can't find the man page, `/usr/local/man` probably isn't in your `$MANPATH` environmental variable. This is beyond the scope of this document, but if it isn't working for you, you can always read the newest `man` page on the rsnapshot web site at [http://www.rsnapshot.org/](http://www.rsnapshot.org/)
 
 ### 4.3. Modifying the config file
 
@@ -202,7 +202,7 @@ Please note that the `hourly` backup is specified first. This is very important.
 
 #### 4.3.8. backup
 
-Please note that the destination paths specified here are based on the assumption that the `--relative` flag is being passed to `rsync` via the `rsync_long_args` parameter. If you are installing for the first time, this is the default setting. If you upgraded from a previous version, please read the INSTALL file that came with the source distribution for more information.
+Please note that the destination paths specified here are based on the assumption that the `--relative` flag is being passed to `rsync` via the `rsync_long_args` parameter. If you are installing for the first time, this is the default setting. If you upgraded from a previous version, please read the `INSTALL` file that came with the source distribution for more information.
 
 This is the section where you tell rsnapshot what files you actually want to back up. You put a backup parameter first, followed by the full path to the directory or network path you're backing up. The third column is the relative path you want to back up to inside the snapshot root. Let's look at an example:
 
@@ -322,7 +322,7 @@ Remember that if you are using different intervals than the ones in this example
 
 ## 7. Restoring backups
 
-When rsnapshot is first run, it will create the `snapshot_root` directory (`/.snapshots/` by default). It assigns this directory the permissions 700, and for good reason. The snapshot root will probably contain files owned by all sorts of users on your system. If any of these files are writeable (and of course some of them will be), the users will still have write access to their files. Thus, if they can see the snapshots directly, they can modify them, and the integrity of the snapshots can not be guaranteed.
+When rsnapshot is first run, it will create the `snapshot_root` directory (`/.snapshots/` by default). It assigns this directory the permissions `700`, and for good reason. The snapshot root will probably contain files owned by all sorts of users on your system. If any of these files are writeable (and of course some of them will be), the users will still have write access to their files. Thus, if they can see the snapshots directly, they can modify them, and the integrity of the snapshots can not be guaranteed.
 
 For example, if a user had write permission to the backups and accidentally ran `rm -rf /`, they would delete all their files in their home directory and all the files they owned in the backups!
 
@@ -410,7 +410,7 @@ You can use the `du` option to rsnapshot to generate disk usage reports. To see 
 rsnapshot du
 ```
 
-If you were storing backups under localhost/home/ and wanted to see how much this subdirectory takes up throughout all your backups, try this instead:
+If you were storing backups under `localhost/home/` and wanted to see how much this subdirectory takes up throughout all your backups, try this instead:
 
 ```sh
 rsnapshot du localhost/home/
