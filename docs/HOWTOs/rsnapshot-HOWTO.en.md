@@ -469,7 +469,7 @@ The latest version of this document and the rsnapshot program can always be foun
 
 ## 9. More resources
 
-**Web sites**
+## Web sites
 
 Mike Rubel's original shell scripts, upon which this project is based
 
