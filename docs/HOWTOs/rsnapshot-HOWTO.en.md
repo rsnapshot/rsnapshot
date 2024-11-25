@@ -13,7 +13,7 @@ rsnapshot is a filesystem backup utility based on `rsync`. Using rsnapshot, it i
 
 rsnapshot is written in `Perl`, and depends on `rsync`. `OpenSSH`, GNU `cp`, GNU `du`, and the BSD `logger` program are also recommended, but not required. All of these should be present on most Linux systems. rsnapshot is written with the lowest common denominator in mind. It only requires at minimum `Perl` 5.004 and `rsync`. As a result of this, it works on pretty much any UNIX-like system you care to throw at it. It has been successfully tested with `Perl` 5.004 through 5.8.2, on Debian, Redhat, Fedora, Solaris, Mac OS X, FreeBSD, OpenBSD, NetBSD, and IRIX.
 
-The latest version of the program and this document can always be found at [http://www.rsnapshot.org/](http://www.rsnapshot.org/).
+The latest version of the program and this document can always be found at [rsnapshot.org](https://www.rsnapshot.org).
 
 ### 1.1. What you will need
 
@@ -25,7 +25,7 @@ Additionally, it will help if you have reasonably good sysadmin skills.
 
 ### 1.2. Copyright and License
 
-This document, rsnapshot HOWTO, is copyrighted (c) 2005 by Nathan Rosenquist, with some portions (c) 2006 David Cantrell. You can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version. A copy of the license is available at [http://www.gnu.org/copyleft/gpl.html](http://www.gnu.org/copyleft/gpl.html).
+This document, rsnapshot HOWTO, is copyrighted (c) 2005 by Nathan Rosenquist, with some portions (c) 2006 David Cantrell. You can **redistribute** it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version. A copy of the license is available at [gnu.org/copyleft/gpl.html](https://www.gnu.org/copyleft/gpl.html).
 
 ### 1.3. Disclaimer
 
@@ -35,7 +35,7 @@ All copyrights are held by their by their respective owners, unless specifically
 
 ### 1.4. Feedback
 
-Feedback is welcome for this document. Please raise issues on the rsnapshot mailing list at [http://lists.sourceforge.net/lists/listinfo/rsnapshot-discuss](http://lists.sourceforge.net/lists/listinfo/rsnapshot-discuss).
+Feedback is welcome for this document. Please raise issues on the rsnapshot mailing list at [sourceforge.net/projects/rsnapshot/lists/rsnapshot-discuss](https://sourceforge.net/projects/rsnapshot/lists/rsnapshot-discuss).
 
 ## 2. Motivation
 
@@ -145,7 +145,7 @@ The `rsnapshot.conf` config file is well commented, and much of it should be fai
 man rsnapshot
 ```
 
-This will give you the complete documentation. However, it assumes that you already know what you're doing to a certain extent. If you just want to get something up and running, this tutorial is a better place to start. If your system can't find the man page, `/usr/local/man` probably isn't in your `$MANPATH` environmental variable. This is beyond the scope of this document, but if it isn't working for you, you can always read the newest `man` page on the rsnapshot web site at [http://www.rsnapshot.org/](http://www.rsnapshot.org/)
+This will give you the complete documentation. However, it assumes that you already know what you're doing to a certain extent. If you just want to get something up and running, this tutorial is a better place to start. If your system can't find the man page, `/usr/local/man` probably isn't in your `$MANPATH` environmental variable. This is beyond the scope of this document, but if it isn't working for you, you can always read the newest `man` page on the rsnapshot web site at [rsnapshot.org](https://www.rsnapshot.org)
 
 ### 4.3. Modifying the config file
 
@@ -222,13 +222,10 @@ backup      root@example.com:/etc/     example.com/
 
 This behaves fundamentally the same way, but you must take a few extra things into account.
 
-*   The `ssh` daemon must be running on `example.com`
-    
-*   You must have access to the account you specify the remote machine, in this case the root user on `example.com`.
-    
-*   You must have key-based logins enabled for the root user at `example.com`, without passphrases. If you wanted to perform backups as another user, you could specify the other user instead of root for the source (i.e. `user@domain.com`). Please note that allowing remote logins with no passphrase is a security risk that may or may not be acceptable in your situation. Make sure you guard access to the backup server very carefully! For more information on how to set this up, please consult the `ssh` man page, or a tutorial on using `ssh` public and private keys. You will find that the key based logins are better in many ways, not just for rsnapshot but for convenience and security in general. One thing you can do to mitigate the potential damage from a backup server breach is to create alternate users on the client machines with `uid` and `gid` set to `0`, but with a more restrictive shell such as `scponly`.
-    
-*   This backup occurs over the network, so it may be slower. Since this uses `rsync`, this is most noticeable during the first backup. Depending on how much your data changes, subsequent backups should go much, much faster since `rsync` only sends the differences between files.
+- The `ssh` daemon must be running on `example.com`
+- You must have access to the account you specify the remote machine, in this case the root user on `example.com`.
+- You must have key-based logins enabled for the root user at `example.com`, without passphrases. If you wanted to perform backups as another user, you could specify the other user instead of root for the source (i.e. `user@domain.com`). Please note that allowing remote logins with no passphrase is a security risk that may or may not be acceptable in your situation. Make sure you guard access to the backup server very carefully! For more information on how to set this up, please consult the `ssh` man page, or a tutorial on using `ssh` public and private keys. You will find that the key based logins are better in many ways, not just for rsnapshot but for convenience and security in general. One thing you can do to mitigate the potential damage from a backup server breach is to create alternate users on the client machines with `uid` and `gid` set to `0`, but with a more restrictive shell such as `scponly`.
+- This backup occurs over the network, so it may be slower. Since this uses `rsync`, this is most noticeable during the first backup. Depending on how much your data changes, subsequent backups should go much, much faster since `rsync` only sends the differences between files.
 
 #### 4.3.9. backup_script
 
@@ -422,32 +419,15 @@ If you were storing backups under `localhost/home/` and wanted to see how much t
 rsnapshot du localhost/home/
 ```
 
-The latest version of this document and the rsnapshot program can always be found at [http://www.rsnapshot.org/](http://www.rsnapshot.org/)
+The latest version of this document and the rsnapshot program can always be found at [rsnapshot.org](https://www.rsnapshot.org)
 
 ## 9. More resources
 
 ### Web sites
 
-Mike Rubel's original shell scripts, upon which this project is based
-
-[http://www.mikerubel.org/computers/rsync_snapshots/](http://www.mikerubel.org/computers/rsync_snapshots/)
-
-`Perl`
-
-[http://www.perl.org/](http://www.perl.org/)
-
-GNU `cp` and `du` (`coreutils` package)
-
-[http://www.gnu.org/software/coreutils/](http://www.gnu.org/software/coreutils/)
-
-`rsync`
-
-[http://rsync.samba.org/](http://rsync.samba.org/)
-
-`OpenSSH`
-
-[http://www.openssh.org/](http://www.openssh.org/)
-
-`rsnapshot`
-
-[http://www.rsnapshot.org/](http://www.rsnapshot.org/)
+- Mike Rubel's original shell scripts, upon which this project is based: [mikerubel.org/computers/rsync_snapshots](http://mikerubel.org/computers/rsync_snapshots/)
+- `Perl`: [perl.org](https://www.perl.org)
+- GNU `cp` and `du` (`coreutils` package): [gnu.org/software/coreutils](https://www.gnu.org/software/coreutils)
+- `rsync`: [rsync.samba.org](https://rsync.samba.org)
+- `OpenSSH`: [openssh.com/](https://www.openssh.com/)
+- `rsnapshot`: [rsnapshot.org](https://www.rsnapshot.org)
