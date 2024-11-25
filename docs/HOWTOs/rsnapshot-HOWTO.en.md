@@ -4,6 +4,52 @@
 
 rsnapshot is a filesystem backup utility based on `rsync`. Using rsnapshot, it is possible to take snapshots of your filesystems at different points in time. Using hard links, rsnapshot creates the illusion of multiple full backups, while only taking up the space of one full backup plus differences. When coupled with `ssh`, it is possible to take snapshots of remote filesystems as well. This document is a tutorial in the installation and configuration of rsnapshot.
 
+## Table of Contents
+
+<!--ts-->
+* [rsnapshot HOWTO](#rsnapshot-howto)
+   * [Abstract](#abstract)
+   * [Table of Contents](#table-of-contents)
+   * [1. Introduction](#1introduction)
+      * [1.1. What you will need](#11what-you-will-need)
+      * [1.2. Copyright and License](#12copyright-and-license)
+      * [1.3. Disclaimer](#13disclaimer)
+      * [1.4. Feedback](#14feedback)
+   * [2. Motivation](#2motivation)
+   * [3. Installation](#3installation)
+      * [3.1. 30 second version (for the impatient)](#3130-second-version-for-the-impatient)
+      * [3.2. Untar the source code package](#32untar-the-source-code-package)
+      * [3.3. Change to the source directory](#33change-to-the-source-directory)
+      * [3.4. Decide where you want to install](#34decide-where-you-want-to-install)
+      * [3.5. Run the configure script](#35run-the-configure-script)
+      * [3.6. Install the program](#36install-the-program)
+   * [4. Configuration](#4configuration)
+      * [4.1. Create the config file](#41create-the-config-file)
+      * [4.2. Where to go for more info](#42where-to-go-for-more-info)
+      * [4.3. Modifying the config file](#43modifying-the-config-file)
+         * [4.3.1. cmd_cp](#431cmd_cp)
+         * [4.3.2. cmd_rsync](#432cmd_rsync)
+         * [4.3.3. cmd_ssh](#433cmd_ssh)
+         * [4.3.4. cmd_logger](#434cmd_logger)
+         * [4.3.5. cmd_du](#435cmd_du)
+         * [4.3.6. link_dest](#436link_dest)
+         * [4.3.7. retain](#437retain)
+         * [4.3.8. backup](#438backup)
+         * [4.3.9. backup_script](#439backup_script)
+      * [4.4. Testing your config file](#44testing-your-config-file)
+   * [5. Automation](#5automation)
+   * [6. How it works](#6how-it-works)
+   * [7. Restoring backups](#7restoring-backups)
+      * [7.1. root only](#71root-only)
+      * [7.2. All users](#72all-users)
+   * [8. Conclusion](#8conclusion)
+   * [9. More resources](#9more-resources)
+      * [Web sites](#web-sites)
+
+<!-- Created by https://github.com/ekalinin/github-markdown-toc -->
+
+<!--te-->
+
 ## 1. Introduction
 
 rsnapshot is a filesystem backup utility based on `rsync`. Using rsnapshot, it is possible to take snapshots of your filesystems at different points in time. Using hard links, rsnapshot creates the illusion of multiple full backups, while only taking up the space of one full backup plus differences. When coupled with `ssh`, it is possible to take snapshots of remote filesystems as well.
