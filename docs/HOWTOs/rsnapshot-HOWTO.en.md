@@ -4,9 +4,6 @@
 
 rsnapshot is a filesystem backup utility based on `rsync`. Using rsnapshot, it is possible to take snapshots of your filesystems at different points in time. Using hard links, rsnapshot creates the illusion of multiple full backups, while only taking up the space of one full backup plus differences. When coupled with `ssh`, it is possible to take snapshots of remote filesystems as well. This document is a tutorial in the installation and configuration of rsnapshot.
 
-
-## Table of Contents
-
 ## 1. Introduction
 
 rsnapshot is a filesystem backup utility based on `rsync`. Using rsnapshot, it is possible to take snapshots of your filesystems at different points in time. Using hard links, rsnapshot creates the illusion of multiple full backups, while only taking up the space of one full backup plus differences. When coupled with `ssh`, it is possible to take snapshots of remote filesystems as well.
