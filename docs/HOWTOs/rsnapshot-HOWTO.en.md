@@ -315,8 +315,7 @@ rsnapshot -t hourly
 
 This tells rsnapshot to simulate an "hourly" backup. It should print out the commands it will perform when it runs for real. Please note that the test output might be slightly different than the real execution, but only because the test doesn't actually do things that may be checked for later in the program. For example, if the program will create a directory and then later test to see if that directory exists, the test run might claim that it would create the directory twice, since it didn't actually get created during the test. This should be the only type of difference you will see while running a test.
 
-5. Automation
--------------
+## 5. Automation
 
 Now that you have your config file set up, it's time to set up rsnapshot to be run from cron. As the root user, edit root's crontab by typing:
 
