@@ -8,45 +8,46 @@ rsnapshot is a filesystem backup utility based on `rsync`. Using rsnapshot, it i
 
 <!--ts-->
 * [rsnapshot HOWTO](#rsnapshot-howto)
-   * [Abstract](#abstract)
-   * [Table of Contents](#table-of-contents)
-   * [1. Introduction](#1introduction)
-      * [1.1. What you will need](#11what-you-will-need)
-      * [1.2. Copyright and License](#12copyright-and-license)
-      * [1.3. Disclaimer](#13disclaimer)
-      * [1.4. Feedback](#14feedback)
-   * [2. Motivation](#2motivation)
-   * [3. Installation](#3installation)
-      * [3.1. 30 second version (for the impatient)](#3130-second-version-for-the-impatient)
-      * [3.2. Untar the source code package](#32untar-the-source-code-package)
-      * [3.3. Change to the source directory](#33change-to-the-source-directory)
-      * [3.4. Decide where you want to install](#34decide-where-you-want-to-install)
-      * [3.5. Run the configure script](#35run-the-configure-script)
-      * [3.6. Install the program](#36install-the-program)
-   * [4. Configuration](#4configuration)
-      * [4.1. Create the config file](#41create-the-config-file)
-      * [4.2. Where to go for more info](#42where-to-go-for-more-info)
-      * [4.3. Modifying the config file](#43modifying-the-config-file)
-         * [4.3.1. cmd_cp](#431cmd_cp)
-         * [4.3.2. cmd_rsync](#432cmd_rsync)
-         * [4.3.3. cmd_ssh](#433cmd_ssh)
-         * [4.3.4. cmd_logger](#434cmd_logger)
-         * [4.3.5. cmd_du](#435cmd_du)
-         * [4.3.6. link_dest](#436link_dest)
-         * [4.3.7. retain](#437retain)
-         * [4.3.8. backup](#438backup)
-         * [4.3.9. backup_script](#439backup_script)
-      * [4.4. Testing your config file](#44testing-your-config-file)
-   * [5. Automation](#5automation)
-   * [6. How it works](#6how-it-works)
-   * [7. Restoring backups](#7restoring-backups)
-      * [7.1. root only](#71root-only)
-      * [7.2. All users](#72all-users)
-   * [8. Conclusion](#8conclusion)
-   * [9. More resources](#9more-resources)
-      * [Web sites](#web-sites)
+  * [Abstract](#abstract)
+  * [Table of Contents](#table-of-contents)
+  * [1. Introduction](#1introduction)
+    * [1.1. What you will need](#11what-you-will-need)
+    * [1.2. Copyright and License](#12copyright-and-license)
+    * [1.3. Disclaimer](#13disclaimer)
+    * [1.4. Feedback](#14feedback)
+  * [2. Motivation](#2motivation)
+  * [3. Installation](#3installation)
+    * [3.1. 30 second version (for the impatient)](#3130-second-version-for-the-impatient)
+    * [3.2. Untar the source code package](#32untar-the-source-code-package)
+    * [3.3. Change to the source directory](#33change-to-the-source-directory)
+    * [3.4. Decide where you want to install](#34decide-where-you-want-to-install)
+    * [3.5. Run the configure script](#35run-the-configure-script)
+    * [3.6. Install the program](#36install-the-program)
+  * [4. Configuration](#4configuration)
+    * [4.1. Create the config file](#41create-the-config-file)
+    * [4.2. Where to go for more info](#42where-to-go-for-more-info)
+    * [4.3. Modifying the config file](#43modifying-the-config-file)
+      * [4.3.1. cmd_cp](#431cmd_cp)
+      * [4.3.2. cmd_rsync](#432cmd_rsync)
+      * [4.3.3. cmd_ssh](#433cmd_ssh)
+      * [4.3.4. cmd_logger](#434cmd_logger)
+      * [4.3.5. cmd_du](#435cmd_du)
+      * [4.3.6. link_dest](#436link_dest)
+      * [4.3.7. retain](#437retain)
+      * [4.3.8. backup](#438backup)
+      * [4.3.9. backup_script](#439backup_script)
+    * [4.4. Testing your config file](#44testing-your-config-file)
+  * [5. Automation](#5automation)
+  * [6. How it works](#6how-it-works)
+  * [7. Restoring backups](#7restoring-backups)
+    * [7.1. root only](#71root-only)
+    * [7.2. All users](#72all-users)
+  * [8. Conclusion](#8conclusion)
+  * [9. More resources](#9more-resources)
+    * [Web sites](#web-sites)
 
 <!-- Created by https://github.com/ekalinin/github-markdown-toc -->
+<!-- Added by: un, at: Mon Nov 25 01:07:53 PM EST 2024 -->
 
 <!--te-->
 
@@ -85,6 +86,8 @@ Feedback is welcome for this document. Please raise issues on the rsnapshot mail
 I originally used Mike Rubel's shell scripts to do `rsync` snapshots a while back. These worked very well, but there were a number of things that I wanted to improve upon. I had to write two shell scripts that were customized for my server. If I wanted to change the number of intervals stored, or the parts of the filesystem that were archived, that meant manually editing these shell scripts. If I wanted to install them on a different server with a different configuration, this meant manually editing the scripts for the new server, and hoping the logic and the sequence of operations was correct. Also, I was doing all the backups locally, on a single machine, on a single hard drive (just to protect from dumb user mistakes like deleting files). Never the less, I continued on with this system for a while, and it did work very well.
 
 Several months later, the IDE controller on my web server failed horribly (when I typed `/sbin/shutdown`, it said the command was not found). I was then faced with what was in the back of my mind all along: I had not been making regular remote backups of my server, and the local backups were of no use to me since the entire drive was corrupted. The reason I had only been making sporadic, partial remote backups is that they weren't automatic and effortless. Of course, this was no one's fault but my own, but I got frustrated enough to write a tool that would make automated remote snapshots so easy that I wouldn't ever have to worry about them again. This goal has long been reached, but work on rsnapshot still continues as people submit patches, request features, and ways are found to improve the program.
+
+[↑ Table of Contents](#table-of-contents)
 
 ## 3. Installation
 
@@ -167,6 +170,8 @@ This will install rsnapshot with all the settings you specified in the `./config
 `/etc/rsnapshot.conf.default` The example config file
 
 If you decide later that you don't want rsnapshot on your system anymore, simply remove the files listed above, or run `make uninstall` in the same source directory you installed from. Of course, if you installed with different options, the location of these files may be different.
+
+[↑ Table of Contents](#table-of-contents)
 
 ## 4. Configuration
 
@@ -312,6 +317,8 @@ rsnapshot -t hourly
 
 This tells rsnapshot to simulate an "hourly" backup. It should print out the commands it will perform when it runs for real. Please note that the test output might be slightly different than the real execution, but only because the test doesn't actually do things that may be checked for later in the program. For example, if the program will create a directory and then later test to see if that directory exists, the test run might claim that it would create the directory twice, since it didn't actually get created during the test. This should be the only type of difference you will see while running a test.
 
+[↑ Table of Contents](#table-of-contents)
+
 ## 5. Automation
 
 Now that you have your config file set up, it's time to set up rsnapshot to be run from `cron`. As the root user, edit root's `crontab` by typing:
@@ -328,6 +335,8 @@ You could alternately keep a `crontab` file that you load in, but the concepts a
 ```
 
 It is usually a good idea to schedule the larger intervals to run a bit before the lower ones. For example, in the `crontab` above, notice that `daily` runs 30 minutes before `hourly`. This helps prevent race conditions where the `daily` would try to run before the `hourly` job had finished. This same strategy should be extended so that a `weekly` entry would run before the `daily` and so on.
+
+[↑ Table of Contents](#table-of-contents)
 
 ## 6. How it works
 
@@ -365,6 +374,8 @@ When `rsnapshot daily` is run, it will rotate all the `daily.X` directories, the
 `hourly.0` will always contain the most recent snapshot, and `daily.6` will always contain a snapshot from a week ago. Unless the files change between snapshots, the full backups are really just multiple hard links to the same files. Thus, if your `/etc/passwd` file doesn't change in a week, `hourly.0/localhost/etc/passwd` and `daily.6/localhost/etc/passwd` will literally be the same exact file. This is how rsnapshot can be so efficient on space. If the file changes at any point, the next backup will unlink the hard link in `hourly.0`, and replace it with a brand new file. This will now take double the disk space it did before, but it is still considerably less than it would be to have full unique copies of this file 13 times over.
 
 Remember that if you are using different intervals than the ones in this example, the first interval listed is the one that gets updates directly from the main filesystem. All subsequently listed intervals pull from the previous intervals. For example, if you had `weekly`, `monthly`, and `yearly` intervals defined (in that order), the weekly ones would get updated directly from the filesystem, the monthly ones would get updated from weekly, and the yearly ones would get updated from monthly.
+
+[↑ Table of Contents](#table-of-contents)
 
 ## 7. Restoring backups
 
@@ -463,6 +474,8 @@ rsnapshot du localhost/home/
 ```
 
 The latest version of this document and the rsnapshot program can always be found at [rsnapshot.org](https://www.rsnapshot.org)
+
+[↑ Table of Contents](#table-of-contents)
 
 ## 9. More resources
 
