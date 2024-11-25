@@ -66,7 +66,7 @@ The rest of this section is the long version.
 tar xzvf rsnapshot-1.2.0.tar.gz
 ```
 
-If you don't have GNU tar, you may have to do this in two steps instead:
+If you don't have GNU `tar`, you may have to do this in two steps instead:
 
 ```sh
 gunzip rsnapshot-1.2.0.tar.gz
@@ -315,7 +315,7 @@ backup          /etc/           localhost/
 
 The `/etc/` directory will initially get backed up into `/.snapshots/hourly.0/localhost/etc/`
 
-Each subsequent time rsnapshot is run with the `hourly` command, it will rotate the hourly.X directories, and then copy the contents of the `hourly.0` directory (using hard links) into `hourly.1`.
+Each subsequent time rsnapshot is run with the `hourly` command, it will rotate the `hourly.X` directories, and then copy the contents of the `hourly.0` directory (using hard links) into `hourly.1`.
 
 When `rsnapshot daily` is run, it will rotate all the `daily.X` directories, then rename `hourly.5` to `daily.0`.
 
