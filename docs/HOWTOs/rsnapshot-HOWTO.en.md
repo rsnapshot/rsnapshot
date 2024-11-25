@@ -1,13 +1,10 @@
-rsnapshot HOWTO
-===============
+# rsnapshot HOWTO
 
-### **Abstract**
+## Abstract
 
 rsnapshot is a filesystem backup utility based on rsync. Using rsnapshot, it is possible to take snapshots of your filesystems at different points in time. Using hard links, rsnapshot creates the illusion of multiple full backups, while only taking up the space of one full backup plus differences. When coupled with ssh, it is possible to take snapshots of remote filesystems as well. This document is a tutorial in the installation and configuration of rsnapshot.
 
-* * *
-
-### **Table of Contents**
+## Table of Contents
 
 [1. Introduction](#intro)
 
@@ -59,8 +56,7 @@ rsnapshot is a filesystem backup utility based on rsync. Using rsnapshot, it is 
 
 [9. More resources](#more_resources)
 
-1. Introduction
----------------
+## 1. Introduction
 
 rsnapshot is a filesystem backup utility based on rsync. Using rsnapshot, it is possible to take snapshots of your filesystems at different points in time. Using hard links, rsnapshot creates the illusion of multiple full backups, while only taking up the space of one full backup plus differences. When coupled with ssh, it is possible to take snapshots of remote filesystems as well.
 
@@ -90,15 +86,13 @@ All copyrights are held by their by their respective owners, unless specifically
 
 Feedback is welcome for this document. Please raise issues on the rsnapshot mailing list at [http://lists.sourceforge.net/lists/listinfo/rsnapshot-discuss](http://lists.sourceforge.net/lists/listinfo/rsnapshot-discuss).
 
-2. Motivation
--------------
+## 2. Motivation
 
 I originally used Mike Rubel's shell scripts to do rsync snapshots a while back. These worked very well, but there were a number of things that I wanted to improve upon. I had to write two shell scripts that were customized for my server. If I wanted to change the number of intervals stored, or the parts of the filesystem that were archived, that meant manually editing these shell scripts. If I wanted to install them on a different server with a different configuration, this meant manually editing the scripts for the new server, and hoping the logic and the sequence of operations was correct. Also, I was doing all the backups locally, on a single machine, on a single hard drive (just to protect from dumb user mistakes like deleting files). Never the less, I continued on with this system for a while, and it did work very well.
 
 Several months later, the IDE controller on my web server failed horribly (when I typed **/sbin/shutdown**, it said the command was not found). I was then faced with what was in the back of my mind all along: I had not been making regular remote backups of my server, and the local backups were of no use to me since the entire drive was corrupted. The reason I had only been making sporadic, partial remote backups is that they weren't automatic and effortless. Of course, this was no one's fault but my own, but I got frustrated enough to write a tool that would make automated remote snapshots so easy that I wouldn't ever have to worry about them again. This goal has long been reached, but work on rsnapshot still continues as people submit patches, request features, and ways are found to improve the program.
 
-3. Installation
----------------
+## 3. Installation
 
 This section will walk you through the installation of rsnapshot, step by step. This is not the only way to do it, but it is a way that works and that is well documented. Feel free to improvise if you know what you're doing.
 
@@ -180,8 +174,7 @@ This will install rsnapshot with all the settings you specified in the ./configu
 
 If you decide later that you don't want rsnapshot on your system anymore, simply remove the files listed above, or run **make uninstall** in the same source directory you installed from. Of course, if you installed with different options, the location of these files may be different.
 
-4. Configuration
-----------------
+## 4. Configuration
 
 ### 4.1. Create the config file
 
@@ -209,7 +202,7 @@ In this example, we will be using the /.snapshots/ directory to hold the filesys
 
 Also please note that fields are separated by tabs, not spaces. The reason for this is so it's easier to specify file paths with spaces in them.
 
-#### 4.3.1. cmd\_cp
+#### 4.3.1. cmd_cp
 
 If enabled, the _cmd\_cp_ parameter should contain the path to the GNU cp program on your filesystem. If you are using Linux, be sure to uncomment this by removing the hash mark (#) in front of it. If you are using BSD, Solaris, IRIX, or most other UNIX variants, you should leave this commented out.
 
@@ -219,27 +212,27 @@ If you don't have GNU cp, there is a subroutine in rsnapshot that somewhat appro
 
 The rule of thumb is that if you're on a Linux system, leave _cmd\_cp_ enabled. If you aren't on a Linux system, leave _cmd\_cp_ disabled. There are reports of GNU cp working on BSD and other non-Linux platforms, but there have also been some cases where problems have been encountered. If you enable _cmd\_cp_ on a non-Linux platform, please let the mailing list know how it worked out for you.
 
-#### 4.3.2. cmd\_rsync
+#### 4.3.2. cmd_rsync
 
 The _cmd\_rsync_ parameter must not be commented out, and it must point to a working version of rsync. If it doesn't, the program just will not work at all.
 
 Please note that if you are using IRIX, there is another program named rsync that is different than the real rsync most people know of. If you're on an IRIX machine, you should double check this.
 
-#### 4.3.3. cmd\_ssh
+#### 4.3.3. cmd_ssh
 
 If you have ssh installed on your system, you will want to uncomment the _cmd\_ssh_ parameter. By enabling ssh, you can take snapshots of any number of remote systems. If you don't have ssh, or plan to only take snapshots of the local filesystem, you may safely leave this commented out.
 
-#### 4.3.4. cmd\_logger
+#### 4.3.4. cmd_logger
 
 The _cmd\_logger_ parameter specifies the path to the logger program. logger is a command line interface to syslog. See the logger man page for more details. logger should be a standard part of most UNIX-like systems. It appears to have remained unchanged since about 1993, which is good for cross-platform stability. If you comment out this parameter, it will disable syslog support in rsnapshot. It is recommended that you leave this enabled.
 
-#### 4.3.5. cmd\_du
+#### 4.3.5. cmd_du
 
 The _cmd\_du_ parameter specifies the path to the du program. du is a command line tool that reports on disk usage. rsnapshot uses du to generate reports about the actual amount of disk space taken up, which is otherwise difficult to estimate because of all the hard links.
 
 If you comment this out, rsnapshot will try to use the version of du it finds in your path, if possible. The GNU version of du is recommended, since it has the best selection of features, and supports the most options. The BSD version also seems to work, although it doesn't support the **\-h** flag. Solaris **du** does not work at all, because it doesn't support the **\-c** parameter.
 
-#### 4.3.6. link\_dest
+#### 4.3.6. link_dest
 
 If you have rsync version 2.5.7 or later, you may want to enable this. With _link\_dest_ enabled, rsnapshot relies on rsync to create recursive hard links, overriding GNU cp in most, but not all, cases. With _link\_dest_ enabled, every single file on your system can be backed up in one pass, on any operating system. To get the most out of rsnapshot on non-Linux platforms, _link\_dest_ should be enabled. Be advised, however, that if a remote host is unavailable during a backup, rsnapshot will take an extra step and roll back the files from the previous backup. Using GNU cp, this would not be necessary.
 
@@ -279,9 +272,8 @@ This behaves fundamentally the same way, but you must take a few extra things in
 *   You must have key-based logins enabled for the root user at example.com, without passphrases. If you wanted to perform backups as another user, you could specify the other user instead of root for the source (i.e. user@domain.com). Please note that allowing remote logins with no passphrase is a security risk that may or may not be acceptable in your situation. Make sure you guard access to the backup server very carefully! For more information on how to set this up, please consult the ssh man page, or a tutorial on using ssh public and private keys. You will find that the key based logins are better in many ways, not just for rsnapshot but for convenience and security in general. One thing you can do to mitigate the potential damage from a backup server breach is to create alternate users on the client machines with uid and gid set to 0, but with a more restrictive shell such as scponly.
     
 *   This backup occurs over the network, so it may be slower. Since this uses rsync, this is most noticeable during the first backup. Depending on how much your data changes, subsequent backups should go much, much faster since _rsync_ only sends the differences between files.
-    
 
-#### 4.3.9. backup\_script
+#### 4.3.9. backup_script
 
 With this parameter, the second column is the full path to an executable backup script, and the third column is the local path you want to store it in (just like with the "backup" parameter). For example:
 
@@ -341,8 +333,7 @@ You could alternately keep a crontab file that you load in, but the concepts are
 
 It is usually a good idea to schedule the larger intervals to run a bit before the lower ones. For example, in the crontab above, notice that _daily_ runs 30 minutes before _hourly_. This helps prevent race conditions where the _daily_ would try to run before the _hourly_ job had finished. This same strategy should be extended so that a _weekly_ entry would run before the _daily_ and so on.
 
-6. How it works
----------------
+## 6. How it works
 
 We have a snapshot root under which all backups are stored. By default, this is the directory /.snapshots/. Within this directory, other directories are created for the various intervals that have been defined. In the beginning it will be empty, but once rsnapshot has been running for a week, it should look something like this:
 
@@ -379,8 +370,7 @@ hourly.0 will always contain the most recent snapshot, and daily.6 will always c
 
 Remember that if you are using different intervals than the ones in this example, the first interval listed is the one that gets updates directly from the main filesystem. All subsequently listed intervals pull from the previous intervals. For example, if you had _weekly_, _monthly_, and _yearly_ intervals defined (in that order), the weekly ones would get updated directly from the filesystem, the monthly ones would get updated from weekly, and the yearly ones would get updated from monthly.
 
-7. Restoring backups
---------------------
+## 7. Restoring backups
 
 When rsnapshot is first run, it will create the _snapshot\_root_ directory (/.snapshots/ by default). It assigns this directory the permissions 700, and for good reason. The snapshot root will probably contain files owned by all sorts of users on your system. If any of these files are writeable (and of course some of them will be), the users will still have write access to their files. Thus, if they can see the snapshots directly, they can modify them, and the integrity of the snapshots can not be guaranteed.
 
@@ -458,8 +448,7 @@ Now, all your users have to do to recover old files is go into the /.snapshots d
 
 Please note that some NFS configurations may prevent you from accessing files that are owned by root and set to only be readable by root. In this situation, you may wish to pull backups for root from the "real" snapshot root, and let non-privileged users pull from the read-only NFS mount.
 
-8. Conclusion
--------------
+## 8. Conclusion
 
 If you followed the instructions in this document, you should now have rsnapshot installed and set up to perform automatic backups of your system. If it's not working, go back and trace your steps back to see if you can isolate the problem.
 
@@ -479,8 +468,7 @@ rsnapshot du localhost/home/
 
 The latest version of this document and the rsnapshot program can always be found at [http://www.rsnapshot.org/](http://www.rsnapshot.org/)
 
-9. More resources
------------------
+## 9. More resources
 
 **Web sites**
 
