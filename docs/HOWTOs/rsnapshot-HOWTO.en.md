@@ -51,7 +51,7 @@ This guide assumes you are installing rsnapshot 1.2.0 for the first time. If you
 
 ### 3.1. 30 second version (for the impatient)
 
-```
+```sh
 ./configure --sysconfdir=/etc
 su
 make install
@@ -62,20 +62,20 @@ The rest of this section is the long version.
 
 ### 3.2. Untar the source code package
 
-```
+```sh
 tar xzvf rsnapshot-1.2.0.tar.gz
 ```
 
 If you don't have GNU tar, you may have to do this in two steps instead:
 
-```
+```sh
 gunzip rsnapshot-1.2.0.tar.gz
 tar xvf rsnapshot-1.2.0.tar
 ```
 
 ### 3.3. Change to the source directory
 
-```
+```sh
 cd rsnapshot-1.2.0/
 ```
 
@@ -85,7 +85,7 @@ By default, the installation procedure will install all files under `/usr/local`
 
 We are assuming that `rsync`, `ssh`, `logger`, and `du` are all in your search path. If this is not the case, you can specify the path to any of these programs using the typical Autoconf `--with-program=/path/to/program` syntax. For example, if Perl was in `/opt/bin/perl` and `rsync` was in `/home/me/bin/rsync`, you could run configure like:
 
-```
+```sh
 ./configure --with-perl=/opt/bin/perl --with-rsync=/home/me/bin/rsync
 ```
 
@@ -93,7 +93,7 @@ We are assuming that `rsync`, `ssh`, `logger`, and `du` are all in your search p
 
 This will poke and prod your system to figure out where the various external programs that rsnapshot depends on live. It also generates the Makefile that we will use to install the program. The configure script accepts arguments that can be used to tell it where to install the program, and also where to find the supporting programs. For this installation, the only non-default option we want is to put the config file in the `/etc` directory. To do this, run this command at the shell:
 
-```
+```sh
 ./configure --sysconfdir=/etc
 ```
 
@@ -103,7 +103,7 @@ If all goes well, you're ready to install the program. If there was a problem, i
 
 If you've followed these instructions so far, you will have configured rsnapshot to be installed under `/usr/local`, with the config file in `/etc`. Under these circumstances, it will be necessary to become root to install the program. Now is the time to do so. You will, of course, need the root password to do this:
 
-```
+```sh
 su
 ```
 
@@ -111,7 +111,7 @@ This will prompt you for the root password.
 
 Now, to install rsnapshot, run the following command:
 
-```
+```sh
 make install
 ```
 
@@ -131,7 +131,7 @@ If you decide later that you don't want rsnapshot on your system anymore, simply
 
 In the install process, the config file is not created or installed. However, a working example is provided that you can copy. To copy the example config file into the location rsnapshot will be looking for the real config file:
 
-```
+```sh
 cp /etc/rsnapshot.conf.default /etc/rsnapshot.conf
 ```
 
@@ -141,7 +141,7 @@ As a general rule, you should avoid modifying `/etc/rsnapshot.conf.default`, sim
 
 The `rsnapshot.conf` config file is well commented, and much of it should be fairly self-explanatory. For a full reference of all the various options, please consult the rsnapshot man page. Type:
 
-```
+```sh
 man rsnapshot
 ```
 
@@ -228,7 +228,7 @@ This behaves fundamentally the same way, but you must take a few extra things in
 
 With this parameter, the second column is the full path to an executable backup script, and the third column is the local path you want to store it in (just like with the `backup` parameter). For example:
 
-```
+```sh
 backup_script      /usr/local/bin/backup_pgsql.sh       localhost/postgres/
 ```
 
@@ -236,7 +236,7 @@ In this example, rsnapshot will run the script `/usr/local/bin/backup_pgsql.sh` 
 
 Your backup script simply needs to dump out the contents of whatever it does into its current working directory. It can create as many files and/or directories as necessary, but it should not put its files in any pre-determined path. The reason for this is that rsnapshot creates a temp directory, changes to that directory, runs the backup script, and then syncs the contents of the temp directory to the local path you specified in the third column. A typical backup script would be one that archives the contents of a database. It might look like this:
 
-```
+```sh
 #!/bin/sh
 /usr/bin/mysqldump -uroot mydatabase > mydatabase.sql
 /bin/chmod 644 mydatabase.sql
@@ -252,7 +252,7 @@ Please remember that these backup scripts will be invoked as the user running rs
 
 When you have made all your changes, you should verify that the config file is syntactically valid, and that all the supporting programs are where you think they are. To do this, run rsnapshot with the configtest argument:
 
-```
+```sh
 rsnapshot configtest
 ```
 
@@ -260,7 +260,7 @@ If all is well, it should say "Syntax OK". If there's a problem, it should tell 
 
 The final step to test your configuration is to run rsnapshot in test mode. This will print out a verbose list of the things it will do, without actually doing them. To do a test run, run this command:
 
-```
+```sh
 rsnapshot -t hourly
 ```
 
@@ -270,13 +270,13 @@ This tells rsnapshot to simulate an "hourly" backup. It should print out the com
 
 Now that you have your config file set up, it's time to set up rsnapshot to be run from `cron`. As the root user, edit root's `crontab` by typing:
 
-```
+```sh
 crontab -e
 ```
 
 You could alternately keep a `crontab` file that you load in, but the concepts are the same. You want to enter the following information into root's `crontab`:
 
-```
+```cronttab
 0 */4 * * *       /usr/local/bin/rsnapshot hourly
 30 23 * * *       /usr/local/bin/rsnapshot daily
 ```
@@ -287,7 +287,7 @@ It is usually a good idea to schedule the larger intervals to run a bit before t
 
 We have a snapshot root under which all backups are stored. By default, this is the directory `/.snapshots/`. Within this directory, other directories are created for the various intervals that have been defined. In the beginning it will be empty, but once rsnapshot has been running for a week, it should look something like this:
 
-```
+```sh
 [root@localhost]# ls -l /.snapshots/
 drwxr-xr-x    7 root     root         4096 Dec 28 00:00 daily.0
 drwxr-xr-x    7 root     root         4096 Dec 27 00:00 daily.1
@@ -306,7 +306,7 @@ drwxr-xr-x    7 root     root         4096 Dec 28 04:00 hourly.5
 
 Inside each of these directories is a full backup of that point in time. The destination directory paths you specified under the `backup` and `backup_script` parameters get stuck directly under these directories. In the example:
 
-```
+```sh
 backup          /etc/           localhost/
 ```
 
@@ -336,31 +336,31 @@ If users need to be able to pull their own backups, you will need to do a little
 
 Set the `snapshot_root` variable in `/etc/rsnapshot.conf` equal to `/.private/.snapshots/`
 
-```
+```sh
 snapshot_root       /.private/.snapshots/
 ```
 
 Create the container directory:
 
-```
+```sh
 mkdir /.private/
 ```
 
 Create the real snapshot root:
 
-```
+```sh
 mkdir /.private/.snapshots/
 ```
 
 Create the read-only snapshot root mount point:
 
-```
+```sh
 mkdir /.snapshots/
 ```
 
 Set the proper permissions on these new directories:
 
-```
+```sh
 chmod 0700 /.private/
 chmod 0755 /.private/.snapshots/
 chmod 0755 /.snapshots/
@@ -382,13 +382,13 @@ You should now restart your NFS daemon.
 
 Now mount the read-only snapshot root:
 
-```
+```sh
 mount /.snapshots/
 ```
 
 To test this, go into the `/.snapshots/` directory as root. It is set to read-only, so even root shouldn't be able to write to it. As root, try:
 
-```
+```sh
 touch /.snapshots/testfile
 ```
 
@@ -406,13 +406,13 @@ The amount of disk space taken up will be equal to one full backup, plus an addi
 
 You can use the `du` option to rsnapshot to generate disk usage reports. To see the sum total of all space used, try:
 
-```
+```sh
 rsnapshot du
 ```
 
 If you were storing backups under localhost/home/ and wanted to see how much this subdirectory takes up throughout all your backups, try this instead:
 
-```
+```sh
 rsnapshot du localhost/home/
 ```
 
