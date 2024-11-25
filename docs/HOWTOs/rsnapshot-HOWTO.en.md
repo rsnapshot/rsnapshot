@@ -191,8 +191,10 @@ If you have `rsync` version 2.5.7 or later, you may want to enable this. With `l
 
 rsnapshot has no idea how often you want to take snapshots. Everyone's backup scheme may be different. In order to specify how much data to save, you need to tell rsnapshot which backups to keep, and how many of each. A backup, in the context of the rsnapshot config file, is just a name. These can actually be named anything (as long as it's alphanumeric, and not a reserved word), but a very common convention is to use names like `hourly` and `daily` and so on. In this example, we want to take a snapshot every four hours, or six times a day (these are the `hourly` backups). We also want to keep a second set, which are taken once a day, and stored for a week (or seven days). The relevant section of the config file would, in this case, look like:
 
+```
 retain    hourly  6
 retain    daily   7
+```
 
 We use the `retain` keyword to describe how many of which level of backup to keep. `interval` is a deprecated synonym.
 
@@ -206,13 +208,17 @@ Please note that the destination paths specified here are based on the assumptio
 
 This is the section where you tell rsnapshot what files you actually want to back up. You put a backup parameter first, followed by the full path to the directory or network path you're backing up. The third column is the relative path you want to back up to inside the snapshot root. Let's look at an example:
 
+```
 backup      /etc/      localhost/
+```
 
 In this example, `backup` tells us it's a backup point. `/etc/` is the full path to the directory we want to take snapshots of, and `localhost/` is a directory inside the `snapshot_root` we're going to put them in. Using the word `localhost` as the destination directory is just a convention. You might also choose to use the server's fully qualified domain name instead of `localhost`. If you are taking snapshots of several machines on one dedicated backup server, it's a good idea to use their various hostnames as directories to keep track of which files came from which server.
 
 In addition to full paths on the local filesystem, you can also backup remote systems using `rsync` over `ssh`. If you have `ssh` installed and enabled (via the `cmd_ssh` parameter), you can specify a path like:
 
+```
 backup      root@example.com:/etc/     example.com/
+```
 
 This behaves fundamentally the same way, but you must take a few extra things into account.
 
