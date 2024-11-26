@@ -7017,6 +7017,17 @@ By default no repeated attempts are performed ("rsync_numtries 0").
 
 =back
 
+B<rsync_wait_between_tries    0>
+
+=over 4
+
+Wait between tries in seconds.
+Specify the duration in seconds to wait between retries of the rsync operation.
+The number of retries should be defined in rsync_numtries.
+The default wait time is 0 seconds.
+
+=back
+
 B<ssh_args    -p 22>
 
 =over 4
