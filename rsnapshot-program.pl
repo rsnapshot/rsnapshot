@@ -2363,7 +2363,8 @@ sub raise_error {
 # returns the current date (for the logfile)
 #
 # there's probably a wonderful module that can do this all for me,
-# but unless it comes standard with perl 5.12.0 and later, i'd rather do it this way :)
+# but unless it comes standard with perl 5.12.0 and later, i'd rather
+# do it this way :)
 #
 sub get_current_date {
 
