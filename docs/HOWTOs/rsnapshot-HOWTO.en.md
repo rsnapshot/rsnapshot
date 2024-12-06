@@ -55,7 +55,7 @@ rsnapshot is a filesystem backup utility based on `rsync`. Using rsnapshot, it i
 
 rsnapshot is a filesystem backup utility based on `rsync`. Using rsnapshot, it is possible to take snapshots of your filesystems at different points in time. Using hard links, rsnapshot creates the illusion of multiple full backups, while only taking up the space of one full backup plus differences. When coupled with `ssh`, it is possible to take snapshots of remote filesystems as well.
 
-rsnapshot is written in `Perl`, and depends on `rsync`. `OpenSSH`, GNU `cp`, GNU `du`, and the BSD `logger` program are also recommended, but not required. All of these should be present on most Linux systems. rsnapshot is written with the lowest common denominator in mind. It only requires at minimum `Perl` 5.004 and `rsync`. As a result of this, it works on pretty much any UNIX-like system you care to throw at it. It has been successfully tested with `Perl` 5.004 through 5.8.2, on Debian, Redhat, Fedora, Solaris, Mac OS X, FreeBSD, OpenBSD, NetBSD, and IRIX.
+rsnapshot is written in `Perl`, and depends on `rsync`. `OpenSSH`, GNU `cp`, GNU `du`, and the BSD `logger` program are also recommended, but not required. All of these should be present on most Linux systems. rsnapshot is written with the lowest common denominator in mind. It only requires at minimum `Perl` 5.12.0 and `rsync`. As a result of this, it works on pretty much any UNIX-like system you care to throw at it. It has been successfully tested with `Perl` 5.12.0 upwards on numerous platforms, including Linux, Solaris, FreeBSD, Mac OS and OpenBSD.
 
 The latest version of the program and this document can always be found at [rsnapshot.org](https://www.rsnapshot.org).
 
