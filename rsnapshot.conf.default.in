@@ -198,6 +198,13 @@ lockfile	/var/run/rsnapshot.pid
 #
 #rsync_numtries	1
 
+# Wait between tries in seconds.
+# Specify the duration in seconds to wait between retries of the rsync operation.
+# The number of retries should be defined in rsync_numtries.
+# The default wait time is 0 seconds.
+#
+#rsync_wait_between_tries	0
+
 # LVM parameters. Used to backup with creating lvm snapshot before backup
 # and removing it after. This should ensure consistency of data in some special
 # cases
