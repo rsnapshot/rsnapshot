@@ -77,3 +77,11 @@ sign_packages.sh
 ------------------------------------------------------------------------------
     The shell script used to automate package signing for releases.
 
+backup_sqlite.sh
+------------------------------------------------------------------------------
+    An example script to backup sqlite3 databases located in the `/var` 
+    directory.  This is to be invoked from rsnapshot using the "backup_script"
+    parameter. You will probably need to modify this for your setup.  Do NOT
+    replace `/var` with `/` otherwise find will locate all of your previous
+    database backups.
+
