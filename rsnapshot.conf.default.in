@@ -136,6 +136,11 @@ lockfile	/var/run/rsnapshot.pid
 #
 #rsync_short_args	-a
 #rsync_long_args	--delete --numeric-ids --relative --delete-excluded
+#
+# Note: there is an exception to every rule:
+#   There is a <tab> after `rsync_long_args` and before `--delete`.
+#   And a <space> after all of the other paramters.  Similar to:
+#   rsync_long_args<tab>--delete<space>--numeric-ids<space>--relative
 
 # ssh has no args passed by default, but you can specify some here.
 #
