@@ -1,0 +1,10 @@
+#!/bin/sh
+set -e
+
+#DEBHELPER#
+
+# purge the log files
+if [ "$1" = purge ] ; then
+        rm -f /var/log/rsnapshot.log*
+fi
+

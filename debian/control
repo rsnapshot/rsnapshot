@@ -1,0 +1,22 @@
+Source: rsnapshot
+Section: utils
+Priority: optional
+Maintainer: Guillaume Delacour <gui@iroqwa.org>
+Uploaders: MJ Ray (Debian) <mjr@debian.org>
+Build-Depends: debhelper (>= 9)
+Build-Depends-Indep: autotools-dev, rsync, openssh-client | ssh-client,
+                     lvm2, udev, dh-autoreconf
+Standards-Version: 3.9.7
+Homepage: http://www.rsnapshot.org/
+Vcs-Browser: https://anonscm.debian.org/cgit/collab-maint/rsnapshot.git
+Vcs-Git: https://anonscm.debian.org/git/collab-maint/rsnapshot.git
+
+Package: rsnapshot
+Architecture: all
+Depends: ${perl:Depends}, rsync, logrotate, ${misc:Depends}, liblchown-perl
+Recommends: openssh-client | ssh-client
+Description: local and remote filesystem snapshot utility
+ rsnapshot is an rsync-based filesystem snapshot utility. It can take
+ incremental backups of local and remote filesystems for any number of
+ machines. rsnapshot makes extensive use of hard links, so disk space is
+ only used when absolutely necessary.

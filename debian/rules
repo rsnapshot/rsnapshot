@@ -1,0 +1,18 @@
+#!/usr/bin/make -f
+# -*- makefile -*-
+
+%:
+	dh $@ 
+
+override_dh_clean:
+	dh_clean
+	./autoclean.sh
+
+override_dh_update_autotools_config:
+	dh_update_autotools_config
+	./autogen.sh
+
+override_dh_install:
+	dh_install
+	$(MAKE) install DESTDIR=$(CURDIR)/debian/rsnapshot
+
