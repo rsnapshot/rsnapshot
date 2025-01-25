@@ -36,44 +36,35 @@ clean:
 	rm -f t/support/files/a/{1,2}
 	rm -rf t/support/snapshots/*.*
 
+tar: dist/rsnapshot-$(VERSION).tar.gz
 
-tar: rsnapshot-$(VERSION).tar.gz
-	@touch tar
-
-rsnapshot-$(VERSION).tar.gz: $(man_MANS) Makefile $(bin_SCRIPTS) $(sysconf_DATA)
+dist/rsnapshot-$(VERSION).tar.gz: $(man_MANS) Makefile $(bin_SCRIPTS) $(sysconf_DATA)
 	@echo building tar file
-	mkdir rsnapshot-$(VERSION)/
-
+	mkdir -p dist/rsnapshot-$(VERSION)/
 	@# core files
 	cp -a AUTHORS ChangeLog COPYING INSTALL.md Makefile.am README.md \
  		rsnapshot.conf.default.in rsnapshot-diff.pl rsnapshot-program.pl \
- 		rsnapshot-$(VERSION)
-
+ 		dist/rsnapshot-$(VERSION)
 	@# autoconf files
 	cp -a configure.ac Makefile.am \
 		aclocal.m4 autom4te.cache configure install-sh Makefile.in missing \
-		rsnapshot-$(VERSION)/
-
+		dist/rsnapshot-$(VERSION)/
 	@# documentation files
 	cp -a docs \
-		rsnapshot-$(VERSION)/
-
+		dist/rsnapshot-$(VERSION)/
 	@# utils
 	cp -a utils/ \
-		rsnapshot-$(VERSION)/
-
+		dist/rsnapshot-$(VERSION)/
 	@# testsuite
 	cp -a t/ \
-	rsnapshot-$(VERSION)/
-
+		dist/rsnapshot-$(VERSION)/
 	@# remove git-files
-	find rsnapshot-$(VERSION)/ -depth -name .gitignore -exec rm -rf {} \;
-
+	find dist/rsnapshot-$(VERSION)/ -depth -name .gitignore -exec rm -rf {} \;
 	@# change ownership to root, and delete build dir
-	fakeroot chown -R root:root rsnapshot-$(VERSION)/
-	rm -f rsnapshot-$(VERSION).tar.gz
-	tar czf rsnapshot-$(VERSION).tar.gz rsnapshot-$(VERSION)/
-	rm -rf rsnapshot-$(VERSION)/
+	fakeroot chown -R root:root dist/rsnapshot-$(VERSION)/
+	rm -f dist/rsnapshot-$(VERSION).tar.gz
+	tar czf dist/rsnapshot-$(VERSION).tar.gz dist/rsnapshot-$(VERSION)/
+	rm -rf dist/rsnapshot-$(VERSION)/
 	@echo
 
 # If you lack GNU make, you could use "test_cases = t/*.t" as an approximation.
