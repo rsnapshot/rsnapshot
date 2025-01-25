@@ -1,4 +1,4 @@
-#!@PERL@ -w
+#!@PERL@
 
 ########################################################################
 #                                                                      #
@@ -32,27 +32,20 @@
 ###         STANDARD MODULES         ###
 ########################################
 
-require 5.004;
+require 5.012000; # first version where POSIX::lchown is documented
 use strict;
-use DirHandle;               # DirHandle()
-use Cwd;                     # cwd()
-use Getopt::Std;             # getopts()
-use File::Path;              # mkpath(), rmtree()
-use File::stat;              # stat(), lstat()
-use POSIX qw(locale_h);      # setlocale()
-use Fcntl;                   # sysopen()
-use IO::File;                # recursive open in parse_config_file
-use IPC::Open3 qw(open3);    #open rsync with error output
-use IO::Handle;              # handle autoflush for rsync-output
+use warnings;
 
-########################################
-###           CPAN MODULES           ###
-########################################
-
-# keep track of whether we have access to the Lchown module
-my $have_lchown = 0;
-
-# use_lchown() is called later, so we can log the results
+use DirHandle;                 # DirHandle()
+use Cwd;                       # cwd()
+use Getopt::Std;               # getopts()
+use File::Path;                # mkpath(), rmtree()
+use File::stat;                # stat(), lstat()
+use POSIX qw(locale_h lchown); # setlocale(), lchown()
+use Fcntl;                     # sysopen()
+use IO::File;                  # recursive open in parse_config_file
+use IPC::Open3 qw(open3);      # open rsync with error output
+use IO::Handle;                # handle autoflush for rsync-output
 
 ########################################
 ###     DECLARE GLOBAL VARIABLES     ###
@@ -255,9 +248,6 @@ else {
 	# warn user and exit the program
 	exit_no_config_file();
 }
-
-# attempt to load the Lchown module: http://search.cpan.org/dist/Lchown/
-use_lchown();
 
 # if we're just doing a configtest, exit here with the results
 if (1 == $do_configtest) {
@@ -2399,7 +2389,8 @@ sub raise_error {
 # returns the current date (for the logfile)
 #
 # there's probably a wonderful module that can do this all for me,
-# but unless it comes standard with perl 5.004 and later, i'd rather do it this way :)
+# but unless it comes standard with perl 5.12.0 and later, i'd rather
+# do it this way :)
 #
 sub get_current_date {
 
@@ -6554,49 +6545,9 @@ sub write_upgraded_config_file {
 	}
 }
 
-# accepts no arguments
-# dynamically loads the CPAN Lchown module, if available
-# sets the global variable $have_lchown
-sub use_lchown {
-	if ($verbose >= 5) {
-		print_msg('require Lchown', 5);
-	}
-	eval { require Lchown; };
-	if ($@) {
-		$have_lchown = 0;
-
-		if ($verbose >= 5) {
-			print_msg('Lchown module not found', 5);
-		}
-
-		return (0);
-	}
-
-	# if it loaded, see if this OS supports the lchown() system call
-	{
-		no strict 'subs';
-		if (defined(Lchown) && defined(Lchown::LCHOWN_AVAILABLE)) {
-			if (1 == Lchown::LCHOWN_AVAILABLE()) {
-				$have_lchown = 1;
-
-				if ($verbose >= 5) {
-					print_msg('Lchown module loaded successfully', 5);
-				}
-
-				return (1);
-			}
-		}
-	}
-
-	if ($verbose >= 5) {
-		print_msg("Lchown module loaded, but operating system doesn't support lchown()", 5);
-	}
-
-	return (0);
-}
-
 # accepts uid, gid, filepath
-# uses lchown() to change ownership of the file, if possible
+# uses lchown() to change ownership of the file
+# without following symlinks
 # returns 1 upon success (or if lchown() not present)
 # returns 0 on failure
 sub safe_chown {
@@ -6615,41 +6566,9 @@ sub safe_chown {
 		return (0);
 	}
 
-	# if it's a symlink, use lchown() or skip it
-	if (-l "$filepath") {
-
-		# use Lchown
-		if (1 == $have_lchown) {
-			$result = Lchown::lchown($uid, $gid, "$filepath");
-			if (!defined($result)) {
-				return (0);
-			}
-
-		}
-
-		# we can't safely do anything here, skip it
-		else {
-			raise_warning();
-
-			if ($verbose > 2) {
-				print_warn("Could not lchown() symlink \"$filepath\"", 2);
-			}
-			elsif ($loglevel > 2) {
-				log_warn("Could not lchown() symlink \"$filepath\"", 2);
-			}
-
-			# we'll still return 1 at the bottom, because we did as well as we could
-			# the warning raised will tell the user what happened
-		}
-
-	}
-
-	# if it's not a symlink, use chown()
-	else {
-		$result = chown($uid, $gid, "$filepath");
-		if (!$result) {
-			return (0);
-		}
+	$result = lchown($uid, $gid, "$filepath");
+	if (!defined($result)) {
+		return (0);
 	}
 
 	return (1);
