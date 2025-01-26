@@ -2,6 +2,32 @@
 rsnapshot changelog
 http://www.rsnapshot.org/
 ------------------------------------------------------------------------------
+VERSION 1.5.0 (Jan 27 2025)
+------------------------------------------------------------------------------
+- Rotate only if there will be a new <interval>.0 folder (#331)
+- Add publish GitHub workflow. (#367)
+- Use POSIX::lchown (#360)
+- Add test GitHub workflow. (#366)
+- Add new backup script for sqlite3 databases (#364)
+- wait between rsync tries (#352)
+- Update AUTHORS
+- Update rsnapshot-HOWTO.en.md
+- Point at the new Markdown HOWTO from the repo's README
+- Docs: add description for `rsync_numtries` to man page (#342)
+- Docs: fix spelling issues
+- Docs: mention the behavior of "sync" cron job in case of "warnings"
+- Remove Benedikt Heine from maintainer list (#337)
+- Docs: Use L<...> for other man pages
+- Docs: Use F<...> for filenames
+- Docs: Fix some styling issues
+- Docs: Fix literal hyphens being turned into en-dash
+- Docs: Fix grammatical error
+- Fix rsync_numtries example in default config
+- Fix validation of rsync_numtries = 0 (#323)
+- update readme with info on cross interval rotation
+- replace deprecated `interval` with `retain` in readme example
+- Minor bugfix: Check retval for termination by signal (#315)
+- Fix typo in docs: rm trailing slash in backup_exec example (#314).
 
 VERSION 1.4.5 (Dec 27 2022)
 ------------------------------------------------------------------------------
