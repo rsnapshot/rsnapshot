@@ -3358,8 +3358,8 @@ sub rotate_lowest_snapshots {
 
 	# cancel if sync_first is enabled but .sync directory not existent
 	if (($config_vars{'sync_first'}) && (!-d "$config_vars{'snapshot_root'}/.sync/")) {
-		print_err("sync_first is enabled, but there is no .sync directory! Run rsnapshot with the ´sync´ command first. Refusing to rotate this level ($interval)", 1);
-		syslog_err("sync_first is enabled, but there is no .sync directory! Run rsnapshot with the ´sync´ command first. Refusing to rotate this level ($interval)");
+		print_err("sync_first is enabled but there is no .sync directory. Refusing to rotate this level ($interval). Run rsnapshot with the ´sync´ command first.", 1);
+		syslog_err("sync_first is enabled but there is no .sync directory. Refusing to rotate this level ($interval). Run rsnapshot with the ´sync´ command first.");
 		bail();
 	}
  
