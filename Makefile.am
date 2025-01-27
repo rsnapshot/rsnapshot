@@ -63,7 +63,7 @@ dist/rsnapshot-$(VERSION).tar.gz: $(man_MANS) Makefile $(bin_SCRIPTS) $(sysconf_
 	@# change ownership to root, and delete build dir
 	fakeroot chown -R root:root dist/rsnapshot-$(VERSION)/
 	rm -f dist/rsnapshot-$(VERSION).tar.gz
-	tar czf dist/rsnapshot-$(VERSION).tar.gz dist/rsnapshot-$(VERSION)/
+	(cd dist/ && tar -czf rsnapshot-$(VERSION).tar.gz rsnapshot-$(VERSION)/)
 	rm -rf dist/rsnapshot-$(VERSION)/
 	@echo
 

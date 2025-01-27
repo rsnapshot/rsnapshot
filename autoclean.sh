@@ -11,3 +11,4 @@ rm -f aclocal.m4
 rm -f compile
 rm -f missing
 rm -f install-sh
+rm -rf dist/
