@@ -3944,6 +3944,10 @@ sub rsync_backup_point {
 			my $pid = open3($rsync_in, $rsync_out, undef, @cmd_stack)
 			  or die "Couldn't fork rsync: $!\n";
 
+			if ($tryCount > 0) {
+				print_msg("retrying, tryCount=".$tryCount, 3);
+			}
+
 			# add autoflush to get output by time and not at the end when rsync is finished
 			$rsync_out->autoflush();
 
