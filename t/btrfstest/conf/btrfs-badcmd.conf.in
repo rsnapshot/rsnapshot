@@ -1,0 +1,10 @@
+config_version	1.2
+snapshot_root	@TEST@/support/snapshots
+cmd_rsync		@TEST@/mock/bin/rsync
+interval		hourly	6
+backup			@TEST@/support/files/template/a/	localhost/
+
+linux_btrfs_cmd		/usr/sbin/btrfs-does-not-exist
+linux_btrfs_snapshotname	rsnapshot-btrfs-snap
+
+backup	btrfs:///mnt/btrfs/home/home/				rivendell/home

@@ -1,0 +1,67 @@
+package Mock;
+
+use strict;
+use File::Path;
+use Exporter 'import';
+
+our $VERSION = '1.0';
+
+our @EXPORT = qw(mock_init mock_cleanup);
+
+# mock_init - initialize the mock environment by creating the logs
+# directory if necessary.
+sub mock_init {
+	mkdir "@TEST@/mock/logs" unless -d "@TEST@/mock/logs";
+}
+
+# mock_cleanup - remove the logs directory so that a subsequent test
+# will not erroneously read the output from an earlier test.
+sub mock_cleanup {
+	rmtree("@TEST@/mock/logs");
+}
+
+=pod
+
+=head1 NAME
+
+Mock.pm - system for mocking external binaries while testing rsnapshot
+
+=head1 DESCRIPTION
+
+B<Mock.pm> allows a tester to mock external binaries and record the
+way in which these binaries were invoked by the program under test.
+The binaries are generated through autoconf by instantiating the
+B<t/mock/bin/mock-exec.in>, which generates a log file within
+B<t/mock/logs/> based on the file name by which the program was
+executed.
+
+For example, a mocked B<rsync> binary will generate a log file named
+B<t/mock/bin/rsync.log>, each line of which will contain the arguments
+passed to the binary for one invocation.
+
+This mocking mechanism enables testing of features that may not be
+available on all operating systems supported by the application under
+test (for example, B<btrfs> or B<lvm>), as well as more fine-grained
+testing that external applications are invoked in the desired manner
+based on inputs and configuration.
+
+To add a new binary to be mocked, simply add the name of that binary
+to the B<autogen.sh> file in the root of the rsnapshot repository,
+then run C<./autogen.sh && ./configure> to generate that binary.
+
+=head1 CAVEATS
+
+Future improvements include:
+
+=over 4
+
+=item *
+
+Configurable exit codes to enable more refined testing of error
+conditions.  (Mocked binaries currently always return success.)
+
+=back
+
+=cut
+
+1;
