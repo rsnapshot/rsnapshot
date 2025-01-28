@@ -3837,10 +3837,11 @@ sub rsync_backup_point {
 		# bp_ref{'dest'} and snapshot_root have already been validated, but these might be blank
 		if (defined($interval_link_dest) && defined($interval_num_link_dest)) {
 
+			# strip redundant trailing slashes
+			my $link_dest_val = "$config_vars{'snapshot_root'}/$interval_link_dest.$interval_num_link_dest/$$bp_ref{'dest'}";
+			$link_dest_val =~ s|/+$|/|;
 			# push link_dest arguments onto cmd stack
-			push(@rsync_long_args_stack,
-				"--link-dest=$config_vars{'snapshot_root'}/$interval_link_dest.$interval_num_link_dest/$$bp_ref{'dest'}"
-			);
+			push(@rsync_long_args_stack, "--link-dest=$link_dest_val");
 		}
 	}
 
@@ -3915,12 +3916,16 @@ sub rsync_backup_point {
 	push(@cmd_stack, "$src");
 	#
 	# dest
+	my $tmp_rsync_dest;
 	if ($interval eq 'sync') {
-		push(@cmd_stack, "$config_vars{'snapshot_root'}/.sync/$$bp_ref{'dest'}");
+		$tmp_rsync_dest = "$config_vars{'snapshot_root'}/.sync/$$bp_ref{'dest'}";
 	}
 	else {
-		push(@cmd_stack, "$config_vars{'snapshot_root'}/$interval.0/$$bp_ref{'dest'}");
+		$tmp_rsync_dest = "$config_vars{'snapshot_root'}/$interval.0/$$bp_ref{'dest'}";
 	}
+	# strip redundant trailing slashes
+	$tmp_rsync_dest =~ s|/+$|/|;
+	push(@cmd_stack, "$tmp_rsync_dest");
 	#
 	# END RSYNC COMMAND ASSEMBLY
 
