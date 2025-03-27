@@ -175,14 +175,14 @@ dnl
 dnl LVM COMMANDS CHECK (optional programs)
 dnl
 dnl lvcreate
-AC_PATH_PROG(LVCREATE, lvcreate, no)
+AC_PATH_PROG(LVCREATE, lvcreate, no, $PATH:/usr/sbin:/sbin)
 if test "$LVCREATE" = "no"; then
 	LVCREATE=/path/to/lvcreate
 fi
 AC_SUBST(CMD_LVCREATE, "$LVCREATE")
 
 dnl lvremove
-AC_PATH_PROG(LVREMOVE, lvremove, no)
+AC_PATH_PROG(LVREMOVE, lvremove, no, $PATH:/usr/sbin:/sbin)
 if test "$LVREMOVE" = "no"; then
 	LVREMOVE=/path/to/lvremove
 fi

@@ -77,11 +77,13 @@ snapshot_root	/.snapshots/
 #cmd_postexec	/path/to/postexec/script
 
 # Paths to lvcreate, lvremove, mount and umount commands, for use with
-# Linux LVMs.
+# Linux LVMs.  If necessary, you can add arguments to any of the commands.
+# The example -r argument shown on the mount command will cause all
+# LVM snapshot mounts to be readonly.
 #
 #linux_lvm_cmd_lvcreate	@CMD_LVCREATE@
 #linux_lvm_cmd_lvremove	@CMD_LVREMOVE@
-#linux_lvm_cmd_mount	@CMD_MOUNT@
+#linux_lvm_cmd_mount	@CMD_MOUNT@ -r
 #linux_lvm_cmd_umount	@CMD_UMOUNT@
 
 #########################################
@@ -230,6 +232,11 @@ lockfile	/var/run/rsnapshot.pid
 #
 #linux_lvm_mountpath	/path/to/mount/lvm/snapshot/during/backup
 
+# Arguments to the mount command used to temporarily mount the snapshot(s).
+# You may need to define this when you use xfs filesystems.
+#
+#linux_lvm_mountargs	-o nouuid
+
 ###############################
 ### BACKUP POINTS / SCRIPTS ###
 ###############################
@@ -245,6 +252,9 @@ backup	/usr/local/	localhost/
 #backup_script	/usr/local/bin/backup_pgsql.sh	localhost/postgres/
 # You must set linux_lvm_* parameters below before using lvm snapshots
 #backup	lvm://vg0/xen-home/	lvm-vg0/xen-home/
+# You can override LVM options as needed.  Use quotes if your option needs to
+# contain a comma.
+#backup	lvm://vg0/xen-home/	lvm-vg0/xen-home/	linux_lvm_mountargs="-o ro,nouuid",linux_lvm_snapshotsize=1G
 
 # EXAMPLE.COM
 #backup_exec	/bin/date "+ backup of example.com started at %c"
