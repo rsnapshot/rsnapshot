@@ -6672,6 +6672,14 @@ B<config_version>     Config file version (required). Default is 1.2
 
 B<snapshot_root>      Local filesystem path to save all snapshots
 
+=over
+
+This can be a volume mounted over the network on the machine which is running
+rsnapshot, but it I<must> reliably support all POSIX interfaces. SMB/CIFS are
+not supported due to some implementations being unreliable and incomplete.
+
+=back
+
 B<include_conf>       Include another file in the configuration at this point.
 
 =over 4
