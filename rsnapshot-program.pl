@@ -46,6 +46,7 @@ use Fcntl;                     # sysopen()
 use IO::File;                  # recursive open in parse_config_file
 use IPC::Open3 qw(open3);      # open rsync with error output
 use IO::Handle;                # handle autoflush for rsync-output
+use Symbol qw(gensym);         # catch stderr of open3
 
 ########################################
 ###     DECLARE GLOBAL VARIABLES     ###
@@ -4895,6 +4896,9 @@ sub gnu_cp_al {
 	my $dest   = shift(@_);
 	my $result = 0;
 	my $status;
+	my $pid;
+	my $errstr;
+	my $stderr = gensym;
 
 	# make sure we were passed two arguments
 	if (!defined($src))  { return (0); }
@@ -4910,10 +4914,25 @@ sub gnu_cp_al {
 	}
 
 	# make the system call to GNU cp
-	$result = system($config_vars{'cmd_cp'}, '-al', "$src", "$dest");
+	eval {
+		$pid = open3(undef, undef, $stderr, $config_vars{'cmd_cp'}, '-al', $src, $dest);
+	};
+
+	if ($@) {
+		$errstr = "Failed to execute $config_vars{'cmd_cp'}: $@";
+		$result = 1;
+	} else {
+		while (<$stderr>) {
+			$errstr .= $_;
+		}
+		close($stderr);
+		waitpid($pid, 0);
+		$result = $?;
+	}
+
 	if ($result != 0) {
 		$status = $result >> 8;
-		print_err("$config_vars{'cmd_cp'} -al $src $dest failed (result $result, exit status $status).", 2);
+		print_err("$config_vars{'cmd_cp'} -al $src $dest failed (result $result, exit status $status): $errstr", 2);
 		if (test_cp_al() > 0) {
 			print_err("Perhaps your cp does not support -al options?", 2);
 		}
