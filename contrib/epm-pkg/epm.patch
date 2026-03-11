@@ -1,0 +1,8 @@
+$pDel{"/usr"} = 1;
+$pDel{"/usr/local"} = 1;
+$pDel{"/usr/local/bin"} = 1;
+$pDel{"/usr/local/etc"} = 1;
+$pDel{"/usr/local/share"} = 1;
+$pDel{"/usr/local/share/doc"} = 1;
+$pDel{"/usr/local/share/man"} = 1;
+$pDel{"/usr/local/share/man/man1"} = 1;

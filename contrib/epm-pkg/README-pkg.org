@@ -1,0 +1,83 @@
+* Build rsnapshot packages with EPM
+- The Makefile and files in this directory will build "native"
+  packages for the rsnapshot program. A mostly OS independent
+  "portable" packge is also build. See the EPM manual for help with
+  building the different OS packages. Between EPM, the Makefile, and
+  ver.sh, most any *nix OS distribution package can be built.
+** Supported OS packages
++ AIX software packages ("installp")
++ AT&T software packages ("pkgadd"), used by Solaris and others
++ BSD packages ("pkg_create")
++ Compaq Tru64 UNIX ("setld")
++ Debian Package Manager ("dpkg")
++ HP-UX software packages ("swinstall")
++ IRIX software manager ("inst", "swmgr", or "tardist")
++ macOS software packages ("name.pkg")
++ Red Hat Package Manager ("rpm")
++ Slackware software packages ("name.tgz")
++ Portable (installation and removal scripts with tar files)
+
+- flatpak, appimage, and snap are not supported by EPM.
+
+** Setup
++ Install the dependencies.
++ Modify ver.sh as needed. Directions are in the comments.
+** ver.sh - define the package's meta-data.
++ The meta-data defines things like the product's name, version, build
+  user, OS, OS version, release server, release dirs, etc.
++ mkver.pl will convert the variables to the syntax used by various
+  programs: make, bash, perl, java, epm, xml
+
+** Dependencies
++ autoconf
+  + Provides: autoreconf
++ automake
+  + Provides: aclocal
++ epm - Pick the lastest install package for your distribution.
+  + Provides: epm, epminstall, mkepmlist
+  + Release: https://moria.whyayh.com/rel/released/software/ThirdParty/epm/
+  + Forked Source: https://github.com/TurtleEngr/epm-deb-pkg
+  + Source: https://github.com/jimjag/epm
+    + Manual: see doc/ dir
+  + Home: https://jimjag.github.io/epm/
++ epm-helper - generates ver files from ver.sh. Cleanup list of file
+  to be packaged.
+  + Provides: mkver.pl, patch-epm-list
+  + Release: https://moria.whyayh.com/rel/released/software/ThirdParty/epm/
+  + Source: https://github.com/TurtleEngr/epm-helper
+
+** Package Steps
++ make config - generate configure script and run it.
++ make build - build the files and install them in dist/usr/local
+  + Manually check epm.list file
++ make test - run the rsnapshot tests
+  + Verify the tests ran OK
++ edit 
+  + increment the ProdBuild var in ver.sh
+  + create the $ProdOSDist.require file for your OS (see ver.env)
++ make package - build the native and portable packages
+  + to build "native" packages, you need to be in the OS you are
+    making the package for.
++ make release - copy package files to a "release" server
++ make dist-clean - remove all generated files
+
+** Files in contrib/epm-pkg/
++ README-pkg.org - this file
++ Makefile - wraps the existing build/install process and adds the
+  steps for packaging
++ epm.patch* - remove dirs that do not belong to the package
++ mx.require - list required packages for the mx distribution
++ ubuntu.require - list required packages for the ubuntu distribution
++ ver.sh* - define the package's meta-data.
+
+*** Generated files
++ configure - created by 'make config' target
++ dist/ - pseudo root. Created by 'make build' and 'make build
+  install' targets
++ pkg/ - put packages here. Created by 'make package' target
+
+*** Generated files in contrib/epm-pkg/
++ ver.mak - used by Makefile
++ ver.epm - used by package target
++ ver.env - used by release target
++ epm.list - list of files in dist/ to be packaged

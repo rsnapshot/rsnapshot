@@ -1,0 +1,6 @@
+%provides rsnapshot
+%requires bash
+%requires coreutils
+%requires openssh-client
+%requires perl
+%requires rsync
