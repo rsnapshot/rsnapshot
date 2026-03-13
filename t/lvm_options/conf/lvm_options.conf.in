@@ -1,0 +1,42 @@
+config_version	1.2
+
+snapshot_root	@SNAP@
+no_create_root	1
+
+cmd_rsync	@RSYNC@
+linux_lvm_cmd_lvcreate	@CMD_LVCREATE@
+linux_lvm_cmd_lvremove	@CMD_LVREMOVE@
+linux_lvm_cmd_mount	@CMD_MOUNT@
+linux_lvm_cmd_umount	@CMD_UMOUNT@
+
+interval	daily	7
+
+one_fs		1
+sync_first	1
+
+linux_lvm_snapshotsize	100M
+linux_lvm_snapshotname	rsnapshot
+linux_lvm_vgpath	/dev
+linux_lvm_mountpath	@TEMP@
+linux_lvm_mountargs	-r
+
+# Test various permutations of paths.  Due to the way the test script is
+# constructed, each destination path must be unique.  If not, it will
+# potentially cause multiple backup points to be exercised in the same
+# test, which the test script is not designed to handle.
+backup	lvm://vg/lv/	lvm-vg/path0/
+backup	lvm://vg/lv/x/	lvm-vg/path1/
+backup	lvm://vg/lv/x/y/	lvm-vg/path2/
+
+# Test each option override individually.
+backup	lvm://vg/lv/	lvm-vg/opt0/	linux_lvm_snapshotsize=1G
+backup	lvm://vg/lv/	lvm-vg/opt1/	linux_lvm_snapshotname=X_Y-Z
+backup	lvm://vg/lv/	lvm-vg/opt2/	linux_lvm_vgpath=/var
+backup	lvm://vg/lv/	lvm-vg/opt3/	linux_lvm_mountpath=/opt
+backup	lvm://vg/lv/	lvm-vg/opt4/	linux_lvm_mountargs=
+backup	lvm://vg/lv/	lvm-vg/opt5/	linux_lvm_mountargs=""
+backup	lvm://vg/lv/	lvm-vg/opt6/	linux_lvm_mountargs="-r"
+backup	lvm://vg/lv/	lvm-vg/opt7/	linux_lvm_mountargs="-o ro,uuid"
+
+# Test overriding all options.
+backup	lvm://vg/lv/	lvm-vg/opt_all0/	linux_lvm_snapshotsize=1G,linux_lvm_snapshotname=foo,linux_lvm_vgpath=/alt,linux_lvm_mountpath=/mnt,linux_lvm_mountargs="-o ro,nouuid"

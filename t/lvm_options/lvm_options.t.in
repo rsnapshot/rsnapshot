@@ -1,0 +1,133 @@
+#!@PERL@
+use strict;
+use warnings;
+use Test::More;
+use Text::ParseWords;	   # parse_line()
+use SysWrap;
+
+#
+# Test LVM config file.
+# Test each backup point in the config file.
+# Test override of LVM options.
+# Test double quotes for mount args.
+#
+
+# Open and parse an rsnapshot config file, returning an array of hash
+# references that contain a per-backup-point configuration.  The
+# include_conf option is not supported.
+sub parse_conf {
+  my ($filename) = @_;
+  my %defaults;
+  my @configs;
+  open my $fh, '<', $filename or BAIL_OUT("Cannot open $filename: $!");
+
+  while (my $line = <$fh>) {
+    # Convert continuation lines to a single line.
+    while ($line =~ s/\\\n//) {
+      $line .= <$fh>;
+    }
+    chomp $line;
+    # Discard blank lines.
+    $line =~ /\S/ or next;
+    # Discard commented lines.
+    $line =~ /^\h*#.*/ and next;
+
+    if ($line !~ /^backup\h+/) {
+      # Add each configuration option to defaults.
+      my ($key, $val) = split ' ', $line, 2;
+      $defaults{$key} = $val;
+    } else {
+      # backup points require special handling, as LVM option overrides
+      # must be split up and applied over the default values defined
+      # in the config file.  parse_line is used because mount args may
+      # be double quoted and contain commas and spaces.
+      my $config = {%defaults};
+      my (undef, $bp_src, $bp_dst, $bp_options) = split ' ', $line, 4;
+      $config->{bp_src} = $bp_src;
+      $config->{bp_dst} = $bp_dst;
+      ($config->{lvm_vg}, $config->{lvm_lv}, $config->{lvm_path}) =
+	($bp_src =~ m|^lvm://([^/]+)/([^/]+)/(.*)$|);
+      my @pairs = parse_line(',', 0, $bp_options);
+      foreach my $pair (@pairs) {
+	# Override any LVM option that has a backup-point-specific
+	# option.
+	my ($key, $val) = parse_line('=', 0, $pair);
+	$config->{$key} = $val;
+      }
+      push @configs, $config;
+    }
+  }
+  return @configs;
+}
+
+# Parse the test configuration file, creating a configuration per
+# backup point.
+my @configs = parse_conf('@TEST@/lvm_options/conf/lvm_options.conf');
+
+if (-x "@CMD_LVCREATE@" and -x "@CMD_LVREMOVE@") {
+  # Total tests is config test plus one test per backup point.
+  plan tests => 1 + scalar(@configs);
+}
+else {
+  plan skip_all => "LVM commands unavailable";
+}
+
+# Test for valid config file.
+ok(0 == rsnapshot("-c @TEST@/lvm_options/conf/lvm_options.conf configtest"),
+  'LVM config') or BAIL_OUT("config file error");
+
+# Given how the test environment is configured, SNAP can have
+# duplicate slashes.  Perform a poor man's normalization of the path
+# so it can be used to check one of the chdir commands in the expected
+# output.
+(my $snapdir = "@SNAP@") =~ s|/+|/|g;
+
+# Each config represents a backup point from the config file.  Loop over
+# the configs, performing a test per config.
+foreach my $cfg (@configs) {
+  # Creating and mounting an LVM snapshot would require root.  Instead of
+  # doing that, we just check that the commands that would be performed are
+  # what we would expect.
+  my $result = rsnapshot_output("-t -c @TEST@/lvm_options/conf/lvm_options.conf sync $cfg->{bp_dst}");
+  # -t output may contain continued lines.  Convert them to a single line.
+  $result =~ s/\\\n//g;
+  #  diag("\n result for $cfg->{bp_dst} is \n$result");
+
+  # linux_lvm_mountargs can be empty, and hence undefined, which causes
+  # a warning when $expected is assigned.
+  $cfg->{linux_lvm_mountargs} //= "";
+
+  my $expected =
+    qr{
+	\A
+	(.*\n)*			# unspecified command(s), typically mkdir
+	^@CMD_LVCREATE@\h+
+	(--snapshot|-s)\h+
+	(--size|-L)\h+$cfg->{linux_lvm_snapshotsize}\h+
+	(--name|-n)\h+$cfg->{linux_lvm_snapshotname}\h+
+	$cfg->{linux_lvm_vgpath}/$cfg->{lvm_vg}/$cfg->{lvm_lv}\h* \n
+	^@CMD_MOUNT@\h+
+	# mount args might be empty, so use \h* instead of \h+
+	\Q$cfg->{linux_lvm_mountargs}\E\h*
+	$cfg->{linux_lvm_vgpath}/
+	$cfg->{lvm_vg}/
+	$cfg->{linux_lvm_snapshotname}\h+
+	$cfg->{linux_lvm_mountpath}\h* \n
+	chdir\h*\(\h*$cfg->{linux_lvm_mountpath}\h*\)\h* \n
+	^@RSYNC@\h+.*\h+
+	\./$cfg->{lvm_path}\h+
+	@SNAP@/.sync/$cfg->{bp_dst}\h* \n
+	chdir\h*\(\h*$snapdir\h*\)\h* \n
+	^@CMD_UMOUNT@\h+
+	$cfg->{linux_lvm_mountpath}\h* \n
+	^@CMD_LVREMOVE@\h+
+	(--force|-f)\h+
+	$cfg->{linux_lvm_vgpath}/
+	$cfg->{lvm_vg}/
+	$cfg->{linux_lvm_snapshotname}\h+ \n
+	(.*\n)*			# unspecified command(s), typically touch
+	\z
+    }mx;
+
+  ok($result =~ $expected, "LVM command, dst = $cfg->{bp_dst}");
+}
