@@ -46,6 +46,7 @@ use Fcntl;                     # sysopen()
 use IO::File;                  # recursive open in parse_config_file
 use IPC::Open3 qw(open3);      # open rsync with error output
 use IO::Handle;                # handle autoflush for rsync-output
+use Symbol qw(gensym);         # catch stderr of open3
 
 ########################################
 ###     DECLARE GLOBAL VARIABLES     ###
@@ -4864,29 +4865,6 @@ sub cp_al {
 	return ($result);
 }
 
-# This is to test whether cp -al seems to work in a simple case
-# return 0  if cp -al succeeds
-# return 1  if cp -al fails
-# return -1 if something else failed - test inconclusive
-sub test_cp_al {
-	my $s = "$config_vars{'snapshot_root'}/cp_al1";
-	my $d = "$config_vars{'snapshot_root'}/cp_al2";
-	my $result;
-
-	-d $s || mkdir($s) || return (-1);
-	open(TT1, ">>$s/tt1") || return (-1);
-	close(TT1) || return (-1);
-	$result = system($config_vars{'cmd_cp'}, '-al', "$s", "$d");
-	if ($result != 0) {
-		return (1);
-	}
-	unlink("$d/tt1");
-	unlink("$s/tt1");
-	rmdir($d);
-	rmdir($s);
-	return (0);
-}
-
 # this is a wrapper to call the GNU version of "cp"
 # it might fail in mysterious ways if you have a different version of "cp"
 #
@@ -4895,6 +4873,9 @@ sub gnu_cp_al {
 	my $dest   = shift(@_);
 	my $result = 0;
 	my $status;
+	my $pid;
+	my $errstr;
+	my $stderr = gensym;
 
 	# make sure we were passed two arguments
 	if (!defined($src))  { return (0); }
@@ -4910,13 +4891,25 @@ sub gnu_cp_al {
 	}
 
 	# make the system call to GNU cp
-	$result = system($config_vars{'cmd_cp'}, '-al', "$src", "$dest");
+	eval {
+		$pid = open3(undef, undef, $stderr, $config_vars{'cmd_cp'}, '-al', $src, $dest);
+	};
+
+	if ($@) {
+		$errstr = "Failed to execute $config_vars{'cmd_cp'}: $@";
+		$result = 1;
+	} else {
+		while (<$stderr>) {
+			$errstr .= $_;
+		}
+		close($stderr);
+		waitpid($pid, 0);
+		$result = $?;
+	}
+
 	if ($result != 0) {
 		$status = $result >> 8;
-		print_err("$config_vars{'cmd_cp'} -al $src $dest failed (result $result, exit status $status).", 2);
-		if (test_cp_al() > 0) {
-			print_err("Perhaps your cp does not support -al options?", 2);
-		}
+		print_err("$config_vars{'cmd_cp'} -al $src $dest failed (result $result, exit status $status): $errstr", 2);
 		return (0);
 	}
 
