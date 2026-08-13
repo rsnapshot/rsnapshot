@@ -235,9 +235,9 @@ lockfile	/var/run/rsnapshot.pid
 ###############################
 
 # LOCALHOST
-backup	/home/		localhost/
-backup	/etc/		localhost/
-backup	/usr/local/	localhost/
+backup	/home/		localhost-home/
+backup	/etc/		localhost-etc/
+backup	/usr/local/	localhost-usr-local/
 #backup	/var/log/rsnapshot		localhost/
 #backup	/etc/passwd	localhost/
 #backup	/home/foo/My Documents/		localhost/
