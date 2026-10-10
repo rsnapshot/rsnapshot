@@ -57,7 +57,7 @@ rsnapshot is a filesystem backup utility based on `rsync`. Using rsnapshot, it i
 
 rsnapshot is written in `Perl`, and depends on `rsync`. `OpenSSH`, GNU `cp`, GNU `du`, and the BSD `logger` program are also recommended, but not required. All of these should be present on most Linux systems. rsnapshot is written with the lowest common denominator in mind. It only requires at minimum `Perl` 5.12.0 and `rsync`. As a result of this, it works on pretty much any UNIX-like system you care to throw at it. It has been successfully tested with `Perl` 5.12.0 upwards on numerous platforms, including Linux, Solaris, FreeBSD, Mac OS and OpenBSD.
 
-The latest version of the program and this document can always be found at [rsnapshot.org](https://www.rsnapshot.org).
+The latest version of the program and this document can always be found on [Github](https://github.com/rsnapshot/rsnapshot/).
 
 ### 1.1. What you will need
 
@@ -193,7 +193,7 @@ The `rsnapshot.conf` config file is well commented, and much of it should be fai
 man rsnapshot
 ```
 
-This will give you the complete documentation. However, it assumes that you already know what you're doing to a certain extent. If you just want to get something up and running, this tutorial is a better place to start. If your system can't find the man page, `/usr/local/man` probably isn't in your `$MANPATH` environmental variable. This is beyond the scope of this document, but if it isn't working for you, you can always read the newest `man` page on the rsnapshot web site at [rsnapshot.org](https://www.rsnapshot.org)
+This will give you the complete documentation. However, it assumes that you already know what you're doing to a certain extent. If you just want to get something up and running, this tutorial is a better place to start. If your system can't find the man page, `/usr/local/man` probably isn't in your `$MANPATH` environmental variable.
 
 ### 4.3. Modifying the config file
 
@@ -473,7 +473,7 @@ If you were storing backups under `localhost/home/` and wanted to see how much t
 rsnapshot du localhost/home/
 ```
 
-The latest version of this document and the rsnapshot program can always be found at [rsnapshot.org](https://www.rsnapshot.org)
+The latest version of this document and the rsnapshot program can always be found on [Github](https://github.com/rsnapshot/rsnapshot/).
 
 [↑ Table of Contents](#table-of-contents)
 
